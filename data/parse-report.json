@@ -965,9 +965,9 @@
     "number": "528",
     "id": 4020,
     "family": "sam",
-    "ok": false,
+    "ok": true,
     "warnings": [
-      "REJECT: no day labels"
+      "dropped a weekday trip whose times go backwards (07:35 07:55 07:40 08:25)"
     ]
   },
   {

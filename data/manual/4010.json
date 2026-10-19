@@ -1,0 +1,236 @@
+{
+ "lineId": 4010,
+ "source": "manual transcription of a scanned PDF (image only): Nº 130 Agua Pena / Sant'Ana",
+ "notes": {},
+ "generalNotes": [
+  "Não se efectuam viagens a 25 de Dezembro."
+ ],
+ "directions": [
+  {
+   "from": "Machico",
+   "to": "Água Pena",
+   "stops": [
+    "Machico",
+    "Água Pena"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "09:45",
+      "10:00"
+     ],
+     "notes": [
+      "Via Cemiterio e Queimada de Cima"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "11:00",
+      "11:15"
+     ],
+     "notes": [
+      "Via Cemiterio e Queimada de Cima"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "12:00",
+      "12:15"
+     ],
+     "notes": [
+      "Via Cemiterio e Queimada de Cima"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "14:00",
+      "14:15"
+     ],
+     "notes": [
+      "Via Cemiterio e Queimada de Cima"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "16:30",
+      "16:45"
+     ],
+     "notes": [
+      "Via Cemiterio e Queimada de Cima"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "19:05",
+      "19:20"
+     ],
+     "notes": [
+      "Via Queimada de Cima"
+     ]
+    }
+   ]
+  },
+  {
+   "from": "Água Pena",
+   "to": "Machico",
+   "stops": [
+    "Água Pena",
+    "Machico"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "10:00",
+      "10:15"
+     ],
+     "notes": [
+      "Via Cemiterio e Queimada de Cima"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "11:15",
+      "11:30"
+     ],
+     "notes": [
+      "Via Cemiterio e Queimada de Cima"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "12:15",
+      "12:30"
+     ],
+     "notes": [
+      "Via Cemiterio e Queimada de Cima"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "14:15",
+      "14:30"
+     ],
+     "notes": [
+      "Via Cemiterio e Queimada de Cima"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "16:45",
+      "17:00"
+     ],
+     "notes": [
+      "Via Cemiterio e Queimada de Cima"
+     ]
+    }
+   ]
+  },
+  {
+   "from": "Machico",
+   "to": "Sant'Ana",
+   "stops": [
+    "Machico",
+    "Sant'Ana"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "09:15",
+      "09:30"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "10:30",
+      "10:45"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "17:00",
+      "17:15"
+     ]
+    }
+   ]
+  },
+  {
+   "from": "Sant'Ana",
+   "to": "Machico",
+   "stops": [
+    "Sant'Ana",
+    "Machico"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "09:30",
+      "09:45"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "10:45",
+      "11:00"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "17:15",
+      "17:30"
+     ]
+    }
+   ]
+  }
+ ]
+}

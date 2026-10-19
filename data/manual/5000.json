@@ -1,0 +1,515 @@
+{
+ "lineId": 5000,
+ "source": "manual transcription of the scanned PDF \"Rede Santana\" (image only, shared by lines 56, 103, 138)",
+ "notes": {
+  "a": "Viagens de ligação direta ao Parque Temático da Madeira."
+ },
+ "generalNotes": [
+  "O horário indica, nos pontos intermédios dos percursos, as horas aproximadas de passagem",
+  "*Serviço a pedido: Os clientes deverão efectuar a marcação do serviço, preferencialmente através do email info@cam-madeira.pt ou em último recurso, através do número de telefone 291 201 150. O pedido deverá ser realizado até às 16h00, do dia útil anterior.",
+  "3ª feira de carnaval, é praticado horário de dia útil período não letivo.",
+  "Não se efectuam viagens no dia 25 de Dezembro."
+ ],
+ "directions": [
+  {
+   "from": "Funchal",
+   "to": "Arco de S. Jorge",
+   "stops": [
+    "Funchal",
+    "Poiso",
+    "P. Cruz (Túnel)",
+    "Ribeiro Frio",
+    "S. Roque do Faial",
+    "Cruzinhas",
+    "Faial",
+    "Santana",
+    "São Jorge",
+    "Cabanas",
+    "Arco de S. Jorge"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "07:30",
+      null,
+      "08:10",
+      null,
+      "08:15",
+      "08:30",
+      "08:40",
+      "09:00",
+      null,
+      null,
+      null
+     ],
+     "notes": [
+      "a",
+      "Via Ilha"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "08:10",
+      "08:40",
+      null,
+      "08:50",
+      "09:10",
+      null,
+      "09:20",
+      "10:00",
+      null,
+      null,
+      null
+     ],
+     "notes": [
+      "a",
+      "Via Lº Galego e St. António"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "09:00",
+      "09:33",
+      null,
+      "09:41",
+      null,
+      "10:04",
+      "10:10",
+      "10:25",
+      null,
+      null,
+      null
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "10:00",
+      "10:33",
+      null,
+      "10:41",
+      null,
+      "11:04",
+      "11:10",
+      "11:25",
+      null,
+      null,
+      null
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "17:05",
+      null,
+      "17:45",
+      null,
+      "17:55",
+      "18:10",
+      "18:20",
+      null,
+      null,
+      null,
+      null
+     ],
+     "notes": [
+      "Até Lº Galego. Via Ach. C. Gordo"
+     ]
+    },
+    {
+     "days": [
+      "saturday"
+     ],
+     "times": [
+      "10:00",
+      "10:30",
+      null,
+      "10:42",
+      "10:59",
+      null,
+      "11:05",
+      "11:20",
+      null,
+      null,
+      null
+     ],
+     "notes": [
+      "a"
+     ]
+    },
+    {
+     "days": [
+      "sunday"
+     ],
+     "times": [
+      "10:30",
+      "11:05",
+      null,
+      "11:15",
+      null,
+      "11:30",
+      "11:35",
+      "12:00",
+      null,
+      null,
+      null
+     ],
+     "notes": [
+      "a"
+     ]
+    }
+   ]
+  },
+  {
+   "from": "Arco de S. Jorge",
+   "to": "Funchal",
+   "stops": [
+    "Arco de S. Jorge",
+    "Cabanas",
+    "São Jorge",
+    "Santana",
+    "Faial",
+    "Cruzinhas",
+    "S. Roque do Faial",
+    "Ribeiro Frio",
+    "Poiso",
+    "P. Cruz (Túnel)",
+    "Funchal"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      null,
+      null,
+      null,
+      null,
+      "06:30",
+      "06:38",
+      "06:54",
+      null,
+      null,
+      "07:00",
+      "07:45"
+     ],
+     "notes": [
+      "De Água d'Alto, às 06h15",
+      "*Serviço a pedido: F. Murta e Lº Galego"
+     ]
+    },
+    {
+     "days": [
+      "weekday_holiday"
+     ],
+     "times": [
+      null,
+      null,
+      null,
+      "08:39",
+      "08:45",
+      null,
+      null,
+      null,
+      null,
+      "08:50",
+      "09:40"
+     ],
+     "notes": [
+      "Via Ilha, A. Marques, Silveira, Cº Chão e St. António"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      null,
+      null,
+      null,
+      "11:00",
+      "11:15",
+      "11:30",
+      null,
+      "11:40",
+      "11:55",
+      null,
+      "12:30"
+     ]
+    },
+    {
+     "days": [
+      "weekday_school"
+     ],
+     "times": [
+      null,
+      null,
+      null,
+      "12:30",
+      "12:45",
+      "13:00",
+      "13:10",
+      "13:15",
+      "13:30",
+      null,
+      "14:25"
+     ]
+    },
+    {
+     "days": [
+      "weekday_holiday"
+     ],
+     "times": [
+      null,
+      null,
+      null,
+      "12:30",
+      "13:10",
+      "13:20",
+      "13:30",
+      "13:45",
+      "14:00",
+      null,
+      null
+     ],
+     "notes": [
+      "Via Lº Galego"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      null,
+      null,
+      null,
+      "15:30",
+      "15:44",
+      "15:54",
+      "16:10",
+      null,
+      null,
+      null,
+      null
+     ],
+     "notes": [
+      "a",
+      "Via Achada do Cedro Gordo",
+      "P. Cruz / Funchal: impresso 14.05 / 14.55 (zřejmě chyba)"
+     ]
+    },
+    {
+     "days": [
+      "saturday"
+     ],
+     "times": [
+      null,
+      null,
+      null,
+      "12:00",
+      "12:16",
+      "12:27",
+      "12:40",
+      null,
+      null,
+      "12:50",
+      "13:30"
+     ]
+    },
+    {
+     "days": [
+      "sunday"
+     ],
+     "times": [
+      null,
+      null,
+      null,
+      "15:30",
+      "15:46",
+      "15:55",
+      "16:03",
+      null,
+      null,
+      "16:10",
+      "16:50"
+     ],
+     "notes": [
+      "a"
+     ]
+    }
+   ]
+  },
+  {
+   "from": "Lº Galego",
+   "to": "Santana",
+   "stops": [
+    "Lº Galego",
+    "Santana"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "09:30",
+      "10:00"
+     ],
+     "notes": [
+      "*Serviço a pedido: F. Murta"
+     ]
+    },
+    {
+     "days": [
+      "weekday_school"
+     ],
+     "times": [
+      "12:20",
+      "13:00"
+     ],
+     "notes": [
+      "*Serviço a pedido: F. Murta"
+     ]
+    },
+    {
+     "days": [
+      "weekday_school"
+     ],
+     "times": [
+      "17:20",
+      "17:50"
+     ],
+     "notes": [
+      "*Serviço a pedido: F. Murta"
+     ]
+    }
+   ]
+  },
+  {
+   "from": "Santana",
+   "to": "Lº Galego",
+   "stops": [
+    "Santana",
+    "Faial",
+    "Lº Galego"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday_school"
+     ],
+     "times": [
+      "12:00",
+      "12:10",
+      "12:20"
+     ],
+     "notes": [
+      "*Serviço a pedido: F. Murta"
+     ]
+    },
+    {
+     "days": [
+      "weekday_holiday"
+     ],
+     "times": [
+      "12:30",
+      "12:40",
+      "12:50"
+     ],
+     "notes": [
+      "*Serviço a pedido: F. Murta"
+     ]
+    },
+    {
+     "days": [
+      "weekday_school"
+     ],
+     "times": [
+      "17:00",
+      "17:10",
+      "17:20"
+     ],
+     "notes": [
+      "*Serviço a pedido: F. Murta"
+     ]
+    }
+   ]
+  },
+  {
+   "from": "Porto da Cruz",
+   "to": "Santana",
+   "stops": [
+    "Porto da Cruz",
+    "Faial",
+    "Santana"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday_school"
+     ],
+     "times": [
+      "13:25",
+      "14:10",
+      "14:25"
+     ],
+     "notes": [
+      "Só no Período Escolar e sujeito ao horário da escola"
+     ]
+    }
+   ]
+  },
+  {
+   "from": "Santana",
+   "to": "Porto da Cruz",
+   "stops": [
+    "Santana",
+    "Faial",
+    "Porto da Cruz"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday_school"
+     ],
+     "times": [
+      "13:25",
+      "13:35",
+      "13:50"
+     ],
+     "notes": [
+      "Só no Período Escolar e sujeito ao horário da escola"
+     ]
+    },
+    {
+     "days": [
+      "weekday_school"
+     ],
+     "times": [
+      "17:00",
+      "17:20",
+      "17:50"
+     ],
+     "notes": [
+      "Só no Período Escolar e sujeito ao horário da escola"
+     ]
+    }
+   ]
+  }
+ ]
+}

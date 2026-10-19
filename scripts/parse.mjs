@@ -73,6 +73,34 @@ function finishSimple(out, warn) {
   for (const m of marks) if (!(m in out.notes) && m !== '*') warn(`note "${m}" has no legend text`);
 }
 
+/**
+ * Lines whose PDF is a scan (or too irregular to parse) can have a hand-made transcription in data/manual/<lineId>.json.
+ * It replaces the parsed result and is marked (family "manual", manualSource) so the app and the report can tell.
+ */
+async function applyManual(out, warn) {
+  const file = path.join(ROOT, 'data', 'manual', `${out.id}.json`);
+  if (!(await exists(file))) return;
+  const m = JSON.parse(await readFile(file, 'utf8'));
+  const sk = (t) => (mins(t) < 180 ? mins(t) + 1440 : mins(t));
+  out.family = 'manual';
+  out.manualSource = m.source;
+  out.notes = m.notes ?? {};
+  if (m.generalNotes?.length) out.generalNotes = m.generalNotes;
+  out.directions = m.directions.map((d) => {
+    const departures = d.departures ? JSON.parse(JSON.stringify(d.departures)) : {};
+    for (const t of d.departures ? [] : d.trips) {
+      if (!t.times[0]) continue;
+      for (const day of t.days) (departures[day] ??= []).push({ t: t.times[0], ...(t.notes ? { notes: t.notes } : {}) });
+    }
+    for (const k of Object.keys(departures)) departures[k].sort((x, y) => sk(x.t) - sk(y.t));
+    for (const t of d.trips) if (t.times.length !== d.stops.length) throw new Error(`manual ${out.id}: trip length differs from stops`);
+    return { variant: d.variant ?? null, from: d.from, to: d.to, shapeId: null, stopSource: 'pdf', stops: d.stops.map((name) => ({ code: null, name })), departures, trips: d.trips };
+  });
+  out.hasParsedSchedule = out.directions.some((d) => d.trips.length || Object.values(d.departures).some((l) => l.length));
+  out.warnings.length = 0;
+  warn('manual transcription');
+}
+
 const lines = JSON.parse(await readFile(path.join(ROOT, 'data', 'lines.json'), 'utf8'));
 const result = [];
 const report = [];
@@ -167,6 +195,7 @@ for (const line of lines) {
   } catch (e) {
     warn(`parser crashed: ${e.message}`);
   }
+  await applyManual(out, warn);
   result.push(out);
   report.push({ number: out.number, id: out.id, family: out.family, ok: out.hasParsedSchedule, warnings });
 }

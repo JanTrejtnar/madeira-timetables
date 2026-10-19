@@ -7,9 +7,9 @@ import { visibleItems } from './lib-pdf.mjs';
 import { norm } from './parse-siga-grid.mjs';
 
 const DAY_RES = [
-  ['weekday', /Weekdays|^Dias [uú]teis/i],
-  ['saturday', /Saturdays|^S[aá]bados/i],
-  ['sunday', /Sundays|^Domingos/i],
+  ['weekday', /Weekdays|(?:^|\s)Dias [uú]teis\s*$/i],
+  ['saturday', /Saturdays|(?:^|\s)S[aá]bados\s*$/i],
+  ['sunday', /Sundays|(?:^|\s)Domingos\b/i],
 ];
 const TIME_RE = /^\s*(\d{1,2})[:.](\d{2})\s*(.*)$/;
 const SUBLABEL = /^(Partida|P.ssagem|Passagem|Chegada)$/; // "P<ssagem" occurs: a glyph without mapping
@@ -80,7 +80,16 @@ function analyzeSegment(part, day, keys) {
   const subs = part.filter((i) => i.y < firstY - 1 && SUBLABEL.test(i.str.trim()));
   const subCols = cluster(subs.map(cx), 10);
   const cellCols = cluster(cells.map(cx), 25); // columns are at least ~30 apart; left-aligned times sit up to ~18 off
-  const colsX = subCols.length >= 2 && subCols.length >= cellCols.length ? subCols : cellCols;
+  const fallbackCols = subCols.length >= 2 && subCols.length >= cellCols.length ? subCols : cellCols;
+  // Every row has a cell (time or dash) in every column, so the rank of a cell in a complete row is its column. This
+  // also copes with narrow columns and with times that are aligned differently from dashes.
+  const rowsOf = cluster(cells.map((c) => c.y), 3.5).map((y) => cells.filter((c) => Math.abs(c.y - y) <= 3.5).sort((p, q) => p.x - q.x));
+  const counts = new Map();
+  for (const r of rowsOf) counts.set(r.length, (counts.get(r.length) ?? 0) + 1);
+  const modal = [...counts].sort((p, q) => q[1] - p[1] || q[0] - p[0])[0];
+  const complete = modal ? rowsOf.filter((r) => r.length === modal[0]) : [];
+  const rankCols = complete.length >= 2 && modal[0] >= 2 ? Array.from({ length: modal[0] }, (_, k) => complete.reduce((n, r) => n + cx(r[k]), 0) / complete.length) : null;
+  const colsX = rankCols && rankCols.every((v, k) => k === 0 || v - rankCols[k - 1] > 8) ? rankCols : fallbackCols;
   if (process.env.SAM_DEBUG) console.log(day, 'subCols', subCols.map(Math.round).join(','), '| cellCols', cellCols.map(Math.round).join(','));
   const colOf = (c) => colsX.reduce((best, v, idx) => (Math.abs(v - c) < Math.abs(colsX[best] - c) ? idx : best), 0);
 
@@ -214,8 +223,13 @@ async function parseSamTable(file, line, warn, tableIdx) {
   const items = all.filter((i) => !inLegend(i) && i.y < infoY);
   const anchors = items.filter((i) => /^Nº\s?\d+\w*$/.test(i.str.trim()) && i.x < 140).sort((a, b) => a.y - b.y);
   if (!anchors.length) {
-    warn('REJECT: no table header (Nº …) found');
-    return null;
+    // sheets without a "Nº …" header (e.g. EXPRESSOS): the table starts just above its first day label
+    const first = items.filter((i) => DAY_RES.some(([, re]) => re.test(i.str.trim()))).sort((p, q) => p.y - q.y)[0];
+    if (!first) {
+      warn('REJECT: no table header (Nº …) found');
+      return null;
+    }
+    anchors.push({ y: first.y - 20, x: 0, str: '' });
   }
   const anchor = anchors[tableIdx];
   const table = items.filter((i) => i.y >= anchor.y - 1 && i.y < (anchors[tableIdx + 1]?.y ?? Infinity) - 1);

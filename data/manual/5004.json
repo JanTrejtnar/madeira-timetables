@@ -1,0 +1,430 @@
+{
+ "lineId": 5004,
+ "source": "manual transcription of the scanned PDF \"Rede Santana\" (image only, shared by lines 56, 103, 138)",
+ "notes": {
+  "a": "Viagens de ligação direta ao Parque Temático da Madeira."
+ },
+ "generalNotes": [
+  "O horário indica, nos pontos intermédios dos percursos, as horas aproximadas de passagem",
+  "*Serviço a pedido: Os clientes deverão efectuar a marcação do serviço, preferencialmente através do email info@cam-madeira.pt ou em último recurso, através do número de telefone 291 201 150. O pedido deverá ser realizado até às 16h00, do dia útil anterior.",
+  "3ª feira de carnaval, é praticado horário de dia útil período não letivo.",
+  "Não se efectuam viagens no dia 25 de Dezembro."
+ ],
+ "directions": [
+  {
+   "from": "Funchal",
+   "to": "Arco de S. Jorge",
+   "stops": [
+    "Funchal",
+    "Poiso",
+    "P. Cruz (Túnel)",
+    "Ribeiro Frio",
+    "S. Roque do Faial",
+    "Cruzinhas",
+    "Faial",
+    "Santana",
+    "São Jorge",
+    "Cabanas",
+    "Arco de S. Jorge"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "13:45",
+      "14:21",
+      null,
+      "14:31",
+      "14:47",
+      "14:59",
+      "15:09",
+      "15:27",
+      "16:15",
+      "16:29",
+      "16:40"
+     ],
+     "notes": [
+      "Via Cº Chão, Silveira, A. Marques e Ilha"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "16:00",
+      null,
+      "16:40",
+      null,
+      null,
+      null,
+      "16:45",
+      "17:00",
+      "17:35",
+      "17:52",
+      "18:05"
+     ],
+     "notes": [
+      "Via St. António"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "18:00",
+      null,
+      "18:43",
+      null,
+      null,
+      null,
+      "18:47",
+      "19:02",
+      "19:25",
+      "19:40",
+      "19:50"
+     ]
+    },
+    {
+     "days": [
+      "saturday"
+     ],
+     "times": [
+      "07:30",
+      "08:03",
+      null,
+      "08:12",
+      "08:33",
+      "08:44",
+      "08:53",
+      "09:13",
+      "10:01",
+      "10:14",
+      "10:25"
+     ],
+     "notes": [
+      "a",
+      "Via St. António e Ilha"
+     ]
+    },
+    {
+     "days": [
+      "saturday"
+     ],
+     "times": [
+      "13:30",
+      "14:04",
+      null,
+      "14:13",
+      null,
+      "14:30",
+      "14:40",
+      "14:55",
+      "15:15",
+      "15:25",
+      "15:35"
+     ],
+     "notes": [
+      "*Serviço a pedido: S. Roque do Faial"
+     ]
+    },
+    {
+     "days": [
+      "saturday"
+     ],
+     "times": [
+      "18:00",
+      "18:30",
+      null,
+      "18:40",
+      "19:00",
+      "19:10",
+      "19:20",
+      "19:35",
+      "20:00",
+      "20:15",
+      "20:25"
+     ],
+     "notes": [
+      "*Serviço a pedido: St. António e Ilha"
+     ]
+    },
+    {
+     "days": [
+      "sunday"
+     ],
+     "times": [
+      "07:30",
+      "08:03",
+      null,
+      "08:12",
+      "08:33",
+      "08:45",
+      "08:58",
+      "09:18",
+      "10:03",
+      "10:15",
+      "10:25"
+     ],
+     "notes": [
+      "a",
+      "Via St. António e Ilha"
+     ]
+    },
+    {
+     "days": [
+      "sunday"
+     ],
+     "times": [
+      "18:00",
+      "18:30",
+      null,
+      "18:40",
+      null,
+      "18:55",
+      "19:05",
+      "19:20",
+      "19:40",
+      "19:55",
+      "20:05"
+     ],
+     "notes": [
+      "*Serviço a pedido: S. Roque do Faial, St. António e Ilha"
+     ]
+    }
+   ]
+  },
+  {
+   "from": "Arco de S. Jorge",
+   "to": "Funchal",
+   "stops": [
+    "Arco de S. Jorge",
+    "Cabanas",
+    "São Jorge",
+    "Santana",
+    "Faial",
+    "Cruzinhas",
+    "S. Roque do Faial",
+    "Ribeiro Frio",
+    "Poiso",
+    "P. Cruz (Túnel)",
+    "Funchal"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "06:20",
+      "06:34",
+      "06:42",
+      "07:02",
+      "07:18",
+      null,
+      null,
+      null,
+      null,
+      "07:21",
+      "08:20"
+     ]
+    },
+    {
+     "days": [
+      "weekday_school"
+     ],
+     "times": [
+      "07:20",
+      "07:31",
+      "07:45",
+      "08:15",
+      "08:40",
+      null,
+      null,
+      null,
+      null,
+      "08:45",
+      "09:30"
+     ],
+     "notes": [
+      "Via St. António"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "10:00",
+      "10:12",
+      "10:25",
+      "11:00",
+      "11:20",
+      "11:32",
+      "11:43",
+      null,
+      null,
+      "11:50",
+      "12:40"
+     ],
+     "notes": [
+      "Via St. António"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "12:15",
+      "12:26",
+      "12:38",
+      "13:10",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "notes": [
+      "Santana 13.10 / 13.25"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "16:30",
+      "16:38",
+      "16:50",
+      "17:25",
+      "17:50",
+      "18:00",
+      null,
+      "18:12",
+      "18:23",
+      null,
+      "19:00"
+     ],
+     "notes": [
+      "a",
+      "Via Ilha e St. António"
+     ]
+    },
+    {
+     "days": [
+      "saturday"
+     ],
+     "times": [
+      "06:00",
+      "06:13",
+      "06:25",
+      "06:45",
+      "07:00",
+      "07:08",
+      null,
+      "07:25",
+      "07:30",
+      null,
+      "08:10"
+     ],
+     "notes": [
+      "*Serviço a pedido: Silveira, St. António, Lº Galego e S. Roque do Faial"
+     ]
+    },
+    {
+     "days": [
+      "saturday"
+     ],
+     "times": [
+      "12:30",
+      "12:41",
+      "12:55",
+      "13:15",
+      "13:30",
+      null,
+      null,
+      null,
+      null,
+      "13:35",
+      "14:20"
+     ],
+     "notes": [
+      "a"
+     ]
+    },
+    {
+     "days": [
+      "saturday"
+     ],
+     "times": [
+      "16:30",
+      "16:38",
+      "16:48",
+      "17:28",
+      "17:50",
+      "18:01",
+      "18:10",
+      "18:30",
+      "18:35",
+      null,
+      "19:20"
+     ],
+     "notes": [
+      "a",
+      "Via Ilha e St. António"
+     ]
+    },
+    {
+     "days": [
+      "sunday"
+     ],
+     "times": [
+      "07:20",
+      "07:30",
+      "07:45",
+      "08:10",
+      "08:30",
+      "08:40",
+      null,
+      "08:50",
+      "09:00",
+      null,
+      "09:35"
+     ],
+     "notes": [
+      "*Serviço a pedido: Ilha, A. Marques, Silveira, St. António e S. Roque do Faial"
+     ]
+    },
+    {
+     "days": [
+      "sunday"
+     ],
+     "times": [
+      "16:30",
+      "16:38",
+      "16:48",
+      "17:28",
+      "17:50",
+      "18:01",
+      "18:10",
+      "18:30",
+      "18:35",
+      null,
+      "19:20"
+     ],
+     "notes": [
+      "a",
+      "Via Ilha e St. António"
+     ]
+    }
+   ]
+  }
+ ]
+}

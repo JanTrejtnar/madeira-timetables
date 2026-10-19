@@ -37,7 +37,7 @@ export async function pdfItems(file) {
       if (!it.str || !it.str.trim()) continue;
       const str = shifted.has(it.fontName) ? decodeShifted(it.str) : it.str;
       if (!str.trim()) continue;
-      out.push({ str, x: it.transform[4], y: vp.height - it.transform[5], w: it.width, h: it.height, page: p, decoded: shifted.has(it.fontName), font: it.fontName, order: out.length });
+      out.push({ str: str.normalize('NFC'), x: it.transform[4], y: vp.height - it.transform[5], w: it.width, h: it.height, page: p, decoded: shifted.has(it.fontName), font: it.fontName, order: out.length });
     }
   }
   return out;
@@ -149,7 +149,7 @@ export async function visibleItems(file) {
       if (!r.visible) continue;
       const str = shifted.has(r.font) && !looksPlain(r.str) ? decodeShifted(r.str) : plus.has(r.font) ? decodePlus(r.str) : r.str;
       if (!str.trim()) continue;
-      out.push({ str, x: r.x, y: r.y, w: r.w, h: r.h, page: p, decoded: shifted.has(r.font) || plus.has(r.font), font: r.font, order: out.length });
+      out.push({ str: str.normalize('NFC'), x: r.x, y: r.y, w: r.w, h: r.h, page: p, decoded: shifted.has(r.font) || plus.has(r.font), font: r.font, order: out.length });
     }
   }
   return out;

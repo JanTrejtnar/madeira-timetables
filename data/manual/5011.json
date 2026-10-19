@@ -1,0 +1,117 @@
+{
+ "lineId": 5011,
+ "source": "manual transcription of the scanned PDF \"Rede Santana\" (image only, shared by lines 56, 103, 138)",
+ "notes": {
+  "a": "Viagens de ligação direta ao Parque Temático da Madeira."
+ },
+ "generalNotes": [
+  "O horário indica, nos pontos intermédios dos percursos, as horas aproximadas de passagem",
+  "*Serviço a pedido: Os clientes deverão efectuar a marcação do serviço, preferencialmente através do email info@cam-madeira.pt ou em último recurso, através do número de telefone 291 201 150. O pedido deverá ser realizado até às 16h00, do dia útil anterior.",
+  "3ª feira de carnaval, é praticado horário de dia útil período não letivo.",
+  "Não se efectuam viagens no dia 25 de Dezembro."
+ ],
+ "directions": [
+  {
+   "from": "Funchal",
+   "to": "Arco de S. Jorge",
+   "stops": [
+    "Funchal",
+    "Poiso",
+    "P. Cruz (Túnel)",
+    "Ribeiro Frio",
+    "S. Roque do Faial",
+    "Cruzinhas",
+    "Faial",
+    "Santana",
+    "São Jorge",
+    "Cabanas",
+    "Arco de S. Jorge"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "18:30",
+      "19:06",
+      null,
+      "19:18",
+      "19:39",
+      "19:50",
+      "20:00",
+      "20:07",
+      "20:45",
+      null,
+      null
+     ],
+     "notes": [
+      "Via Silveira, A. Marques e Ilha"
+     ]
+    },
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      "19:30",
+      null,
+      "20:10",
+      null,
+      "20:15",
+      "20:32",
+      "20:40",
+      "20:57",
+      "21:15",
+      "21:30",
+      null
+     ],
+     "notes": [
+      "*Serviço a pedido: St. António"
+     ]
+    }
+   ]
+  },
+  {
+   "from": "Arco de S. Jorge",
+   "to": "Funchal",
+   "stops": [
+    "Arco de S. Jorge",
+    "Cabanas",
+    "São Jorge",
+    "Santana",
+    "Faial",
+    "Cruzinhas",
+    "S. Roque do Faial",
+    "Ribeiro Frio",
+    "Poiso",
+    "P. Cruz (Túnel)",
+    "Funchal"
+   ],
+   "trips": [
+    {
+     "days": [
+      "weekday"
+     ],
+     "times": [
+      null,
+      "05:20",
+      "05:35",
+      "06:17",
+      "06:31",
+      null,
+      "06:39",
+      "06:56",
+      "07:05",
+      null,
+      "07:40"
+     ],
+     "notes": [
+      "Via Ilha, A. Marques e Silveira",
+      "*Serviço a pedido: F. Câmara St. António"
+     ]
+    }
+   ]
+  }
+ ]
+}
