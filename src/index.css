@@ -1,0 +1,79 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: light dark;
+}
+
+html,
+body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background: #020617;
+    color: #e2e8f0;
+  }
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.leaflet-container {
+  font: inherit;
+}
+
+/* map popups: compact, in the app's visual language */
+.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 0.18);
+}
+.leaflet-popup-content {
+  margin: 12px 14px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.leaflet-popup-content .map-links {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.leaflet-popup-content .map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  color: #0369a1;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  background: #f8fafc;
+}
+.leaflet-popup-content .map-link:hover {
+  background: #e0f2fe;
+}
+
+@media (prefers-color-scheme: dark) {
+  .leaflet-container {
+    background: #1e293b;
+  }
+  .leaflet-tile-pane {
+    filter: brightness(0.82) contrast(0.95) saturate(0.85);
+  }
+}

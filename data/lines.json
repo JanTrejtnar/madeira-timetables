@@ -1,0 +1,2603 @@
+[
+  {
+    "id": 8,
+    "number": "007",
+    "oldNumber": "7",
+    "name": "Travessa do Pomar",
+    "route": "Centro - Travessa do Pomar",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/173CCB95-4440-455C-B49B-244343E85F87.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/BC282F54-C384-4050-A942-924A243B5C95.jpg",
+    "directions": [
+      {
+        "shapeId": 8566,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 8601,
+        "name": "Travessa do Pomar"
+      }
+    ],
+    "heading": "Centro - Travessa do Pomar",
+    "pdfFile": "pdf/173CCB95-4440-455C-B49B-244343E85F87.pdf"
+  },
+  {
+    "id": 9,
+    "number": "008",
+    "oldNumber": "8",
+    "name": "STA Quitéria (via Barreiros)",
+    "route": "Centro - STA Quitéria (via Barreiros)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/3CA4A08D-34DD-4EA6-BBA3-13C7E3D24B8A.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/C0BAD5A3-0E76-4899-82FB-44D5B9E4EE36.jpg",
+    "directions": [
+      {
+        "shapeId": 19684,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 19683,
+        "name": "STA Quitéria"
+      }
+    ],
+    "heading": "Centro - STA Quitéria (via Barreiros)",
+    "pdfFile": "pdf/3CA4A08D-34DD-4EA6-BBA3-13C7E3D24B8A.pdf"
+  },
+  {
+    "id": 10,
+    "number": "108",
+    "oldNumber": "8A",
+    "name": "STA Quitéria (via MadeiraShopping)",
+    "route": "Centro - STA Quitéria (via MadeiraShopping)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/833756D8-75A7-4F05-A643-0263F76F886E.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/28769FA7-D58F-44FB-924D-9ED1621108B4.jpg",
+    "directions": [
+      {
+        "shapeId": 18342,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 18341,
+        "name": "STA Quitéria V Madeira Shopping"
+      }
+    ],
+    "heading": "Centro - STA Quitéria (via MadeiraShopping)",
+    "pdfFile": "pdf/833756D8-75A7-4F05-A643-0263F76F886E.pdf"
+  },
+  {
+    "id": 11,
+    "number": "009",
+    "oldNumber": "9",
+    "name": "Courelas",
+    "route": "Centro - Courelas",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/3BBBA4D0-DF09-47AA-8EB1-0BE970AB12A0.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/AFF748AB-F7C6-4805-8168-1ABA7BDC89E2.jpg",
+    "directions": [
+      {
+        "shapeId": 14022,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 14021,
+        "name": "Courelas"
+      }
+    ],
+    "heading": "Centro - Courelas",
+    "pdfFile": "pdf/3BBBA4D0-DF09-47AA-8EB1-0BE970AB12A0.pdf"
+  },
+  {
+    "id": 12,
+    "number": "010",
+    "oldNumber": "10",
+    "name": "Chamorra",
+    "route": "Centro - Chamorra",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/9093CA3C-9CB2-46C9-8465-35250862867F.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/9ACE0353-69CF-4691-B9A4-D466E262E500.jpg",
+    "directions": [
+      {
+        "shapeId": 17482,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 17481,
+        "name": "Chamorra"
+      }
+    ],
+    "heading": "Centro - Chamorra",
+    "pdfFile": "pdf/9093CA3C-9CB2-46C9-8465-35250862867F.pdf"
+  },
+  {
+    "id": 13,
+    "number": "110",
+    "oldNumber": "10A",
+    "name": "Chamorra (Barreira)",
+    "route": "Centro - Chamorra (Barreira)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/FFB3A4AF-2B97-4770-901C-F15512723BE7.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/235D5E39-FDA5-4D87-ABF4-41534C13D19A.jpg",
+    "directions": [
+      {
+        "shapeId": 19942,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 19941,
+        "name": "Chamorra Barreira"
+      }
+    ],
+    "heading": "Centro - Chamorra (Barreira)",
+    "pdfFile": "pdf/FFB3A4AF-2B97-4770-901C-F15512723BE7.pdf"
+  },
+  {
+    "id": 14,
+    "number": "011",
+    "oldNumber": "11",
+    "name": "Trapiche",
+    "route": "Centro - Trapiche",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/7A2210BA-29B8-4D7A-961C-1081DE44F956.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/A967ECD9-5F65-4BF8-B060-306C2885EC62.jpg",
+    "directions": [
+      {
+        "shapeId": 11722,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 13081,
+        "name": "Trapiche"
+      }
+    ],
+    "heading": "Centro - Trapiche",
+    "pdfFile": "pdf/7A2210BA-29B8-4D7A-961C-1081DE44F956.pdf"
+  },
+  {
+    "id": 15,
+    "number": "012",
+    "oldNumber": "12",
+    "name": "Jamboto (via Hospital)",
+    "route": "Centro - Jamboto (via Hospital)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/1868D233-026F-4307-8768-730D80CD8804.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/A32A374B-A5EC-4646-9856-135015225565.jpg",
+    "directions": [
+      {
+        "shapeId": 20182,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 20181,
+        "name": "Jamboto - S.Roque (Via Hospital)"
+      }
+    ],
+    "heading": "Centro - Jamboto (via Hospital)",
+    "pdfFile": "pdf/1868D233-026F-4307-8768-730D80CD8804.pdf"
+  },
+  {
+    "id": 16,
+    "number": "013",
+    "oldNumber": "13",
+    "name": "Jamboto (via Viveiros)",
+    "route": "Centro - Jamboto (via Viveiros)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/3FCA583E-495D-43AF-9D3A-4CE53541162C.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/604AC8FA-6399-4817-B4BF-9C9EED84ED11.jpg",
+    "directions": [
+      {
+        "shapeId": 19384,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 19383,
+        "name": "Jamboto-Courelas Via Viveiros"
+      }
+    ],
+    "heading": "Centro - Jamboto (via Viveiros)",
+    "pdfFile": "pdf/3FCA583E-495D-43AF-9D3A-4CE53541162C.pdf"
+  },
+  {
+    "id": 17,
+    "number": "014",
+    "oldNumber": "14",
+    "name": "Álamos",
+    "route": "Centro - Álamos",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/5874D2B0-9F17-4910-8D6A-70EA5747106C.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/E3543110-2A97-47D2-B05D-6617FC95508C.jpg",
+    "directions": [
+      {
+        "shapeId": 10862,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 18141,
+        "name": "Álamos"
+      }
+    ],
+    "heading": "Centro - Álamos",
+    "pdfFile": "pdf/5874D2B0-9F17-4910-8D6A-70EA5747106C.pdf"
+  },
+  {
+    "id": 20,
+    "number": "125",
+    "oldNumber": "15B",
+    "name": "Galeão (Escola)",
+    "route": "Centro - Galeão (Escola)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/67D43AC4-655D-4E4A-91F9-22B160216A11.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/8841E25C-358D-483C-8137-9FCDC9C2CF1D.jpg",
+    "directions": [
+      {
+        "shapeId": 9244,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 9243,
+        "name": "Galeão - Escola"
+      }
+    ],
+    "heading": "Centro - Galeão (Escola)",
+    "pdfFile": "pdf/67D43AC4-655D-4E4A-91F9-22B160216A11.pdf"
+  },
+  {
+    "id": 21,
+    "number": "016",
+    "oldNumber": "16",
+    "name": "Pinheiro das Voltas (via CAM do Pilar)",
+    "route": "Centro - Pinheiro das Voltas (via CAM do Pilar)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/F3E1042C-CBD0-4E19-8B29-523D9F46E3D6.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/4A931D11-6039-4EE7-A77D-D53DB4C1617E.jpg",
+    "directions": [
+      {
+        "shapeId": 17286,
+        "name": "Centro - Alfândega"
+      },
+      {
+        "shapeId": 17285,
+        "name": "Pinheiro das Voltas"
+      }
+    ],
+    "heading": "Centro - Pinheiro das Voltas (via CAM do Pilar)",
+    "pdfFile": "pdf/F3E1042C-CBD0-4E19-8B29-523D9F46E3D6.pdf"
+  },
+  {
+    "id": 22,
+    "number": "017",
+    "oldNumber": "17",
+    "name": "Lombo Segundo",
+    "route": "Centro - Lombo Segundo",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/300FDF7E-E5DD-490F-93AF-F438200F9E05.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/AE0E0285-3B78-4D8E-9312-1503F4ACFBF7.jpg",
+    "directions": [
+      {
+        "shapeId": 19422,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 19421,
+        "name": "Lombo Segundo"
+      }
+    ],
+    "heading": "Centro - Lombo Segundo",
+    "pdfFile": "pdf/300FDF7E-E5DD-490F-93AF-F438200F9E05.pdf"
+  },
+  {
+    "id": 24,
+    "number": "019",
+    "oldNumber": "19",
+    "name": "Levada da Corujeira",
+    "route": "Centro - Levada da Corujeira",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/41066FF7-FC6D-4E03-A173-A6FFBC751F44.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/CB63D6A4-8B35-4BBB-9E52-E93534C424BC.jpg",
+    "directions": [
+      {
+        "shapeId": 18162,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 18161,
+        "name": "Lev. Corujeira - Via Pena"
+      }
+    ],
+    "heading": "Centro - Levada da Corujeira",
+    "pdfFile": "pdf/41066FF7-FC6D-4E03-A173-A6FFBC751F44.pdf"
+  },
+  {
+    "id": 25,
+    "number": "020",
+    "oldNumber": "20",
+    "name": "Monte via Corujeira de Dentro",
+    "route": "Centro - Monte via Corujeira de Dentro",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/3313FB1E-7B77-48A4-BBAD-62BAEE5B2884.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/EA33CAA7-BBE7-4C4A-9D63-214D079AFDE8.jpg",
+    "directions": [
+      {
+        "shapeId": 15702,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 19501,
+        "name": "Monte Via Corujeira de Dentro"
+      }
+    ],
+    "heading": "Centro - Monte via Corujeira de Dentro",
+    "pdfFile": "pdf/3313FB1E-7B77-48A4-BBAD-62BAEE5B2884.pdf"
+  },
+  {
+    "id": 27,
+    "number": "021",
+    "oldNumber": "21",
+    "name": "Monte (via Largo da Fonte)",
+    "route": "Centro - Monte (via Largo da Fonte)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/81563E35-9E0D-44F0-AE75-2E34B1F58D72.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/941E6724-7D36-431D-AEA6-874E06DB3ABD.jpg",
+    "directions": [
+      {
+        "shapeId": 14746,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 19461,
+        "name": "Monte Via LG Fonte"
+      }
+    ],
+    "heading": "Centro - Monte (via Largo da Fonte)",
+    "pdfFile": "pdf/81563E35-9E0D-44F0-AE75-2E34B1F58D72.pdf"
+  },
+  {
+    "id": 29,
+    "number": "022",
+    "oldNumber": "22",
+    "name": "Babosas",
+    "route": "Centro - Babosas",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/336C83FC-5D97-417F-B8D0-DDF6C2D443D3.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/B7924685-992C-4779-89A5-A49F446B33F7.jpg",
+    "directions": [
+      {
+        "shapeId": 10944,
+        "name": "Centro - D. Carlos I"
+      },
+      {
+        "shapeId": 19781,
+        "name": "Babosas"
+      }
+    ],
+    "heading": "Centro - Babosas",
+    "pdfFile": "pdf/336C83FC-5D97-417F-B8D0-DDF6C2D443D3.pdf"
+  },
+  {
+    "id": 33,
+    "number": "026",
+    "oldNumber": "26",
+    "name": "Levada de STA Luzia (via Pena)",
+    "route": "Centro - Levada de STA Luzia (via Pena)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/7E0F8122-1283-4A47-BF53-664CCA8A1718.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/DF08EA40-D5F5-4F8A-9124-2F83CD16726B.jpg",
+    "directions": [
+      {
+        "shapeId": 19322,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 19321,
+        "name": "LEV STA Luzia"
+      }
+    ],
+    "heading": "Centro - Levada de STA Luzia (via Pena)",
+    "pdfFile": "pdf/7E0F8122-1283-4A47-BF53-664CCA8A1718.pdf"
+  },
+  {
+    "id": 34,
+    "number": "027",
+    "oldNumber": "27",
+    "name": "Caminho de Ferro",
+    "route": "Centro - Caminho de Ferro",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/4BE589B9-9FED-40B4-B742-1411177E839A.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/84CF1D4B-2340-4ADE-B95B-231E66DD6306.jpg",
+    "directions": [
+      {
+        "shapeId": 18362,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 18361,
+        "name": "Caminho de Ferro"
+      }
+    ],
+    "heading": "Centro - Caminho de Ferro",
+    "pdfFile": "pdf/4BE589B9-9FED-40B4-B742-1411177E839A.pdf"
+  },
+  {
+    "id": 35,
+    "number": "028",
+    "oldNumber": "28",
+    "name": "D. João",
+    "route": "Centro - D João",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/D4EB0C65-4142-40CC-A656-692564E1EF62.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/3EC690F1-C084-4BE8-9F4B-8F1E24CB006E.jpg",
+    "directions": [
+      {
+        "shapeId": 19442,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 19441,
+        "name": "D. João"
+      }
+    ],
+    "heading": "Centro - D João",
+    "pdfFile": "pdf/D4EB0C65-4142-40CC-A656-692564E1EF62.pdf"
+  },
+  {
+    "id": 36,
+    "number": "029",
+    "oldNumber": "29",
+    "name": "Curral dos Romeiros (via Jardim Botânico)",
+    "route": "Centro - Curral dos Romeiros",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/2078A094-887D-4BB6-9F91-E780F64A2D84.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/EFFCDB70-6A1B-4881-B9E8-E07262E6F3BF.jpg",
+    "directions": [
+      {
+        "shapeId": 15042,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 15041,
+        "name": "Curral Romeiros (via Jardim Botânico)"
+      }
+    ],
+    "heading": "Centro - Curral dos Romeiros",
+    "pdfFile": "pdf/2078A094-887D-4BB6-9F91-E780F64A2D84.pdf"
+  },
+  {
+    "id": 38,
+    "number": "031",
+    "oldNumber": "31",
+    "name": "Jardim Botânico",
+    "route": "Centro - Jardim Botânico",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/76AC5213-3237-4E7D-AF2C-6B881068B48A.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/DCEA7621-164B-41FE-A132-B25102DA4E16.jpg",
+    "directions": [
+      {
+        "shapeId": 5782,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 5781,
+        "name": "Jardim Botânico"
+      }
+    ],
+    "heading": "Centro - Jardim Botânico",
+    "pdfFile": "pdf/76AC5213-3237-4E7D-AF2C-6B881068B48A.pdf"
+  },
+  {
+    "id": 39,
+    "number": "131",
+    "oldNumber": "31A",
+    "name": "Teleférico Jardim Botânico",
+    "route": "Centro - Teleférico Jardim Botânico",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/21AF3A25-4216-4F6A-BA09-47B825B615AE.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/FEDC8433-09B4-4B6D-A9A9-456332E56192.jpg",
+    "directions": [
+      {
+        "shapeId": 17222,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 17221,
+        "name": "Teleférico J. Botanico"
+      }
+    ],
+    "heading": "Centro - Teleférico Jardim Botânico",
+    "pdfFile": "pdf/21AF3A25-4216-4F6A-BA09-47B825B615AE.pdf"
+  },
+  {
+    "id": 40,
+    "number": "032",
+    "oldNumber": "32",
+    "name": "Rochinha",
+    "route": "Centro - Rochinha",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/C0783ED6-7440-406A-9941-FACCD6182902.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/10EE0FE4-9138-4E73-A73D-6B0099869F65.jpg",
+    "directions": [
+      {
+        "shapeId": 5806,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 5805,
+        "name": "Rochinha"
+      }
+    ],
+    "heading": "Centro - Rochinha",
+    "pdfFile": "pdf/C0783ED6-7440-406A-9941-FACCD6182902.pdf"
+  },
+  {
+    "id": 41,
+    "number": "033",
+    "oldNumber": "33",
+    "name": "Balancal (via Bairro STA Maria)",
+    "route": "Centro - Balancal (via Bairro STA Maria)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/FE9638AD-FA09-45CA-A5E0-12D450AD5B96.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/E0FE060D-6D0D-445E-BC83-789E43294BD6.jpg",
+    "directions": [
+      {
+        "shapeId": 19342,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 19341,
+        "name": "Balancal"
+      }
+    ],
+    "heading": "Centro - Balancal (via Bairro STA Maria)",
+    "pdfFile": "pdf/FE9638AD-FA09-45CA-A5E0-12D450AD5B96.pdf"
+  },
+  {
+    "id": 42,
+    "number": "034",
+    "oldNumber": "34",
+    "name": "Canto do Muro",
+    "route": "Centro - Canto do Muro",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/3B382F74-2820-45CA-B1A1-EC9F482431DF.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/56F66DC0-4B38-49DE-9157-E6D46BFA597C.jpg",
+    "directions": [
+      {
+        "shapeId": 20082,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 20081,
+        "name": "Canto do Muro"
+      }
+    ],
+    "heading": "Centro - Canto do Muro",
+    "pdfFile": "pdf/3B382F74-2820-45CA-B1A1-EC9F482431DF.pdf"
+  },
+  {
+    "id": 45,
+    "number": "036",
+    "oldNumber": "36",
+    "name": "Palheiro Ferreiro (via Ribeiro da Quinta)",
+    "route": "Centro - Palheiro Ferreiro (via Ribeiro da Quinta)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/00BC7587-4293-4B09-BD49-9D6565690EF3.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/9A6F5897-E898-4232-87ED-EA4195F1B844.jpg",
+    "directions": [
+      {
+        "shapeId": 16902,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 16901,
+        "name": "Palheiro Ferreiro Via Ribeiro da Quinta"
+      }
+    ],
+    "heading": "Centro - Palheiro Ferreiro (via Ribeiro da Quinta)",
+    "pdfFile": "pdf/00BC7587-4293-4B09-BD49-9D6565690EF3.pdf"
+  },
+  {
+    "id": 47,
+    "number": "037",
+    "oldNumber": "37",
+    "name": "Pinheirinho (Via Palheiro Ferreiro)",
+    "route": "Centro - Pinheirinho (via Palheiro Ferreiro)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/1FE932BB-E189-4C6F-8521-303592D59E50.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/CD836139-5A58-4F64-BD4A-E07CE6C9834F.jpg",
+    "directions": [
+      {
+        "shapeId": 3822,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 3821,
+        "name": "Pinheirinho Via Palheiro Ferreiro"
+      }
+    ],
+    "heading": "Centro - Pinheirinho (via Palheiro Ferreiro)",
+    "pdfFile": "pdf/1FE932BB-E189-4C6F-8521-303592D59E50.pdf"
+  },
+  {
+    "id": 48,
+    "number": "038",
+    "oldNumber": "38",
+    "name": "Cancela",
+    "route": "Centro - Cancela",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/FD7FA670-47E0-4EC7-8DA9-E2C71F5AA4C4.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/5576747E-8838-418D-A007-1E48710F47CF.jpg",
+    "directions": [
+      {
+        "shapeId": 14366,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 14365,
+        "name": "ZN Industrial"
+      }
+    ],
+    "heading": "Centro - Cancela",
+    "pdfFile": "pdf/FD7FA670-47E0-4EC7-8DA9-E2C71F5AA4C4.pdf"
+  },
+  {
+    "id": 49,
+    "number": "039",
+    "oldNumber": "39",
+    "name": "Montanha",
+    "route": "Centro - Montanha",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/CE5CA223-BC63-4F9D-8588-4740E720BB3F.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/7FA90AFD-B087-4E22-B58E-7BD455432C05.jpg",
+    "directions": [
+      {
+        "shapeId": 20102,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 20101,
+        "name": "ZN Industrial"
+      }
+    ],
+    "heading": "Centro - Montanha",
+    "pdfFile": "pdf/CE5CA223-BC63-4F9D-8588-4740E720BB3F.pdf"
+  },
+  {
+    "id": 50,
+    "number": "040",
+    "oldNumber": "40",
+    "name": "Quinta da Rocha",
+    "route": "Centro - Quinta da Rocha",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/86685A07-C576-4324-A98B-10AA12EAC15B.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/21440B7B-5538-4EDF-910F-E7E0E8C2C8E1.jpg",
+    "directions": [
+      {
+        "shapeId": 18122,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 18121,
+        "name": "Quinta da Rocha S. Gonçalo"
+      }
+    ],
+    "heading": "Centro - Quinta da Rocha",
+    "pdfFile": "pdf/86685A07-C576-4324-A98B-10AA12EAC15B.pdf"
+  },
+  {
+    "id": 51,
+    "number": "042",
+    "oldNumber": "42",
+    "name": "Alegria",
+    "route": "Centro - Alegria",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/303F50B8-B842-407E-B41A-4C1180B635AA.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/D059FEBB-B83C-499E-B158-AC7DC39F47A8.jpg",
+    "directions": [
+      {
+        "shapeId": 20024,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 20023,
+        "name": "Alegria"
+      }
+    ],
+    "heading": "Centro - Alegria",
+    "pdfFile": "pdf/303F50B8-B842-407E-B41A-4C1180B635AA.pdf"
+  },
+  {
+    "id": 53,
+    "number": "044",
+    "oldNumber": "44",
+    "name": "Nazaré (via Virtudes)",
+    "route": "Centro - Nazaré (via Virtudes)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/24F6584E-EDF3-4E11-AA95-9E00C8B0688E.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/7210B823-7079-4205-B9EE-D17569B702DB.jpg",
+    "directions": [
+      {
+        "shapeId": 17962,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 17961,
+        "name": "Nazaré Via Virtudes"
+      }
+    ],
+    "heading": "Centro - Nazaré (via Virtudes)",
+    "pdfFile": "pdf/24F6584E-EDF3-4E11-AA95-9E00C8B0688E.pdf"
+  },
+  {
+    "id": 54,
+    "number": "045",
+    "oldNumber": "45",
+    "name": "Nazaré (via Barreiros)",
+    "route": "Centro - Nazaré (via Barreiros)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/45250D5E-A5D8-4AC8-812D-498BD6848745.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/CDAE3395-B32B-454F-A311-E8E64FCDFA9D.jpg",
+    "directions": [
+      {
+        "shapeId": 17982,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 17981,
+        "name": "Nazaré Via Virtudes"
+      }
+    ],
+    "heading": "Centro - Nazaré (via Barreiros)",
+    "pdfFile": "pdf/45250D5E-A5D8-4AC8-812D-498BD6848745.pdf"
+  },
+  {
+    "id": 55,
+    "number": "046",
+    "oldNumber": "46",
+    "name": "Ribeira Grande",
+    "route": "Centro - Ribeira Grande",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/D181E9F5-58D9-4570-9B53-1B7320B53514.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/FF3FA26B-D30D-413D-AE1A-951B06E5ED61.jpg",
+    "directions": [
+      {
+        "shapeId": 20062,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 20061,
+        "name": "Ribeira Grande"
+      }
+    ],
+    "heading": "Centro - Ribeira Grande",
+    "pdfFile": "pdf/D181E9F5-58D9-4570-9B53-1B7320B53514.pdf"
+  },
+  {
+    "id": 56,
+    "number": "047",
+    "oldNumber": "47",
+    "name": "São João Latrão",
+    "route": "Centro - São João Latrão",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/D3D62DFF-1E50-4DB3-B92C-BEE9F5AC64C3.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/704B23EF-7C72-439D-9A79-3E75531C2FB1.jpg",
+    "directions": [
+      {
+        "shapeId": 20222,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 20221,
+        "name": "S João Latrão"
+      }
+    ],
+    "heading": "Centro - São João Latrão",
+    "pdfFile": "pdf/D3D62DFF-1E50-4DB3-B92C-BEE9F5AC64C3.pdf"
+  },
+  {
+    "id": 57,
+    "number": "048",
+    "oldNumber": "48",
+    "name": "Nazaré/Monte",
+    "route": "Entre Nazaré e Monte",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/180BB40E-229F-4B75-B7D3-2E84B6D0AB5B.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/8DC6A4C4-DBD7-457B-869A-B562145371D4.jpg",
+    "directions": [
+      {
+        "shapeId": 19544,
+        "name": "Nazaré - Via Penteada"
+      },
+      {
+        "shapeId": 19541,
+        "name": "Monte Via Penteada"
+      }
+    ],
+    "heading": "Entre Nazaré e Monte",
+    "pdfFile": "pdf/180BB40E-229F-4B75-B7D3-2E84B6D0AB5B.pdf"
+  },
+  {
+    "id": 59,
+    "number": "049",
+    "oldNumber": "49",
+    "name": "Fundoa",
+    "route": "Centro - Fundoa (via Universidade)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/3C3B8E13-5C8D-4326-9D6F-3DDAD82F1061.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/8B1E59A0-8465-4260-8B20-AD8E99EC99A1.jpg",
+    "directions": [
+      {
+        "shapeId": 10626,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 18243,
+        "name": "Fundoa"
+      }
+    ],
+    "heading": "Centro - Fundoa (via Universidade)",
+    "pdfFile": "pdf/3C3B8E13-5C8D-4326-9D6F-3DDAD82F1061.pdf"
+  },
+  {
+    "id": 60,
+    "number": "050",
+    "oldNumber": "50",
+    "name": "Viana/Lombo da Quinta (via Madeira Shopping)",
+    "route": "Entre Viana e Lombo da Quinta (via Madeira Shopping)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/79B2826F-E3A5-4859-9245-DA3404FFBE95.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/78262404-58D1-4106-844C-F8F0E6BA9E1F.jpg",
+    "directions": [
+      {
+        "shapeId": 16104,
+        "name": "Viana"
+      },
+      {
+        "shapeId": 17363,
+        "name": "Lombo Quinta"
+      }
+    ],
+    "heading": "Entre Viana e Lombo da Quinta (via Madeira Shopping)",
+    "pdfFile": "pdf/79B2826F-E3A5-4859-9245-DA3404FFBE95.pdf"
+  },
+  {
+    "id": 61,
+    "number": "092",
+    "oldNumber": "92",
+    "name": "Três Paus",
+    "route": "Centro - Três Paus",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/8C479329-328D-4B48-A3FC-A4E27070418E.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/9140211F-E2D5-4721-B5C3-862E2F11AFFD.jpg",
+    "directions": [
+      {
+        "shapeId": 11666,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 13841,
+        "name": "Três Paus Via Courelas"
+      }
+    ],
+    "heading": "Centro - Três Paus",
+    "pdfFile": "pdf/8C479329-328D-4B48-A3FC-A4E27070418E.pdf"
+  },
+  {
+    "id": 62,
+    "number": "090",
+    "oldNumber": "90",
+    "name": "CAM Trapiche/C Velho/LMB Aguiares",
+    "route": "Entre CAM Trapiche e C Velho e LMB Aguiares",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/C26D0750-DCF1-4BA1-8895-2C78C45966EA.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/DE52FB18-8433-4266-B839-C23C999C4764.jpg",
+    "directions": [
+      {
+        "shapeId": 16126,
+        "name": "Galeão"
+      },
+      {
+        "shapeId": 16123,
+        "name": "Campo Marítimo"
+      }
+    ],
+    "heading": "Entre CAM Trapiche e C Velho e LMB Aguiares",
+    "pdfFile": "pdf/C26D0750-DCF1-4BA1-8895-2C78C45966EA.pdf"
+  },
+  {
+    "id": 64,
+    "number": "093",
+    "oldNumber": "93",
+    "name": "Lombo Jamboeiro/São Roque",
+    "route": "Entre LMB Jamboeiro e São Roque",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/1D1D74C7-8A0C-49AC-AD75-A08F97D5A47E.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/D6620917-B87E-469C-9E75-098B9896FA73.jpg",
+    "directions": [
+      {
+        "shapeId": 17462,
+        "name": "São Roque"
+      },
+      {
+        "shapeId": 17461,
+        "name": "LMB Jamboeiro"
+      }
+    ],
+    "heading": "Entre LMB Jamboeiro e São Roque",
+    "pdfFile": "pdf/1D1D74C7-8A0C-49AC-AD75-A08F97D5A47E.pdf"
+  },
+  {
+    "id": 65,
+    "number": "094",
+    "oldNumber": "94",
+    "name": "Choupana/Caminho do Terço",
+    "route": "Entre Choupana e Caminho do Terço",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/C94A7348-F847-4DA3-BD81-DF3EACD85A07.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/A81593F2-728E-4891-8655-F42B40242C9A.jpg",
+    "directions": [
+      {
+        "shapeId": 20202,
+        "name": "Choupana"
+      },
+      {
+        "shapeId": 20201,
+        "name": "Choupana"
+      }
+    ],
+    "heading": "Entre Choupana e Caminho do Terço",
+    "pdfFile": "pdf/C94A7348-F847-4DA3-BD81-DF3EACD85A07.pdf"
+  },
+  {
+    "id": 66,
+    "number": "060",
+    "oldNumber": "60",
+    "name": "Praça Autonomia/Fundoa",
+    "route": "Praça da Autonomia/Fundoa - Madrugada",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/A2971ADC-2EF4-412D-9271-1EDF1FDE8635.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/2B3D8BC7-D204-4308-B3E0-F464A9E85D6F.jpg",
+    "directions": [
+      {
+        "shapeId": 19401,
+        "name": "Estação"
+      }
+    ],
+    "heading": "Praça da Autonomia/Fundoa - Madrugada",
+    "pdfFile": "pdf/A2971ADC-2EF4-412D-9271-1EDF1FDE8635.pdf"
+  },
+  {
+    "id": 67,
+    "number": "061",
+    "oldNumber": "61",
+    "name": "Lombada/Praça Autonomia",
+    "route": "Lombada/Praça Autonomia - Madrugada",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/BA2DC732-DC4F-4F96-A5C2-A879EED812D5.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/4D477364-8331-4624-8FC7-7B649F28F7F2.jpg",
+    "directions": [
+      {
+        "shapeId": 17841,
+        "name": "Praça Autonomia"
+      }
+    ],
+    "heading": "Lombada/Praça Autonomia - Madrugada",
+    "pdfFile": "pdf/BA2DC732-DC4F-4F96-A5C2-A879EED812D5.pdf"
+  },
+  {
+    "id": 68,
+    "number": "062",
+    "oldNumber": "62",
+    "name": "Cancela/Praça Autonomia",
+    "route": "Cancela/Praça Autonomia - Madrugada",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/B13DE4E4-54CE-4B4B-9480-E14F39A8E99B.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/B5297021-EE7F-43F4-9E98-787AB456C4DB.jpg",
+    "directions": [
+      {
+        "shapeId": 15483,
+        "name": "Praça Autonomia"
+      }
+    ],
+    "heading": "Cancela/Praça Autonomia - Madrugada",
+    "pdfFile": "pdf/B13DE4E4-54CE-4B4B-9480-E14F39A8E99B.pdf"
+  },
+  {
+    "id": 71,
+    "number": "001",
+    "oldNumber": "01",
+    "name": "Ponta da Laranjeira",
+    "route": "Centro - Ponta da Laranjeira",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/BD5AE3DD-8974-49CD-853F-13BDA258230F.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/C90077AA-0648-407E-9A58-75F5D262BD08.jpg",
+    "directions": [
+      {
+        "shapeId": 19582,
+        "name": "Centro - Linha Verde"
+      },
+      {
+        "shapeId": 19581,
+        "name": "Ponta Laranjeira - Linha Verde"
+      }
+    ],
+    "heading": "Centro - Ponta da Laranjeira",
+    "pdfFile": "pdf/BD5AE3DD-8974-49CD-853F-13BDA258230F.pdf"
+  },
+  {
+    "id": 72,
+    "number": "002",
+    "oldNumber": "02",
+    "name": "Ponta da Cruz",
+    "route": "Centro - Ponta da Cruz",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/18235D5E-5BBA-4BD8-B86E-B9C894C5F3B4.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/A14D6077-24FE-4123-B2BF-79EF4987D922.jpg",
+    "directions": [
+      {
+        "shapeId": 20246,
+        "name": "Centro - Linha Verde (Via Lido)"
+      },
+      {
+        "shapeId": 20421,
+        "name": "Ponta da Cruz - Linha Verde"
+      }
+    ],
+    "heading": "Centro - Ponta da Cruz",
+    "pdfFile": "pdf/18235D5E-5BBA-4BD8-B86E-B9C894C5F3B4.pdf"
+  },
+  {
+    "id": 73,
+    "number": "003",
+    "oldNumber": "3",
+    "name": "Lombada - Pizo (via São Martinho)",
+    "route": "Centro (Rua Dias Leite) - Lombada - Pizo (via São Martinho)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/D15EFA77-B12A-4F78-8C15-2926BFE47D96.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/23454B66-CA30-42C5-9FB4-0A8AB433B31C.jpg",
+    "directions": [
+      {
+        "shapeId": 19902,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 19901,
+        "name": "Lombada - Pizo"
+      }
+    ],
+    "heading": "Centro (Rua Dias Leite) - Lombada - Pizo (via São Martinho)",
+    "pdfFile": "pdf/D15EFA77-B12A-4F78-8C15-2926BFE47D96.pdf"
+  },
+  {
+    "id": 74,
+    "number": "004",
+    "oldNumber": "04",
+    "name": "Amparo",
+    "route": "Centro - Amparo",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/5CCF65C6-D00C-475B-A0DD-8E53D129E48C.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/5567A6DB-A2DB-43AB-8098-22E0A62E8012.jpg",
+    "directions": [
+      {
+        "shapeId": 19882,
+        "name": "Centro - Linha Verde"
+      },
+      {
+        "shapeId": 19881,
+        "name": "ESCL S Martinho"
+      }
+    ],
+    "heading": "Centro - Amparo",
+    "pdfFile": "pdf/5CCF65C6-D00C-475B-A0DD-8E53D129E48C.pdf"
+  },
+  {
+    "id": 75,
+    "number": "015",
+    "oldNumber": "15",
+    "name": "Álamos (via Achada)",
+    "route": "Centro - Álamos (via Achada)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/57F61DCF-10FF-486E-AEC3-2F6BE4876DB8.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/E5F21556-2683-429A-B2EA-DD6B87FC9A35.jpg",
+    "directions": [
+      {
+        "shapeId": 12702,
+        "name": "Centro"
+      },
+      {
+        "shapeId": 12701,
+        "name": "Álamos - V. Achada"
+      }
+    ],
+    "heading": "Centro - Álamos (via Achada)",
+    "pdfFile": "pdf/57F61DCF-10FF-486E-AEC3-2F6BE4876DB8.pdf"
+  },
+  {
+    "id": 76,
+    "number": "024",
+    "oldNumber": "24",
+    "name": "Papagaio Verde",
+    "route": "Centro - Papagaio Verde",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/EC0A738B-3A47-4CC1-A7A2-1302FE1135F1.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/03B7E60A-8C13-49F2-A54F-EECC9B2E87EF.jpg",
+    "directions": [
+      {
+        "shapeId": 20162,
+        "name": "Centro - D. Carlos I"
+      },
+      {
+        "shapeId": 20161,
+        "name": "Papagaio Verde"
+      }
+    ],
+    "heading": "Centro - Papagaio Verde",
+    "pdfFile": "pdf/EC0A738B-3A47-4CC1-A7A2-1302FE1135F1.pdf"
+  },
+  {
+    "id": 77,
+    "number": "043",
+    "oldNumber": "43",
+    "name": "Praia Formosa/Casa Branca (via STO António)",
+    "route": "Entre Praia Formosa e Romeiras (via STO António)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/96F581D6-384C-4E5F-9131-EDCEE624462B.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/5ACFE325-8AEA-4927-854F-0B72E6FF5468.jpg",
+    "directions": [
+      {
+        "shapeId": 20502,
+        "name": "Praia Formosa"
+      },
+      {
+        "shapeId": 20501,
+        "name": "CAM Casa Branca"
+      }
+    ],
+    "heading": "Entre Praia Formosa e Romeiras (via STO António)",
+    "pdfFile": "pdf/96F581D6-384C-4E5F-9131-EDCEE624462B.pdf"
+  },
+  {
+    "id": 79,
+    "number": "503",
+    "oldNumber": "110",
+    "name": "Boqueirão (via Caniço)",
+    "route": "Funchal - Boqueirão (via Caniço)",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/5BCE8B18-50BB-4773-B78D-335E8F0E0B08.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/4393B212-A2FE-44E0-B16D-8A1F85406F52.jpg",
+    "directions": [
+      {
+        "shapeId": 14444,
+        "name": "Funchal Via Caniço"
+      },
+      {
+        "shapeId": 12961,
+        "name": "Boqueirão Via Caniço"
+      }
+    ],
+    "heading": "Funchal - Boqueirão (via Caniço)",
+    "pdfFile": "pdf/5BCE8B18-50BB-4773-B78D-335E8F0E0B08.pdf"
+  },
+  {
+    "id": 80,
+    "number": "601",
+    "oldNumber": "111B",
+    "name": "Achadinha (via Ribeirinha)",
+    "route": "Funchal - Achadinha (via Ribeirinha)",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/111.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/111.jpg",
+    "directions": [
+      {
+        "shapeId": 13142,
+        "name": "Funchal Via Ribeirinha"
+      },
+      {
+        "shapeId": 13141,
+        "name": "Achadinha Via Ribeirinha"
+      }
+    ],
+    "heading": "Funchal - Achadinha (via Ribeirinha)",
+    "pdfFile": "pdf/111.pdf"
+  },
+  {
+    "id": 81,
+    "number": "602",
+    "oldNumber": "112",
+    "name": "Rochão de Cima",
+    "route": "Funchal - Rochão de Cima",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/112.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/112.jpg",
+    "directions": [
+      {
+        "shapeId": 13182,
+        "name": "Funchal"
+      },
+      {
+        "shapeId": 13181,
+        "name": "Rochão Via Carreiras"
+      }
+    ],
+    "heading": "Funchal - Rochão de Cima",
+    "pdfFile": "pdf/112.pdf"
+  },
+  {
+    "id": 82,
+    "number": "604",
+    "oldNumber": "113",
+    "name": "Camacha / Sta Cruz (via Gaula)",
+    "route": "Camacha/Santa Cruz (via Gaula)",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/CCA02DC2-A77F-43D2-805E-C78895944973.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/17D5FEBA-A886-4A9B-AE6F-DACD23A04CD0.jpg",
+    "directions": [
+      {
+        "shapeId": 4762,
+        "name": "Camacha Via Gaula"
+      },
+      {
+        "shapeId": 4761,
+        "name": "Santa Cruz Via Gaula"
+      }
+    ],
+    "heading": "Camacha/Santa Cruz (via Gaula)",
+    "pdfFile": "pdf/CCA02DC2-A77F-43D2-805E-C78895944973.pdf"
+  },
+  {
+    "id": 83,
+    "number": "603",
+    "oldNumber": "114",
+    "name": "Nogueira",
+    "route": "Funchal - Nogueira",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/114.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/114.jpg",
+    "directions": [
+      {
+        "shapeId": 13202,
+        "name": "Funchal"
+      },
+      {
+        "shapeId": 13201,
+        "name": "Nogueira"
+      }
+    ],
+    "heading": "Funchal - Nogueira",
+    "pdfFile": "pdf/114.pdf"
+  },
+  {
+    "id": 84,
+    "number": "625",
+    "oldNumber": "129",
+    "name": "Camacha",
+    "route": "Funchal - Camacha",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/129.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/129.jpg",
+    "directions": [
+      {
+        "shapeId": 13222,
+        "name": "Funchal"
+      },
+      {
+        "shapeId": 13221,
+        "name": "Camacha"
+      }
+    ],
+    "heading": "Funchal - Camacha",
+    "pdfFile": "pdf/129.pdf"
+  },
+  {
+    "id": 89,
+    "number": "651",
+    "oldNumber": "77",
+    "name": "Santo da Serra",
+    "route": "Funchal - Santo da Serra",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/77.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/77.jpg",
+    "directions": [
+      {
+        "shapeId": 13102,
+        "name": "Funchal Via Camacha"
+      },
+      {
+        "shapeId": 13101,
+        "name": "Santo Serra Via Camacha"
+      }
+    ],
+    "heading": "Funchal - Santo da Serra",
+    "pdfFile": "pdf/77.pdf"
+  },
+  {
+    "id": 90,
+    "number": "181",
+    "oldNumber": "81",
+    "name": "Curral das Freiras",
+    "route": "Funchal - Curral das Freiras",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/EA5F137E-7D09-4706-B6F9-A925A0FEECC3.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/40459461-FACA-4A04-9F41-8D95A89E5C66.jpg",
+    "directions": [
+      {
+        "shapeId": 13502,
+        "name": "Funchal"
+      },
+      {
+        "shapeId": 13501,
+        "name": "Curral das Freiras"
+      }
+    ],
+    "heading": "Funchal - Curral das Freiras",
+    "pdfFile": "pdf/EA5F137E-7D09-4706-B6F9-A925A0FEECC3.pdf"
+  },
+  {
+    "id": 91,
+    "number": "502",
+    "oldNumber": "85",
+    "name": "Boqueirão (via Palheiro Ferreiro)",
+    "route": "Funchal - Boqueirão (via Palheiro Ferreiro)",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/85.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/85.jpg",
+    "directions": [],
+    "heading": "Funchal - Boqueirão (via Palheiro Ferreiro)",
+    "pdfFile": "pdf/85.pdf"
+  },
+  {
+    "id": 94,
+    "number": "082",
+    "oldNumber": "82",
+    "name": "São Tiago/D João",
+    "route": "Entre S Tiago e D João",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/4DE51252-FEC6-4017-82B5-72CC10B464A2.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/2A061B8F-1BA8-4F99-B487-EA26CFC067EF.jpg",
+    "directions": [],
+    "heading": "Entre S Tiago e D João",
+    "pdfFile": "pdf/4DE51252-FEC6-4017-82B5-72CC10B464A2.pdf"
+  },
+  {
+    "id": 95,
+    "number": "083",
+    "oldNumber": "83",
+    "name": "Forum Madeira/São Martinho",
+    "route": "Entre Forum Madeira e S Martinho",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/EE265927-773F-485C-8376-8DD403A49E15.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/BAC19BE1-89D0-4C70-A9B0-7B8411F19DF1.jpg",
+    "directions": [],
+    "heading": "Entre Forum Madeira e S Martinho",
+    "pdfFile": "pdf/EE265927-773F-485C-8376-8DD403A49E15.pdf"
+  },
+  {
+    "id": 96,
+    "number": "070",
+    "oldNumber": "70",
+    "name": "Santa Luzia",
+    "route": "Centro-Santa Luzia",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/B0EA67C3-ECA9-4322-BBD7-0374E8E447C5.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/4BA6A6F6-67F9-43B9-BB5F-2E9D8F8A753F.jpg",
+    "directions": [
+      {
+        "shapeId": 19362,
+        "name": "Alfândega"
+      },
+      {
+        "shapeId": 19361,
+        "name": "Santa Luzia"
+      }
+    ],
+    "heading": "Centro-Santa Luzia",
+    "pdfFile": "pdf/B0EA67C3-ECA9-4322-BBD7-0374E8E447C5.pdf"
+  },
+  {
+    "id": 1000,
+    "number": "005",
+    "oldNumber": "05",
+    "name": "Linha Cidade (AV Sá Carneiro)",
+    "route": "Linha Cidade (AV Sá Carneiro)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/5EF8B9EE-C970-41DC-8DA8-B9F2639902E4.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/5B6B3775-BC2C-4E06-941C-1D2094488378.jpg",
+    "directions": [],
+    "heading": "Linha Cidade (AV Sá Carneiro)",
+    "pdfFile": "pdf/5EF8B9EE-C970-41DC-8DA8-B9F2639902E4.pdf"
+  },
+  {
+    "id": 1001,
+    "number": "105",
+    "oldNumber": "05A",
+    "name": "Linha Eco Cidade",
+    "route": "Linha Eco Cidade",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/38E141EA-54A5-415E-9D2F-BB06C2BB21CC.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/3005B323-4B47-4655-877C-9B659945D970.jpg",
+    "directions": [],
+    "heading": "Linha Eco Cidade",
+    "pdfFile": "pdf/38E141EA-54A5-415E-9D2F-BB06C2BB21CC.pdf"
+  },
+  {
+    "id": 1002,
+    "number": "115",
+    "oldNumber": "05B",
+    "name": "Linha Cidade (Cruzes)",
+    "route": "Linha Cidade (Cruzes)",
+    "municipalityId": 281,
+    "municipality": "Funchal",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/C0F44B90-2EA2-4469-A053-72E9C6CBB2FC.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/B6C59670-8904-4A6A-AACA-5585DB98C706.jpg",
+    "directions": [],
+    "heading": "Linha Cidade (Cruzes)",
+    "pdfFile": "pdf/C0F44B90-2EA2-4469-A053-72E9C6CBB2FC.pdf"
+  },
+  {
+    "id": 2000,
+    "number": "201",
+    "oldNumber": "1",
+    "name": "Ponte dos Frades",
+    "route": "Ponte dos Frades",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_1.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_1.jpg",
+    "directions": [],
+    "heading": "Ponte dos Frades",
+    "pdfFile": "pdf/rod_1.pdf"
+  },
+  {
+    "id": 2001,
+    "number": "",
+    "oldNumber": "3",
+    "name": "Funchal Castelejo",
+    "route": "FUNCHAL CASTELEJO",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/59E61085-687E-4431-8D9C-E3B6A1BEC3DE.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/2216F05E-F519-4748-8D61-CD61A07E6D44.jpg",
+    "directions": [],
+    "heading": "FUNCHAL CASTELEJO",
+    "pdfFile": "pdf/59E61085-687E-4431-8D9C-E3B6A1BEC3DE.pdf"
+  },
+  {
+    "id": 2002,
+    "number": "",
+    "oldNumber": "4",
+    "name": "Miradouro Lombada Ponta Sol",
+    "route": "Miradouro Lombada Ponta Sol",
+    "municipalityId": 283,
+    "municipality": "Ponta do Sol",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_4miradouro.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_4miradouro.jpg",
+    "directions": [],
+    "heading": "Miradouro Lombada Ponta Sol",
+    "pdfFile": "pdf/rod_4miradouro.pdf"
+  },
+  {
+    "id": 2003,
+    "number": "",
+    "oldNumber": "4",
+    "name": "Funchal Ponta Sol",
+    "route": "Funchal Ponta Sol",
+    "municipalityId": 283,
+    "municipality": "Ponta do Sol",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_4funchal.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_4funchal.jpg",
+    "directions": [],
+    "heading": "Funchal Ponta Sol",
+    "pdfFile": "pdf/rod_4funchal.pdf"
+  },
+  {
+    "id": 2004,
+    "number": "",
+    "oldNumber": "6",
+    "name": "Arco de São Jorge",
+    "route": "Arco de São Jorge",
+    "municipalityId": 287,
+    "municipality": "Santana",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_6.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_6.jpg",
+    "directions": [],
+    "heading": "Arco de São Jorge",
+    "pdfFile": "pdf/rod_6.pdf"
+  },
+  {
+    "id": 2005,
+    "number": "221",
+    "oldNumber": "7",
+    "name": "Furna",
+    "route": "Ribeira Brava - Pomar da Rocha e Furna (ida e volta)",
+    "municipalityId": 285,
+    "municipality": "Ribeira Brava",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_7furna.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_7furna.jpg",
+    "directions": [],
+    "heading": "Ribeira Brava - Pomar da Rocha e Furna (ida e volta)",
+    "pdfFile": "pdf/rod_7furna.pdf"
+  },
+  {
+    "id": 2006,
+    "number": "",
+    "oldNumber": "7",
+    "name": "Funchal - Ribeira Brava",
+    "route": "Funchal - Ribeira Brava",
+    "municipalityId": 285,
+    "municipality": "Ribeira Brava",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_7funchal.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_7funchal.jpg",
+    "directions": [],
+    "heading": "Funchal - Ribeira Brava",
+    "pdfFile": "pdf/rod_7funchal.pdf"
+  },
+  {
+    "id": 2007,
+    "number": "",
+    "oldNumber": "8",
+    "name": "Madalena do Mar",
+    "route": "Madalena do Mar",
+    "municipalityId": 283,
+    "municipality": "Ponta do Sol",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_8.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_8.jpg",
+    "directions": [],
+    "heading": "Madalena do Mar",
+    "pdfFile": "pdf/rod_8.pdf"
+  },
+  {
+    "id": 2008,
+    "number": "",
+    "oldNumber": "27",
+    "name": "Preces e Caldeira",
+    "route": "Preces e Caldeira",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/3617EC3F-7EB9-42D8-9471-65BD27A4BD17.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/CA46CD98-E56A-4EA0-9A0E-09233647BF0A.jpg",
+    "directions": [],
+    "heading": "Preces e Caldeira",
+    "pdfFile": "pdf/3617EC3F-7EB9-42D8-9471-65BD27A4BD17.pdf"
+  },
+  {
+    "id": 2009,
+    "number": "",
+    "oldNumber": "80",
+    "name": "Porto Moniz via Calheta",
+    "route": "Porto Moniz via Calheta",
+    "municipalityId": 284,
+    "municipality": "Porto Moniz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/6B1E0B53-B03C-4ED6-96C5-B7A43462413E.pdf",
+    "jpg": null,
+    "directions": [],
+    "heading": "Porto Moniz via Calheta",
+    "pdfFile": "pdf/6B1E0B53-B03C-4ED6-96C5-B7A43462413E.pdf"
+  },
+  {
+    "id": 2010,
+    "number": "",
+    "oldNumber": "96",
+    "name": "Corticeiras. Jardim Serra e Corrida",
+    "route": "Corticeiras. Jardim Serra e Corrida",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/471E790A-3436-48E4-9679-DAC75FBD3F66.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/71473B5F-FA1C-4345-9486-00FFF807AEA6.jpg",
+    "directions": [],
+    "heading": "Corticeiras. Jardim Serra e Corrida",
+    "pdfFile": "pdf/471E790A-3436-48E4-9679-DAC75FBD3F66.pdf"
+  },
+  {
+    "id": 2011,
+    "number": "220",
+    "oldNumber": "100",
+    "name": "Ribeira Brava - Serra de Água",
+    "route": "Ribeira Brava - Serra de Água",
+    "municipalityId": 285,
+    "municipality": "Ribeira Brava",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_100.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_100.jpg",
+    "directions": [],
+    "heading": "Ribeira Brava - Serra de Água",
+    "pdfFile": "pdf/rod_100.pdf"
+  },
+  {
+    "id": 2012,
+    "number": "",
+    "oldNumber": "107",
+    "name": "Raposeira",
+    "route": "Raposeira",
+    "municipalityId": 279,
+    "municipality": "Calheta",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_107.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_107.jpg",
+    "directions": [],
+    "heading": "Raposeira",
+    "pdfFile": "pdf/rod_107.pdf"
+  },
+  {
+    "id": 2013,
+    "number": "",
+    "oldNumber": "115",
+    "name": "Paúl do Mar",
+    "route": "Paúl do Mar",
+    "municipalityId": 279,
+    "municipality": "Calheta",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_115.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_115.jpg",
+    "directions": [],
+    "heading": "Paúl do Mar",
+    "pdfFile": "pdf/rod_115.pdf"
+  },
+  {
+    "id": 2014,
+    "number": "",
+    "oldNumber": "123",
+    "name": "Campanário",
+    "route": "Campanário",
+    "municipalityId": 285,
+    "municipality": "Ribeira Brava",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_123.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_123.jpg",
+    "directions": [],
+    "heading": "Campanário",
+    "pdfFile": "pdf/rod_123.pdf"
+  },
+  {
+    "id": 2015,
+    "number": "",
+    "oldNumber": "127",
+    "name": "Boa Morte",
+    "route": "Boa Morte",
+    "municipalityId": 285,
+    "municipality": "Ribeira Brava",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_127.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_127.jpg",
+    "directions": [],
+    "heading": "Boa Morte",
+    "pdfFile": "pdf/rod_127.pdf"
+  },
+  {
+    "id": 2016,
+    "number": "",
+    "oldNumber": "137",
+    "name": "Covão",
+    "route": "Covão",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/4D0FCAB9-3F92-4186-AF98-B498F3390675.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/E388B946-DF8C-489C-B61A-25EC2A17802B.jpg",
+    "directions": [],
+    "heading": "Covão",
+    "pdfFile": "pdf/4D0FCAB9-3F92-4186-AF98-B498F3390675.pdf"
+  },
+  {
+    "id": 2017,
+    "number": "",
+    "oldNumber": "139",
+    "name": "Santa Porto Moniz",
+    "route": "Santa Porto Moniz",
+    "municipalityId": 284,
+    "municipality": "Porto Moniz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/A7986371-1A86-40CF-BD74-2B02A9B7BC6E.pdf",
+    "jpg": null,
+    "directions": [],
+    "heading": "Santa Porto Moniz",
+    "pdfFile": "pdf/A7986371-1A86-40CF-BD74-2B02A9B7BC6E.pdf"
+  },
+  {
+    "id": 2018,
+    "number": "",
+    "oldNumber": "142",
+    "name": "Ponta do Pargo",
+    "route": "Ponta do Pargo",
+    "municipalityId": 279,
+    "municipality": "Calheta",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_142.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_142.jpg",
+    "directions": [],
+    "heading": "Ponta do Pargo",
+    "pdfFile": "pdf/rod_142.pdf"
+  },
+  {
+    "id": 2019,
+    "number": "",
+    "oldNumber": "146",
+    "name": "Carvalhal",
+    "route": "Carvalhal",
+    "municipalityId": 283,
+    "municipality": "Ponta do Sol",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_146.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_146.jpg",
+    "directions": [],
+    "heading": "Carvalhal",
+    "pdfFile": "pdf/rod_146.pdf"
+  },
+  {
+    "id": 2020,
+    "number": "228",
+    "oldNumber": "148",
+    "name": "Funchal - Boa Morte",
+    "route": "Funchal - Boa Morte",
+    "municipalityId": 285,
+    "municipality": "Ribeira Brava",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_148.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_148.jpg",
+    "directions": [],
+    "heading": "Funchal - Boa Morte",
+    "pdfFile": "pdf/rod_148.pdf"
+  },
+  {
+    "id": 2021,
+    "number": "250",
+    "oldNumber": "150",
+    "name": "São Vicente - Porto Moniz",
+    "route": "São Vicente - Porto Moniz",
+    "municipalityId": 284,
+    "municipality": "Porto Moniz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_150.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_150.jpg",
+    "directions": [],
+    "heading": "São Vicente - Porto Moniz",
+    "pdfFile": "pdf/rod_150.pdf"
+  },
+  {
+    "id": 2022,
+    "number": "",
+    "oldNumber": "154",
+    "name": "Fontainhas",
+    "route": "Fontainhas",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_154.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_154.jpg",
+    "directions": [],
+    "heading": "Fontainhas",
+    "pdfFile": "pdf/rod_154.pdf"
+  },
+  {
+    "id": 2023,
+    "number": "258",
+    "oldNumber": "158",
+    "name": "Ponte dos Frades (Torre)",
+    "route": "Ponte dos Frades (Torre)",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_158.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_158.jpg",
+    "directions": [],
+    "heading": "Ponte dos Frades (Torre)",
+    "pdfFile": "pdf/rod_158.pdf"
+  },
+  {
+    "id": 2024,
+    "number": "",
+    "oldNumber": "159",
+    "name": "Estreito Câmara de Lobos - Fontes",
+    "route": "Estreito Câmara de Lobos - Fontes",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_159.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_159.jpg",
+    "directions": [],
+    "heading": "Estreito Câmara de Lobos - Fontes",
+    "pdfFile": "pdf/rod_159.pdf"
+  },
+  {
+    "id": 2025,
+    "number": "260",
+    "oldNumber": "160",
+    "name": "Estreito Câmara de Lobos - Castelejo",
+    "route": "Estreito Câmara de Lobos - Castelejo",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_160.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_160.jpg",
+    "directions": [],
+    "heading": "Estreito Câmara de Lobos - Castelejo",
+    "pdfFile": "pdf/rod_160.pdf"
+  },
+  {
+    "id": 2026,
+    "number": "261",
+    "oldNumber": "161",
+    "name": "Estreito Câmara de Lobos - Jardim da Serra",
+    "route": "Estreito Câmara de Lobos - Jardim da Serra",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_161.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_161.jpg",
+    "directions": [],
+    "heading": "Estreito Câmara de Lobos - Jardim da Serra",
+    "pdfFile": "pdf/rod_161.pdf"
+  },
+  {
+    "id": 2027,
+    "number": "262",
+    "oldNumber": "162",
+    "name": "Estreito Câmara de Lobos - Corrida",
+    "route": "Estreito Câmara de Lobos - Corrida",
+    "municipalityId": 280,
+    "municipality": "Câmara de Lobos",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_162.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_162.jpg",
+    "directions": [],
+    "heading": "Estreito Câmara de Lobos - Corrida",
+    "pdfFile": "pdf/rod_162.pdf"
+  },
+  {
+    "id": 2028,
+    "number": "263",
+    "oldNumber": "163",
+    "name": "Calheta - Paul do Mar",
+    "route": "Calheta - Paul do Mar",
+    "municipalityId": 279,
+    "municipality": "Calheta",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_163.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_163.jpg",
+    "directions": [],
+    "heading": "Calheta - Paul do Mar",
+    "pdfFile": "pdf/rod_163.pdf"
+  },
+  {
+    "id": 2029,
+    "number": "218",
+    "oldNumber": "164",
+    "name": "Calheta - Arco da Calheta",
+    "route": "Calheta - Arco da Calheta",
+    "municipalityId": 279,
+    "municipality": "Calheta",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/rod_164.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/rod_164.jpg",
+    "directions": [],
+    "heading": "Calheta - Arco da Calheta",
+    "pdfFile": "pdf/rod_164.pdf"
+  },
+  {
+    "id": 3000,
+    "number": "551",
+    "oldNumber": "2",
+    "name": "Assomada (Portinho)",
+    "route": "Assomada (Portinho)",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/C2.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/C2.jpg",
+    "directions": [],
+    "heading": "Assomada (Portinho)",
+    "pdfFile": "pdf/C2.pdf"
+  },
+  {
+    "id": 3001,
+    "number": "552",
+    "oldNumber": "87",
+    "name": "Eiras",
+    "route": "Eiras",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/C87.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/C87.jpg",
+    "directions": [],
+    "heading": "Eiras",
+    "pdfFile": "pdf/C87.pdf"
+  },
+  {
+    "id": 3002,
+    "number": "575",
+    "oldNumber": "88",
+    "name": "Vargem",
+    "route": "Vargem",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/C88.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/C88.jpg",
+    "directions": [],
+    "heading": "Vargem",
+    "pdfFile": "pdf/C88.pdf"
+  },
+  {
+    "id": 3003,
+    "number": "553",
+    "oldNumber": "109",
+    "name": "Moinhos (Fontes)",
+    "route": "Moinhos (Fontes)",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/C109.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/C109.jpg",
+    "directions": [],
+    "heading": "Moinhos (Fontes)",
+    "pdfFile": "pdf/C109.pdf"
+  },
+  {
+    "id": 3004,
+    "number": "554",
+    "oldNumber": "109A",
+    "name": "Moinhos (Vargem)",
+    "route": "Moinhos (Vargem)",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/C109A.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/C109A.jpg",
+    "directions": [],
+    "heading": "Moinhos (Vargem)",
+    "pdfFile": "pdf/C109A.pdf"
+  },
+  {
+    "id": 3005,
+    "number": "557",
+    "oldNumber": "136",
+    "name": "Vargem (Mãe de Deus)",
+    "route": "Vargem (Mãe de Deus)",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/C136.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/C136.jpg",
+    "directions": [],
+    "heading": "Vargem (Mãe de Deus)",
+    "pdfFile": "pdf/C136.pdf"
+  },
+  {
+    "id": 3006,
+    "number": "555",
+    "oldNumber": "155",
+    "name": "Ponta da Oliveira",
+    "route": "Ponta da Oliveira",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/5F0B3170-0F43-431B-B018-784FE40DA06A.pdf",
+    "jpg": null,
+    "directions": [],
+    "heading": "Ponta da Oliveira",
+    "pdfFile": "pdf/5F0B3170-0F43-431B-B018-784FE40DA06A.pdf"
+  },
+  {
+    "id": 3007,
+    "number": "556",
+    "oldNumber": "157",
+    "name": "Reis Magos",
+    "route": "Reis Magos",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/C157.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/C157.jpg",
+    "directions": [],
+    "heading": "Reis Magos",
+    "pdfFile": "pdf/C157.pdf"
+  },
+  {
+    "id": 4000,
+    "number": "",
+    "oldNumber": "20",
+    "name": "Santo da Serra",
+    "route": "Santo da Serra",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_20.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_20.jpg",
+    "directions": [],
+    "heading": "Santo da Serra",
+    "pdfFile": "pdf/sam_20.pdf"
+  },
+  {
+    "id": 4001,
+    "number": "701",
+    "oldNumber": "23",
+    "name": "Machico",
+    "route": "Machico",
+    "municipalityId": 282,
+    "municipality": "Machico",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_23.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_23.jpg",
+    "directions": [],
+    "heading": "Machico",
+    "pdfFile": "pdf/sam_23.pdf"
+  },
+  {
+    "id": 4002,
+    "number": "675",
+    "oldNumber": "25",
+    "name": "Santo da Serra",
+    "route": "Santo da Serra",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_25.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_25.jpg",
+    "directions": [],
+    "heading": "Santo da Serra",
+    "pdfFile": "pdf/sam_25.pdf"
+  },
+  {
+    "id": 4003,
+    "number": "",
+    "oldNumber": "53",
+    "name": "Porto da Cruz - Faial",
+    "route": "Porto da Cruz - Faial",
+    "municipalityId": 287,
+    "municipality": "Santana",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_53.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_53.jpg",
+    "directions": [],
+    "heading": "Porto da Cruz - Faial",
+    "pdfFile": "pdf/sam_53.pdf"
+  },
+  {
+    "id": 4004,
+    "number": "501",
+    "oldNumber": "60",
+    "name": "Boqueirão",
+    "route": "Boqueirão",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_60.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_60.jpg",
+    "directions": [],
+    "heading": "Boqueirão",
+    "pdfFile": "pdf/sam_60.pdf"
+  },
+  {
+    "id": 4005,
+    "number": "825",
+    "oldNumber": "78",
+    "name": "Porto da Cruz - Faial",
+    "route": "Porto da Cruz - Faial",
+    "municipalityId": 287,
+    "municipality": "Santana",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_78.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_78.jpg",
+    "directions": [],
+    "heading": "Porto da Cruz - Faial",
+    "pdfFile": "pdf/sam_78.pdf"
+  },
+  {
+    "id": 4006,
+    "number": "",
+    "oldNumber": "111",
+    "name": "Salão - Achada",
+    "route": "Salão - Achada",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_111.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_111.jpg",
+    "directions": [],
+    "heading": "Salão - Achada",
+    "pdfFile": "pdf/sam_111.pdf"
+  },
+  {
+    "id": 4007,
+    "number": "702",
+    "oldNumber": "113",
+    "name": "Caniçal - Baía D&#039;Abra",
+    "route": "Caniçal - Baía D&#039;Abra",
+    "municipalityId": 282,
+    "municipality": "Machico",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_113.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_113.jpg",
+    "directions": [],
+    "heading": "Caniçal - Baía D&#039;Abra",
+    "pdfFile": "pdf/sam_113.pdf"
+  },
+  {
+    "id": 4008,
+    "number": "703",
+    "oldNumber": "113RS",
+    "name": "Ribeira Seca",
+    "route": "Ribeira Seca",
+    "municipalityId": 282,
+    "municipality": "Machico",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_113rs.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_113rs.jpg",
+    "directions": [],
+    "heading": "Ribeira Seca",
+    "pdfFile": "pdf/sam_113rs.pdf"
+  },
+  {
+    "id": 4009,
+    "number": "505",
+    "oldNumber": "128",
+    "name": "Moinho Valente - Moinhos",
+    "route": "Moinho Valente - Moinhos",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_128.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_128.jpg",
+    "directions": [],
+    "heading": "Moinho Valente - Moinhos",
+    "pdfFile": "pdf/sam_128.pdf"
+  },
+  {
+    "id": 4010,
+    "number": "725",
+    "oldNumber": "130",
+    "name": "Água Pena",
+    "route": "Água Pena",
+    "municipalityId": 282,
+    "municipality": "Machico",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/E962B8CA-504E-4D65-890F-707CACA5DDA8.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/4D030D8E-9952-4F83-97BA-C5064D0B90A6.jpg",
+    "directions": [],
+    "heading": "Água Pena",
+    "pdfFile": "pdf/E962B8CA-504E-4D65-890F-707CACA5DDA8.pdf"
+  },
+  {
+    "id": 4011,
+    "number": "704",
+    "oldNumber": "156",
+    "name": "Maroços",
+    "route": "Maroços",
+    "municipalityId": 282,
+    "municipality": "Machico",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_156.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_156.jpg",
+    "directions": [],
+    "heading": "Maroços",
+    "pdfFile": "pdf/sam_156.pdf"
+  },
+  {
+    "id": 4012,
+    "number": "726",
+    "oldNumber": "201",
+    "name": "Ribeira Seca",
+    "route": "Ribeira Seca",
+    "municipalityId": 282,
+    "municipality": "Machico",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_201.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_201.jpg",
+    "directions": [],
+    "heading": "Ribeira Seca",
+    "pdfFile": "pdf/sam_201.pdf"
+  },
+  {
+    "id": 4013,
+    "number": "727",
+    "oldNumber": "202",
+    "name": "Maroços",
+    "route": "Maroços",
+    "municipalityId": 282,
+    "municipality": "Machico",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_202.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_202.jpg",
+    "directions": [],
+    "heading": "Maroços",
+    "pdfFile": "pdf/sam_202.pdf"
+  },
+  {
+    "id": 4014,
+    "number": "525",
+    "oldNumber": "203",
+    "name": "Boqueirão",
+    "route": "Boqueirão",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_203.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_203.jpg",
+    "directions": [],
+    "heading": "Boqueirão",
+    "pdfFile": "pdf/sam_203.pdf"
+  },
+  {
+    "id": 4015,
+    "number": "526",
+    "oldNumber": "204",
+    "name": "Salão - Achada",
+    "route": "Salão - Achada",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_204.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_204.jpg",
+    "directions": [],
+    "heading": "Salão - Achada",
+    "pdfFile": "pdf/sam_204.pdf"
+  },
+  {
+    "id": 4016,
+    "number": "527",
+    "oldNumber": "205",
+    "name": "Moinhos - Remédios",
+    "route": "Moinhos - Remédios",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_205.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_205.jpg",
+    "directions": [],
+    "heading": "Moinhos - Remédios",
+    "pdfFile": "pdf/sam_205.pdf"
+  },
+  {
+    "id": 4017,
+    "number": "785",
+    "oldNumber": "206",
+    "name": "Porto da Cruz - Achada",
+    "route": "Porto da Cruz - Achada",
+    "municipalityId": 282,
+    "municipality": "Machico",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_206.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_206.jpg",
+    "directions": [],
+    "heading": "Porto da Cruz - Achada",
+    "pdfFile": "pdf/sam_206.pdf"
+  },
+  {
+    "id": 4018,
+    "number": "785",
+    "oldNumber": "207",
+    "name": "Porto da Cruz - Referta - Porto da Cruz",
+    "route": "Porto da Cruz - Referta - Porto da Cruz",
+    "municipalityId": 282,
+    "municipality": "Machico",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_207.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_207.jpg",
+    "directions": [],
+    "heading": "Porto da Cruz - Referta - Porto da Cruz",
+    "pdfFile": "pdf/sam_207.pdf"
+  },
+  {
+    "id": 4019,
+    "number": "",
+    "oldNumber": "208",
+    "name": "Funchal / Porto da Cruz - Faial",
+    "route": "Funchal / Porto da Cruz - Faial",
+    "municipalityId": 282,
+    "municipality": "Machico",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_208.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_208.jpg",
+    "directions": [],
+    "heading": "Funchal / Porto da Cruz - Faial",
+    "pdfFile": "pdf/sam_208.pdf"
+  },
+  {
+    "id": 4020,
+    "number": "528",
+    "oldNumber": "209",
+    "name": "Morena",
+    "route": "Morena",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/sam_209.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/sam_209.jpg",
+    "directions": [],
+    "heading": "Morena",
+    "pdfFile": "pdf/sam_209.pdf"
+  },
+  {
+    "id": 4021,
+    "number": "Via Rápida",
+    "oldNumber": "Expresso",
+    "name": "Expresso",
+    "route": "Expresso",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/FC7C67CB-F2C9-413C-ACF2-CAE88280CCBD.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/F07C7AA6-A70D-4AB8-977B-8CA227CB0E94.jpg",
+    "directions": [],
+    "heading": "Expresso",
+    "pdfFile": "pdf/FC7C67CB-F2C9-413C-ACF2-CAE88280CCBD.pdf"
+  },
+  {
+    "id": 4022,
+    "number": "500",
+    "oldNumber": "Aerobus",
+    "name": "Funchal - Aeroporto",
+    "route": "Funchal - Aeroporto",
+    "municipalityId": 286,
+    "municipality": "Santa Cruz",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/47BD00FC-805E-44CE-9FC1-BCF84150A768.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/D658AEA4-4750-4176-89B1-1E67796BDB3D.jpg",
+    "directions": [],
+    "heading": "Funchal - Aeroporto",
+    "pdfFile": "pdf/47BD00FC-805E-44CE-9FC1-BCF84150A768.pdf"
+  },
+  {
+    "id": 5000,
+    "number": "",
+    "oldNumber": "56",
+    "name": "Santana",
+    "route": "Santana",
+    "municipalityId": 287,
+    "municipality": "Santana",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/44398B04-BC0E-4791-902D-7802101575ED.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/6BFF8F67-E138-45B7-BF93-1B2C06D9256B.jpg",
+    "directions": [],
+    "heading": "Santana",
+    "pdfFile": "pdf/44398B04-BC0E-4791-902D-7802101575ED.pdf"
+  },
+  {
+    "id": 5004,
+    "number": "",
+    "oldNumber": "103",
+    "name": "Arco São Jorge",
+    "route": "Arco São Jorge",
+    "municipalityId": 287,
+    "municipality": "Santana",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/17AB7997-EBB0-4808-B1B6-56F8B2516C6F.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/66447274-8577-431A-B1D4-8F5BCE6A644E.jpg",
+    "directions": [],
+    "heading": "Arco São Jorge",
+    "pdfFile": "pdf/17AB7997-EBB0-4808-B1B6-56F8B2516C6F.pdf"
+  },
+  {
+    "id": 5011,
+    "number": "",
+    "oldNumber": "138",
+    "name": "São Jorge",
+    "route": "São Jorge",
+    "municipalityId": 287,
+    "municipality": "Santana",
+    "type": "interurbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/75592A82-1723-4DBB-B4A1-D89489C7201C.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/39905420-5436-4FDE-9B77-EA9A93D8D03B.jpg",
+    "directions": [],
+    "heading": "São Jorge",
+    "pdfFile": "pdf/75592A82-1723-4DBB-B4A1-D89489C7201C.pdf"
+  },
+  {
+    "id": 6000,
+    "number": "991",
+    "oldNumber": "991",
+    "name": "CENTRO - CAMACHA",
+    "route": "CENTRO - CAMACHA",
+    "municipalityId": 289,
+    "municipality": "Porto Santo",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/6F124271-558F-4E2C-A067-DFC4E32AC70E.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/F3F33B5C-80E7-4CB8-96D7-CF5E2C1638B4.jpg",
+    "directions": [],
+    "heading": "CENTRO - CAMACHA",
+    "pdfFile": "pdf/6F124271-558F-4E2C-A067-DFC4E32AC70E.pdf"
+  },
+  {
+    "id": 6001,
+    "number": "992",
+    "oldNumber": "992",
+    "name": "CENTRO - SERRA DE FORA",
+    "route": "CENTRO - SERRA DE FORA",
+    "municipalityId": 289,
+    "municipality": "Porto Santo",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/09E84134-213E-4827-96B7-3DA6B1DFD935.pdf",
+    "jpg": null,
+    "directions": [],
+    "heading": "CENTRO - SERRA DE FORA",
+    "pdfFile": "pdf/09E84134-213E-4827-96B7-3DA6B1DFD935.pdf"
+  },
+  {
+    "id": 6002,
+    "number": "993",
+    "oldNumber": "993",
+    "name": "CENTRO - CAMPO DE CIMA/LAPEIRA",
+    "route": "CENTRO - CAMPO DE CIMA/LAPEIRA",
+    "municipalityId": 289,
+    "municipality": "Porto Santo",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/9580F75A-5EFF-4919-85EF-4F03DF5B3B25.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/CF1BD64C-CC7F-46B6-A42E-6504D8A82830.jpg",
+    "directions": [],
+    "heading": "CENTRO - CAMPO DE CIMA/LAPEIRA",
+    "pdfFile": "pdf/9580F75A-5EFF-4919-85EF-4F03DF5B3B25.pdf"
+  },
+  {
+    "id": 6003,
+    "number": "994",
+    "oldNumber": "994",
+    "name": "CENTRO - CALHETA",
+    "route": "CENTRO - CALHETA",
+    "municipalityId": 289,
+    "municipality": "Porto Santo",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/073A4587-C9C8-4666-B238-A2A31C2466D9.pdf",
+    "jpg": "https://siga.madeira.gov.pt/storage/horarios_jpg/82AD1722-5080-488A-91B7-D55794CD8386.jpg",
+    "directions": [],
+    "heading": "CENTRO - CALHETA",
+    "pdfFile": "pdf/073A4587-C9C8-4666-B238-A2A31C2466D9.pdf"
+  },
+  {
+    "id": 6004,
+    "number": "995",
+    "oldNumber": "995",
+    "name": "CENTRO - PORTO DE ABRIGO",
+    "route": "CENTRO - PORTO DE ABRIGO",
+    "municipalityId": 289,
+    "municipality": "Porto Santo",
+    "type": "urbano",
+    "pdf": "https://siga.madeira.gov.pt/storage/horarios_pdf/30F6EBE1-D975-4485-BCB4-78CBE5ED37D9.pdf",
+    "jpg": null,
+    "directions": [],
+    "heading": "CENTRO - PORTO DE ABRIGO",
+    "pdfFile": "pdf/30F6EBE1-D975-4485-BCB4-78CBE5ED37D9.pdf"
+  }
+]

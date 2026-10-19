@@ -1,0 +1,43 @@
+# Madeira Autocarros
+
+Offline-first PWA with bus timetables for Madeira. Data comes from <https://siga.madeira.gov.pt/horarios>.
+
+## Data pipeline
+
+```
+npm run scrape       # index + line pages + PDFs + shapedata -> data/raw (idempotent, 1 request/s)
+npm run parse        # PDFs -> data/schedules.json, data/parse-report.json, data/shapes/
+npm run build:data   # -> public/data (schedules, route geometry) and small original PDFs in public/pdf
+npm run dev | build | preview | test
+```
+
+The site has no timetable API. Times exist only inside per-line PDFs, and only for terminals; stop lists and
+route geometry come from `/horarios/shapedata/{id}`. PDF layouts differ, so there is one parser per family
+(`scripts/parse-*.mjs`). A line is accepted only when the structure and the time counts check out
+(`hasParsedSchedule`); everything else is listed with a reason in `data/parse-report.json` and the app offers the
+original PDF instead.
+
+`src/lib/holidays.ts` decides which timetable applies on a given day (weekday / Saturday / Sunday & holidays,
+Madeira holidays, 25 Dec no service, Saturday timetable on 24/31 Dec, Carnival Tuesday and Holy Thursday).
+Only the Funchal municipal holiday (21 Aug) is included.
+
+## Estimates and journey planner
+
+`npm run build:data` adds estimated passing times for intermediate stops (`scripts/lib-estimate.mjs`): distance along the
+`shapedata` polyline / average speed (Funchal urban 16 km/h, other urban 20, interurban 25). Directions carry
+`isEstimated: true` and `stopOffsets`; lines with printed per-stop times ("Locais Passagem") carry `trips` and
+`isEstimated: false`. The UI marks estimates with `~`.
+
+`src/lib/network.ts` + `src/lib/router.ts` implement the planner (direct trips and one transfer, minimum 5 minutes plus
+walking time between stops within 200 m). `node scripts/e2e.mjs` drives the running dev server in headless Chrome
+(needs `npm run dev` and Chrome).
+
+## SAM sheets (east of the island)
+
+`scripts/parse-sam.mjs` reads the Excel-export PDFs of operator SAM: rows are trips, columns are stops with printed times.
+The PDFs paint several tables over each other and hide the rest with per-cell clipping, so `visibleItems()` in
+`scripts/lib-pdf.mjs` walks the page operators and keeps only text that is really visible (and decodes the fonts whose
+glyph codes are ASCII - 29). `node scripts/_shot.mjs <pdf> out.png` renders a PDF in Chrome for eyeballing a table.
+
+The planner treats line type as a filter: intercity (default), urban or all; "prefer" also shows other types after the
+preferred ones, "only" is strict. A transfer needs 12 minutes when either bus has estimated times, otherwise 5.

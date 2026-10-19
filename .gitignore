@@ -1,0 +1,19 @@
+# dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# raw scrape cache (re-created by `npm run scrape`: 87 MB of PDFs, page HTML, shapedata)
+data/raw/
+data/scrape.log
+
+# generated for the app by `npm run build:data`
+public/data/
+public/pdf/
+
+# local / editor / debug artefacts
+*.log
+*.png
+.DS_Store
+.vscode/
+.claude/

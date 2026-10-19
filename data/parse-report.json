@@ -1,0 +1,1070 @@
+[
+  {
+    "number": "007",
+    "id": 8,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "008",
+    "id": 9,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "108",
+    "id": 10,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "009",
+    "id": 11,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "010",
+    "id": 12,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "110",
+    "id": 13,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "011",
+    "id": 14,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "012",
+    "id": 15,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "013",
+    "id": 16,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "014",
+    "id": 17,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "125",
+    "id": 20,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "016",
+    "id": 21,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "017",
+    "id": 22,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "019",
+    "id": 24,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "020",
+    "id": 25,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "021",
+    "id": 27,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "022",
+    "id": 29,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "026",
+    "id": 33,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "027",
+    "id": 34,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "028",
+    "id": 35,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "029",
+    "id": 36,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "031",
+    "id": 38,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "131",
+    "id": 39,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "032",
+    "id": 40,
+    "family": "unsupported",
+    "ok": false,
+    "warnings": [
+      "unsupported PDF layout"
+    ]
+  },
+  {
+    "number": "033",
+    "id": 41,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "034",
+    "id": 42,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "036",
+    "id": 45,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "037",
+    "id": 47,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "038",
+    "id": 48,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "039",
+    "id": 49,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "040",
+    "id": 50,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "042",
+    "id": 51,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "044",
+    "id": 53,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "045",
+    "id": 54,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "046",
+    "id": 55,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "047",
+    "id": 56,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "048",
+    "id": 57,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "049",
+    "id": 59,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": [
+      "p2: shapedata 18243 overlaps only 1/20 PDF stops; using PDF stops",
+      "p2: shapedata 10626 overlaps only 2/17 PDF stops; using PDF stops"
+    ]
+  },
+  {
+    "number": "050",
+    "id": 60,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "092",
+    "id": 61,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "090",
+    "id": 62,
+    "family": "unsupported",
+    "ok": false,
+    "warnings": [
+      "unsupported PDF layout"
+    ]
+  },
+  {
+    "number": "093",
+    "id": 64,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "094",
+    "id": 65,
+    "family": "siga-grid",
+    "ok": false,
+    "warnings": [
+      "more than 2 time columns per day (7)"
+    ]
+  },
+  {
+    "number": "060",
+    "id": 66,
+    "family": "unsupported",
+    "ok": false,
+    "warnings": [
+      "unsupported PDF layout"
+    ]
+  },
+  {
+    "number": "061",
+    "id": 67,
+    "family": "unsupported",
+    "ok": false,
+    "warnings": [
+      "unsupported PDF layout"
+    ]
+  },
+  {
+    "number": "062",
+    "id": 68,
+    "family": "unsupported",
+    "ok": false,
+    "warnings": [
+      "unsupported PDF layout"
+    ]
+  },
+  {
+    "number": "001",
+    "id": 71,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "002",
+    "id": 72,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "003",
+    "id": 73,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "004",
+    "id": 74,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "015",
+    "id": 75,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "024",
+    "id": 76,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "043",
+    "id": 77,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "503",
+    "id": 79,
+    "family": "cam-school",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "601",
+    "id": 80,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "602",
+    "id": 81,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "604",
+    "id": 82,
+    "family": "cam-school",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "603",
+    "id": 83,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "625",
+    "id": 84,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "651",
+    "id": 89,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "181",
+    "id": 90,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": [
+      "p2: more than 2 time columns per day (7)"
+    ]
+  },
+  {
+    "number": "502",
+    "id": 91,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "082",
+    "id": 94,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "083",
+    "id": 95,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "070",
+    "id": 96,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "005",
+    "id": 1000,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "105",
+    "id": 1001,
+    "family": "siga-grid",
+    "ok": false,
+    "warnings": [
+      "more than 2 time columns per day (4)"
+    ]
+  },
+  {
+    "number": "115",
+    "id": 1002,
+    "family": "siga-grid",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "201",
+    "id": 2000,
+    "family": "rod",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "3",
+    "id": 2001,
+    "family": "unsupported",
+    "ok": false,
+    "warnings": [
+      "unsupported PDF layout"
+    ]
+  },
+  {
+    "number": "4",
+    "id": 2002,
+    "family": "rod",
+    "ok": false,
+    "warnings": [
+      "REJECT: layout with passage/arrival columns"
+    ]
+  },
+  {
+    "number": "4",
+    "id": 2003,
+    "family": "passage",
+    "ok": false,
+    "warnings": [
+      "REJECT: unresolved day header \"\""
+    ]
+  },
+  {
+    "number": "6",
+    "id": 2004,
+    "family": "passage",
+    "ok": false,
+    "warnings": [
+      "REJECT: unresolved day header \"2ª a Sábado\""
+    ]
+  },
+  {
+    "number": "221",
+    "id": 2005,
+    "family": "rod",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "7",
+    "id": 2006,
+    "family": "rod",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "8",
+    "id": 2007,
+    "family": "passage",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "27",
+    "id": 2008,
+    "family": "unsupported",
+    "ok": false,
+    "warnings": [
+      "unsupported PDF layout"
+    ]
+  },
+  {
+    "number": "80",
+    "id": 2009,
+    "family": "passage",
+    "ok": false,
+    "warnings": [
+      "REJECT: unresolved day header \"\""
+    ]
+  },
+  {
+    "number": "96",
+    "id": 2010,
+    "family": "unsupported",
+    "ok": false,
+    "warnings": [
+      "unsupported PDF layout"
+    ]
+  },
+  {
+    "number": "220",
+    "id": 2011,
+    "family": "rod",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "107",
+    "id": 2012,
+    "family": "passage",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "115",
+    "id": 2013,
+    "family": "passage",
+    "ok": false,
+    "warnings": [
+      "REJECT: unresolved day header \"\""
+    ]
+  },
+  {
+    "number": "123",
+    "id": 2014,
+    "family": "passage",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "127",
+    "id": 2015,
+    "family": "rod",
+    "ok": false,
+    "warnings": [
+      "no day labels"
+    ]
+  },
+  {
+    "number": "137",
+    "id": 2016,
+    "family": "unsupported",
+    "ok": false,
+    "warnings": [
+      "unsupported PDF layout"
+    ]
+  },
+  {
+    "number": "139",
+    "id": 2017,
+    "family": "passage",
+    "ok": false,
+    "warnings": [
+      "multi-page PDF: only page 1 parsed",
+      "REJECT: unresolved day header \"\""
+    ]
+  },
+  {
+    "number": "142",
+    "id": 2018,
+    "family": "passage",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "146",
+    "id": 2019,
+    "family": "passage",
+    "ok": false,
+    "warnings": [
+      "REJECT: unresolved day header \"\""
+    ]
+  },
+  {
+    "number": "228",
+    "id": 2020,
+    "family": "rod",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "250",
+    "id": 2021,
+    "family": "passage",
+    "ok": false,
+    "warnings": [
+      "REJECT: unresolved day header \"\""
+    ]
+  },
+  {
+    "number": "154",
+    "id": 2022,
+    "family": "rod",
+    "ok": false,
+    "warnings": [
+      "REJECT: 12 time-like strings in block but 10 parsed"
+    ]
+  },
+  {
+    "number": "258",
+    "id": 2023,
+    "family": "rod",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "159",
+    "id": 2024,
+    "family": "rod",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "260",
+    "id": 2025,
+    "family": "rod",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "261",
+    "id": 2026,
+    "family": "rod",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "262",
+    "id": 2027,
+    "family": "rod",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "263",
+    "id": 2028,
+    "family": "rod",
+    "ok": false,
+    "warnings": [
+      "REJECT: terminal names differ between day bands (escola da calheta | calheta)"
+    ]
+  },
+  {
+    "number": "218",
+    "id": 2029,
+    "family": "passage",
+    "ok": false,
+    "warnings": [
+      "REJECT: unresolved day header \"\""
+    ]
+  },
+  {
+    "number": "551",
+    "id": 3000,
+    "family": "cam",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "552",
+    "id": 3001,
+    "family": "cam",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "575",
+    "id": 3002,
+    "family": "cam",
+    "ok": false,
+    "warnings": [
+      "REJECT: no times"
+    ]
+  },
+  {
+    "number": "553",
+    "id": 3003,
+    "family": "cam",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "554",
+    "id": 3004,
+    "family": "cam",
+    "ok": false,
+    "warnings": [
+      "REJECT: terminal names unclear ()"
+    ]
+  },
+  {
+    "number": "557",
+    "id": 3005,
+    "family": "cam",
+    "ok": false,
+    "warnings": [
+      "REJECT: unexpected Partida column count 5"
+    ]
+  },
+  {
+    "number": "555",
+    "id": 3006,
+    "family": "image-only",
+    "ok": false,
+    "warnings": [
+      "PDF has no text layer"
+    ]
+  },
+  {
+    "number": "556",
+    "id": 3007,
+    "family": "cam",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "20",
+    "id": 4000,
+    "family": "sam",
+    "ok": true,
+    "warnings": [
+      "dropped a weekday trip whose times go backwards (07:30 07:15 07:35 07:50 08:00)",
+      "dropped a weekday trip whose times go backwards (07:45 07:15 07:55 07:50 08:10 08:20)",
+      "dropped a weekday trip whose times go backwards (09:45 09:55 10:05 10:00 10:15 10:30 11:30)",
+      "dropped a weekday trip whose times go backwards (13:00 13:10 13:05 13:30 14:15)",
+      "note \"Até S.Cruz\" has no legend text"
+    ]
+  },
+  {
+    "number": "701",
+    "id": 4001,
+    "family": "sam",
+    "ok": true,
+    "warnings": [
+      "note \"b g\" has no legend text",
+      "note \"a g\" has no legend text",
+      "note \"Até St. Cruz\" has no legend text"
+    ]
+  },
+  {
+    "number": "675",
+    "id": 4002,
+    "family": "sam",
+    "ok": true,
+    "warnings": [
+      "note \"Até Remedios\" has no legend text"
+    ]
+  },
+  {
+    "number": "53",
+    "id": 4003,
+    "family": "sam",
+    "ok": true,
+    "warnings": [
+      "note \"Até P.Cruz\" has no legend text",
+      "note \"J\" has no legend text"
+    ]
+  },
+  {
+    "number": "501",
+    "id": 4004,
+    "family": "sam",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "825",
+    "id": 4005,
+    "family": "sam",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "111",
+    "id": 4006,
+    "family": "sam",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "702",
+    "id": 4007,
+    "family": "sam",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "703",
+    "id": 4008,
+    "family": "sam",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "505",
+    "id": 4009,
+    "family": "sam",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "725",
+    "id": 4010,
+    "family": "image-only",
+    "ok": false,
+    "warnings": [
+      "PDF has no text layer"
+    ]
+  },
+  {
+    "number": "704",
+    "id": 4011,
+    "family": "sam",
+    "ok": true,
+    "warnings": [
+      "dropped a weekday trip whose times go backwards (21:30 22:30 22:25)",
+      "note \"rs\" has no legend text",
+      "note \"SC\" has no legend text",
+      "note \"4\" has no legend text"
+    ]
+  },
+  {
+    "number": "726",
+    "id": 4012,
+    "family": "sam",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "727",
+    "id": 4013,
+    "family": "sam",
+    "ok": true,
+    "warnings": [
+      "note \"Via Misericordia\" has no legend text"
+    ]
+  },
+  {
+    "number": "525",
+    "id": 4014,
+    "family": "sam",
+    "ok": true,
+    "warnings": [
+      "note \"Até Achada\" has no legend text",
+      "note \"Ate Achada\" has no legend text"
+    ]
+  },
+  {
+    "number": "526",
+    "id": 4015,
+    "family": "sam",
+    "ok": false,
+    "warnings": [
+      "REJECT: 2 tables in one PDF"
+    ]
+  },
+  {
+    "number": "527",
+    "id": 4016,
+    "family": "sam",
+    "ok": true,
+    "warnings": [
+      "dropped a weekday trip whose times go backwards (07:38 07:30 07:32 07:25 07:55)"
+    ]
+  },
+  {
+    "number": "785",
+    "id": 4017,
+    "family": "sam",
+    "ok": false,
+    "warnings": [
+      "REJECT: no cells in the weekday block"
+    ]
+  },
+  {
+    "number": "785",
+    "id": 4018,
+    "family": "sam",
+    "ok": false,
+    "warnings": [
+      "REJECT: no cells in the weekday block"
+    ]
+  },
+  {
+    "number": "208",
+    "id": 4019,
+    "family": "sam",
+    "ok": false,
+    "warnings": [
+      "REJECT: two different cells in one position (weekday): 08:50"
+    ]
+  },
+  {
+    "number": "528",
+    "id": 4020,
+    "family": "sam",
+    "ok": false,
+    "warnings": [
+      "REJECT: no day labels"
+    ]
+  },
+  {
+    "number": "Via Rápida",
+    "id": 4021,
+    "family": "sam",
+    "ok": false,
+    "warnings": [
+      "REJECT: no table header (Nº …) found"
+    ]
+  },
+  {
+    "number": "500",
+    "id": 4022,
+    "family": "unsupported",
+    "ok": false,
+    "warnings": [
+      "unsupported PDF layout"
+    ]
+  },
+  {
+    "number": "56",
+    "id": 5000,
+    "family": "image-only",
+    "ok": false,
+    "warnings": [
+      "PDF has no text layer"
+    ]
+  },
+  {
+    "number": "103",
+    "id": 5004,
+    "family": "image-only",
+    "ok": false,
+    "warnings": [
+      "PDF has no text layer"
+    ]
+  },
+  {
+    "number": "138",
+    "id": 5011,
+    "family": "image-only",
+    "ok": false,
+    "warnings": [
+      "PDF has no text layer"
+    ]
+  },
+  {
+    "number": "991",
+    "id": 6000,
+    "family": "cam-school",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "992",
+    "id": 6001,
+    "family": "cam-school",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "993",
+    "id": 6002,
+    "family": "cam-school",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "994",
+    "id": 6003,
+    "family": "cam-school",
+    "ok": true,
+    "warnings": []
+  },
+  {
+    "number": "995",
+    "id": 6004,
+    "family": "cam-school",
+    "ok": true,
+    "warnings": []
+  }
+]
