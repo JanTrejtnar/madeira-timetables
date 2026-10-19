@@ -9,6 +9,7 @@ import { isCam, parseCam } from './parse-cam.mjs';
 import { isSchool, parseSchool } from './parse-school.mjs';
 import { isPassage, parsePassage } from './parse-passage.mjs';
 import { isSam, parseSam } from './parse-sam.mjs';
+import { isRowTables, parseRowTables } from './parse-rowtables.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RAW = path.join(ROOT, 'data', 'raw');
@@ -132,6 +133,23 @@ for (const line of lines) {
         const n = r.directions.reduce((a, d) => a + Object.values(d.departures).reduce((x, l) => x + l.length, 0), 0);
         out.hasParsedSchedule = n > 0;
         if (!n) warn('no departure times found');
+      }
+    } else if (isRowTables(items, line.oldNumber)) {
+      out.family = 'rowtables';
+      const r = await parseRowTables(file, line.oldNumber, warn);
+      if (r && r.directions.length) {
+        out.notes = r.notes;
+        if (r.general.length) out.generalNotes = r.general;
+        out.directions = r.directions.map((d) => {
+          const departures = {};
+          for (const t of d.trips) {
+            const first = t.times.find(Boolean);
+            if (first) for (const day of t.days) (departures[day] ??= []).push({ t: first, ...(t.notes?.length ? { notes: t.notes } : {}) });
+          }
+          for (const l of Object.values(departures)) l.sort((x, y) => mins(x.t) - mins(y.t));
+          return { ...d, stopSource: 'pdf', stops: d.stops.map((name) => ({ code: null, name })), departures };
+        });
+        finishSimple(out, warn);
       }
     } else if (isSam(items)) {
       out.family = 'sam';

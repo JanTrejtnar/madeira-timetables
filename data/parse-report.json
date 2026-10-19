@@ -163,10 +163,10 @@
   {
     "number": "032",
     "id": 40,
-    "family": "unsupported",
+    "family": "siga-grid",
     "ok": false,
     "warnings": [
-      "unsupported PDF layout"
+      "more than 2 time columns per day (12)"
     ]
   },
   {
@@ -504,19 +504,19 @@
   {
     "number": "3",
     "id": 2001,
-    "family": "unsupported",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "unsupported PDF layout"
+      "manual transcription"
     ]
   },
   {
     "number": "4",
     "id": 2002,
-    "family": "rod",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "REJECT: layout with passage/arrival columns"
+      "manual transcription"
     ]
   },
   {
@@ -557,10 +557,10 @@
   {
     "number": "27",
     "id": 2008,
-    "family": "unsupported",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "unsupported PDF layout"
+      "manual transcription"
     ]
   },
   {
@@ -573,10 +573,27 @@
   {
     "number": "96",
     "id": 2010,
-    "family": "unsupported",
-    "ok": false,
+    "family": "rowtables",
+    "ok": true,
     "warnings": [
-      "unsupported PDF layout"
+      "1 of 123 rows skipped",
+      "dropped 13:45 after 19:15 in the printed table (Funchal > Corrida)",
+      "note \"via C. Podão/Corticeiras\" has no legend text",
+      "note \"via Fôro\" has no legend text",
+      "note \"via Fontes/Corticeiras\" has no legend text",
+      "note \"via Castelejo/Fontes/Corticeiras\" has no legend text",
+      "note \"via C. Podão/Marco F. Pedra\" has no legend text",
+      "note \"via Fontes/Marco F. Pedra\" has no legend text",
+      "note \"via Castelejo/Fontes/Marco\" has no legend text",
+      "note \"via Fontes/Marco F.Pedra\" has no legend text",
+      "note \"via C. Podão/Corticeiras/Fôro\" has no legend text",
+      "note \"VR*\" has no legend text",
+      "note \"via Fontes\" has no legend text",
+      "note \"via C.Podão\" has no legend text",
+      "note \"Fontes/Castelejo\" has no legend text",
+      "note \"via C. Podão\" has no legend text",
+      "note \"só aos Domingos\" has no legend text",
+      "note \"Saída do Estreito às 13h15, Fontes, Corticeiras e Fôro\" has no legend text"
     ]
   },
   {
@@ -610,19 +627,19 @@
   {
     "number": "127",
     "id": 2015,
-    "family": "rod",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "no day labels"
+      "manual transcription"
     ]
   },
   {
     "number": "137",
     "id": 2016,
-    "family": "unsupported",
-    "ok": false,
+    "family": "rowtables",
+    "ok": true,
     "warnings": [
-      "unsupported PDF layout"
+      "1 of 103 rows skipped"
     ]
   },
   {
@@ -630,9 +647,7 @@
     "id": 2017,
     "family": "passage",
     "ok": true,
-    "warnings": [
-      "multi-page PDF: only page 1 parsed"
-    ]
+    "warnings": []
   },
   {
     "number": "142",
@@ -667,10 +682,10 @@
   {
     "number": "154",
     "id": 2022,
-    "family": "rod",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "REJECT: 12 time-like strings in block but 10 parsed"
+      "manual transcription"
     ]
   },
   {
@@ -711,10 +726,10 @@
   {
     "number": "263",
     "id": 2028,
-    "family": "rod",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "REJECT: terminal names differ between day bands (escola da calheta | calheta)"
+      "manual transcription"
     ]
   },
   {
@@ -755,10 +770,10 @@
   {
     "number": "554",
     "id": 3004,
-    "family": "cam",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "REJECT: terminal names unclear (a column has no name)"
+      "manual transcription"
     ]
   },
   {
@@ -821,9 +836,9 @@
     "number": "53",
     "id": 4003,
     "family": "sam",
-    "ok": false,
+    "ok": true,
     "warnings": [
-      "REJECT: two different cells in one position (weekday): 09:45"
+      "note \"Até P.Cruz\" has no legend text"
     ]
   },
   {
@@ -910,9 +925,10 @@
     "number": "525",
     "id": 4014,
     "family": "sam",
-    "ok": false,
+    "ok": true,
     "warnings": [
-      "REJECT: two different cells in one position (saturday): 11:55"
+      "note \"Até Achada\" has no legend text",
+      "note \"Ate Achada\" has no legend text"
     ]
   },
   {
@@ -976,10 +992,10 @@
   {
     "number": "500",
     "id": 4022,
-    "family": "unsupported",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "unsupported PDF layout"
+      "manual transcription"
     ]
   },
   {

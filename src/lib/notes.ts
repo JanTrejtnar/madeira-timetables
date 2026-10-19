@@ -2,6 +2,7 @@
 // Names of lines, stops and places always stay as printed. Anything unknown is shown in the original, and the
 // real-data test lists texts that still lack a translation.
 import type { Lang } from '../i18n';
+import { EXTRA } from './notes-extra';
 
 type Tr = [cs: string, en: string];
 
@@ -236,11 +237,13 @@ const EXACT: Record<string, Tr> = {
   ],
 };
 
-const EXACT_LC = new Map(Object.entries(EXACT).map(([k, v]) => [clean(k).toLowerCase(), v]));
+const EXACT_LC = new Map(Object.entries({ ...EXACT, ...EXTRA }).map(([k, v]) => [clean(k).toLowerCase(), v]));
 
 /** Templates for the many "Via X" / "Até/de X" style notes; `$1` is the untranslated rest (names). */
 const RULES: [RegExp, Tr][] = [
   [/^via (.+)$/i, ['přes $1', 'via $1']],
+  [/^\*?serviço a pedido:\s*(.+)$/i, ['Na objednání: $1', 'On request: $1']],
+  [/^CL-(\d{1,2}:\d{2})$/, ['Câmara de Lobos $1', 'Câmara de Lobos $1']],
   [/^até paragem (.+)$/i, ['Do zastávky $1', 'To stop $1']],
   [/^até\s*\/\s*(?:dos?|das?|de)\s+(.+)$/i, ['Do / z $1', 'To / from $1']],
   [/^inicia na paragem (.+)$/i, ['Začíná na zastávce $1', 'Starts at stop $1']],

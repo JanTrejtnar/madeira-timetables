@@ -17,7 +17,7 @@ const DAY_LABELS = [
 export const codeKey = (c) => String(c).replace(/^C/, '');
 
 export function isSigaGrid(items) {
-  return items.some((i) => /Partidas de:/.test(i.str));
+  return items.some((i) => /Partidas (?:Centro )?de:/.test(i.str));
 }
 
 /** Split a text item that may contain several times into [{t, marks, x}] with approximate x. */

@@ -16,6 +16,21 @@ function defaultDay(keys: DayKey[], shared: Shared): DayKey | undefined {
 
 import { translateNote } from '../lib/notes';
 
+/** The stop where most trips have a time: many SAM trips start mid-route, so stop 0 would show almost nothing. */
+function bestStop(dir: Line['directions'][number] | undefined): number {
+  if (!dir?.trips?.length) return 0;
+  let best = 0;
+  let bestN = -1;
+  for (let i = 0; i < dir.stops.length; i++) {
+    const n = dir.trips.filter((t) => t.times[i]).length;
+    if (n > bestN) {
+      best = i;
+      bestN = n;
+    }
+  }
+  return best;
+}
+
 export function LineView({ line, initialDir, shared, onBack }: { line: Line; initialDir?: number; shared: Shared; onBack: () => void }) {
   const { t, lang } = useT();
   const tn = (s: string) => translateNote(s, lang);
@@ -26,14 +41,14 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
   const [day, setDay] = useState<DayKey | undefined>(() => defaultDay(keys, shared));
   useEffect(() => {
     setDirIndex(initialDir ?? 0);
-    setStopIdx(0);
+    setStopIdx(bestStop(line.directions[initialDir ?? 0]));
     setDay(defaultDay(keys, shared));
     window.scrollTo(0, 0);
     document.getElementById('scroller')?.scrollTo(0, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [line.id, initialDir]);
   useEffect(() => {
-    setStopIdx(0);
+    setStopIdx(bestStop(line.directions[dirIndex]));
     setLinksIdx(null);
   }, [dirIndex]);
 

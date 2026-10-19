@@ -12,6 +12,8 @@ const DAY_RES = [
   ['sunday', /Sundays|(?:^|\s)Domingos\b/i],
 ];
 const TIME_RE = /^\s*(\d{1,2})[:.](\d{2})\s*(.*)$/;
+// pieces of the sub-header words that stay visible when a neighbouring cell clips them ("agem" of "Passagem")
+const SUBLABEL_FRAGMENT = /^(?:P?a?ssagem|agem|gem|Partid|artida|rtida|Chegad|hegada|egada)$/i;
 const SUBLABEL = /^(Partida|P.ssagem|Passagem|Chegada)$/; // "P<ssagem" occurs: a glyph without mapping
 
 export function isSam(items) {
@@ -68,6 +70,8 @@ const mins = (t) => {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
 };
+const words = (n) => new Set(norm(n).split(' ').filter((w) => w.length >= 3 && w !== 'cruz' ? true : w === 'cruz'));
+const sharesWord = (a, b) => [...words(a)].some((w) => words(b).has(w));
 const cx = (i) => i.x + i.w / 2;
 
 /** One header + its rows. Returns { names, grid, halves } or { reject }. */
@@ -89,13 +93,14 @@ function analyzeSegment(part, day, keys) {
   const modal = [...counts].sort((p, q) => q[1] - p[1] || q[0] - p[0])[0];
   const complete = modal ? rowsOf.filter((r) => r.length === modal[0]) : [];
   const rankCols = complete.length >= 2 && modal[0] >= 2 ? Array.from({ length: modal[0] }, (_, k) => complete.reduce((n, r) => n + cx(r[k]), 0) / complete.length) : null;
-  const colsX = rankCols && rankCols.every((v, k) => k === 0 || v - rankCols[k - 1] > 8) ? rankCols : fallbackCols;
+  if (process.env.SAM_DEBUG) console.log(day, "modal", modal && modal.join("x"), "complete", complete.length, "rank", rankCols && rankCols.map(Math.round).join(","), "cell", cellCols.map(Math.round).join(","));
+  const colsX = rankCols && rankCols.length >= fallbackCols.length && rankCols.every((v, k) => k === 0 || v - rankCols[k - 1] > 8) ? rankCols : fallbackCols;
   if (process.env.SAM_DEBUG) console.log(day, 'subCols', subCols.map(Math.round).join(','), '| cellCols', cellCols.map(Math.round).join(','));
   const colOf = (c) => colsX.reduce((best, v, idx) => (Math.abs(v - c) < Math.abs(colsX[best] - c) ? idx : best), 0);
 
   // header names: each column takes the header cell covering it; a merged terminal cell ("BOQUEIRÃO" over Chegada and
   // Partida) is centred between two columns and covers neither, so unnamed columns take the header between them
-  const head = part.filter((i) => i.y < firstY - 1 && !SUBLABEL.test(i.str.trim()) && i.str.trim() !== '');
+  const head = part.filter((i) => i.y < firstY - 1 && !SUBLABEL.test(i.str.trim()) && !SUBLABEL_FRAGMENT.test(i.str.trim()) && i.str.trim() !== '');
   const names = colsX.map((c) => {
     const cover = head.filter((h) => c >= h.x - 3 && c <= h.x + h.w + 3).sort((p, q) => Math.abs(cx(p) - c) - Math.abs(cx(q) - c))[0];
     return cover ? { text: cover.str.trim(), id: head.indexOf(cover) } : { text: '', id: -1 };
@@ -306,8 +311,9 @@ async function parseSamTable(file, line, warn, tableIdx) {
     let from = 0;
     for (let i = 0; i < names.length; i++) {
       let at = mk.indexOf(norm(names[i]), from);
-      if (at < 0 && i === 0) at = 0; // terminals may be spelled differently in different blocks
-      if (at < 0 && i === names.length - 1) at = master.length - 1;
+      // terminals may be spelled differently in different blocks ("ST. SERRA" / "SANTO SERRA"): accept a shared word
+      if (at < 0 && i === 0 && sharesWord(names[0], master[0])) at = 0;
+      if (at < 0 && i === names.length - 1 && sharesWord(names[i], master[master.length - 1])) at = master.length - 1;
       if (at < 0 || at < from) return null;
       map.push(at);
       from = at + 1;

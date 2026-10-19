@@ -73,15 +73,16 @@ export function RouteMap({ layers, fill = false }: Props) {
       }
     }
     const fit = () => {
+      if (!alive) return;
       map.invalidateSize();
       const b = group.getBounds();
-      if (b.isValid()) map.fitBounds(b, { padding: [32, 32] });
+      if (b.isValid()) map.fitBounds(b, { padding: [32, 32], animate: false });
       else map.setView([32.75, -16.95], 10);
     };
     fit();
 
     // The container may be laid out after the map is created (route change, fonts, orientation change).
-    const ro = new ResizeObserver(() => map.invalidateSize());
+    const ro = new ResizeObserver(() => alive && map.invalidateSize());
     ro.observe(container);
     const late = setTimeout(fit, 250);
 

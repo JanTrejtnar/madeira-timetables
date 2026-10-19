@@ -41,3 +41,15 @@ glyph codes are ASCII - 29). `node scripts/_shot.mjs <pdf> out.png` renders a PD
 
 The planner treats line type as a filter: intercity (default), urban or all; "prefer" also shows other types after the
 preferred ones, "only" is strict. A transfer needs 12 minutes when either bus has estimated times, otherwise 5.
+
+## Manual transcriptions (`data/manual/`)
+
+A few PDFs cannot be parsed reliably: scans without a text layer (lines 56/103/138 "Rede Santana", 555, 725) and irregular
+tables (lines 3, 4, 27, 109A, 127, 154, 163 and the Aerobus 500). They were read from the rendered pages
+(`node scripts/_shot.mjs <pdf> out.png`) and written down by the generators in `scripts/manual/*.mjs`, which write
+`data/manual/<lineId>.json`. `scripts/parse.mjs` merges them into the schedule (`family: "manual"`, with `manualSource`).
+Re-run the generator after correcting a transcription, then `npm run parse && npm run build:data`.
+
+Lines with printed per-trip destinations (96, 137) have their own parser (`scripts/parse-rowtables.mjs`).
+Not parsed: the Funchal urban lines 032, 060-062, 090, 094 and 105 (several destination variants per table or
+arrival/departure rows distinguished only by shading); the app offers their PDF.

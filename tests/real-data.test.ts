@@ -116,3 +116,20 @@ describe.skipIf(!existsSync(file))('SAM (east of the island) lines', () => {
     expect(r.direct[0].legs[0].arriveEstimated).toBe(false);
   });
 });
+
+describe.skipIf(!existsSync(file))('coverage', () => {
+  const data: Dataset = JSON.parse(readFileSync(file, 'utf8'));
+  it('every intercity line has a parsed or transcribed schedule', () => {
+    const missing = data.lines.filter((l) => l.type === 'interurbano' && !l.hasParsedSchedule).map((l) => l.number || l.oldNumber);
+    expect(missing).toEqual([]);
+  });
+  it('at least 130 of 137 lines have times; manual transcriptions are labelled', () => {
+    expect(data.lines.filter((l) => l.hasParsedSchedule).length).toBeGreaterThanOrEqual(130);
+    for (const l of data.lines.filter((x) => (x as unknown as { family: string }).family === 'manual')) {
+      expect((l as unknown as { manualSource?: string }).manualSource).toBeTruthy();
+    }
+  });
+  it('no direction mixes up trip length and stop list', () => {
+    for (const l of data.lines) for (const d of l.directions) for (const t of d.trips ?? []) expect(t.times.length).toBe(d.stops.length);
+  });
+});

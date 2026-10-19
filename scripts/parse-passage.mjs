@@ -27,6 +27,7 @@ function resolveDays(text) {
   const school = /P\.?\s?Escolar/i.test(s);
   s = s.replace(/P\.?\s?Escolar/i, '').trim();
   s = s.replace(/(Domingo|S[aá]bado)\s+s\b/i, '$1s'); // a final "s" painted as a separate piece
+  s = s.replace(/(^|\s)\d{1,3},?(?=\s|$)/g, ' ').replace(/Fim-?\s*Semana/gi, ' ').trim(); // line numbers printed in the header, "Fim-Semana"
   // "2ª a Sábado" = Monday to Saturday
   if (/2ª\s*a\s*s[aá]bado/i.test(s)) s = s.replace(/2ª\s*a\s*s[aá]bado/i, '2ª a 6ª Sábados');
   const weekday = /2ª\s*a\s*6ª|segunda a sexta|dias [uú]teis/i.test(s);
@@ -53,8 +54,20 @@ const mins = (t) => {
 
 export async function parsePassage(file, warn) {
   const all = await pdfItems(file);
-  const items = all.filter((i) => i.page === 1);
-  if (all.some((i) => i.page > 1)) warn('multi-page PDF: only page 1 parsed');
+  const pages = [...new Set(all.map((i) => i.page))].sort((a, b) => a - b);
+  const merged = { notes: {}, general: [], directions: [] };
+  for (const p of pages) {
+    const r = parsePassagePage(all.filter((i) => i.page === p), pages.length > 1 ? (m) => warn(`p${p}: ${m}`) : warn);
+    if (!r) return null;
+    Object.assign(merged.notes, r.notes);
+    merged.general.push(...r.general);
+    merged.directions.push(...r.directions);
+  }
+  merged.general = [...new Set(merged.general)];
+  return merged.directions.length ? merged : null;
+}
+
+function parsePassagePage(items, warn) {
 
   const obsY = Math.min(...items.filter((i) => /OBSERVA/i.test(i.str)).map((i) => i.y), Infinity);
   const lps = items.filter((i) => i.str.trim() === 'Locais Passagem').sort((a, b) => a.x - b.x);
@@ -120,7 +133,7 @@ export async function parsePassage(file, warn) {
     // header text: items between the table title and the first row, grouped by x; each column takes the nearest group
     const firstY = rowsY[0];
     // the table title ("FUNCHAL - PORTO MONIZ", "HORÁRIO de PASSAGEM APROXIMADA") ends where the day headers begin
-    const titles = region.filter((i) => i.y < lp.y - 2 && (/^\S.*\s-\s\S/.test(i.str.trim()) || /PASSAGEM APROXIMADA/i.test(i.str)) && /^[A-ZÁÂÃÇÉÊÍÓÔÕÚ]/.test(i.str.trim()));
+    const titles = region.filter((i) => i.y < lp.y - 2 && (/^\S.*\s-\s\S/.test(i.str.trim()) || /PASSAGEM APROXIMAD[AO]/i.test(i.str)) && /^[A-ZÁÂÃÇÉÊÍÓÔÕÚ]/.test(i.str.trim()));
     const titleY = titles.length ? Math.max(...titles.map((i) => i.y)) : lp.y - 14;
     const hdr = region
       .filter((i) => i.y > titleY + 3 && i.y < firstY - 4 && i !== lp && !ENGLISH.test(i.str.trim()) && !/^(VIA|RÁPIDA)$/i.test(i.str.trim()) && i.x + i.w > minCellX - 2 && !/^Carrei|^ra n.|^º$/.test(i.str.trim()) && !MARKONLY.test(i.str.trim()))
