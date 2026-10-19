@@ -75,7 +75,17 @@ function parsePage(items, shapes /* [{shapeId,name,poly,stops}] */, warn, multi)
   const notes = {};
   for (const it of items) {
     const m = it.str.trim().match(/^([a-z])\)\s+(\S.*)$/);
-    if (m) notes[m[1]] = m[2].trim();
+    if (!m) continue;
+    let text = m[2].trim();
+    // a long note continues on the following lines at the same x ("… (não passa na paragem Monte PQ" / "Corujeira (1557))")
+    let prev = it;
+    for (;;) {
+      const next = items.find((j) => j !== prev && Math.abs(j.x - it.x) < 4 && j.y - prev.y > 3 && j.y - prev.y <= 9.6 && !/^[A-Za-z]{1,2}\s*\)/.test(j.str.trim()) && !/Início|Starting|Término|Terminus|Ligação|Direct/.test(j.str) && !/^(and|or|to|from|the|at|on)\b/i.test(j.str.trim()));
+      if (!next) break;
+      text += ' ' + next.str.trim();
+      prev = next;
+    }
+    notes[m[1]] = text.replace(/\s+[A-Za-z]\s*\)\s*$/, '').trim();
   }
   for (const it of items) {
     const m = it.str.trim().match(/^([a-z])\)$/);

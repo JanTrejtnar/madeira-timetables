@@ -14,8 +14,11 @@ function defaultDay(keys: DayKey[], shared: Shared): DayKey | undefined {
   return keys.find((k) => wanted.includes(k)) ?? keys[0];
 }
 
+import { translateNote } from '../lib/notes';
+
 export function LineView({ line, initialDir, shared, onBack }: { line: Line; initialDir?: number; shared: Shared; onBack: () => void }) {
-  const { t } = useT();
+  const { t, lang } = useT();
+  const tn = (s: string) => translateNote(s, lang);
   const [dirIndex, setDirIndex] = useState(initialDir ?? 0);
   const [stopIdx, setStopIdx] = useState(0);
   const [linksIdx, setLinksIdx] = useState<number | null>(null);
@@ -44,7 +47,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
   const dayLabel = (k: DayKey) => {
     const extra = line.dayLabels?.[k];
     const base = t(`day_${k}` as Key);
-    return extra && (k === 'weekday' || k === 'saturday' || k === 'sunday') ? `${base} (${extra})` : base;
+    return extra && (k === 'weekday' || k === 'saturday' || k === 'sunday') ? `${base} (${tn(extra)})` : base;
   };
 
   const times: Timed[] = useMemo(() => {
@@ -115,7 +118,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
         <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('direction')}>
           {line.directions.map((d, i) => (
             <Chip key={i} active={i === dirIndex} onClick={() => setDirIndex(i)}>
-              {d.variant ? `${d.variant}: ` : ''}
+              {d.variant ? `${tn(d.variant)}: ` : ''}
               {dirLabel(d, line.name)}
             </Chip>
           ))}
@@ -145,7 +148,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                   <>
                     {estimatedHere ? '~' : ''}
                     {x.t}
-                    {x.notes?.length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70">{x.notes.join(',')}</sup> : null}
+                    {x.notes?.length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70">{x.notes.map(tn).join(',')}</sup> : null}
                   </>
                 );
                 return (
@@ -172,12 +175,12 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
           <ul className="space-y-1 px-1 text-sm">
             {Object.entries(line.notes).map(([k, v]) => (
               <li key={k}>
-                <b>{k}</b> – {v}
+                <b>{k}</b> – {tn(v)}
               </li>
             ))}
             {line.generalNotes?.map((n, i) => (
               <li key={`g${i}`} className="text-slate-500">
-                {n}
+                {tn(n)}
               </li>
             ))}
           </ul>
