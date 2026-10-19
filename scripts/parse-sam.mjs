@@ -144,18 +144,57 @@ function analyzeSegment(part, day, keys) {
   // at the same place - in the middle
   if (headerless) return { names: null, ncols: colsX.length, grid, rowLabels: rowLabelsOf(), dups };
   let split = -1;
+  let shared = false;
   for (let k = 1; k < names.length; k++) {
     if (names[k].id === names[k - 1].id) {
       split = k;
       break;
     }
   }
-  if (split < 0 && names.length >= 4 && names.length % 2 === 0 && norm(names[0].text) === norm(names[names.length - 1].text)) split = names.length / 2;
-  const halves = split < 0 ? [[0, names.length]] : [[0, split], [split, names.length]];
+  if (split < 0 && names.length >= 4 && names.length % 2 === 0 && norm(names[0].text) === norm(names[names.length - 1].text)) {
+    // same first and last stop: either two directions side by side, or one circular trip. A circular trip has times that
+    // keep rising across the whole row.
+    const half = names.length / 2;
+    // the last column of the left half can be the shared terminal, so it does not count as "left" here
+    const rowsBoth = grid.filter((row) => row.slice(0, half - 1).some((c) => c?.t) && row.slice(half).some((c) => c?.t));
+    const rising = (row) => {
+      let prev = -1;
+      for (const c of row) {
+        if (!c?.t) continue;
+        let m = mins(c.t);
+        if (m < prev && prev >= 1200 && m < 360) m += 1440;
+        if (m < prev) return false;
+        prev = m;
+      }
+      return true;
+    };
+    const circular = rowsBoth.length >= 1 && rowsBoth.filter(rising).length / rowsBoth.length >= 0.5;
+    if (!circular) {
+      split = half;
+      // a terminal that has only one column ("ST. SERRA") is the last stop of the outbound and the first of the return trip
+      if (norm(names[half - 1].text) !== norm(names[half].text)) shared = true;
+    }
+  }
+  const halves = split < 0 ? [[0, names.length]] : shared ? [[0, split, true], [split - 1, names.length, true]] : [[0, split], [split, names.length]];
   return { names, ncols: colsX.length, grid, halves, rowLabels: rowLabelsOf(), dups };
 }
 
+/** Some PDFs hold several tables (e.g. a line and its variant); each is parsed on its own and the directions are joined. */
 export async function parseSam(file, line, warn) {
+  const all = mergeTouching(await visibleItems(file));
+  const heads = all.filter((i) => /^Nºs?d+w*$/.test(i.str.trim()) && i.x < 140);
+  const n = Math.max(1, heads.length);
+  const parts = [];
+  for (let k = 0; k < n; k++) {
+    const r = await parseSamTable(file, line, warn, k);
+    if (!r) return null;
+    parts.push(r);
+  }
+  if (parts.length === 1) return parts[0];
+  return { notes: Object.assign({}, ...parts.map((p) => p.notes)), general: [], directions: parts.flatMap((p) => p.directions) };
+}
+
+async function parseSamTable(file, line, warn, tableIdx) {
   const all = mergeTouching(await visibleItems(file));
   const obs = all.find((i) => /OBSERVA/i.test(i.str));
   const legendX = obs ? obs.x - 3 : Infinity;
@@ -178,25 +217,22 @@ export async function parseSam(file, line, warn) {
     warn('REJECT: no table header (Nº …) found');
     return null;
   }
-  if (anchors.length > 1) {
-    warn(`REJECT: ${anchors.length} tables in one PDF`);
-    return null;
-  }
-  const table = items.filter((i) => i.y >= anchors[0].y - 1);
+  const anchor = anchors[tableIdx];
+  const table = items.filter((i) => i.y >= anchor.y - 1 && i.y < (anchors[tableIdx + 1]?.y ?? Infinity) - 1);
 
   const labels = table
     .flatMap((i) => DAY_RES.filter(([, re]) => re.test(i.str.trim())).map(([key]) => ({ key, y: i.y })))
     .sort((a, b) => a.y - b.y);
   if (!labels.length) {
     // some tables name the day in the title: "PORTO DA CRUZ - Via Achada (Dias úteis)"
-    const title = table.filter((i) => Math.abs(i.y - anchors[0].y) < 3).map((i) => i.str).join(' ');
+    const title = table.filter((i) => Math.abs(i.y - anchor.y) < 3).map((i) => i.str).join(' ');
     const inParens = title.match(/\(([^)]*)\)/)?.[1] ?? '';
     const d = DAY_RES.find(([, re]) => re.test(inParens.trim()));
     if (!d) {
       warn('REJECT: no day labels');
       return null;
     }
-    labels.push({ key: d[0], y: anchors[0].y });
+    labels.push({ key: d[0], y: anchor.y });
   }
 
   // blocks -> segments (a header row between two rows of cells starts a new small table)
@@ -245,8 +281,8 @@ export async function parseSam(file, line, warn) {
   // halves -> directions: halves with the same ends and compatible stop names share one direction
   const halves = [];
   for (const seg of segments) {
-    for (const [a, z] of seg.halves) {
-      halves.push({ day: seg.day, names: seg.names.slice(a, z).map((n) => n.text), rows: seg.grid.map((r) => r.slice(a, z)), labels: seg.rowLabels });
+    for (const [a, z, sharedTerminal] of seg.halves) {
+      halves.push({ shared: !!sharedTerminal, day: seg.day, names: seg.names.slice(a, z).map((n) => n.text), rows: seg.grid.map((r) => r.slice(a, z)), labels: seg.rowLabels });
     }
   }
   halves.sort((p, q) => q.names.length - p.names.length);
@@ -299,6 +335,8 @@ export async function parseSam(file, line, warn) {
           } else if (c.text) tripNotes.push(c.text);
         });
         if (!times.some(Boolean)) continue;
+        // with a shared terminal column a lone time belongs to the other direction
+        if (p.shared && times.filter(Boolean).length < 2) continue;
         if (p.labels?.[ri]) tripNotes.push(p.labels[ri]);
         let prev = -1;
         let bad = false;

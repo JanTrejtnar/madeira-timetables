@@ -827,8 +827,7 @@
     "family": "sam",
     "ok": true,
     "warnings": [
-      "note \"Até P.Cruz\" has no legend text",
-      "note \"J\" has no legend text"
+      "note \"Até P.Cruz\" has no legend text"
     ]
   },
   {
@@ -891,6 +890,7 @@
       "dropped a weekday trip whose times go backwards (21:30 22:30 22:25)",
       "note \"rs\" has no legend text",
       "note \"SC\" has no legend text",
+      "note \"J\" has no legend text",
       "note \"4\" has no legend text"
     ]
   },
@@ -924,10 +924,8 @@
     "number": "526",
     "id": 4015,
     "family": "sam",
-    "ok": false,
-    "warnings": [
-      "REJECT: 2 tables in one PDF"
-    ]
+    "ok": true,
+    "warnings": []
   },
   {
     "number": "527",
@@ -942,19 +940,17 @@
     "number": "785",
     "id": 4017,
     "family": "sam",
-    "ok": false,
+    "ok": true,
     "warnings": [
-      "REJECT: no cells in the weekday block"
+      "dropped a weekday trip whose times go backwards (18:20 18:27 18:30 18:35 18:40 18:25)"
     ]
   },
   {
     "number": "785",
     "id": 4018,
     "family": "sam",
-    "ok": false,
-    "warnings": [
-      "REJECT: no cells in the weekday block"
-    ]
+    "ok": true,
+    "warnings": []
   },
   {
     "number": "208",

@@ -134,6 +134,7 @@ export async function visibleItems(file) {
       }
     }
     const shifted = new Set(runs.filter((r) => [...r.str].some((ch) => ch.charCodeAt(0) < 32 && ch !== '\n' && ch !== '\t')).map((r) => r.font));
+    const plus = plusFonts(runs, shifted);
     // text painted earlier and covered by a later white fill is not visible either
     runs.forEach((r, k) => {
       if (!r.visible) return;
@@ -146,10 +147,42 @@ export async function visibleItems(file) {
     });
     for (const r of runs) {
       if (!r.visible) continue;
-      const str = shifted.has(r.font) ? decodeShifted(r.str) : r.str;
+      const str = shifted.has(r.font) && !looksPlain(r.str) ? decodeShifted(r.str) : plus.has(r.font) ? decodePlus(r.str) : r.str;
       if (!str.trim()) continue;
-      out.push({ str, x: r.x, y: r.y, w: r.w, h: r.h, page: p, decoded: shifted.has(r.font), font: r.font, order: out.length });
+      out.push({ str, x: r.x, y: r.y, w: r.w, h: r.h, page: p, decoded: shifted.has(r.font) || plus.has(r.font), font: r.font, order: out.length });
     }
   }
   return out;
+}
+
+// A second kind of broken font: glyph code = ASCII + 29 ("MTWOR" is "07:25", "J" is "-"). It has no control characters
+// to give it away, so a font qualifies when most of its texts decode to times or dashes.
+function decodePlus(s) {
+  let out = '';
+  for (const ch of s) {
+    const c = ch.charCodeAt(0);
+    out += c >= 61 && c <= 151 ? String.fromCharCode(c - 29) : ch;
+  }
+  return out;
+}
+
+function plusFonts(runs, shifted) {
+  const stats = new Map();
+  for (const r of runs) {
+    if (shifted.has(r.font) || !r.str.trim()) continue;
+    const s = stats.get(r.font) ?? { n: 0, hit: 0 };
+    s.n++;
+    if (/^\s*\d{1,2}[:.]\d{2}|^\s*-\s*$/.test(decodePlus(r.str))) s.hit++;
+    stats.set(r.font, s);
+  }
+  return new Set([...stats].filter(([, s]) => s.n >= 3 && s.hit / s.n >= 0.6).map(([f]) => f));
+}
+
+/**
+ * Some PDFs mix plain and shifted text in one font. A run without control characters that is a time, a dash or a
+ * short mark ("07:25", "----", "PE") is plain text and must not be shifted.
+ */
+function looksPlain(str) {
+  if ([...str].some((ch) => ch.charCodeAt(0) < 32)) return false;
+  return /^\s*\d{1,2}[:.]\d{2}(\s*[A-Za-z]{0,3})*\s*$/.test(str) || /^\s*-+\s*$/.test(str) || /^[A-Za-z]{1,2}$/.test(str.trim());
 }
