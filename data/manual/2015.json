@@ -1,0 +1,287 @@
+{
+ "lineId": 2015,
+ "source": "manual transcription of rod_127.pdf (Carreira 127, SIGA Rodoeste)",
+ "notes": {
+  "a": "com passagem pelo ESPIGÃO",
+  "b": "com passagem pelo MORENO",
+  "c": "circulação com inicio na Pedra, Moreno, Ribeira Brava",
+  "d": "circulação Rª BRAVA - MORENO - PEDRA - Rª BRAVA"
+ },
+ "generalNotes": [
+  "P.E. - realiza-se somente no Período Escolar, sujeito ao horário lectivo em vigor. P.N.E. - realiza-se somente no Período NÃO Escolar.",
+  "Feriados: Ribeira Brava → Boa Morte 08:45, 11:10; Boa Morte → Ribeira Brava 09:10, 11:35.",
+  "Não se realizam viagens a 25 e 26 de Dezembro e 1 de Janeiro."
+ ],
+ "directions": [
+  {
+   "variant": "via Boa Morte-São Paulo",
+   "from": "Ribeira Brava",
+   "to": "Lugar da Serra",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "08:00",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "13:30",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "18:35",
+      "notes": [
+       "a"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": "via Campanário e Adega",
+   "from": "Ribeira Brava",
+   "to": "Lugar da Serra",
+   "stops": [],
+   "departures": {
+    "weekday_school": [
+     {
+      "t": "11:00"
+     },
+     {
+      "t": "17:35"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Ribeira Brava",
+   "to": "Boa Morte",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "11:10"
+     }
+    ],
+    "saturday": [
+     {
+      "t": "08:45"
+     },
+     {
+      "t": "11:10"
+     }
+    ],
+    "sunday": [
+     {
+      "t": "08:45"
+     },
+     {
+      "t": "11:20"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": "via Moreno, Barreiro e Jardim",
+   "from": "Ribeira Brava",
+   "to": "Boa Morte",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "13:30"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Ribeira Brava",
+   "to": "São João",
+   "stops": [],
+   "departures": {
+    "weekday_school": [
+     {
+      "t": "18:25"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Ribeira Brava",
+   "to": "Moreno",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "18:40"
+     }
+    ],
+    "sunday": [
+     {
+      "t": "09:30",
+      "notes": [
+       "d"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Lugar da Serra",
+   "to": "Ribeira Brava",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "06:30",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "08:40",
+      "notes": [
+       "a"
+      ]
+     }
+    ],
+    "weekday_school": [
+     {
+      "t": "07:05",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "11:35",
+      "notes": [
+       "a"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": "via Adega e Campanário",
+   "from": "Lugar da Serra",
+   "to": "Ribeira Brava",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "14:15"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Boa Morte",
+   "to": "Ribeira Brava",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "06:00"
+     },
+     {
+      "t": "06:55"
+     },
+     {
+      "t": "09:10"
+     },
+     {
+      "t": "11:35"
+     },
+     {
+      "t": "14:10",
+      "notes": [
+       "b"
+      ]
+     }
+    ],
+    "weekday_school": [
+     {
+      "t": "07:35"
+     },
+     {
+      "t": "07:35",
+      "notes": [
+       "b"
+      ]
+     },
+     {
+      "t": "12:00",
+      "notes": [
+       "b"
+      ]
+     }
+    ],
+    "weekday_holiday": [
+     {
+      "t": "07:45"
+     }
+    ],
+    "saturday": [
+     {
+      "t": "09:10"
+     },
+     {
+      "t": "11:35"
+     }
+    ],
+    "sunday": [
+     {
+      "t": "06:00"
+     },
+     {
+      "t": "08:15",
+      "notes": [
+       "b"
+      ]
+     },
+     {
+      "t": "09:10"
+     },
+     {
+      "t": "11:45"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Moreno",
+   "to": "Ribeira Brava",
+   "stops": [],
+   "departures": {
+    "sunday": [
+     {
+      "t": "06:30",
+      "notes": [
+       "c"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  }
+ ]
+}

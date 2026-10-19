@@ -1,0 +1,45 @@
+{
+ "lineId": 2028,
+ "source": "manual transcription of rod_163.pdf (Carreira 163, SIGA Rodoeste)",
+ "notes": {},
+ "generalNotes": [
+  "Horário realizado no período escolar, consoante o período lectivo",
+  "Não se realizam viagens a 25 de Dezembro"
+ ],
+ "directions": [
+  {
+   "variant": null,
+   "from": "Escola da Calheta",
+   "to": "Paúl do Mar",
+   "stops": [],
+   "departures": {
+    "weekday_school": [
+     {
+      "t": "13:30"
+     },
+     {
+      "t": "16:50"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Paúl do Mar",
+   "to": "Escola da Calheta",
+   "stops": [],
+   "departures": {
+    "weekday_school": [
+     {
+      "t": "07:00"
+     },
+     {
+      "t": "12:30"
+     }
+    ]
+   },
+   "trips": []
+  }
+ ]
+}

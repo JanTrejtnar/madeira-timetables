@@ -742,10 +742,8 @@
     "number": "575",
     "id": 3002,
     "family": "cam",
-    "ok": false,
-    "warnings": [
-      "REJECT: no times"
-    ]
+    "ok": true,
+    "warnings": []
   },
   {
     "number": "553",
@@ -760,25 +758,23 @@
     "family": "cam",
     "ok": false,
     "warnings": [
-      "REJECT: terminal names unclear ()"
+      "REJECT: terminal names unclear (a column has no name)"
     ]
   },
   {
     "number": "557",
     "id": 3005,
     "family": "cam",
-    "ok": false,
-    "warnings": [
-      "REJECT: unexpected Partida column count 5"
-    ]
+    "ok": true,
+    "warnings": []
   },
   {
     "number": "555",
     "id": 3006,
-    "family": "image-only",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "PDF has no text layer"
+      "manual transcription"
     ]
   },
   {
@@ -825,9 +821,9 @@
     "number": "53",
     "id": 4003,
     "family": "sam",
-    "ok": true,
+    "ok": false,
     "warnings": [
-      "note \"Até P.Cruz\" has no legend text"
+      "REJECT: two different cells in one position (weekday): 09:45"
     ]
   },
   {
@@ -875,10 +871,10 @@
   {
     "number": "725",
     "id": 4010,
-    "family": "image-only",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "PDF has no text layer"
+      "manual transcription"
     ]
   },
   {
@@ -914,10 +910,9 @@
     "number": "525",
     "id": 4014,
     "family": "sam",
-    "ok": true,
+    "ok": false,
     "warnings": [
-      "note \"Até Achada\" has no legend text",
-      "note \"Ate Achada\" has no legend text"
+      "REJECT: two different cells in one position (saturday): 11:55"
     ]
   },
   {
@@ -956,9 +951,10 @@
     "number": "208",
     "id": 4019,
     "family": "sam",
-    "ok": false,
+    "ok": true,
     "warnings": [
-      "REJECT: two different cells in one position (weekday): 08:50"
+      "note \"Sca\" has no legend text",
+      "note \"rano\" has no legend text"
     ]
   },
   {
@@ -974,10 +970,8 @@
     "number": "Via Rápida",
     "id": 4021,
     "family": "sam",
-    "ok": false,
-    "warnings": [
-      "REJECT: no table header (Nº …) found"
-    ]
+    "ok": true,
+    "warnings": []
   },
   {
     "number": "500",
@@ -991,28 +985,28 @@
   {
     "number": "56",
     "id": 5000,
-    "family": "image-only",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "PDF has no text layer"
+      "manual transcription"
     ]
   },
   {
     "number": "103",
     "id": 5004,
-    "family": "image-only",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "PDF has no text layer"
+      "manual transcription"
     ]
   },
   {
     "number": "138",
     "id": 5011,
-    "family": "image-only",
-    "ok": false,
+    "family": "manual",
+    "ok": true,
     "warnings": [
-      "PDF has no text layer"
+      "manual transcription"
     ]
   },
   {

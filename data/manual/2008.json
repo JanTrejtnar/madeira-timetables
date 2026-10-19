@@ -1,0 +1,413 @@
+{
+ "lineId": 2008,
+ "source": "manual transcription of the PDF of Carreira 27 Preces - Caldeira (SIGA Rodoeste)",
+ "notes": {
+  "a": "via Centro de Saúde Cª Lobos (Fte. Rocha)",
+  "b": "via Serrado do Mar",
+  "c": "Partida do Limoeiro - Caldeira - Rancho - VIA RÁPIDA (Limoeiro - Funchal)",
+  "d": "VIA RÁPIDA entre Funchal e Santa Rita",
+  "e": "VIA RÁPIDA entre Santa Rita e Funchal",
+  "f": "termina em Câmara de Lobos",
+  "g": "com passagem pela Fonte da Rocha, Torre e Serrado da Adega",
+  "T": "Transbordo em Câmara de Lobos"
+ },
+ "generalNotes": [
+  "Todas as viagens com partida do Funchal ou Cª Lobos circulam pela Rotunda do Rancho, Preces, Limoeiro, Caldeira e Rancho",
+  "Todas as viagens com destino ao Funchal ou Cª Lobos iniciam na Rotunda do Rancho, circulando pelas Preces, Limoeiro, Caldeira e Rancho",
+  "Horário a se realizar a partir do dia 15 de Setembro de 2025",
+  "Não se realizam viagens a 25 de Dezembro"
+ ],
+ "directions": [
+  {
+   "variant": null,
+   "from": "Funchal",
+   "to": "Preces - Caldeira",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "08:00",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "09:00",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "10:00",
+      "notes": [
+       "a",
+       "b"
+      ]
+     },
+     {
+      "t": "11:30",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "12:05",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "13:05",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "14:30",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "15:30",
+      "notes": [
+       "a",
+       "b"
+      ]
+     },
+     {
+      "t": "16:10",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "17:00",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "17:30",
+      "notes": [
+       "a",
+       "b"
+      ]
+     },
+     {
+      "t": "18:30",
+      "notes": [
+       "d",
+       "a"
+      ]
+     },
+     {
+      "t": "19:05",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "20:00",
+      "notes": [
+       "T",
+       "CL-20:30"
+      ]
+     },
+     {
+      "t": "21:15",
+      "notes": [
+       "T",
+       "CL-21:35"
+      ]
+     },
+     {
+      "t": "22:30",
+      "notes": [
+       "T",
+       "CL-23:00"
+      ]
+     }
+    ],
+    "saturday": [
+     {
+      "t": "08:00",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "10:00",
+      "notes": [
+       "a",
+       "b"
+      ]
+     },
+     {
+      "t": "12:05",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "13:10",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "15:05",
+      "notes": [
+       "T",
+       "CL-15:30",
+       "a"
+      ]
+     },
+     {
+      "t": "17:30"
+     },
+     {
+      "t": "19:15"
+     },
+     {
+      "t": "21:15",
+      "notes": [
+       "T",
+       "CL-21:35"
+      ]
+     }
+    ],
+    "sunday": [
+     {
+      "t": "08:00",
+      "notes": [
+       "T",
+       "CL-08:30"
+      ]
+     },
+     {
+      "t": "10:00",
+      "notes": [
+       "b"
+      ]
+     },
+     {
+      "t": "12:05",
+      "notes": [
+       "T",
+       "CL-12:30"
+      ]
+     },
+     {
+      "t": "15:05",
+      "notes": [
+       "T",
+       "CL-15:30"
+      ]
+     },
+     {
+      "t": "17:30"
+     },
+     {
+      "t": "19:15"
+     },
+     {
+      "t": "21:15",
+      "notes": [
+       "T",
+       "CL-21:35"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Rotunda do Rancho",
+   "to": "Funchal",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "06:05"
+     },
+     {
+      "t": "06:45"
+     },
+     {
+      "t": "07:00"
+     },
+     {
+      "t": "07:55",
+      "notes": [
+       "c"
+      ]
+     },
+     {
+      "t": "08:00",
+      "notes": [
+       "a",
+       "b"
+      ]
+     },
+     {
+      "t": "08:35",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "09:35",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "10:40",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "12:05",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "12:45",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "13:50",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "15:10",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "16:05",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "16:50",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "18:05",
+      "notes": [
+       "e"
+      ]
+     },
+     {
+      "t": "19:05",
+      "notes": [
+       "f"
+      ]
+     },
+     {
+      "t": "20:35",
+      "notes": [
+       "f"
+      ]
+     }
+    ],
+    "saturday": [
+     {
+      "t": "06:05"
+     },
+     {
+      "t": "07:05"
+     },
+     {
+      "t": "08:00",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "08:35",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "10:40",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "12:40",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "13:45"
+     },
+     {
+      "t": "15:35"
+     },
+     {
+      "t": "18:05"
+     },
+     {
+      "t": "19:50",
+      "notes": [
+       "f"
+      ]
+     }
+    ],
+    "sunday": [
+     {
+      "t": "06:40"
+     },
+     {
+      "t": "08:00"
+     },
+     {
+      "t": "08:35",
+      "notes": [
+       "g"
+      ]
+     },
+     {
+      "t": "10:40",
+      "notes": [
+       "T"
+      ]
+     },
+     {
+      "t": "12:35"
+     },
+     {
+      "t": "15:35"
+     },
+     {
+      "t": "18:05"
+     },
+     {
+      "t": "19:50",
+      "notes": [
+       "f"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  }
+ ]
+}

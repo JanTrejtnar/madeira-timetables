@@ -1,0 +1,230 @@
+{
+ "lineId": 2022,
+ "source": "manual transcription of rod_154.pdf (Carreira 154, SIGA Rodoeste)",
+ "notes": {
+  "a": "com passagem pela Furneira",
+  "b": "com passagem pela Francelheira",
+  "c": "termina no Estreito de Câmara de Lobos",
+  "d": "não se realiza nos Feriados",
+  "VR": "pela VIA RÁPIDA (descendo a Estrada J. A. Pinto-Pedregal até Limoeiro)",
+  "f": "via Fonte da Rocha",
+  "T": "com transbordo no Estreito C. Lobos"
+ },
+ "generalNotes": [
+  "Não se realizam viagens a 25 de Dezembro",
+  "Nota: Eventualmente este horário, poderá ser alterado ou reajustado a pedido dos utentes sem AVISO PRÉVIO."
+ ],
+ "directions": [
+  {
+   "variant": null,
+   "from": "Funchal",
+   "to": "Fontainhas",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "11:30",
+      "notes": [
+       "a",
+       "b",
+       "f"
+      ]
+     },
+     {
+      "t": "17:00"
+     },
+     {
+      "t": "18:05",
+      "notes": [
+       "f"
+      ]
+     },
+     {
+      "t": "19:00",
+      "notes": [
+       "a",
+       "b"
+      ]
+     }
+    ],
+    "saturday": [
+     {
+      "t": "17:00",
+      "notes": [
+       "T",
+       "a",
+       "b"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Fontainhas",
+   "to": "Funchal",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "06:50"
+     },
+     {
+      "t": "07:40",
+      "notes": [
+       "a",
+       "VR"
+      ]
+     },
+     {
+      "t": "08:30",
+      "notes": [
+       "a",
+       "b",
+       "c"
+      ]
+     },
+     {
+      "t": "13:00",
+      "notes": [
+       "b"
+      ]
+     }
+    ],
+    "saturday": [
+     {
+      "t": "06:50",
+      "notes": [
+       "T",
+       "a",
+       "b"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Funchal",
+   "to": "Furneira",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "16:00",
+      "notes": [
+       "b"
+      ]
+     },
+     {
+      "t": "17:00",
+      "notes": [
+       "b"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Furneira",
+   "to": "Funchal",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "06:45",
+      "notes": [
+       "b",
+       "VR"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Francelheira",
+   "to": "Funchal",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "07:55",
+      "notes": [
+       "f"
+      ]
+     }
+    ],
+    "saturday": [
+     {
+      "t": "08:00"
+     }
+    ],
+    "sunday": [
+     {
+      "t": "08:00"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Funchal",
+   "to": "Francelheira",
+   "stops": [],
+   "departures": {
+    "saturday": [
+     {
+      "t": "18:10"
+     }
+    ],
+    "sunday": [
+     {
+      "t": "18:10"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Estreito de Câmara de Lobos",
+   "to": "Fontainhas",
+   "stops": [],
+   "departures": {
+    "sunday": [
+     {
+      "t": "09:15",
+      "notes": [
+       "d"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Fontainhas",
+   "to": "Estreito de Câmara de Lobos",
+   "stops": [],
+   "departures": {
+    "sunday": [
+     {
+      "t": "06:00",
+      "notes": [
+       "d"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  }
+ ]
+}

@@ -1,0 +1,414 @@
+{
+ "lineId": 2001,
+ "source": "manual transcription of the PDF of Carreira 3 (SIGA Rodoeste)",
+ "notes": {
+  "a": "termina viagem no Estreito de Câmara de Lobos",
+  "b": "circula pela VIA RÁPIDA",
+  "c": "inicia viagem no Estreito de Câmara de Lobos - PARAGEM DAMASQUEIRO (Estrada João Gonçalves Zarco)",
+  "d": "com passagem pela Fonte da Rocha",
+  "e": "circulação pela carreira 137 - via Covão-Ernesto-Estrada José Ângelo Pestana de Barros",
+  "f": "circulação pela carreira 96",
+  "g": "com passagem nas Fontes e Corticeiras",
+  "h": "circulação pela carreira 137 - Estreito via Covão",
+  "T": "Transbordo no Estreito Câmara de Lobos"
+ },
+ "generalNotes": [
+  "Não se realizam viagens a 25 de Dezembro",
+  "Nota: Eventualmente este horário, poderá ser alterado ou reajustado a pedido dos utentes sem AVISO PRÉVIO."
+ ],
+ "directions": [
+  {
+   "variant": null,
+   "from": "Funchal",
+   "to": "Castelejo",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "09:00",
+      "notes": [
+       "f",
+       "T"
+      ]
+     },
+     {
+      "t": "10:30"
+     },
+     {
+      "t": "11:45",
+      "notes": [
+       "b"
+      ]
+     },
+     {
+      "t": "12:45"
+     },
+     {
+      "t": "14:15",
+      "notes": [
+       "f",
+       "T"
+      ]
+     },
+     {
+      "t": "15:00"
+     },
+     {
+      "t": "16:10"
+     },
+     {
+      "t": "17:30",
+      "notes": [
+       "b"
+      ]
+     },
+     {
+      "t": "18:05",
+      "notes": [
+       "b"
+      ]
+     },
+     {
+      "t": "18:20",
+      "notes": [
+       "f",
+       "T"
+      ]
+     },
+     {
+      "t": "18:45",
+      "notes": [
+       "b"
+      ]
+     },
+     {
+      "t": "19:15",
+      "notes": [
+       "f"
+      ]
+     },
+     {
+      "t": "19:15",
+      "notes": [
+       "e"
+      ]
+     },
+     {
+      "t": "21:35",
+      "notes": [
+       "h"
+      ]
+     }
+    ],
+    "saturday": [
+     {
+      "t": "09:00",
+      "notes": [
+       "f",
+       "T"
+      ]
+     },
+     {
+      "t": "11:15",
+      "notes": [
+       "f"
+      ]
+     },
+     {
+      "t": "13:30",
+      "notes": [
+       "e"
+      ]
+     },
+     {
+      "t": "16:45"
+     },
+     {
+      "t": "17:30",
+      "notes": [
+       "T"
+      ]
+     },
+     {
+      "t": "18:45",
+      "notes": [
+       "T"
+      ]
+     },
+     {
+      "t": "19:50",
+      "notes": [
+       "f",
+       "T"
+      ]
+     },
+     {
+      "t": "21:35",
+      "notes": [
+       "h"
+      ]
+     }
+    ],
+    "sunday": [
+     {
+      "t": "11:15",
+      "notes": [
+       "f"
+      ]
+     },
+     {
+      "t": "14:05"
+     },
+     {
+      "t": "17:00",
+      "notes": [
+       "T"
+      ]
+     },
+     {
+      "t": "19:50",
+      "notes": [
+       "f",
+       "T"
+      ]
+     },
+     {
+      "t": "21:35",
+      "notes": [
+       "e"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Castelejo",
+   "to": "Funchal",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "06:45",
+      "notes": [
+       "e"
+      ]
+     },
+     {
+      "t": "07:15"
+     },
+     {
+      "t": "08:00",
+      "notes": [
+       "b"
+      ]
+     },
+     {
+      "t": "08:55",
+      "notes": [
+       "b",
+       "g"
+      ]
+     },
+     {
+      "t": "10:00"
+     },
+     {
+      "t": "11:40",
+      "notes": [
+       "b"
+      ]
+     },
+     {
+      "t": "12:45",
+      "notes": [
+       "T"
+      ]
+     },
+     {
+      "t": "13:55",
+      "notes": [
+       "d"
+      ]
+     },
+     {
+      "t": "16:30"
+     },
+     {
+      "t": "17:25",
+      "notes": [
+       "b"
+      ]
+     },
+     {
+      "t": "22:30",
+      "notes": [
+       "b"
+      ]
+     }
+    ],
+    "saturday": [
+     {
+      "t": "07:00",
+      "notes": [
+       "T"
+      ]
+     },
+     {
+      "t": "08:00",
+      "notes": [
+       "T"
+      ]
+     },
+     {
+      "t": "10:00",
+      "notes": [
+       "h"
+      ]
+     },
+     {
+      "t": "12:35",
+      "notes": [
+       "f"
+      ]
+     },
+     {
+      "t": "14:30",
+      "notes": [
+       "a"
+      ]
+     },
+     {
+      "t": "17:40"
+     },
+     {
+      "t": "20:40"
+     },
+     {
+      "t": "22:30",
+      "notes": [
+       "b"
+      ]
+     }
+    ],
+    "sunday": [
+     {
+      "t": "15:05"
+     },
+     {
+      "t": "18:00",
+      "notes": [
+       "T"
+      ]
+     },
+     {
+      "t": "20:40"
+     },
+     {
+      "t": "22:30",
+      "notes": [
+       "b"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Funchal",
+   "to": "Estreito de Câmara de Lobos",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "17:30",
+      "notes": [
+       "a",
+       "b"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Estreito de Câmara de Lobos",
+   "to": "Funchal",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "21:20",
+      "notes": [
+       "c"
+      ]
+     },
+     {
+      "t": "00:00",
+      "notes": [
+       "c"
+      ]
+     }
+    ],
+    "saturday": [
+     {
+      "t": "00:00",
+      "notes": [
+       "c"
+      ]
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Estreito de Câmara de Lobos",
+   "to": "Castelejo",
+   "stops": [],
+   "departures": {
+    "sunday": [
+     {
+      "t": "07:30"
+     },
+     {
+      "t": "08:30"
+     },
+     {
+      "t": "09:45"
+     },
+     {
+      "t": "10:45"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Castelejo",
+   "to": "Estreito de Câmara de Lobos",
+   "stops": [],
+   "departures": {
+    "sunday": [
+     {
+      "t": "06:00"
+     },
+     {
+      "t": "07:45"
+     },
+     {
+      "t": "08:55"
+     },
+     {
+      "t": "10:00"
+     }
+    ]
+   },
+   "trips": []
+  }
+ ]
+}

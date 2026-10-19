@@ -1,0 +1,75 @@
+{
+ "lineId": 3004,
+ "source": "manual transcription of the PDF of Carreira 109A (CAM)",
+ "notes": {},
+ "generalNotes": [
+  "Não se efectuam viagens a 25 de Dezembro."
+ ],
+ "directions": [
+  {
+   "variant": null,
+   "from": "Moinhos",
+   "to": "Funchal",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "06:55"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Funchal",
+   "to": "Moinhos",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "18:30"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Moinhos",
+   "to": "Vargem",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "07:40"
+     },
+     {
+      "t": "12:10"
+     },
+     {
+      "t": "14:10"
+     }
+    ]
+   },
+   "trips": []
+  },
+  {
+   "variant": null,
+   "from": "Vargem",
+   "to": "Moinhos",
+   "stops": [],
+   "departures": {
+    "weekday": [
+     {
+      "t": "11:40"
+     },
+     {
+      "t": "13:45"
+     }
+    ]
+   },
+   "trips": []
+  }
+ ]
+}
