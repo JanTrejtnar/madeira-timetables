@@ -26,6 +26,9 @@ function resolveDays(text) {
   }
   const school = /P\.?\s?Escolar/i.test(s);
   s = s.replace(/P\.?\s?Escolar/i, '').trim();
+  s = s.replace(/(Domingo|S[aá]bado)\s+s\b/i, '$1s'); // a final "s" painted as a separate piece
+  // "2ª a Sábado" = Monday to Saturday
+  if (/2ª\s*a\s*s[aá]bado/i.test(s)) s = s.replace(/2ª\s*a\s*s[aá]bado/i, '2ª a 6ª Sábados');
   const weekday = /2ª\s*a\s*6ª|segunda a sexta|dias [uú]teis/i.test(s);
   const sat = /s[aá]b/i.test(s);
   const sun = /dom|feriado/i.test(s);
@@ -63,6 +66,8 @@ export async function parsePassage(file, warn) {
     const lp = lps[k];
     const x0 = k === 0 ? -Infinity : lp.x - 25;
     const x1 = k + 1 < lps.length ? lps[k + 1].x - 25 : Infinity;
+    // stop names of a later table can start left of its "Locais Passagem" label
+    const nameX0 = k === 0 ? -Infinity : lp.x - 60;
     const region = items.filter((i) => i.x >= x0 && i.x < x1 && i.y < obsY - 2);
 
     const timeIt = region.filter((i) => TIME.test(i.str.trim()));
@@ -104,8 +109,8 @@ export async function parsePassage(file, warn) {
 
     // stop names
     const names = rowsY.map((y) =>
-      region
-        .filter((i) => Math.abs(i.y - y) < 5 && i.x + i.w <= minCellX - 2 && i.x > x0 && !/^(VIA|RÁPIDA)$/i.test(i.str.trim()) && i !== lp)
+      items
+        .filter((i) => i.y < obsY - 2 && Math.abs(i.y - y) < 5 && i.x + i.w <= minCellX - 2 && i.x > nameX0 && !TIME.test(i.str.trim()) && !DASH.test(i.str.trim()) && !/^(VIA|RÁPIDA)$/i.test(i.str.trim()) && i !== lp)
         .sort((a, b) => a.x - b.x)
         .map((i) => i.str.trim())
         .join(' '),
@@ -114,10 +119,9 @@ export async function parsePassage(file, warn) {
 
     // header text: items between the table title and the first row, grouped by x; each column takes the nearest group
     const firstY = rowsY[0];
-    const titleY = Math.max(
-      ...region.filter((i) => i.y < lp.y - 2 && /^S.*s-sS/.test(i.str.trim()) && /^[A-ZÁÂÃÇÉÊÍÓÔÕÚ]/.test(i.str.trim())).map((i) => i.y),
-      lp.y - 14,
-    );
+    // the table title ("FUNCHAL - PORTO MONIZ", "HORÁRIO de PASSAGEM APROXIMADA") ends where the day headers begin
+    const titles = region.filter((i) => i.y < lp.y - 2 && (/^\S.*\s-\s\S/.test(i.str.trim()) || /PASSAGEM APROXIMADA/i.test(i.str)) && /^[A-ZÁÂÃÇÉÊÍÓÔÕÚ]/.test(i.str.trim()));
+    const titleY = titles.length ? Math.max(...titles.map((i) => i.y)) : lp.y - 14;
     const hdr = region
       .filter((i) => i.y > titleY + 3 && i.y < firstY - 4 && i !== lp && !ENGLISH.test(i.str.trim()) && !/^(VIA|RÁPIDA)$/i.test(i.str.trim()) && i.x + i.w > minCellX - 2 && !/^Carrei|^ra n.|^º$/.test(i.str.trim()) && !MARKONLY.test(i.str.trim()))
       .sort((p, q) => p.x + p.w / 2 - (q.x + q.w / 2));
@@ -127,11 +131,24 @@ export async function parsePassage(file, warn) {
       const g = groups.find((g) => Math.abs(g.cx - cx) <= 18);
       if (g) { g.items.push(i); g.cx = g.items.reduce((n, o) => n + o.x + o.w / 2, 0) / g.items.length; } else groups.push({ cx, items: [i] });
     }
+    if (process.env.PASSAGE_DEBUG) {
+      console.log('table', k + 1, 'cols', cols.map((c) => Math.round(c.cx)).join(','));
+      for (const g of groups) console.log('  hdr', Math.round(Math.min(...g.items.map((o) => o.x))) + '-' + Math.round(Math.max(...g.items.map((o) => o.x + o.w))), JSON.stringify(g.items.sort((p, q) => p.y - q.y).map((o) => o.str.trim()).join(' | ')));
+    }
+    // Columns take the day header whose block they fall in: blocks are bounded by the gaps between neighbouring header
+    // texts, so one wide header ("2ª a 6ª Feira" x3) covers all columns up to the next header. Columns far outside every
+    // header stay unresolved.
+    groups.sort((a, b) => a.cx - b.cx);
+    const ext = groups.map((g) => ({ g, x0: Math.min(...g.items.map((o) => o.x)), x1: Math.max(...g.items.map((o) => o.x + o.w)) }));
     for (const c of cols) {
-      // a column belongs to a header only when it lies under that header's text; otherwise the day type is unknown
-      const under = groups.filter((x) => c.cx >= Math.min(...x.items.map((o) => o.x)) - 6 && c.cx <= Math.max(...x.items.map((o) => o.x + o.w)) + 6);
-      const g = under.sort((a, b) => Math.abs(a.cx - c.cx) - Math.abs(b.cx - c.cx))[0];
-      if (g) c.header = g.items;
+      if (!ext.length) break;
+      if (c.cx < ext[0].x0 - 80 || c.cx > ext[ext.length - 1].x1 + 80) continue;
+      let pick = ext[0];
+      for (let n = 1; n < ext.length; n++) {
+        const boundary = (ext[n - 1].x1 + ext[n].x0) / 2;
+        if (c.cx >= boundary) pick = ext[n];
+      }
+      c.header = pick.g.items;
     }
     for (const i of region) {
       if (i.y > titleY + 3 && i.y < firstY - 4 && MARKONLY.test(i.str.trim())) {
@@ -150,12 +167,20 @@ export async function parsePassage(file, warn) {
       const r = resolveDays(text);
       if (!r) { warn(`REJECT: unresolved day header "${text}"`); return null; }
       // monotonic down the column (wrap only after 20:00 into the early morning)
+      // A small step back (<= 10 min) is an inconsistency of the printed timetable (stop order vs. times): the time is
+      // levelled to the previous one and reported; a larger one means a misread column and rejects the line.
       let prev = -1;
-      for (const t of c.times) {
+      for (let i = 0; i < c.times.length; i++) {
+        const t = c.times[i];
         if (!t) continue;
         let m = mins(t);
         if (m < prev && prev >= 1200 && m < 300) m += 1440;
-        if (m < prev) { warn(`REJECT: times not increasing in a trip column (${text})`); return null; }
+        if (m < prev) {
+          if (prev - m > 10) { warn(`REJECT: times not increasing in a trip column (${text}): ${c.times.filter(Boolean).join(' ')}`); return null; }
+          warn(`levelled a time that goes back in the printed column (${text}): ${t} after ${fmt(prev)}`);
+          c.times[i] = fmt(prev);
+          m = prev;
+        }
         prev = m;
       }
       if (c.times.filter(Boolean).length < 2) { warn('REJECT: trip with fewer than two times'); return null; }
@@ -210,4 +235,9 @@ export async function parsePassage(file, warn) {
   }
   if (usedVia) notes.VR ??= 'VIA RÁPIDA';
   return { notes, general, directions };
+}
+
+function fmt(m) {
+  const x = m % 1440;
+  return `${String(Math.floor(x / 60)).padStart(2, '0')}:${String(x % 60).padStart(2, '0')}`;
 }

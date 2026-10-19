@@ -523,19 +523,15 @@
     "number": "4",
     "id": 2003,
     "family": "passage",
-    "ok": false,
-    "warnings": [
-      "REJECT: unresolved day header \"\""
-    ]
+    "ok": true,
+    "warnings": []
   },
   {
     "number": "6",
     "id": 2004,
     "family": "passage",
-    "ok": false,
-    "warnings": [
-      "REJECT: unresolved day header \"2ª a Sábado\""
-    ]
+    "ok": true,
+    "warnings": []
   },
   {
     "number": "221",
@@ -571,10 +567,8 @@
     "number": "80",
     "id": 2009,
     "family": "passage",
-    "ok": false,
-    "warnings": [
-      "REJECT: unresolved day header \"\""
-    ]
+    "ok": true,
+    "warnings": []
   },
   {
     "number": "96",
@@ -603,10 +597,8 @@
     "number": "115",
     "id": 2013,
     "family": "passage",
-    "ok": false,
-    "warnings": [
-      "REJECT: unresolved day header \"\""
-    ]
+    "ok": true,
+    "warnings": []
   },
   {
     "number": "123",
@@ -637,10 +629,9 @@
     "number": "139",
     "id": 2017,
     "family": "passage",
-    "ok": false,
+    "ok": true,
     "warnings": [
-      "multi-page PDF: only page 1 parsed",
-      "REJECT: unresolved day header \"\""
+      "multi-page PDF: only page 1 parsed"
     ]
   },
   {
@@ -654,9 +645,9 @@
     "number": "146",
     "id": 2019,
     "family": "passage",
-    "ok": false,
+    "ok": true,
     "warnings": [
-      "REJECT: unresolved day header \"\""
+      "levelled a time that goes back in the printed column (2ª a 6ª Feira): 12:40 after 12:45"
     ]
   },
   {
@@ -670,10 +661,8 @@
     "number": "250",
     "id": 2021,
     "family": "passage",
-    "ok": false,
-    "warnings": [
-      "REJECT: unresolved day header \"\""
-    ]
+    "ok": true,
+    "warnings": []
   },
   {
     "number": "154",
@@ -732,10 +721,8 @@
     "number": "218",
     "id": 2029,
     "family": "passage",
-    "ok": false,
-    "warnings": [
-      "REJECT: unresolved day header \"\""
-    ]
+    "ok": true,
+    "warnings": []
   },
   {
     "number": "551",
