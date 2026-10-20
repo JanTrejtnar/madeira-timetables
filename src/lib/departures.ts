@@ -5,6 +5,8 @@ import type { DayKey, Departure, Direction, Line, Trip } from '../types';
 export interface Timed extends Departure {
   /** Minutes since midnight of the service day; > 1439 means after midnight (next calendar day). */
   minutes: number;
+  /** the trip this time belongs to (only for timetables with times at every stop) */
+  trip?: Trip;
 }
 
 export interface Ctx {
@@ -59,7 +61,7 @@ export function timesAtStop(dir: Direction, stopIdx: number, trips: Trip[]): Tim
     const first = trip.times.find(Boolean) as string;
     let minutes = toMinutes(t);
     if (minutes < toMinutes(first)) minutes += 1440;
-    out.push({ t, minutes, ...(trip.notes ? { notes: trip.notes } : {}) });
+    out.push({ t, minutes, trip, ...(trip.notes ? { notes: trip.notes } : {}) });
   }
   void dir;
   return out.sort((a, b) => a.minutes - b.minutes);

@@ -3,14 +3,36 @@ import L from 'leaflet';
 import { loadShape } from '../data';
 import { useT } from '../i18n';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
-import type { MapLayer, Stop } from '../types';
+import type { MapFocus, MapLayer, Stop } from '../types';
 import { iconSvg } from './Icons';
 
-function popupContent(s: Stop, labels: { google: string; mapy: string }): HTMLElement {
+interface PopupLabels {
+  google: string;
+  mapy: string;
+  arrival: string;
+  departure: string;
+  approx: string;
+}
+
+function popupContent(s: Stop, labels: PopupLabels, time: string | null, first: boolean): HTMLElement {
   const box = document.createElement('div');
   const title = document.createElement('strong');
   title.textContent = s.name;
   box.appendChild(title);
+  if (time) {
+    const row = document.createElement('div');
+    row.className = 'popup-time';
+    row.style.fontWeight = '600';
+    row.textContent = `${first ? labels.departure : labels.arrival}: ${time}`;
+    box.appendChild(row);
+  }
+  if (s.approx) {
+    const a = document.createElement('div');
+    a.textContent = labels.approx;
+    a.style.color = '#b45309';
+    a.style.fontSize = '12px';
+    box.appendChild(a);
+  }
   if (s.code) {
     const code = document.createElement('div');
     code.textContent = s.code;
@@ -42,12 +64,18 @@ interface Props {
   layers: MapLayer[];
   /** fills its parent (desktop side map) instead of being a fixed-height card */
   fill?: boolean;
+  /** stop of the first layer to centre on; its popup opens with the passing time */
+  focus?: MapFocus | null;
 }
 
-export function RouteMap({ layers, fill = false }: Props) {
+export function RouteMap({ layers, focus = null, fill = false }: Props) {
   const { t } = useT();
   const el = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
+  const markers = useRef(new Map<number, L.CircleMarker>());
+  const focusRef = useRef<MapFocus | null>(focus);
+  focusRef.current = focus;
   // inline maps on touch screens: one finger scrolls the page, two fingers move the map
   const lockDrag = touch && !fill;
 
@@ -55,23 +83,28 @@ export function RouteMap({ layers, fill = false }: Props) {
     const container = el.current;
     if (!container) return;
     setFailed(false);
+    markers.current = new Map();
     const map = L.map(container, { scrollWheelZoom: fill, dragging: !lockDrag, touchZoom: true, zoomControl: !lockDrag });
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
+    mapRef.current = map;
     const group = L.featureGroup().addTo(map);
+    const labels: PopupLabels = { google: t('mapGoogle'), mapy: t('mapMapyCz'), arrival: t('arrivalWord'), departure: t('departureWord'), approx: t('coordsApprox') };
     let alive = true;
 
-    for (const layer of layers) {
-      for (const s of layer.stops) {
-        if (s.lat === undefined || s.lon === undefined) continue;
-        L.circleMarker([s.lat, s.lon], { radius: 5, color: layer.color, weight: 2.5, fillColor: '#fff', fillOpacity: 1 })
+    layers.forEach((layer, li) => {
+      layer.stops.forEach((s, si) => {
+        if (s.lat === undefined || s.lon === undefined) return;
+        const marker = L.circleMarker([s.lat, s.lon], { radius: 5, color: layer.color, weight: 2.5, fillColor: '#fff', fillOpacity: 1 })
           .bindTooltip(s.name)
-          .bindPopup(popupContent(s, { google: t('mapGoogle'), mapy: t('mapMapyCz') }))
+          // content is built when the popup opens, so it always shows the time of the currently selected trip
+          .bindPopup(() => popupContent(s, labels, li === 0 ? focusRef.current?.times[si] ?? null : null, si === 0), { autoPan: false })
           .addTo(group);
-      }
-    }
+        if (li === 0) markers.current.set(si, marker);
+      });
+    });
     const fit = () => {
       if (!alive) return;
       map.invalidateSize();
@@ -104,8 +137,31 @@ export function RouteMap({ layers, fill = false }: Props) {
       clearTimeout(late);
       ro.disconnect();
       map.remove();
+      mapRef.current = null;
+      markers.current = new Map();
     };
   }, [layers, t, fill, lockDrag]);
+
+  // tapping a stop in the list: pan to it, highlight it and open its popup (with the selected trip's time)
+  const seq = focus?.seq;
+  const stopIndex = focus?.stopIndex;
+  useEffect(() => {
+    const map = mapRef.current;
+    for (const [i, m] of markers.current) m.setStyle({ radius: i === stopIndex ? 9 : 5, fillColor: i === stopIndex ? m.options.color : '#fff' });
+    if (!map || stopIndex === undefined) return;
+    const m = markers.current.get(stopIndex);
+    if (!m) return;
+    m.bringToFront();
+    map.flyTo(m.getLatLng(), Math.max(map.getZoom(), 14), { duration: 0.6 });
+    m.openPopup();
+  }, [seq, stopIndex]);
+  // another trip selected while a popup is open: refresh the time in it
+  const times = focus?.times;
+  useEffect(() => {
+    if (stopIndex === undefined) return;
+    const m = markers.current.get(stopIndex);
+    if (m?.isPopupOpen()) m.getPopup()?.update();
+  }, [times, stopIndex]);
 
   return (
     <div className={fill ? 'relative h-full w-full' : ''}>

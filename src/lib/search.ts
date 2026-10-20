@@ -1,4 +1,5 @@
 import type { Direction, Line } from '../types';
+import { expandTerms } from './aliases';
 
 /** lower-case, no diacritics, punctuation → spaces */
 export const norm = (s: string) =>
@@ -56,19 +57,22 @@ export function buildIndex(lines: Line[]): Index {
 }
 
 export function searchLines(ix: Index, query: string): Line[] {
-  const q = norm(query);
-  if (!q) return [];
-  const tokens = q.split(' ');
+  const terms = expandTerms(query); // the typed text plus aliases ("airport" -> "aeroporto")
+  if (!terms.length) return [];
   const scored: { line: Line; score: number }[] = [];
   for (const l of ix.lines) {
-    if (!tokens.every((t) => l.hay.includes(t))) continue;
-    let score = 0;
-    if (l.number === q || l.oldNumber === q) score += 100;
-    else if (l.number.startsWith(q) || l.oldNumber.startsWith(q)) score += 60;
-    if (norm(l.line.name).includes(q)) score += 30;
-    if (norm(l.line.route).includes(q)) score += 20;
-    score += l.line.hasParsedSchedule ? 1 : 0;
-    scored.push({ line: l.line, score });
+    let best = -Infinity;
+    terms.forEach((q, ti) => {
+      if (!q.split(' ').every((t) => l.hay.includes(t))) return;
+      let score = ti === 0 ? 1 : 0; // what was typed ranks above what an alias added
+      if (l.number === q || l.oldNumber === q) score += 100;
+      else if (l.number.startsWith(q) || l.oldNumber.startsWith(q)) score += 60;
+      if (norm(l.line.name).includes(q)) score += 30;
+      if (norm(l.line.route).includes(q)) score += 20;
+      best = Math.max(best, score);
+    });
+    if (best === -Infinity) continue;
+    scored.push({ line: l.line, score: best + (l.line.hasParsedSchedule ? 1 : 0) });
   }
   return scored.sort((a, b) => b.score - a.score || byNumber(a.line, b.line)).map((s) => s.line);
 }
@@ -76,9 +80,9 @@ export function searchLines(ix: Index, query: string): Line[] {
 export function searchStops(ix: Index, query: string, limit = 12): StopHit[] {
   const q = norm(query);
   if (q.length < 2) return [];
-  const tokens = q.split(' ');
+  const terms = expandTerms(query);
   return ix.stops
-    .filter((s) => tokens.every((t) => s.key.includes(t)))
+    .filter((s) => terms.some((term) => term.split(' ').every((t) => s.key.includes(t))))
     .sort((a, b) => Number(b.key.startsWith(q)) - Number(a.key.startsWith(q)) || a.key.length - b.key.length)
     .slice(0, limit);
 }
@@ -98,20 +102,20 @@ export interface Connection {
 
 /** Lines that serve A before B (by stop order of a direction; terminal names for lines without stop lists). */
 export function findConnections(lines: Line[], aQuery: string, bQuery: string): Connection[] {
-  const a = norm(aQuery);
-  const b = norm(bQuery);
-  if (!a || !b) return [];
+  const as = expandTerms(aQuery);
+  const bs = expandTerms(bQuery);
+  if (!as.length || !bs.length) return [];
   const out: Connection[] = [];
   for (const line of lines) {
     line.directions.forEach((dir, dirIndex) => {
       if (dir.stops.length) {
         const keys = dir.stops.map((s) => stopKey(s.name));
-        const i = keys.findIndex((k) => k.includes(a));
+        const i = keys.findIndex((k) => as.some((a) => k.includes(a)));
         if (i < 0) return;
-        const j = keys.findIndex((k, idx) => idx > i && k.includes(b));
+        const j = keys.findIndex((k, idx) => idx > i && bs.some((b) => k.includes(b)));
         if (j < 0) return;
         out.push({ line, dirIndex, dir, boardIdx: i, board: dir.stops[i].name, alight: dir.stops[j].name, between: j - i - 1, via: 'stops' });
-      } else if (dir.from && norm(dir.from).includes(a) && norm(dir.to).includes(b)) {
+      } else if (dir.from && as.some((a) => norm(dir.from as string).includes(a)) && bs.some((b) => norm(dir.to).includes(b))) {
         out.push({ line, dirIndex, dir, boardIdx: null, board: dir.from, alight: dir.to, between: null, via: 'terminals' });
       }
     });

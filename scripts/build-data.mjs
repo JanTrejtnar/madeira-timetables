@@ -4,6 +4,8 @@ import { cp, mkdir, readFile, writeFile, readdir, rm, stat } from 'node:fs/promi
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { addEstimates } from './lib-estimate.mjs';
+import { classifyLine } from './lib-classify.mjs';
+import { buildStopIndex, fillCoords } from './lib-coords.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'public');
@@ -15,11 +17,14 @@ await rm(path.join(OUT, 'pdf'), { recursive: true, force: true });
 await mkdir(path.join(OUT, 'data'), { recursive: true });
 await mkdir(path.join(OUT, 'pdf'), { recursive: true });
 
+const reclassified = [];
 let local = 0;
 let estimated = 0;
 const rejected = [];
 for (const l of data.lines) {
   delete l.warnings; // parser diagnostics are not needed in the app
+  const why = classifyLine(l, path.join(ROOT, 'data', 'shapes'));
+  if (why) reclassified.push(`${l.number}: ${why}`);
   estimated += addEstimates(l, path.join(ROOT, 'data', 'shapes'));
   // keep only the legend entries that some departure refers to (SAM sheets carry a 30-line legend)
   const used = new Set();
@@ -42,6 +47,10 @@ for (const l of data.lines) {
   }
   delete l.pdfFile;
 }
+// stops known only by name: borrow coordinates from stops of other routes that carry the same name
+const coords = fillCoords(data.lines, buildStopIndex(data.lines));
+console.log('reclassified urbano -> interurbano:', reclassified.length ? reclassified.join('; ') : 'none');
+console.log('stop coordinates matched by name:', coords.filled, '(still without coordinates:', coords.missing + ')');
 await writeFile(path.join(OUT, 'data', 'schedules.json'), JSON.stringify(data));
 await cp(path.join(ROOT, 'data', 'shapes'), path.join(OUT, 'data', 'shapes'), { recursive: true });
 console.log('estimated directions:', estimated, rejected.length ? `(rejected: ${rejected.join('; ')})` : '');

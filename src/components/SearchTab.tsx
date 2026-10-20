@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useDebounced } from '../lib/hooks';
 import { useT } from '../i18n';
+import { poiFor } from '../lib/aliases';
 import { searchLines, searchStops, type Index } from '../lib/search';
 import { Card, EmptyState, LineBadge, matchesType, SearchInput, SectionTitle, SkeletonCards, TypeFilter, type LineTypeFilter, type Shared } from './common';
 import { Icon } from './Icons';
 
 export function SearchTab({ shared, index }: { shared: Shared; index: Index }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [q, setQ] = useState('');
   const dq = useDebounced(q);
   const [type, setType] = useState<LineTypeFilter>('all');
@@ -19,6 +20,10 @@ export function SearchTab({ shared, index }: { shared: Shared; index: Index }) {
     [index, dq, type],
   );
   const pending = q.trim() !== dq.trim();
+  // a destination without any scheduled line (e.g. Pico do Arieiro): explain it, and offer the nearest stops we know
+  const poi = useMemo(() => poiFor(dq), [dq]);
+  const noLines = !lines.length && !stops.length;
+  const nearStops = useMemo(() => (poi?.near ?? []).flatMap((term) => searchStops(index, term, 3)), [poi, index]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -27,7 +32,30 @@ export function SearchTab({ shared, index }: { shared: Shared; index: Index }) {
 
       {!q.trim() && <EmptyState icon="search" title={t('searchEmptyTitle')} body={t('searchHint')} />}
       {pending && q.trim() && <SkeletonCards n={3} />}
-      {!pending && dq.trim() && !lines.length && !stops.length && <EmptyState icon="frown" title={t('noResultsTitle')} body={t('noResultsBody')} />}
+      {!pending && poi?.info && noLines && (
+        <Card className="flex flex-col gap-2 border-sky-200! bg-sky-50/60! dark:border-sky-400/30! dark:bg-sky-400/5!">
+          <div className="flex items-start gap-3">
+            <Icon name="pin" className="mt-0.5 size-5 shrink-0 text-sky-600" />
+            <div>
+              <p className="font-semibold">
+                {poi.name} · <span className="font-normal text-slate-500">{t('poiTitle')}</span>
+              </p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{poi.info[lang]}</p>
+            </div>
+          </div>
+          {nearStops.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 text-sm">
+              <span className="text-slate-500">{t('nearestStops')}:</span>
+              {nearStops.map((s) => (
+                <button key={s.key} onClick={() => setQ(s.name)} className="rounded-full bg-white px-2.5 py-1 font-medium text-sky-700 ring-1 ring-sky-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-sky-500/30">
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+      {!pending && dq.trim() && noLines && !poi?.info && <EmptyState icon="frown" title={t('noResultsTitle')} body={t('noResultsBody')} />}
 
       {!pending && stops.length > 0 && (
         <section>

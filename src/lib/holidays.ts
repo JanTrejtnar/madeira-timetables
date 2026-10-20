@@ -3,6 +3,8 @@
 // on the PDFs: no service on 25 Dec; 24 & 31 Dec, Carnival Tuesday and Holy Thursday run the Saturday timetable
 // (unless they fall on a Sunday or holiday).
 
+import { nowInMadeira } from './time';
+
 export interface Ymd {
   y: number;
   m: number; // 1-12
@@ -117,17 +119,33 @@ export function serviceDay(v: Ymd, municipalities: readonly string[] = ['Funchal
   return { type: wd === 6 ? 'saturday' : 'weekday', reason: 'normal' };
 }
 
+const utc = (v: Ymd) => Date.UTC(v.y, v.m - 1, v.d);
+
 /**
- * Rough guess whether school timetables ("período escolar") apply. The real calendar changes every year, so
- * the app lets the user override this. Excludes summer, Christmas (20 Dec – 6 Jan) and Easter break.
+ * Whether the school-term timetables ("período escolar") apply in Madeira on that date. Approximation of the
+ * regional school calendar (it changes slightly every year): no term between 1 Jul and 10 Sep, 18 Dec - 2 Jan,
+ * the Carnival week (Monday - Sunday around Shrove Tuesday) and the Easter break (7 days before to 7 days after Easter).
+ * Ignores weekdays: see isMadeiraSchoolDay.
  */
-export function likelySchoolPeriod(v: Ymd): boolean {
+export function isSchoolPeriod(v: Ymd): boolean {
   const md = v.m * 100 + v.d;
-  if (md >= 611 && md <= 914) return false;
-  if (md >= 1220 || md <= 106) return false;
+  if (md >= 701 && md <= 910) return false;
+  if (md >= 1218 || md <= 102) return false;
   const e = easter(v.y);
-  const t = Date.UTC(v.y, v.m - 1, v.d);
-  const start = Date.UTC(e.y, e.m - 1, e.d - 9);
-  const end = Date.UTC(e.y, e.m - 1, e.d + 1);
-  return !(t >= start && t <= end);
+  const t = utc(v);
+  if (t >= utc(addDays(e, -7)) && t <= utc(addDays(e, 7))) return false;
+  const shrove = addDays(e, -47);
+  const monday = addDays(shrove, -((weekdayOf(shrove) + 6) % 7));
+  return !(t >= utc(monday) && t <= utc(addDays(monday, 6)));
+}
+
+/** Kept for existing callers. */
+export const likelySchoolPeriod = isSchoolPeriod;
+
+/** true on a day when pupils are at school: inside the school period, Monday - Friday, and not a holiday. */
+export function isMadeiraSchoolDay(date: Date): boolean {
+  const v = nowInMadeira(date);
+  const wd = weekdayOf(v);
+  if (wd === 0 || wd === 6) return false;
+  return isSchoolPeriod(v) && !holidayOn(v);
 }

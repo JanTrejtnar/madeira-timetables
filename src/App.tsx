@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDataset } from './data';
 import { LANGS, LangContext, makeT, type Lang } from './i18n';
-import { likelySchoolPeriod, serviceDay } from './lib/holidays';
+import { isSchoolPeriod, serviceDay } from './lib/holidays';
 import { nowInMadeira } from './lib/time';
 import { DeparturesTab } from './components/DeparturesTab';
 import { LineView } from './components/LineView';
@@ -12,7 +12,7 @@ import { EmptyState, SkeletonCards, type Shared } from './components/common';
 import { Icon, type IconName } from './components/Icons';
 import { RouteMap } from './components/RouteMap';
 import { useMedia } from './lib/hooks';
-import type { MapLayer } from './types';
+import type { MapFocus, MapLayer } from './types';
 
 type Tab = 'search' | 'route' | 'departures';
 
@@ -51,13 +51,18 @@ export function App() {
   const [tab, setTab] = useState<Tab>('search');
   const [route, setRoute] = useState(parseHash);
   const [now, setNow] = useState(() => nowInMadeira());
+  // The school term is detected from today's date. A manual choice is only an override for the day it was made.
+  const dayStamp = `${now.y}-${now.m}-${now.d}`;
   const [schoolOverride, setSchoolOverride] = useState<boolean | null>(() => {
-    const v = store.get('school');
-    return v === null ? null : v === '1';
+    const [v, stamp] = (store.get('school') ?? '').split('|');
+    const t = nowInMadeira();
+    return stamp === `${t.y}-${t.m}-${t.d}` && (v === '1' || v === '0') ? v === '1' : null;
   });
+  const [overrideDay, setOverrideDay] = useState(dayStamp);
   const { data, index, error } = useDataset();
   const desktop = useMedia('(min-width: 1024px)');
   const [mapLayers, setMapLayers] = useState<MapLayer[] | null>(null);
+  const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -73,7 +78,8 @@ export function App() {
     };
   }, []);
 
-  const school = schoolOverride ?? likelySchoolPeriod(now);
+  const school = (schoolOverride !== null && overrideDay === dayStamp ? schoolOverride : null) ?? isSchoolPeriod(now);
+  const autoSchool = isSchoolPeriod(now);
   const ctx = useMemo(() => ({ now, school, municipalities: ['Funchal'] as const }), [now, school]);
   const net = useMemo(() => (data ? buildNetwork(data.lines) : null), [data]);
   const shared: Shared | null = useMemo(
@@ -88,6 +94,7 @@ export function App() {
             },
             desktop,
             setMap: setMapLayers,
+            setMapFocus,
           }
         : null,
     [data, net, ctx, desktop],
@@ -154,12 +161,25 @@ export function App() {
                   checked={school}
                   onChange={(e) => {
                     setSchoolOverride(e.target.checked);
-                    store.set('school', e.target.checked ? '1' : '0');
+                    setOverrideDay(dayStamp);
+                    store.set('school', `${e.target.checked ? '1' : '0'}|${dayStamp}`);
                   }}
                 />
                 <span className="relative h-5 w-9 shrink-0 rounded-full bg-slate-300 transition-colors after:absolute after:left-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-sky-600 peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-500 dark:bg-slate-600" />
                 {school ? t('schoolPeriod') : t('schoolHolidays')}
+                {school === autoSchool ? <span className="text-slate-400">({t('schoolAuto')})</span> : null}
               </label>
+              {school !== autoSchool && (
+                <button
+                  className="min-h-8 rounded-md px-1.5 text-sky-700 underline dark:text-sky-300"
+                  onClick={() => {
+                    setSchoolOverride(null);
+                    store.set('school', '');
+                  }}
+                >
+                  {t('schoolReset')}
+                </button>
+              )}
             </div>
             <nav className="mt-3 hidden grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 lg:grid" aria-label="Tabs">
               {tabs.map((x) => (
@@ -206,7 +226,7 @@ export function App() {
 
         {desktop && (
           <div className="relative h-dvh bg-slate-200 dark:bg-slate-800">
-            <RouteMap layers={mapLayers ?? []} fill />
+            <RouteMap layers={mapLayers ?? []} focus={mapFocus} fill />
             {!mapLayers && (
               <div className="pointer-events-none absolute left-16 top-4 z-10 flex max-w-xs items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/90 px-4 py-3 text-sm text-slate-600 shadow-lg backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-900/90 dark:text-slate-300">
                 <Icon name="map" className="size-5 shrink-0 text-sky-600" />

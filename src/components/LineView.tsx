@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT, type Key } from '../i18n';
 import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } from '../lib/departures';
 import { fmtMinutes } from '../lib/time';
 import { serviceDay } from '../lib/holidays';
-import type { DayKey, Line, MapLayer } from '../types';
+import type { DayKey, Direction, Line, MapFocus, MapLayer } from '../types';
 import { Card, Chip, dirLabel, EstTag, LineBadge, lineColor, lineRailCls, MapLinks, PdfButton, SectionTitle, type Shared } from './common';
 import { Icon } from './Icons';
 import { RouteMap } from './RouteMap';
@@ -15,6 +15,14 @@ function defaultDay(keys: DayKey[], shared: Shared): DayKey | undefined {
 }
 
 import { translateNote } from '../lib/notes';
+
+/** Times of a direction on a day key: at `stopIdx` for timetables with times at every stop, else departures from the terminal. */
+function timesOfDay(dir: Direction, day: DayKey, stopIdx: number): Timed[] {
+  if (dir.trips?.length) return timesAtStop(dir, stopIdx, dir.trips.filter((x) => x.days.includes(day)));
+  const type = day === 'saturday' || day === 'sunday' ? day : 'weekday';
+  const list = day === 'weekday_school' || day === 'weekday_holiday' ? dir.departures[day] ?? [] : listFor(dir, type, true);
+  return withMinutes(list);
+}
 
 /** The stop where most trips have a time: many SAM trips start mid-route, so stop 0 would show almost nothing. */
 function bestStop(dir: Line['directions'][number] | undefined): number {
@@ -37,12 +45,20 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
   const [dirIndex, setDirIndex] = useState(initialDir ?? 0);
   const [stopIdx, setStopIdx] = useState(0);
   const [linksIdx, setLinksIdx] = useState<number | null>(null);
+  /** selected departure (key of the Timed item); null = automatic: the next upcoming one, or the first of the day */
+  const [selKey, setSelKey] = useState<string | null>(null);
+  /** stop last tapped in the list (drives the map popup); null = none yet */
+  const [focusIdx, setFocusIdx] = useState<number | null>(null);
+  const [focusSeq, setFocusSeq] = useState(0);
+  const mapBox = useRef<HTMLElement>(null);
   const keys = useMemo(() => dayKeysOf(line), [line]);
   const [day, setDay] = useState<DayKey | undefined>(() => defaultDay(keys, shared));
   useEffect(() => {
     setDirIndex(initialDir ?? 0);
     setStopIdx(bestStop(line.directions[initialDir ?? 0]));
     setDay(defaultDay(keys, shared));
+    setSelKey(null);
+    setFocusIdx(null);
     window.scrollTo(0, 0);
     document.getElementById('scroller')?.scrollTo(0, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,14 +66,23 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
   useEffect(() => {
     setStopIdx(bestStop(line.directions[dirIndex]));
     setLinksIdx(null);
+    setSelKey(null);
+    setFocusIdx(null);
   }, [dirIndex]);
+  // a day without trips in this direction (e.g. a weekend-only direction): show the first day that has some
+  useEffect(() => {
+    const d = line.directions[dirIndex];
+    if (!d || !line.hasParsedSchedule) return;
+    if (day && timesOfDay(d, day, 0).length) return;
+    const alt = keys.find((k) => timesOfDay(d, k, 0).length);
+    if (alt) setDay(alt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirIndex, line.id, day]);
+  useEffect(() => setSelKey(null), [day]);
 
   const dir = line.directions[dirIndex] ?? line.directions[0];
   const hasTrips = !!dir?.trips?.length;
   const hasOffsets = !hasTrips && !!dir?.stopOffsets?.length;
-  const perStop = hasTrips || hasOffsets;
-  /** times at the selected stop are estimates (all but the first stop of a direction without printed stop times) */
-  const estimatedHere = hasOffsets && stopIdx > 0;
   const today = serviceDay(shared.ctx.now, shared.ctx.municipalities);
   const dayLabel = (k: DayKey) => {
     const extra = line.dayLabels?.[k];
@@ -65,16 +90,28 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
     return extra && (k === 'weekday' || k === 'saturday' || k === 'sunday') ? `${base} (${tn(extra)})` : base;
   };
 
-  const times: Timed[] = useMemo(() => {
-    if (!dir || !day) return [];
-    if (hasTrips) return timesAtStop(dir, stopIdx, (dir.trips ?? []).filter((x) => x.days.includes(day)));
-    const type = day === 'saturday' || day === 'sunday' ? day : 'weekday';
-    const list = day === 'weekday_school' || day === 'weekday_holiday' ? dir.departures[day] ?? [] : listFor(dir, type, true);
-    const off = hasOffsets ? dir.stopOffsets?.[stopIdx] ?? 0 : 0;
-    return withMinutes(list).map((x) => (off ? { ...x, minutes: x.minutes + off, t: fmtMinutes(x.minutes + off) } : x));
-  }, [dir, day, hasTrips, hasOffsets, stopIdx]);
+  // grid: times at the chosen stop (timetables with times at every stop) or departures from the terminal
+  const times: Timed[] = useMemo(() => (dir && day ? timesOfDay(dir, day, hasTrips ? stopIdx : 0) : []), [dir, day, hasTrips, stopIdx]);
+  const keyOf = (x: Timed, i: number) => (x.trip && dir?.trips ? `t${dir.trips.indexOf(x.trip)}` : `d${i}`);
   const isToday = day !== undefined && today.type !== null && keysFor(today.type, shared.ctx.school).includes(day);
   const nextIdx = isToday ? times.findIndex((x) => x.minutes >= shared.ctx.now.minutes) : -1;
+  // exactly one time is always active: the tapped one, else the next upcoming departure, else the first of the day
+  const found = selKey === null ? -1 : times.findIndex((x, i) => keyOf(x, i) === selKey);
+  const selIdx = found >= 0 ? found : nextIdx >= 0 ? nextIdx : 0;
+  const sel: Timed | undefined = times[selIdx];
+  // the passing time of the selected trip at every stop: printed times, or terminal departure + estimated offset
+  const stopTimes = useMemo<(string | null)[]>(() => {
+    if (!dir || !sel) return [];
+    return dir.stops.map((_, i) => {
+      if (sel.trip) return sel.trip.times[i] ?? null;
+      if (hasOffsets) return i === 0 ? sel.t : fmtMinutes(sel.minutes + (dir.stopOffsets?.[i] ?? 0));
+      return i === 0 ? sel.t : null;
+    });
+  }, [dir, sel, hasOffsets]);
+  const stopTimeLabel = (i: number) => {
+    const v = stopTimes[i];
+    return v ? (hasOffsets && i > 0 ? `~${v}` : v) : null;
+  };
 
   const hasMap = !!dir && (dir.stops.some((s) => s.lat !== undefined) || dir.shapeId !== null);
   const layers = useMemo<MapLayer[]>(() => (dir ? [{ shapeId: dir.shapeId, stops: dir.stops, color: lineColor(line) }] : []), [dir, line]);
@@ -86,6 +123,30 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
     return () => setMap(null);
   }, [desktop, hasMap, setMap, layers]);
 
+  const mapFocus = useMemo<MapFocus | null>(
+    () => (focusIdx === null ? null : { stopIndex: focusIdx, seq: focusSeq, times: stopTimes.map((_, i) => stopTimeLabel(i)) }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [focusIdx, focusSeq, stopTimes],
+  );
+  const { setMapFocus } = shared;
+  useEffect(() => {
+    if (!desktop) return;
+    setMapFocus(mapFocus);
+    return () => setMapFocus(null);
+  }, [desktop, mapFocus, setMapFocus]);
+  const tapStop = (i: number) => {
+    if (hasTrips) setStopIdx(i);
+    setFocusIdx(i);
+    setFocusSeq((n) => n + 1);
+    // on a phone the map is above the list: bring it into view so the jump is visible
+    const el = mapBox.current;
+    if (!desktop && el) {
+      const r = el.getBoundingClientRect();
+      if (r.top < 0 || r.bottom > window.innerHeight) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const selNotes = sel?.notes ?? [];
   const railCls = lineRailCls(line);
   const ringCls = line.type === 'urbano' ? 'border-emerald-600' : 'border-slate-700 dark:border-slate-400';
 
@@ -144,9 +205,9 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
         <section className="flex flex-col gap-3">
           <div>
             <SectionTitle>
-              {perStop ? `${t('departuresFromStop')}: ${dir.stops[stopIdx]?.name ?? ''}${estimatedHere ? ` (${t('estimateWord')})` : ''}` : `${t('schedule')}: ${dir.from}`}
+              {hasTrips ? `${t('departuresFromStop')}: ${dir.stops[stopIdx]?.name ?? ''}` : `${t('schedule')}: ${dir.from}`}
             </SectionTitle>
-            {perStop && <p className="px-1 text-xs text-slate-500 dark:text-slate-400">{estimatedHere ? t('estimatedAtStop') : t('tapStop')}</p>}
+            <p className="px-1 text-xs text-slate-500 dark:text-slate-400">{hasTrips ? `${t('tapTime')} ${t('tapStop')}` : t('tapTime')}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {keys.map((k) => (
@@ -159,22 +220,25 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
           {times.length ? (
             <Card className="grid grid-cols-4 gap-1.5 p-3! sm:grid-cols-5">
               {times.map((x, i) => {
-                const label = (
-                  <>
-                    {estimatedHere ? '~' : ''}
-                    {x.t}
-                    {x.notes?.length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70">{x.notes.map(tn).join(',')}</sup> : null}
-                  </>
-                );
+                const active = i === selIdx;
                 return (
-                  <span
+                  <button
                     key={i}
-                    className={`rounded-lg px-1 py-1.5 text-center text-sm tabular-nums ${
-                      i === nextIdx ? 'bg-sky-600 font-bold text-white' : i < nextIdx ? 'text-slate-300 dark:text-slate-600' : 'font-medium'
+                    onClick={() => setSelKey(keyOf(x, i))}
+                    aria-pressed={active}
+                    className={`min-h-11 rounded-lg px-1 py-1.5 text-center text-sm tabular-nums transition-colors ${
+                      active
+                        ? 'bg-sky-600 font-bold text-white'
+                        : i === nextIdx
+                          ? 'font-semibold text-sky-700 ring-2 ring-sky-300 hover:bg-sky-50 dark:text-sky-300 dark:ring-sky-500/50 dark:hover:bg-sky-400/10'
+                          : i < nextIdx
+                            ? 'text-slate-400 hover:bg-slate-100 dark:text-slate-600 dark:hover:bg-slate-800'
+                            : 'font-medium hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
-                    {estimatedHere && i !== nextIdx ? <EstTag>{label}</EstTag> : label}
-                  </span>
+                    {x.t}
+                    {x.notes?.length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70">{x.notes.map(tn).join(',')}</sup> : null}
+                  </button>
                 );
               })}
             </Card>
@@ -184,15 +248,31 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
         </section>
       )}
 
-      {Object.keys(line.notes).length > 0 && (
+      {(Object.keys(line.notes).length > 0 || selNotes.length > 0) && (
         <section>
           <SectionTitle>{t('notes')}</SectionTitle>
+          {line.hasParsedSchedule && selNotes.length > 0 && sel && (
+            <p className="mb-1 px-1 text-xs text-slate-500 dark:text-slate-400">
+              {t('tripNotes')}: <b className="tabular-nums">{sel.t}</b>
+            </p>
+          )}
           <ul className="space-y-1 px-1 text-sm">
-            {Object.entries(line.notes).map(([k, v]) => (
-              <li key={k}>
-                <b>{k}</b> – {tn(v)}
-              </li>
-            ))}
+            {Object.entries(line.notes).map(([k, v]) => {
+              const on = selNotes.includes(k);
+              const dim = selNotes.length > 0 && !on;
+              return (
+                <li key={k} className={on ? 'rounded-lg bg-sky-50 px-2 py-1 font-medium dark:bg-sky-400/10' : dim ? 'opacity-40' : ''}>
+                  <b>{k}</b> – {tn(v)}
+                </li>
+              );
+            })}
+            {selNotes
+              .filter((k) => !(k in line.notes))
+              .map((k) => (
+                <li key={`sel-${k}`} className="rounded-lg bg-sky-50 px-2 py-1 font-medium dark:bg-sky-400/10">
+                  {tn(k)}
+                </li>
+              ))}
             {line.generalNotes?.map((n, i) => (
               <li key={`g${i}`} className="text-slate-500">
                 {tn(n)}
@@ -203,9 +283,9 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
       )}
 
       {hasMap && !desktop && (
-        <section>
+        <section ref={mapBox}>
           <SectionTitle>{t('map')}</SectionTitle>
-          <RouteMap layers={layers} />
+          <RouteMap layers={layers} focus={mapFocus} />
         </section>
       )}
 
@@ -215,17 +295,25 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
           {dir.stops.length ? (
             <ol className="rounded-2xl border border-slate-200/70 bg-white py-2 pr-2 text-sm dark:border-slate-700/70 dark:bg-slate-900">
               {dir.stops.map((s, i) => {
-                const selectable = perStop;
                 const edge = i === 0 || i === dir.stops.length - 1;
-                const active = i === stopIdx && selectable;
+                const active = hasTrips ? i === stopIdx : i === focusIdx;
+                const label = stopTimeLabel(i);
                 const content = (
                   <>
                     <span className={`min-w-0 flex-1 ${edge || active ? 'font-semibold' : ''}`}>{s.name}</span>
-                    {hasOffsets && i > 0 && (
-                      <EstTag>
-                        <span className="text-xs">~+{dir.stopOffsets?.[i]} min</span>
-                      </EstTag>
-                    )}
+                    {label ? (
+                      hasOffsets && i > 0 ? (
+                        <EstTag>
+                          <span className="text-xs tabular-nums">{label}</span>
+                        </EstTag>
+                      ) : (
+                        <span className={`text-sm font-semibold tabular-nums ${i === 0 ? 'text-sky-700 dark:text-sky-300' : ''}`}>{label}</span>
+                      )
+                    ) : hasTrips && sel ? (
+                      <span className="text-xs text-slate-300 dark:text-slate-600" title={t('noTimeAtStop')}>
+                        –
+                      </span>
+                    ) : null}
                     {s.code && <span className="text-xs text-slate-400">{s.code}</span>}
                   </>
                 );
@@ -246,20 +334,16 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                     </div>
                     <div className={`rounded-xl ${active ? 'bg-sky-50 dark:bg-sky-400/10' : ''}`}>
                       <div className="flex items-center">
-                        {selectable ? (
-                          <button
-                            onClick={() => {
-                              setStopIdx(i);
-                              setLinksIdx(i);
-                            }}
-                            aria-pressed={i === stopIdx}
-                            className="flex min-h-11 min-w-0 flex-1 items-center gap-2 pr-1 text-left"
-                          >
-                            {content}
-                          </button>
-                        ) : (
-                          <div className="flex min-h-11 min-w-0 flex-1 items-center gap-2 pr-1">{content}</div>
-                        )}
+                        <button
+                          onClick={() => {
+                            tapStop(i);
+                            setLinksIdx(i);
+                          }}
+                          aria-pressed={active}
+                          className="flex min-h-11 min-w-0 flex-1 items-center gap-2 pr-1 text-left"
+                        >
+                          {content}
+                        </button>
                         <button
                           onClick={() => setLinksIdx(linksIdx === i ? null : i)}
                           aria-expanded={linksIdx === i}
@@ -276,6 +360,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                         <div className="flex flex-wrap items-center gap-2 pb-2.5">
                           <MapLinks stop={s} />
                           {!hasCoords && <span className="text-xs text-slate-400">{t('mapByName')}</span>}
+                          {s.approx && <span className="text-xs text-amber-600">{t('coordsApprox')}</span>}
                         </div>
                       )}
                     </div>

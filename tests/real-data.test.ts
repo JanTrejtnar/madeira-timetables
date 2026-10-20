@@ -4,6 +4,7 @@ import { board } from '../src/lib/departures';
 import { buildIndex, findConnections, searchLines, searchStops } from '../src/lib/search';
 import { buildNetwork, resolveNodes, servicesFor } from '../src/lib/network';
 import { plan } from '../src/lib/router';
+import { poiFor } from '../src/lib/aliases';
 import type { Dataset } from '../src/types';
 
 const file = 'public/data/schedules.json';
@@ -141,5 +142,38 @@ describe.skipIf(!existsSync(file))('coverage', () => {
     const f = tr.find((d) => d.stops[0].name === 'Funchal' && d.stops[1].name === 'ESTR Lombo Chão')!;
     expect(f.trips![0].times).toEqual(['10:00', '11:20', '11:35', '11:50']);
     expect(tr.some((d) => d.stops.some((s) => s.name === 'Seara Velha Baixo'))).toBe(true);
+  });
+  it('urban lines that span municipalities or exceed 15 km are interurbano (994 on Porto Santo stays urban)', () => {
+    const t = (n: string) => data.lines.find((l) => l.number === n)!;
+    for (const n of ['048', '050', '703', '704']) {
+      expect(t(n).type).toBe('interurbano');
+      expect(t(n).typeSiga).toBe('urbano');
+      expect(t(n).isInterurbano).toBe(true);
+    }
+    expect(t('994').type).toBe('urbano');
+    expect(t('007').type).toBe('urbano');
+  });
+  it('aliases: airport / Letiště / Flugplatz find the Aeroporto stops and the Aerobus', () => {
+    const ix = buildIndex(data.lines);
+    for (const q of ['airport', 'Letiště', 'Flugplatz']) {
+      expect(searchStops(ix, q).some((s) => s.key.includes('aeroporto'))).toBe(true);
+      expect(searchLines(ix, q).some((l) => l.number === '500')).toBe(true);
+    }
+  });
+  it('aliases: tourist destinations', () => {
+    const ix = buildIndex(data.lines);
+    expect(searchLines(ix, 'curral das freiras').some((l) => l.number === '181')).toBe(true);
+    expect(searchStops(ix, 'cabo girao').length).toBeGreaterThan(0);
+    expect(searchStops(ix, 'ribeiro frio').length).toBeGreaterThan(0);
+    // no scheduled line to Pico do Arieiro in the data: an information card is shown instead
+    const poi = poiFor('Pico do Arieiro')!;
+    expect(poi.info?.cs).toMatch(/Poiso/);
+    expect(searchLines(ix, 'Pico do Arieiro')).toHaveLength(0);
+    expect(searchStops(ix, 'poiso').length).toBeGreaterThan(0);
+  });
+  it('stops known only by name got approximate coordinates (181 Transbordo)', () => {
+    const l = data.lines.find((x) => x.number === '181')!;
+    for (const d of l.directions.filter((x) => x.variant === 'transbordo')) for (const s of d.stops) expect(s.lat).toBeDefined();
+    expect(l.directions.some((d) => d.stops.some((s) => s.approx))).toBe(true);
   });
 });

@@ -10,6 +10,8 @@ export interface Stop {
   name: string;
   lat?: number;
   lon?: number;
+  /** coordinates were not printed with the timetable but matched by name against a stop of another route */
+  approx?: boolean;
 }
 
 /** One run of a bus: a time at every stop (null = does not call there). */
@@ -48,6 +50,12 @@ export interface Line {
   route: string;
   municipality: string | null;
   type: 'urbano' | 'interurbano';
+  /** same as type === 'interurbano'; set by build:data (also for urban-labelled lines that span municipalities / > 15 km) */
+  isInterurbano?: boolean;
+  /** why build:data changed the type printed by SIGA */
+  typeReason?: string;
+  /** the type printed by SIGA when build:data overrode it */
+  typeSiga?: 'urbano' | 'interurbano';
   pdfUrl: string;
   pdfLocal?: string;
   jpgUrl: string | null;
@@ -70,4 +78,13 @@ export interface MapLayer {
   shapeId: number | null;
   stops: Stop[];
   color: string;
+}
+
+/** Stop of the first map layer to centre on and open the popup of, with the passing time of the selected trip. */
+export interface MapFocus {
+  stopIndex: number;
+  /** changes on every tap so the popup re-opens even for the same stop */
+  seq: number;
+  /** one display string per stop of the layer ("11:18", "~11:18" or null) */
+  times: (string | null)[];
 }

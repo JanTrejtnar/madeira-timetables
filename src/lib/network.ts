@@ -4,6 +4,7 @@ import { keysFor, listFor, withMinutes } from './departures';
 import { norm, stopKey } from './search';
 import { toMinutes } from './time';
 import type { Direction, Line } from '../types';
+import { expandTerms } from './aliases';
 
 export interface Node {
   id: number;
@@ -163,7 +164,8 @@ export interface Suggestion {
 export function suggest(net: Network, lines: Line[], query: string, limit = 10): Suggestion[] {
   const q = norm(query);
   if (q.length < 2) return [];
-  const tokens = q.split(' ');
+  const terms = expandTerms(query).map((x) => x.split(' '));
+  const hit = (key: string) => terms.some((tokens) => tokens.every((t) => key.includes(t)));
   const count = new Map<string, Set<number>>();
   for (const line of lines) {
     line.directions.forEach((_, di) => {
@@ -175,11 +177,11 @@ export function suggest(net: Network, lines: Line[], query: string, limit = 10):
   }
   const seen = new Map<string, Suggestion>();
   for (const n of net.nodes) {
-    if (!tokens.every((t) => n.key.includes(t))) continue;
+    if (!hit(n.key)) continue;
     if (!seen.has(n.key)) seen.set(n.key, { key: n.key, name: n.name, lines: count.get(n.key)?.size ?? 0 });
   }
   for (const [k, a] of net.aliases) {
-    if (!tokens.every((t) => k.includes(t)) || seen.has(k)) continue;
+    if (!hit(k) || seen.has(k)) continue;
     const ls = new Set<number>();
     for (const line of lines) line.directions.forEach((_, di) => { if ((net.dirNodes.get(dirKey(line, di)) ?? []).some((id) => a.nodes.has(id))) ls.add(line.id); });
     seen.set(k, { key: k, name: a.name, lines: ls.size });
@@ -197,9 +199,10 @@ export function resolveNodes(net: Network, input: string, pickedKey?: string | n
     for (const id of net.aliases.get(pickedKey)?.nodes ?? []) out.add(id);
   }
   if (out.size) return out;
-  const tokens = norm(input).split(' ').filter(Boolean);
-  if (!tokens.length) return out;
-  for (const n of net.nodes) if (tokens.every((t) => n.key.includes(t))) out.add(n.id);
-  for (const [k, a] of net.aliases) if (tokens.every((t) => k.includes(t))) for (const id of a.nodes) out.add(id);
+  const terms = expandTerms(input).map((x) => x.split(' ').filter(Boolean));
+  if (!terms.length) return out;
+  const hit = (key: string) => terms.some((tokens) => tokens.every((t) => key.includes(t)));
+  for (const n of net.nodes) if (hit(n.key)) out.add(n.id);
+  for (const [k, a] of net.aliases) if (hit(k)) for (const id of a.nodes) out.add(id);
   return out;
 }

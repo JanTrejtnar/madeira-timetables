@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { easter, holidayOn, likelySchoolPeriod, serviceDay } from './holidays';
+import { easter, holidayOn, isMadeiraSchoolDay, likelySchoolPeriod, serviceDay } from './holidays';
 
 describe('easter', () => {
   it('computes known dates', () => {
@@ -40,11 +40,34 @@ describe('serviceDay', () => {
   });
 });
 
-describe('likelySchoolPeriod', () => {
-  it('guesses summer and Christmas as holidays', () => {
-    expect(likelySchoolPeriod({ y: 2026, m: 10, d: 19 })).toBe(true);
-    expect(likelySchoolPeriod({ y: 2026, m: 7, d: 15 })).toBe(false);
-    expect(likelySchoolPeriod({ y: 2026, m: 12, d: 23 })).toBe(false);
-    expect(likelySchoolPeriod({ y: 2026, m: 3, d: 30 })).toBe(false); // Easter 2026-04-05
+describe('school period', () => {
+  const p = (y: number, m: number, d: number) => likelySchoolPeriod({ y, m, d });
+  it('summer, Christmas, Carnival and Easter are breaks', () => {
+    expect(p(2026, 10, 19)).toBe(true);
+    expect(p(2026, 6, 30)).toBe(true);
+    expect(p(2026, 7, 1)).toBe(false);
+    expect(p(2026, 9, 10)).toBe(false);
+    expect(p(2026, 9, 11)).toBe(true);
+    expect(p(2026, 12, 17)).toBe(true);
+    expect(p(2026, 12, 18)).toBe(false);
+    expect(p(2027, 1, 2)).toBe(false);
+    expect(p(2027, 1, 3)).toBe(true);
+    // Easter 2026-04-05, Shrove Tuesday 2026-02-17 (Monday 16 - Sunday 22)
+    expect(p(2026, 2, 15)).toBe(true);
+    expect(p(2026, 2, 16)).toBe(false);
+    expect(p(2026, 2, 22)).toBe(false);
+    expect(p(2026, 2, 23)).toBe(true);
+    expect(p(2026, 3, 28)).toBe(true);
+    expect(p(2026, 3, 29)).toBe(false);
+    expect(p(2026, 4, 12)).toBe(false);
+    expect(p(2026, 4, 13)).toBe(true);
+  });
+  it('isMadeiraSchoolDay: weekdays in term only, never on holidays', () => {
+    expect(isMadeiraSchoolDay(new Date('2026-10-19T12:00:00Z'))).toBe(true); // Monday
+    expect(isMadeiraSchoolDay(new Date('2026-10-17T12:00:00Z'))).toBe(false); // Saturday
+    expect(isMadeiraSchoolDay(new Date('2026-11-02T12:00:00Z'))).toBe(true);
+    expect(isMadeiraSchoolDay(new Date('2026-11-01T12:00:00Z'))).toBe(false); // Sunday, All Saints
+    expect(isMadeiraSchoolDay(new Date('2026-12-08T12:00:00Z'))).toBe(false); // Immaculate Conception
+    expect(isMadeiraSchoolDay(new Date('2026-07-15T12:00:00Z'))).toBe(false); // summer
   });
 });

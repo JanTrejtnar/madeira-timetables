@@ -3,6 +3,7 @@ import { assetUrl } from '../data';
 import { useT } from '../i18n';
 import type { Network } from '../lib/network';
 import type { Upcoming } from '../lib/departures';
+import type { MapFocus } from '../types';
 import type { Ctx } from '../lib/departures';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
 import type { Direction, Line, MapLayer, Stop } from '../types';
@@ -17,6 +18,8 @@ export interface Shared {
   desktop: boolean;
   /** shows routes on the big desktop map (null clears it) */
   setMap: (layers: MapLayer[] | null) => void;
+  /** centres the map on a stop of the shown route and opens its popup (desktop map) */
+  setMapFocus: (focus: MapFocus | null) => void;
 }
 
 /** Colour of a line on maps and timelines: green = urbano, slate = interurbano. */
