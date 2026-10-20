@@ -64,7 +64,7 @@ check('SAM line 20: printed (not estimated) times at the stop', timeCount(t20) >
 async function planner(from, to, { pick = false, time = '09:00' } = {}) {
   await page.goto(base, { waitUntil: 'networkidle0' });
   await page.evaluate(() => (location.hash = ''));
-  await clickButton('Odkud');
+  await clickButton('Plánovač');
   await sleep(300);
   const inputs = await page.$$('input[aria-label]');
   const find = async (label) => {
@@ -91,13 +91,13 @@ async function planner(from, to, { pick = false, time = '09:00' } = {}) {
 
 const typePressed = await (async () => {
   await page.goto(base, { waitUntil: 'networkidle0' });
-  await clickButton('Odkud');
+  await clickButton('Plánovač');
   return page.evaluate(() => [...document.querySelectorAll('button[aria-pressed="true"]')].map((b) => b.innerText.trim()));
 })();
-check('planner: default type filter is Meziměstské', typePressed.includes('Meziměstské'), JSON.stringify(typePressed));
+check('planner: default type filter is Vše', typePressed.includes('Vše'), JSON.stringify(typePressed));
 
 const t1 = await planner('pinga', 'mercedes');
-check('planner: urban connection found in "prefer" mode (Pinga -> Mercedes)', /\d\d:\d\d/.test(t1) && /Pinga/.test(t1));
+check('planner: urban connection found (type filter: all) (Pinga -> Mercedes)', /\d\d:\d\d/.test(t1) && /Pinga/.test(t1));
 check('planner: estimated arrival flagged with ~', /~\s?\d\d:\d\d/.test(t1));
 
 const t2 = await planner('machico', 'funchal', { time: '07:00' });

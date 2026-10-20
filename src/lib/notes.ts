@@ -273,3 +273,21 @@ export function hasTranslation(text: string): boolean {
   const c = clean(text);
   return EXACT_LC.has(c.toLowerCase()) || RULES.some(([re]) => re.test(c));
 }
+
+const VARIANTS: Record<string, [cs: string, en: string, pt: string]> = {
+  up: ['Nahoru', 'Uphill', 'Subida'],
+  down: ['Dolů', 'Downhill', 'Descida'],
+  transbordo: ['Přestup (Transbordo)', 'Transfer (Transbordo)', 'Transbordo'],
+};
+
+/** Direction variant printed in the timetable header ("up", "via Campanário e Adega", …) in the UI language. */
+export function variantLabel(variant: string, lang: Lang): string {
+  const i = lang === 'cs' ? 0 : lang === 'en' ? 1 : 2;
+  const known = VARIANTS[variant.trim().toLowerCase()];
+  if (known) return known[i];
+  if (lang !== 'pt') {
+    const via = variant.match(/^via\s+(.+)$/i);
+    if (via) return `${lang === 'cs' ? 'přes' : 'via'} ${via[1]}`;
+  }
+  return translateNote(variant, lang);
+}

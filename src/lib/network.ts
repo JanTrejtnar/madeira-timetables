@@ -13,6 +13,8 @@ export interface Node {
   name: string;
   lat?: number;
   lon?: number;
+  /** municipality (concelho) */
+  muni?: string;
 }
 
 export interface Network {
@@ -67,10 +69,11 @@ export function buildNetwork(lines: Line[]): Network {
           if (node && node.lat === undefined) Object.assign(node, p);
         } else node = cands[0];
         if (!node) {
-          node = { id: nodes.length, key, name: displayName(s.name), ...(s.lat !== undefined ? { lat: s.lat, lon: s.lon } : {}) };
+          node = { id: nodes.length, key, name: displayName(s.name), ...(s.lat !== undefined ? { lat: s.lat, lon: s.lon } : {}), ...(s.muni ? { muni: s.muni } : {}) };
           nodes.push(node);
           keyToNodes.set(key, [...(keyToNodes.get(key) ?? []), node.id]);
         }
+        if (!node.muni && s.muni) node.muni = s.muni;
         return node.id;
       });
       dirNodes.set(dirKey(line, di), ids);
@@ -159,7 +162,14 @@ export interface Suggestion {
   key: string;
   name: string;
   lines: number;
+  /** "all stops of <municipality>": key is `@muni:<name>`, the UI adds the "(all stops)" wording */
+  group?: boolean;
 }
+
+/** Municipalities of Madeira that can be picked as a whole ("all stops of Santana"). */
+export const MUNICIPALITIES = ['Funchal', 'Câmara de Lobos', 'Ribeira Brava', 'Ponta do Sol', 'Calheta', 'Porto Moniz', 'São Vicente', 'Santana', 'Machico', 'Santa Cruz', 'Porto Santo'] as const;
+export const GROUP_PREFIX = '@muni:';
+const muniKeys = MUNICIPALITIES.map((m) => [m, norm(m)] as const);
 
 export function suggest(net: Network, lines: Line[], query: string, limit = 10): Suggestion[] {
   const q = norm(query);
@@ -176,24 +186,43 @@ export function suggest(net: Network, lines: Line[], query: string, limit = 10):
     });
   }
   const seen = new Map<string, Suggestion>();
+  const groups: Suggestion[] = [];
+  for (const [m, k] of muniKeys) {
+    if (!k.startsWith(q) && !(q.length >= 4 && k.includes(q))) continue;
+    const ids = new Set(net.nodes.filter((x) => x.muni === m).map((x) => x.id));
+    if (!ids.size) continue;
+    const ls = new Set<number>();
+    for (const line of lines) line.directions.forEach((_, di) => { if ((net.dirNodes.get(dirKey(line, di)) ?? []).some((id) => ids.has(id))) ls.add(line.id); });
+    groups.push({ key: GROUP_PREFIX + m, name: m, lines: ls.size, group: true });
+  }
+  groups.sort((a, b) => Number(norm(b.name) === q) - Number(norm(a.name) === q) || Number(norm(b.name).startsWith(q)) - Number(norm(a.name).startsWith(q)) || b.lines - a.lines);
+  const groupKeys = new Set(groups.map((g) => norm(g.name)));
   for (const n of net.nodes) {
     if (!hit(n.key)) continue;
     if (!seen.has(n.key)) seen.set(n.key, { key: n.key, name: n.name, lines: count.get(n.key)?.size ?? 0 });
   }
   for (const [k, a] of net.aliases) {
-    if (!hit(k) || seen.has(k)) continue;
+    if (!hit(k) || seen.has(k) || groupKeys.has(k)) continue;
     const ls = new Set<number>();
     for (const line of lines) line.directions.forEach((_, di) => { if ((net.dirNodes.get(dirKey(line, di)) ?? []).some((id) => a.nodes.has(id))) ls.add(line.id); });
     seen.set(k, { key: k, name: a.name, lines: ls.size });
   }
-  return [...seen.values()]
+  const stops = [...seen.values()]
     .sort((a, b) => Number(b.key.startsWith(q)) - Number(a.key.startsWith(q)) || b.lines - a.lines || a.key.length - b.key.length)
     .slice(0, limit);
+  return [...groups, ...stops];
 }
 
 /** Nodes for a user input: an exact suggestion key, or every node whose name contains the typed words. */
 export function resolveNodes(net: Network, input: string, pickedKey?: string | null): Set<number> {
   const out = new Set<number>();
+  // "all stops of <municipality>": picked from the suggestions, or the bare municipality name typed
+  const typed = muniKeys.find(([, k]) => k === norm(input));
+  const muni = pickedKey?.startsWith(GROUP_PREFIX) ? pickedKey.slice(GROUP_PREFIX.length) : !pickedKey ? typed?.[0] : undefined;
+  if (muni) {
+    for (const x of net.nodes) if (x.muni === muni) out.add(x.id);
+    if (out.size) return out;
+  }
   if (pickedKey) {
     for (const id of net.keyToNodes.get(pickedKey) ?? []) out.add(id);
     for (const id of net.aliases.get(pickedKey)?.nodes ?? []) out.add(id);

@@ -2,7 +2,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { board } from '../src/lib/departures';
 import { buildIndex, findConnections, searchLines, searchStops } from '../src/lib/search';
-import { buildNetwork, resolveNodes, servicesFor } from '../src/lib/network';
+import { buildNetwork, resolveNodes, servicesFor, suggest } from '../src/lib/network';
+import { variantLabel } from '../src/lib/notes';
 import { plan } from '../src/lib/router';
 import { poiFor } from '../src/lib/aliases';
 import { departuresFrom, nearbyStops } from '../src/lib/nearby';
@@ -205,5 +206,75 @@ describe.skipIf(!existsSync(file))('coverage', () => {
     expect(r.stops[0].dist).toBeLessThan(100);
     const deps = departuresFrom(net, data.lines, r.stops.find((x) => /Parque/.test(x.name)) ?? r.stops[0], { now: { y: 2026, m: 10, d: 20, minutes: 12 * 60 }, school: true, municipalities: ['Funchal'] as const });
     expect(deps.every((d) => d.next.inMin >= 0)).toBe(true);
+  });
+});
+
+describe.skipIf(!existsSync(file))('GTFS coordinates and municipality search (real data)', () => {
+  const data: Dataset = JSON.parse(readFileSync(file, 'utf8'));
+  const gtfs: { stops: { code: string; name: string; lat: number; lon: number }[] } = JSON.parse(readFileSync('data/gtfs/stops.json', 'utf8'));
+  const km = (a: [number, number], b: [number, number]) => Math.hypot((a[0] - b[0]) * 111, (a[1] - b[1]) * 93);
+  const net = buildNetwork(data.lines);
+
+  it('feed stops are on Madeira with unique ids', () => {
+    expect(gtfs.stops.length).toBeGreaterThan(1500);
+    for (const s of gtfs.stops) {
+      expect(s.lat).toBeGreaterThan(32.3);
+      expect(s.lat).toBeLessThan(33.2);
+      expect(s.lon).toBeGreaterThan(-17.4);
+      expect(s.lon).toBeLessThan(-16.2);
+    }
+  });
+  it('stops whose code is in the feed carry the official position (or lie within 150 m of it)', () => {
+    const byCode = new Map<string, typeof gtfs.stops>();
+    for (const s of gtfs.stops) byCode.set(s.code, [...(byCode.get(s.code) ?? []), s]);
+    let checked = 0;
+    let apart = 0; // a stop code shared by two different stops of the two systems keeps its SIGA position
+    for (const l of data.lines) for (const d of l.directions) for (const s of d.stops) {
+      const c = s.code ? byCode.get(String(s.code)) : undefined;
+      if (!c || s.lat === undefined) continue;
+      checked++;
+      if (Math.min(...c.map((x) => km([s.lat!, s.lon!], [x.lat, x.lon]))) >= 0.15) apart++;
+    }
+    expect(apart).toBeLessThanOrEqual(3);
+    expect(checked).toBeGreaterThan(3000);
+  });
+  it('Teleférico-Término (4A) uses the official GTFS position, not an estimate', () => {
+    const s = data.lines.find((l) => l.id === 9001)!.directions[0].stops[0];
+    expect(s.approx).toBeFalsy();
+    expect(km([s.lat!, s.lon!], [32.647321, -16.902695])).toBeLessThan(0.03);
+  });
+  it('fewer stops lack coordinates than before the feed (1122)', () => {
+    const missing = data.lines.reduce((n, l) => n + l.directions.reduce((m, d) => m + d.stops.filter((s) => s.lat === undefined).length, 0), 0);
+    expect(missing).toBeLessThan(850);
+  });
+  it('typing a town offers "all stops" first, before single stops', () => {
+    for (const q of ['funchal', 'santana', 'machico', 'santa cruz', 'ribeira brava', 'câmara de lobos', 'porto moniz', 'são vicente', 'calheta', 'ponta do sol']) {
+      const first = suggest(net, data.lines, q)[0];
+      expect(first.group, q).toBe(true);
+      expect(first.key.startsWith('@muni:')).toBe(true);
+    }
+    expect(suggest(net, data.lines, 'pinga')[0].group).toBeFalsy();
+  });
+  it('the group resolves to the stops of the municipality only', () => {
+    const santana = resolveNodes(net, '', '@muni:Santana');
+    const funchal = resolveNodes(net, '', '@muni:Funchal');
+    expect(santana.size).toBeGreaterThan(5);
+    expect(funchal.size).toBeGreaterThan(santana.size);
+    for (const id of santana) expect(net.nodes[id].muni).toBe('Santana');
+    expect([...santana].some((id) => funchal.has(id))).toBe(false);
+  });
+  it('connections from "all stops of Santana" to "all stops of Funchal" leave from several Santana stops, in time order', () => {
+    const trips = servicesFor(net, data.lines, { y: 2026, m: 10, d: 19 }, true, ['Funchal']);
+    const p = plan(net, trips, resolveNodes(net, '', '@muni:Santana'), resolveNodes(net, '', '@muni:Funchal'), 8 * 60);
+    expect(p.direct.length).toBeGreaterThan(1);
+    for (let i = 1; i < p.direct.length; i++) expect(p.direct[i].depart).toBeGreaterThanOrEqual(p.direct[i - 1].depart);
+    expect(new Set(p.direct.map((x) => x.legs[0].trip.nodes[x.legs[0].fromPos])).size).toBeGreaterThan(1);
+  });
+  it('direction variants are translated', () => {
+    expect(variantLabel('up', 'cs')).toBe('Nahoru');
+    expect(variantLabel('up', 'en')).toBe('Uphill');
+    expect(variantLabel('down', 'cs')).toBe('Dolů');
+    expect(variantLabel('via Campanário e Adega', 'cs')).toBe('přes Campanário e Adega');
+    expect(variantLabel('up', 'pt')).toBe('Subida');
   });
 });

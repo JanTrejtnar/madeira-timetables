@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useT } from '../i18n';
 import { addDays } from '../lib/holidays';
 import { resolveNodes, servicesFor, suggest } from '../lib/network';
-import { mergePlans, plan, type Itinerary } from '../lib/router';
+import { plan, type Itinerary } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
 import { fmtMinutes } from '../lib/time';
 import type { Line, MapLayer } from '../types';
@@ -15,6 +15,7 @@ interface Picked {
 }
 
 function Combobox({ label, placeholder, value, onChange, shared }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; shared: Shared }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const debounced = useDebounced(value.text, 120);
   const items = useMemo(() => (open ? suggest(shared.net, shared.lines, debounced) : []), [open, debounced, shared.net, shared.lines]);
@@ -43,21 +44,24 @@ function Combobox({ label, placeholder, value, onChange, shared }: { label: stri
       />
       {open && items.length > 0 && (
         <ul className="absolute -left-9 -right-12 top-full z-30 mt-2 max-h-72 overflow-auto rounded-2xl border border-slate-200/70 bg-white py-1 shadow-xl dark:border-slate-700 dark:bg-slate-900">
-          {items.map((s) => (
+          {items.map((s) => {
+            const name = s.group ? t('allStopsOf', { name: s.name }) : s.name;
+            return (
             <li key={s.key}>
               <button
-                className="flex min-h-11 w-full items-center gap-3 px-4 text-left hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-800 dark:active:bg-slate-800"
+                className={`flex min-h-11 w-full items-center gap-3 px-4 text-left hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-800 dark:active:bg-slate-800 ${s.group ? 'bg-sky-50/70 font-semibold dark:bg-sky-400/10' : ''}`}
                 onClick={() => {
-                  onChange({ text: s.name, key: s.key });
+                  onChange({ text: name, key: s.key });
                   setOpen(false);
                 }}
               >
-                <Icon name="pin" className="size-4 shrink-0 text-slate-400" />
-                <span className="min-w-0 flex-1 truncate">{s.name}</span>
+                <Icon name="pin" className={`size-4 shrink-0 ${s.group ? 'text-sky-600' : 'text-slate-400'}`} />
+                <span className="min-w-0 flex-1 truncate">{name}</span>
                 <span className="shrink-0 text-xs text-slate-400">{s.lines}×</span>
               </button>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
@@ -211,9 +215,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     if (fromReq) setFrom({ text: fromReq.text, key: fromReq.key });
   }, [fromReq?.seq]); // eslint-disable-line react-hooks/exhaustive-deps
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  // the island-wide intercity network is the main use; urban lines can still be allowed as a fallback ("prefer")
-  const [type, setType] = useState<LineTypeFilter>('interurbano');
-  const [strict, setStrict] = useState(false);
+  const [type, setType] = useState<LineTypeFilter>('all');
+  const [directOnly, setDirectOnly] = useState(false);
 
   const date = useMemo(() => addDays({ y: shared.ctx.now.y, m: shared.ctx.now.m, d: shared.ctx.now.d }, dayOffset), [shared.ctx.now.y, shared.ctx.now.m, shared.ctx.now.d, dayOffset]);
   // all trips of the day; rebuilt only when the date or the school switch changes
@@ -229,10 +232,9 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const B = resolveNodes(shared.net, dTo.text, dTo.key);
     if (!dFrom.text.trim() || !dTo.text.trim()) return null;
     const only = type === 'all' ? trips : trips.filter((tr) => tr.line.type === type);
-    const first = plan(shared.net, only, A, B, departAt);
-    const result = type === 'all' || strict ? first : mergePlans(first, plan(shared.net, trips, A, B, departAt));
-    return { A: A.size, B: B.size, plan: result };
-  }, [shared.net, trips, dFrom, dTo, departAt, type, strict]);
+    const found = plan(shared.net, only, A, B, departAt);
+    return { A: A.size, B: B.size, plan: directOnly ? { ...found, transfers: [] } : found };
+  }, [shared.net, trips, dFrom, dTo, departAt, type, directOnly]);
 
   const pending = (from !== dFrom || to !== dTo) && !!from.text.trim() && !!to.text.trim();
   const empty = result && !result.plan.direct.length && !result.plan.transfers.length;
@@ -346,22 +348,10 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
           <TypeFilter value={type} onChange={setType} />
-          {type !== 'all' && (
-            <div className="inline-flex rounded-full bg-slate-100 p-0.5 dark:bg-slate-800" role="group" title={t('typeHint')}>
-              {([false, true] as const).map((v) => (
-                <button
-                  key={String(v)}
-                  aria-pressed={strict === v}
-                  onClick={() => setStrict(v)}
-                  className={`h-9 rounded-full px-3 text-sm font-medium transition-colors ${
-                    strict === v ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'
-                  }`}
-                >
-                  {v ? t('typeStrict') : t('typePrefer')}
-                </button>
-              ))}
-            </div>
-          )}
+          <label className="flex min-h-9 cursor-pointer items-center gap-2 rounded-full px-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+            <input type="checkbox" checked={directOnly} onChange={(e) => setDirectOnly(e.target.checked)} className="size-4 accent-sky-600" />
+            {t('directOnly')}
+          </label>
         </div>
       </Card>
 
@@ -369,9 +359,16 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       {pending && <SkeletonCards n={2} tall />}
       {!pending && result && (result.A === 0 || result.B === 0) && <EmptyState icon="alert" tone="warn" title={t('noStopNodesTitle')} body={t('noStopNodes')} />}
       {!pending && empty && result.A > 0 && result.B > 0 && <EmptyState icon="frown" title={t('noConnectionTitle')} body={t('noConnectionBody')} />}
-      {!pending && empty && result.A > 0 && result.B > 0 && type !== 'all' && (
+      {!pending && empty && result.A > 0 && result.B > 0 && (type !== 'all' || directOnly) && (
         <div className="flex justify-center">
-          <Chip onClick={() => setType('all')}>{t('tryAllTypes')}</Chip>
+          <Chip
+            onClick={() => {
+              setType('all');
+              setDirectOnly(false);
+            }}
+          >
+            {t('tryAllTypes')}
+          </Chip>
         </div>
       )}
 

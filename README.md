@@ -80,3 +80,10 @@ get positions interpolated along the route (`scripts/lib-interpolate.mjs`, flag 
 
 PWA icons are rendered from `public/icon.svg` by `node scripts/make-icons.mjs`. `node scripts/e2e-pwa.mjs` checks manifest, service-worker
 cache, offline reload and "stops near me" against `npx vite preview --port 4173`.
+
+## Official stop positions (GTFS) and "all stops of a town"
+
+- `npm run fetch:gtfs` downloads https://www.horariosdofunchal.pt/googletransit.zip and keeps the stops in `data/gtfs/stops.json` (committed, so `build:data` works offline).
+- `build:data` matches SIGA stops to feed stops by stop code and takes the official position (fills missing ones, replaces SIGA's when within 150 m or when ours was only approximate); feed stop names also feed the name matching for text-only lines.
+- Every stop gets a municipality (`muni`): nearest reference point (feed stops labelled by the operator + parish seats), else a locality/town named in the stop name, else the neighbouring stops of the direction. Only an approximation by position – borders are not exact.
+- The planner suggests "<town> (all stops)" first; the search then runs from/to every stop of that municipality.

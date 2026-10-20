@@ -14,6 +14,8 @@ export interface Stop {
   approx?: boolean;
   /** position interpolated along the route polyline between two stops with known positions (build:data) */
   isEstimatedLocation?: boolean;
+  /** Municipality (concelho) of the stop, set by build:data */
+  muni?: string;
 }
 
 /** One run of a bus: a time at every stop (null = does not call there). */

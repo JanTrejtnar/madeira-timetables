@@ -39,6 +39,30 @@ try {
   });
   check('schedules.json is in the SW cache', cached.some((u) => u.includes('data/schedules.json')), `${cached.length} cached files`);
 
+  // planner is the first tab and the default one; simplified filters
+  const tabs = await page.evaluate(() => [...document.querySelectorAll('nav[aria-label=Tabs]')].map((n) => [...n.querySelectorAll('button')].map((b) => b.textContent.trim())));
+  check('tab order: Plánovač, Hledat, Odjezdy', tabs.length > 0 && tabs.every((t) => /Plánovač/.test(t[0]) && /Hledat/.test(t[1]) && /Odjezdy/.test(t[2])), JSON.stringify(tabs));
+  let body0 = await text(page);
+  check('planner opens first; no "Preferovat" / "Pouze tento typ"', /Odkud|Nástupní/.test(await page.evaluate(() => document.body.innerHTML)) && !/Preferovat|Pouze tento typ/.test(body0));
+  check('"Pouze přímá spojení" checkbox + Vše/Meziměstské/Městské switch', /Pouze přímá spojení/.test(body0) && ['Vše', 'Meziměstské', 'Městské'].every((x) => body0.includes(x)));
+  const typeIn = async (label, value) => {
+    await page.evaluate((l, v) => { const i = document.querySelector(`input[aria-label="${l}"]`); i.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(i, v); i.dispatchEvent(new Event('input', { bubbles: true })); }, label, value);
+    await sleep(500);
+  };
+  await typeIn('Odkud', 'santana');
+  const first = await page.evaluate(() => document.querySelector('ul li button')?.innerText.replace(/\s+/g, ' '));
+  check('"santana": first suggestion is the whole municipality', /^Santana \(všechny zastávky\)/.test(first ?? ''), first);
+  await page.evaluate(() => document.querySelector('ul li button')?.click());
+  await typeIn('Kam', 'funchal');
+  const firstTo = await page.evaluate(() => document.querySelector('ul li button')?.innerText.replace(/\s+/g, ' '));
+  check('"funchal": first suggestion is the whole municipality', /^Funchal \(všechny zastávky\)/.test(firstTo ?? ''), firstTo);
+  await page.evaluate(() => document.querySelector('ul li button')?.click());
+  await sleep(900);
+  const bodyG = await text(page);
+  check('Santana (all stops) -> Funchal (all stops) lists connections', (bodyG.match(/\d\d:\d\d/g) ?? []).length >= 4, (bodyG.match(/\d\d:\d\d/g) ?? []).length + ' times');
+  await clickText(page, /^Hledat$/);
+  await sleep(300);
+
   // Pico do Areeiro search
   await page.type('input:not([type=checkbox])', 'Arieiro');
   await sleep(700);
@@ -73,6 +97,8 @@ try {
   await sleep(2500);
   body = await text(page);
   check('app + data load after reload while offline', !/Nepodařilo se načíst/.test(body) && (await page.$('input:not([type=checkbox])')) !== null);
+  await clickText(page, /^Hledat$/);
+  await sleep(300);
   await page.type('input:not([type=checkbox])', 'Pico do Areeiro');
   await sleep(800);
   check('offline search finds the line', /HF Areeiro|Pico do Areeiro/.test(await text(page)));

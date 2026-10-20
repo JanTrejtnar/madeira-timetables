@@ -18,3 +18,4 @@ public/pdf/
 .vscode/
 .claude/
 !public/*.png
+data/gtfs-raw/

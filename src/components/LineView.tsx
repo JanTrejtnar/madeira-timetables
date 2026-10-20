@@ -14,7 +14,7 @@ function defaultDay(keys: DayKey[], shared: Shared): DayKey | undefined {
   return keys.find((k) => wanted.includes(k)) ?? keys[0];
 }
 
-import { translateNote } from '../lib/notes';
+import { translateNote, variantLabel } from '../lib/notes';
 
 /** Times of a direction on a day key: at `stopIdx` for timetables with times at every stop, else departures from the terminal. */
 function timesOfDay(dir: Direction, day: DayKey, stopIdx: number): Timed[] {
@@ -194,7 +194,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
         <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('direction')}>
           {line.directions.map((d, i) => (
             <Chip key={i} active={i === dirIndex} onClick={() => setDirIndex(i)}>
-              {d.variant ? `${tn(d.variant)}: ` : ''}
+              {d.variant ? `${variantLabel(d.variant, lang)}: ` : ''}
               {dirLabel(d, line.name)}
             </Chip>
           ))}
@@ -244,67 +244,6 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
             </Card>
           ) : (
             <p className="px-1 text-sm text-slate-500">{t('noDeparturesInDir')}</p>
-          )}
-        </section>
-      )}
-
-      {(Object.keys(line.notes).length > 0 || selNotes.length > 0) && (
-        <section>
-          <SectionTitle>{t('notes')}</SectionTitle>
-          {line.hasParsedSchedule && selNotes.length > 0 && sel && (
-            <p className="mb-1 px-1 text-xs text-slate-500 dark:text-slate-400">
-              {t('tripNotes')}: <b className="tabular-nums">{sel.t}</b>
-            </p>
-          )}
-          <ul className="space-y-1 px-1 text-sm">
-            {Object.entries(line.notes).map(([k, v]) => {
-              const on = selNotes.includes(k);
-              const dim = selNotes.length > 0 && !on;
-              return (
-                <li key={k} className={on ? 'rounded-lg bg-sky-50 px-2 py-1 font-medium dark:bg-sky-400/10' : dim ? 'opacity-40' : ''}>
-                  <b>{k}</b> – {tn(v)}
-                </li>
-              );
-            })}
-            {selNotes
-              .filter((k) => !(k in line.notes))
-              .map((k) => (
-                <li key={`sel-${k}`} className="rounded-lg bg-sky-50 px-2 py-1 font-medium dark:bg-sky-400/10">
-                  {tn(k)}
-                </li>
-              ))}
-            {line.generalNotes?.map((n, i) => (
-              <li key={`g${i}`} className="text-slate-500">
-                {tn(n)}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {line.info && (
-        <section className="flex flex-col gap-2 rounded-2xl border border-sky-200 bg-sky-50/60 p-4 text-sm dark:border-sky-400/30 dark:bg-sky-400/5">
-          {line.operator && (
-            <p>
-              <span className="text-slate-500">{t('lineOperator')}:</span> <b>{line.operator}</b>
-            </p>
-          )}
-          {line.info.price && (
-            <div>
-              <p className="font-semibold">{t('linePrice')}</p>
-              <p className="text-slate-600 dark:text-slate-300">{line.info.price[lang]}</p>
-            </div>
-          )}
-          {line.info.conditions && (
-            <div>
-              <p className="font-semibold">{t('lineConditions')}</p>
-              <p className="text-slate-600 dark:text-slate-300">{line.info.conditions[lang]}</p>
-            </div>
-          )}
-          {line.sourceUrl && (
-            <a href={line.sourceUrl} target="_blank" rel="noreferrer" className="text-sky-700 underline dark:text-sky-300">
-              {t('lineSourcePage')}
-            </a>
           )}
         </section>
       )}
@@ -397,6 +336,67 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
             </ol>
           ) : (
             <p className="px-1 text-sm text-slate-500">{t('noStops')}</p>
+          )}
+        </section>
+      )}
+
+      {(Object.keys(line.notes).length > 0 || selNotes.length > 0) && (
+        <section>
+          <SectionTitle>{t('notes')}</SectionTitle>
+          {line.hasParsedSchedule && selNotes.length > 0 && sel && (
+            <p className="mb-1 px-1 text-xs text-slate-500 dark:text-slate-400">
+              {t('tripNotes')}: <b className="tabular-nums">{sel.t}</b>
+            </p>
+          )}
+          <ul className="space-y-1 px-1 text-sm">
+            {Object.entries(line.notes).map(([k, v]) => {
+              const on = selNotes.includes(k);
+              const dim = selNotes.length > 0 && !on;
+              return (
+                <li key={k} className={on ? 'rounded-lg bg-sky-50 px-2 py-1 font-medium dark:bg-sky-400/10' : dim ? 'opacity-40' : ''}>
+                  <b>{k}</b> – {tn(v)}
+                </li>
+              );
+            })}
+            {selNotes
+              .filter((k) => !(k in line.notes))
+              .map((k) => (
+                <li key={`sel-${k}`} className="rounded-lg bg-sky-50 px-2 py-1 font-medium dark:bg-sky-400/10">
+                  {tn(k)}
+                </li>
+              ))}
+            {line.generalNotes?.map((n, i) => (
+              <li key={`g${i}`} className="text-slate-500">
+                {tn(n)}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {line.info && (
+        <section className="flex flex-col gap-2 rounded-2xl border border-sky-200 bg-sky-50/60 p-4 text-sm dark:border-sky-400/30 dark:bg-sky-400/5">
+          {line.operator && (
+            <p>
+              <span className="text-slate-500">{t('lineOperator')}:</span> <b>{line.operator}</b>
+            </p>
+          )}
+          {line.info.price && (
+            <div>
+              <p className="font-semibold">{t('linePrice')}</p>
+              <p className="text-slate-600 dark:text-slate-300">{line.info.price[lang]}</p>
+            </div>
+          )}
+          {line.info.conditions && (
+            <div>
+              <p className="font-semibold">{t('lineConditions')}</p>
+              <p className="text-slate-600 dark:text-slate-300">{line.info.conditions[lang]}</p>
+            </div>
+          )}
+          {line.sourceUrl && (
+            <a href={line.sourceUrl} target="_blank" rel="noreferrer" className="text-sky-700 underline dark:text-sky-300">
+              {t('lineSourcePage')}
+            </a>
           )}
         </section>
       )}

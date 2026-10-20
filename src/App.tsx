@@ -49,7 +49,7 @@ function parseHash(): { id: number; dir?: number } | null {
 export function App() {
   const [lang, setLang] = useState<Lang>(initialLang);
   const t = useMemo(() => makeT(lang), [lang]);
-  const [tab, setTab] = useState<Tab>('search');
+  const [tab, setTab] = useState<Tab>('route');
   const [route, setRoute] = useState(parseHash);
   const [now, setNow] = useState(() => nowInMadeira());
   // The school term is detected from today's date. A manual choice is only an override for the day it was made.
@@ -153,8 +153,8 @@ export function App() {
     if (route) location.hash = '';
   };
   const tabs: { key: Tab; icon: IconName; label: string }[] = [
-    { key: 'search', icon: 'search', label: t('tabSearch') },
     { key: 'route', icon: 'route', label: t('tabRoute') },
+    { key: 'search', icon: 'search', label: t('tabSearch') },
     { key: 'departures', icon: 'clock', label: t('tabDepartures') },
   ];
 

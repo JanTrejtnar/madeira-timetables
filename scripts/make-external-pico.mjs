@@ -30,6 +30,8 @@ coordOf.set('Parque estacionamento Santa Luzia', coordOf.get('Jardim Santa Luzia
 coordOf.set('Teleférico - paragem Teleférico - Término (4A)', coordOf.get('Teleférico - paragem Teleférico-Término (4A)'));
 const NOTE_A = 'No horário de Inverno esta viagem é realizada pelas 18h00';
 const days = ['weekday', 'saturday', 'sunday'];
+// GTFS stop codes (Horários do Funchal): build:data takes the official coordinates of these two stops from the feed
+const CODE_OF = (name) => (/Teleférico/.test(name) ? '4A' : /Largo da Fonte/.test(name) ? '540' : null);
 const dir = (rows, from, to, variant) => ({
   variant,
   from,
@@ -37,7 +39,7 @@ const dir = (rows, from, to, variant) => ({
   shapeId: variant === 'up' ? 9001 : 9002,
   stopSource: 'pdf',
   // anchors carry OSM coordinates; the stops in between are interpolated along the shape by build:data
-  stops: rows.map((r) => ({ code: null, name: r[0], ...(coordOf.get(r[0]) ?? {}) })),
+  stops: rows.map((r) => ({ code: CODE_OF(r[0]), name: r[0], ...(coordOf.get(r[0]) ?? {}) })),
   trips: [1, 2].map((k) => ({ days, times: rows.map((r) => r[k]), ...(variant === 'down' && k === 2 ? { notes: ['a'] } : {}) })),
 });
 const line = {

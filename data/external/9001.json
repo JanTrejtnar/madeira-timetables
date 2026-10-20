@@ -42,7 +42,7 @@
    "stopSource": "pdf",
    "stops": [
     {
-     "code": null,
+     "code": "4A",
      "name": "Teleférico - paragem Teleférico-Término (4A)",
      "lat": 32.6482,
      "lon": -16.9045,
@@ -55,7 +55,7 @@
      "lon": -16.9119
     },
     {
-     "code": null,
+     "code": "540",
      "name": "Monte - Largo da Fonte",
      "lat": 32.6767,
      "lon": -16.9029
@@ -204,7 +204,7 @@
      "name": "Entrada Corujeira de Dentro"
     },
     {
-     "code": null,
+     "code": "540",
      "name": "Monte - Largo da Fonte",
      "lat": 32.6767,
      "lon": -16.9029
@@ -216,7 +216,7 @@
      "lon": -16.9119
     },
     {
-     "code": null,
+     "code": "4A",
      "name": "Teleférico - paragem Teleférico - Término (4A)",
      "lat": 32.6482,
      "lon": -16.9045,
