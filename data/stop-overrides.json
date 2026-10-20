@@ -2,6 +2,7 @@
   "_comment": "Hand-checked stop positions. A matching stop gets these coordinates with absolute priority over SIGA / GTFS / OSM name matching; its settlement_center warning is dropped. `name` is compared like a stop name (case, accents, punctuation ignored); `lines` (optional) limits the override to those line numbers.",
   "overrides": [
     { "name": "Machico", "label": "Machico terminal (main transfer hub)", "lat": 32.721648, "lon": -16.770177, "osmNode": 1093953107, "locationPrecision": "exact" },
+    { "name": "Faial", "label": "Faial, village by Santana (lines 208, 53, 825) - not the Funchal quarter", "lines": ["208", "53", "825"], "lat": 32.7915, "lon": -16.8535, "locationPrecision": "exact" },
     { "name": "Rosário", "label": "Rosário (line 139)", "lines": ["139"], "lat": 32.777216, "lon": -17.03291, "osmNode": 147902557, "locationPrecision": "exact" }
   ]
 }

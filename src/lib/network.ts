@@ -3,7 +3,8 @@ import { addDays, serviceDay, type Ymd } from './holidays';
 import { keysFor, listFor, withMinutes } from './departures';
 import { norm, stopKey } from './search';
 import { toMinutes } from './time';
-import type { Direction, Line } from '../types';
+import type { Direction, Line, Stop } from '../types';
+import { viaAt, viaMinutes, viaStop } from './via';
 import { expandTerms } from './aliases';
 
 export interface Node {
@@ -29,6 +30,8 @@ export interface Network {
    * the direction they belong to. Lets users search by town/terminal name.
    */
   aliases: Map<string, { name: string; nodes: Set<number> }>;
+  /** node of a "Via X" place, key `${lineId}:${noteCode}` (trips with that note call there) */
+  viaNodes: Map<string, number>;
   /** nodes within walking distance (including the node itself with 0 minutes) */
   near: Map<number, { node: number; walk: number }[]>;
 }
@@ -58,32 +61,36 @@ export function buildNetwork(lines: Line[]): Network {
     aliases.set(k, e);
   };
 
+  const nodeFor = (s: Stop): Node => {
+    const key = stopKey(s.name);
+    const cands = (keyToNodes.get(key) ?? []).map((i) => nodes[i]);
+    let node: Node | undefined;
+    if (s.lat !== undefined && s.lon !== undefined) {
+      const p = { lat: s.lat, lon: s.lon };
+      node = cands.find((c) => c.lat !== undefined && metres(c as Required<Node>, p) <= CLUSTER_M) ?? cands.find((c) => c.lat === undefined);
+      if (node && node.lat === undefined) Object.assign(node, p);
+    } else node = cands[0];
+    if (!node) {
+      node = { id: nodes.length, key, name: displayName(s.name), ...(s.lat !== undefined ? { lat: s.lat, lon: s.lon } : {}), ...(s.muni ? { muni: s.muni } : {}), ...(s.par ? { par: s.par } : {}) };
+      nodes.push(node);
+      keyToNodes.set(key, [...(keyToNodes.get(key) ?? []), node.id]);
+    }
+    if (!node.muni && s.muni) node.muni = s.muni;
+    if (!node.par && s.par) node.par = s.par;
+    return node;
+  };
   for (const line of lines) {
     line.directions.forEach((dir, di) => {
       if (!dir.stops.length) return;
-      const ids = dir.stops.map((s) => {
-        const key = stopKey(s.name);
-        const cands = (keyToNodes.get(key) ?? []).map((i) => nodes[i]);
-        let node: Node | undefined;
-        if (s.lat !== undefined && s.lon !== undefined) {
-          const p = { lat: s.lat, lon: s.lon };
-          node = cands.find((c) => c.lat !== undefined && metres(c as Required<Node>, p) <= CLUSTER_M) ?? cands.find((c) => c.lat === undefined);
-          if (node && node.lat === undefined) Object.assign(node, p);
-        } else node = cands[0];
-        if (!node) {
-          node = { id: nodes.length, key, name: displayName(s.name), ...(s.lat !== undefined ? { lat: s.lat, lon: s.lon } : {}), ...(s.muni ? { muni: s.muni } : {}), ...(s.par ? { par: s.par } : {}) };
-          nodes.push(node);
-          keyToNodes.set(key, [...(keyToNodes.get(key) ?? []), node.id]);
-        }
-        if (!node.muni && s.muni) node.muni = s.muni;
-        if (!node.par && s.par) node.par = s.par;
-        return node.id;
-      });
+      const ids = dir.stops.map((s) => nodeFor(s).id);
       dirNodes.set(dirKey(line, di), ids);
       addAlias(dir.from, ids[0]);
       addAlias(dir.to, ids[ids.length - 1]);
     });
   }
+  // places of "Via X" notes: the same node as a stop of that name nearby, else a node of their own
+  const viaNodes = new Map<string, number>();
+  for (const line of lines) for (const [code, v] of Object.entries(line.via ?? {})) viaNodes.set(`${line.id}:${code}`, nodeFor(viaStop(v)).id);
 
   // walking links between nearby nodes with different names (e.g. two stops around one square)
   const near = new Map<number, { node: number; walk: number }[]>();
@@ -100,7 +107,7 @@ export function buildNetwork(lines: Line[]): Network {
       }
     }
   }
-  return { nodes, dirNodes, keyToNodes, aliases, near };
+  return { nodes, dirNodes, keyToNodes, aliases, near, viaNodes };
 }
 
 /** A bus run with an (absolute, minutes since 00:00 of the searched date) time at each stop it calls at. */
@@ -109,6 +116,8 @@ export interface Trip {
   dirIndex: number;
   dir: Direction;
   nodes: number[];
+  /** stops aligned with `nodes` and `times`; absent = `dir.stops` (set when the trip calls at a "Via" place) */
+  stops?: Stop[];
   times: (number | null)[];
   /** times after the first stop are estimates */
   estimated: boolean;
@@ -131,6 +140,28 @@ function tripsOfDirection(
   const push = (times: (number | null)[], estimated: boolean, notes?: string[]) => {
     const shifted = times.map((t) => (t === null || t + shift < 0 ? null : t + shift));
     if (shifted.filter((t) => t !== null).length < 2) return;
+    // "Via Aeroporto"-style notes: the trip also calls at that place, between two stops of the list
+    const calls = viaAt(line, dirIndex, dir, notes);
+    if (calls.size) {
+      const ns: number[] = [];
+      const st: Stop[] = [];
+      const ts: (number | null)[] = [];
+      dir.stops.forEach((s, i) => {
+        ns.push(nodes[i]);
+        st.push(s);
+        ts.push(shifted[i]);
+        for (const { code, place } of calls.get(i) ?? []) {
+          const m = viaMinutes(dir, i, place, shifted);
+          const id = net.viaNodes.get(`${line.id}:${code}`);
+          if (m === null || id === undefined) continue; // the trip does not run through that stretch
+          ns.push(id);
+          st.push(viaStop(place));
+          ts.push(m);
+        }
+      });
+      out.push({ line, dirIndex, dir, nodes: ns, stops: st, times: ts, estimated, ...(notes ? { notes } : {}) });
+      return;
+    }
     out.push({ line, dirIndex, dir, nodes, times: shifted, estimated, ...(notes ? { notes } : {}) });
   };
   if (dir.trips?.length) {
@@ -146,6 +177,9 @@ function tripsOfDirection(
     }
   }
 }
+
+/** Stops of a trip, aligned with `trip.nodes` / `trip.times` (the direction's stops plus the "Via" places the trip calls at). */
+export const tripStops = (trip: Trip): Stop[] => trip.stops ?? trip.dir.stops;
 
 /** All trips relevant for a search on `date`: late trips of the day before, the day itself and the next morning. */
 export function servicesFor(net: Network, lines: Line[], date: Ymd, school: boolean, municipalities: readonly string[]): Trip[] {

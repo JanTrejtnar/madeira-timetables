@@ -20,13 +20,53 @@ export function waypointsOf(dir) {
     const p = [+s.lat.toFixed(5), +s.lon.toFixed(5)];
     const last = pts.at(-1);
     if (last && last.p[0] === p[0] && last.p[1] === p[1]) return;
-    pts.push({ p, i });
+    pts.push({ p, i, prec: s.locationPrecision ?? 'exact' });
   });
-  return pts;
+  return dropOutliers(pts);
 }
 
-/** stable signature of the waypoints: a route is reused only while the stops are unchanged */
-export const signature = (pts) => pts.map((x) => x.p.join(',')).join(';');
+const R = 6371.0088;
+const rad = Math.PI / 180;
+function hav(a, b) {
+  const dLat = (b[0] - a[0]) * rad;
+  const dLon = (b[1] - a[1]) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+const MIN_EXCESS_KM = 4;
+const RUN = 3; // runs of up to this many consecutive waypoints are tested together (a wrong namesake often comes with its neighbour)
+
+/**
+ * A stop matched by name to a namesake far away ("Moinhos" in Caniço instead of the one by Porto da Cruz) would send the route
+ * across the island and back. Runs of 1-3 consecutive waypoints without an official position are left out when going through
+ * them is much longer than going straight between their neighbours (more than MIN_EXCESS_KM and more than 1.5x that distance);
+ * the run with the biggest excess per waypoint goes first, until none is left. A curving road (Cabo Girão - Ribeira Brava - Serra de Água) stays.
+ */
+export function dropOutliers(pts) {
+  const out = [...pts];
+  for (;;) {
+    let best = null;
+    for (let k = 1; k < out.length - 1; k++) {
+      for (let len = 1; len <= RUN && k + len < out.length; len++) {
+        const run = out.slice(k, k + len);
+        if (run.some((x) => x.prec === 'exact')) break;
+        let via = hav(out[k - 1].p, run[0].p) + hav(run.at(-1).p, out[k + len].p);
+        for (let r = 1; r < len; r++) via += hav(run[r - 1].p, run[r].p);
+        const direct = hav(out[k - 1].p, out[k + len].p);
+        const excess = via - direct;
+        if (direct >= 1 && excess > MIN_EXCESS_KM && excess > 1.5 * direct && (!best || excess / len > best.score)) best = { k, len, score: excess / len };
+      }
+    }
+    if (!best) return out;
+    out.splice(best.k, best.len);
+  }
+}
+
+/** a waypoint must lie within this many metres of a road (OSRM `radiuses`), else it is left out: no detour into a dead end for a stop beside the road */
+export const ROUTE_RADIUS_M = 45;
+
+/** stable signature of the waypoints and the snapping rule: a route is reused only while both are unchanged */
+export const signature = (pts) => `r${ROUTE_RADIUS_M}|` + pts.map((x) => x.p.join(',')).join(';');
 
 /** Attaches the generated routes of data/routes.json to directions without a shape; returns the number attached. */
 export function attachRoutes(lines, root) {

@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useT } from '../i18n';
 import { addDays, serviceDay } from '../lib/holidays';
-import { resolveNodes, servicesFor, suggest, type Suggestion } from '../lib/network';
+import { resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
 import { isoToYmd, ymdToIso, type Picked, type PlannerForm } from '../lib/plannerForm';
 import { plan, type Itinerary } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
@@ -186,8 +186,8 @@ function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt, startAt }
   const dur = it.arrive - it.depart;
   const last = it.legs.length - 1;
   // walking from the point picked on the map to the first stop / from the last stop to the picked destination
-  const walkIn = walkTo(fromPt, it.legs[0].trip.dir.stops[it.legs[0].fromPos]);
-  const walkOut = walkTo(toPt, it.legs[last].trip.dir.stops[it.legs[last].toPos]);
+  const walkIn = walkTo(fromPt, tripStops(it.legs[0].trip)[it.legs[0].fromPos]);
+  const walkOut = walkTo(toPt, tripStops(it.legs[last].trip)[it.legs[last].toPos]);
   return (
     <Card className={`p-0! transition-shadow ${selected && shared.desktop ? 'ring-2 ring-sky-500/70' : ''}`}>
       <button onClick={onSelect} className="flex w-full items-center justify-between gap-3 rounded-t-2xl px-4 py-3 text-left">
@@ -209,7 +209,7 @@ function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt, startAt }
         )}
         {it.legs.map((l, i) => {
           const prev = it.legs[i - 1];
-          const stops = l.trip.dir.stops;
+          const stops = tripStops(l.trip);
           const line = l.trip.line;
           const isLast = i === last;
           return (
@@ -255,7 +255,7 @@ function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt, startAt }
                   <p className="py-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
                     <b className="font-semibold text-slate-600 dark:text-slate-300">{t('transferWord')}</b>
                     {' · '}
-                    {it.legs[i + 1].trip.dir.stops[it.legs[i + 1].fromPos].name}
+                    {tripStops(it.legs[i + 1].trip)[it.legs[i + 1].fromPos].name}
                     {' · '}
                     {t('waitMin', { n: it.legs[i + 1].depart - l.arrive })}
                     {it.walk > 0 ? ` · ${t('walkMin', { n: it.walk })}` : ''}
@@ -331,12 +331,12 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const legs = selected.it.legs;
     const pinFor = (kind: PickedPin['kind'], pt: Picked['pt'], stop: { lat?: number; lon?: number; name: string }): PickedPin | null =>
       pt ? { kind, lat: pt.lat, lon: pt.lon, stop: stop.lat !== undefined && stop.lon !== undefined ? { lat: stop.lat, lon: stop.lon, name: stop.name } : undefined } : null;
-    const first = legs[0].trip.dir.stops[legs[0].fromPos];
+    const first = tripStops(legs[0].trip)[legs[0].fromPos];
     const lastLeg = legs[legs.length - 1];
-    const pins = [pinFor('from', from.pt, first), pinFor('to', to.pt, lastLeg.trip.dir.stops[lastLeg.toPos])].filter((p): p is PickedPin => p !== null);
+    const pins = [pinFor('from', from.pt, first), pinFor('to', to.pt, tripStops(lastLeg.trip)[lastLeg.toPos])].filter((p): p is PickedPin => p !== null);
     return legs.map((l, i) => ({
       shapeId: l.trip.dir.shapeId,
-      stops: l.trip.dir.stops.slice(l.fromPos, l.toPos + 1),
+      stops: tripStops(l.trip).slice(l.fromPos, l.toPos + 1),
       color: lineColor(l.trip.line),
       ...(i === 0 && pins.length ? { pins } : {}),
     }));

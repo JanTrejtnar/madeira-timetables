@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { board } from '../src/lib/departures';
 import { buildIndex, findConnections, searchLines, searchStops } from '../src/lib/search';
-import { buildNetwork, nearestNode, resolveNodes, servicesFor, suggest, type Trip } from '../src/lib/network';
+import { buildNetwork, nearestNode, resolveNodes, servicesFor, suggest, tripStops, type Trip } from '../src/lib/network';
 import { formFromQuery, formToQuery } from '../src/lib/plannerForm';
 import { serviceDay } from '../src/lib/holidays';
 import { variantLabel } from '../src/lib/notes';
@@ -558,5 +558,31 @@ describe.skipIf(!existsSync(file))('manual overrides, generated routes and "Via"
     const plain = d.trips!.find((x) => !x.notes?.includes('a'))!;
     expect(withVia(l208, di, d, plain.notes, plain.times).stops).toBe(d.stops);
     expect(withVia(l208, di, d, ['E'], trip.times).stops).toBe(d.stops);
+  });
+  it('planner: Aeroporto -> Faial offers the 208 trip that calls at the airport (Via Aeroporto), leaving at its estimated time', () => {
+    const net = buildNetwork(data.lines);
+    const trips = servicesFor(net, data.lines, { y: 2026, m: 10, d: 19 }, true, ['Funchal']);
+    const it = plan(net, trips, resolveNodes(net, 'aeroporto'), resolveNodes(net, 'faial'), 16 * 60 + 30);
+    const hit = it.direct.find((i) => i.legs[0].trip.line.number === '208' && tripStops(i.legs[0].trip)[i.legs[0].fromPos].name === 'Aeroporto');
+    expect(hit).toBeDefined();
+    const leg = hit!.legs[0];
+    expect(leg.depart).toBeGreaterThanOrEqual(16 * 60 + 40);
+    expect(leg.depart).toBeLessThanOrEqual(16 * 60 + 55);
+    expect(leg.trip.times.at(-1)).toBe(17 * 60 + 35);
+    // the trips without the note do not call at the airport
+    const plain = trips.filter((t) => t.line.number === '208' && !t.notes?.includes('a'));
+    expect(plain.length).toBeGreaterThan(0);
+    expect(plain.every((t) => !tripStops(t).some((s) => s.name === 'Aeroporto'))).toBe(true);
+  });
+  it('Faial of lines 208 / 53 / 825 is the village by Santana, not the Funchal quarter; the 208 route is no longer 110 km', () => {
+    const l208 = data.lines.find((l) => l.number === '208')!;
+    for (const d of l208.directions) {
+      const f = d.stops.find((s) => s.name === 'Faial')!;
+      expect(m([f.lat!, f.lon!], [32.7915, -16.8535])).toBeLessThan(1);
+      const pts = JSON.parse(readFileSync(new URL(`../public/data/shapes/${d.shapeId}.json`, import.meta.url), 'utf8')) as [number, number][];
+      let len = 0;
+      for (let i = 1; i < pts.length; i++) len += m(pts[i - 1], pts[i]);
+      expect(len / 1000).toBeLessThan(80);
+    }
   });
 });
