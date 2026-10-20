@@ -90,6 +90,12 @@
       "lon": -16.851402,
       "label": "Garajau, Caniço (OSM suburb)"
     },
+    "cristo rei": {
+      "name": "Cristo Rei",
+      "lat": 32.640114,
+      "lon": -16.851579,
+      "label": "Cristo Rei, Garajau, Caniço (OSM neighbourhood)"
+    },
     "figueirinhas": {
       "name": "Figueirinhas",
       "lat": 32.651518,

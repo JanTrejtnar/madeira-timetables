@@ -1,0 +1,13 @@
+{
+  "_comment": "Terminals of timetables that print only departure times and no stop list (scanned PDFs, CAM / Rodoeste sheets). Hand-checked positions, snapped to the nearest road with OSRM /nearest; they give such a direction its two stops so the planner can use it. `lines` limits an entry to the lines whose terminal of that name it is (namesakes: Vargem, Moinhos, Eiras). Position labels name the OSM object they come from.",
+  "terminals": {
+    "funchal": { "name": "Funchal", "lat": 32.649898, "lon": -16.907315, "label": "Funchal bus terminal as used by 73 directions with a stop list (Rua 31 de Janeiro)" },
+    "funchal fontes": { "name": "Funchal", "lat": 32.649898, "lon": -16.907315, "lines": ["553"], "label": "Funchal bus terminal (printed \"Funchal (Fontes)\" on line 553)" },
+    "ponta da oliveira": { "name": "Ponta da Oliveira", "lat": 32.641562, "lon": -16.831726, "lines": ["555"], "label": "Ponta da Oliveira, Caniço de Baixo (OSM cape 32.64043,-16.83124), snapped to Travessa Cais da Oliveira" },
+    "eiras": { "name": "Eiras", "lat": 32.656586, "lon": -16.855194, "lines": ["552", "575"], "label": "Eiras, Caniço (OSM suburb)" },
+    "vargem": { "name": "Vargem", "lat": 32.651187, "lon": -16.84268, "lines": ["557", "575"], "label": "Vargem, Caniço (OSM neighbourhood)" },
+    "assomada": { "name": "Assomada", "lat": 32.659409, "lon": -16.828145, "lines": ["551"], "label": "Assomada, Caniço (OSM neighbourhood)" },
+    "reis magos": { "name": "Reis Magos", "lat": 32.646836, "lon": -16.827358, "lines": ["556"], "label": "Reis Magos, Caniço (OSM suburb)" },
+    "moinhos fontes": { "name": "Moinhos", "lat": 32.664343, "lon": -16.83031, "lines": ["553"], "label": "Moinhos, Caniço (OSM neighbourhood)" }
+  }
+}

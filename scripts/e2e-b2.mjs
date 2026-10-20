@@ -29,6 +29,7 @@ const paths = (page) => page.evaluate(() => [...document.querySelectorAll('.leaf
   }
   check('planner: the rest of a line outside the ride is drawn faint (opacity 0.25)', !!found, found ? `${found[0]} -> ${found[1]} ${found[2].filter((x) => /^[35]\//.test(x)).join(' ')}` : '');
   check('planner: the ridden stretch is drawn at full weight', !!found && found[2].some((x) => x.startsWith('5/0.9/')));
+  check('planner: the transfer stop carries a transfer pin', (await page.$$('[data-testid=transfer-pin]')).length >= 1);
   await page.close();
 }
 
@@ -79,6 +80,45 @@ const paths = (page) => page.evaluate(() => [...document.querySelectorAll('.leaf
   const hs = await page.evaluate(() => [...document.querySelectorAll('button[aria-pressed]')].filter((b) => /^\d\d:\d\d/.test(b.textContent.trim())).map((b) => Math.round(b.getBoundingClientRect().height)));
   check('departure grid: all time buttons have one height', hs.length > 0 && new Set(hs).size === 1, [...new Set(hs)].join(','));
   check('build stamp in the footer', /v\d+\.\d+\.\d+ · Build: \d{4}-\d\d-\d\d \d\d:\d\d/.test(await page.evaluate(() => document.querySelector('[data-testid="build-info"]')?.textContent ?? '')));
+  await page.close();
+}
+
+// 4) own 24-hour time picker and calendar (desktop and phone)
+for (const [name, vp] of [['desktop', { width: 1400, height: 900 }], ['phone', { width: 390, height: 844, isMobile: true, hasTouch: true }]]) {
+  const page = await browser.newPage();
+  await page.setViewport(vp);
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.goto(`${base}?from=Funchal&to=Santana&time=08:00&date=2026-12-07`, { waitUntil: 'networkidle0' });
+  await sleep(800);
+  check(`${name}: no native time / date inputs`, (await page.$('input[type=time], input[type=date]')) === null);
+  await page.click('[data-testid=time-trigger]');
+  check(`${name}: the time popover has 24 hours and 12 minute steps`, (await page.$$('[data-testid^="hour-"]')).length === 24 && (await page.$$('[data-testid^="minute-"]')).length === 12);
+  await page.click('[data-testid=hour-17]');
+  await page.click('[data-testid=minute-45]');
+  check(`${name}: hour and minute buttons set 17:45`, (await page.$eval('[data-testid=time-trigger]', (b) => b.dataset.value)) === '17:45');
+  await page.focus('[data-testid=time-input]');
+  await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');
+  await page.keyboard.type('2305');
+  await page.keyboard.press('Enter');
+  check(`${name}: typed 2305 becomes 23:05 (24-hour)`, (await page.$eval('[data-testid=time-trigger]', (b) => b.dataset.value)) === '23:05');
+  await page.focus('[data-testid=time-input]');
+  await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');
+  await page.keyboard.type('25:99');
+  await page.keyboard.press('Enter');
+  check(`${name}: 25:99 is refused`, (await page.$eval('[data-testid=time-trigger]', (b) => b.dataset.value)) === '23:05');
+  await page.keyboard.press('Escape');
+  check(`${name}: Escape closes the popover`, (await page.$('[data-testid=hour-3]')) === null);
+  await page.click('[data-testid=date-trigger]');
+  const dec8 = await page.$('[data-date="2026-12-08"]');
+  check(`${name}: 8 Dec is marked as a holiday in the calendar`, !!dec8 && (await dec8.evaluate((b) => b.dataset.holiday)) === '1');
+  const sunday = await page.$eval('[data-date="2026-12-06"]', (b) => getComputedStyle(b).color);
+  const monday = await page.$eval('[data-date="2026-12-09"]', (b) => getComputedStyle(b).color);
+  check(`${name}: Sunday is coloured differently from a weekday`, sunday !== monday, `${sunday} vs ${monday}`);
+  const box = await page.$eval('[role=dialog]', (d) => { const r = d.getBoundingClientRect(); return { l: r.left, r: r.right, w: innerWidth }; });
+  check(`${name}: the calendar stays inside the screen`, box.l >= 0 && box.r <= box.w, JSON.stringify(box));
+  await page.click('[data-date="2026-12-10"]');
+  await sleep(300);
+  check(`${name}: picking a day sets the date and closes the calendar`, (await page.$eval('[data-testid=date-trigger]', (b) => b.dataset.value)) === '2026-12-10' && (await page.$('[role=dialog]')) === null);
   await page.close();
 }
 

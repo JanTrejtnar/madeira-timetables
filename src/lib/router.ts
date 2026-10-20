@@ -4,7 +4,9 @@ import type { Network, Trip } from './network';
 export const MIN_TRANSFER = 5; // minutes between arrival and the next departure (plus walking time)
 /** Longer buffer when at least one of the two buses has estimated (not printed) times: mountain roads are slow. */
 export const MIN_TRANSFER_ESTIMATED = 12;
-const MAX_WAIT = 120; // do not offer transfers with a longer wait than this
+/** Longest wait offered at a transfer; only when nothing else is found does the search allow up to MAX_WAIT_FALLBACK (sparse country lines). */
+export const MAX_WAIT = 30;
+export const MAX_WAIT_FALLBACK = 120;
 /** A transfer must arrive this much earlier than the best direct bus to be offered. */
 export const TRANSFER_PENALTY = 10;
 /** Score adjustments (minutes) of the transfer point: official terminals win over a "Via" place that is no guaranteed stop. */
@@ -15,15 +17,19 @@ const isMicro = (stops: number, minutes: number) => stops <= 1 && minutes <= 3;
 /** A first leg of one or two stops that ends within this distance of where it starts is never offered: the traveller walks. */
 const WALK_INSTEAD_M = 1000;
 const MAX_HOP_STOPS = 2;
-function shortHop(net: Network, from: number, to: number, stops: number, minutes: number): boolean {
-  if (isMicro(stops, minutes)) return true;
-  if (stops > MAX_HOP_STOPS) return false;
+const nodeMetres = (net: Network, from: number, to: number): number => {
   const a = net.nodes[from];
   const b = net.nodes[to];
-  if (a.lat === undefined || a.lon === undefined || b.lat === undefined || b.lon === undefined) return false;
-  const m = Math.hypot((a.lon - b.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180), (a.lat - b.lat) * 110540);
-  return m <= WALK_INSTEAD_M;
+  if (a.lat === undefined || a.lon === undefined || b.lat === undefined || b.lon === undefined) return Infinity;
+  return Math.hypot((a.lon - b.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180), (a.lat - b.lat) * 110540);
+};
+function shortHop(net: Network, from: number, to: number, stops: number, minutes: number): boolean {
+  if (isMicro(stops, minutes)) return true;
+  return stops <= MAX_HOP_STOPS && nodeMetres(net, from, to) <= WALK_INSTEAD_M;
 }
+/** A last leg of one stop (two minutes at most) that ends within this distance of where it starts is never offered: the traveller walks. */
+const LAST_HOP_WALK_M = 800;
+const lastHop = (net: Network, from: number, to: number, stops: number, minutes: number): boolean => stops <= 1 && minutes <= 2 && nodeMetres(net, from, to) < LAST_HOP_WALK_M;
 const HORIZON = 48 * 60; // services cover yesterday, the day itself and tomorrow
 
 export interface Leg {
@@ -87,7 +93,7 @@ export function direct(trips: Trip[], from: Set<number>, to: Set<number>, depart
   return out.sort((a, b) => a.depart - b.depart || a.arrive - b.arrive);
 }
 
-export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn): Itinerary[] {
+export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn, maxWait = MAX_WAIT): Itinerary[] {
   // second legs: for each node, the trips that call there and later reach `to`
   const second = new Map<number, { trip: Trip; m: number; j: number }[]>();
   for (const trip of trips) {
@@ -116,11 +122,13 @@ export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to:
       if (shortHop(net, t1.nodes[i], t1.nodes[k], k - i, arriveK - l1depart)) continue;
       for (const { node, walk } of net.near.get(t1.nodes[k]) ?? []) {
         for (const c of second.get(node) ?? []) {
-          if (c.trip === t1 || (c.trip.line.id === t1.line.id && c.trip.dirIndex === t1.dirIndex)) continue;
+          // never back onto the same line (either direction): that is a U-turn, the traveller stays on the bus or walks
+          if (c.trip === t1 || c.trip.line.id === t1.line.id) continue;
+          if (lastHop(net, node, c.trip.nodes[c.j], c.j - c.m, (c.trip.times[c.j] as number) - (c.trip.times[c.m] as number))) continue;
           const tm = c.trip.times[c.m] as number;
           const buffer = t1.estimated || c.trip.estimated ? MIN_TRANSFER_ESTIMATED : MIN_TRANSFER;
           const ready = arriveK + buffer + walk;
-          if (tm < ready || tm - ready > MAX_WAIT) continue;
+          if (tm < ready || tm - ready > maxWait) continue;
           const arrive = c.trip.times[c.j] as number;
           const score = arrive + (net.viaOnly.has(node) ? VIA_PENALTY : 0) - (net.nodes[node].transferHub ? HUB_BONUS : 0);
           if (!best || score < bestScore || (score === bestScore && walk < best.walk)) {
@@ -155,7 +163,10 @@ export function plan(net: Network, trips: Trip[], from: Set<number>, to: Set<num
   const nearest = d[0];
   // transfers help when there is no direct trip, it leaves much later, or a transfer arrives clearly earlier
   const needTransfers = !nearest || nearest.depart - departAt > 60;
-  const t = withTransfer(net, trips, from, to, departAt, walkIn).filter((x) => needTransfers || x.arrive + TRANSFER_PENALTY < bestDirectArrive);
+  const search = (maxWait: number) => withTransfer(net, trips, from, to, departAt, walkIn, maxWait).filter((x) => needTransfers || x.arrive + TRANSFER_PENALTY < bestDirectArrive);
+  let t = search(MAX_WAIT);
+  // nothing else: a long wait beats no connection at all
+  if (!d.length && !t.length) t = search(MAX_WAIT_FALLBACK);
   return { direct: d.slice(0, 8), transfers: t.slice(0, 6) };
 }
 

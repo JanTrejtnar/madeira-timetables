@@ -71,6 +71,23 @@ function popupContent(s: Stop, lang: Lang, labels: PopupLabels, time: string | n
   return box;
 }
 
+/** Transfer pin (two arrows); between two different stops also the walk between the platforms as a dashed yellow line. */
+function drawTransfer(group: L.FeatureGroup, x: NonNullable<MapLayer['transfers']>[number], title: string, walkTitle: string) {
+  const mid: [number, number] = x.to ? [(x.at[0] + x.to[0]) / 2, (x.at[1] + x.to[1]) / 2] : x.at;
+  if (x.to) {
+    // dark underlay keeps the yellow readable on light map tiles
+    L.polyline([x.at, x.to], { color: '#0f172a', weight: 7, opacity: 0.55, interactive: false }).addTo(group);
+    L.polyline([x.at, x.to], { color: '#facc15', weight: 4, opacity: 1, dashArray: '2 8', lineCap: 'round', interactive: false }).bindTooltip(walkTitle).addTo(group);
+  }
+  L.marker(mid, {
+    icon: L.divIcon({ className: '', html: `<div class="transfer-pin" data-testid="transfer-pin">${iconSvg('transfer', 17)}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] }),
+    zIndexOffset: 800,
+    keyboard: false,
+  })
+    .bindTooltip(title)
+    .addTo(group);
+}
+
 const touch = typeof window !== 'undefined' && (L.Browser.mobile || navigator.maxTouchPoints > 0);
 
 interface Props {
@@ -130,6 +147,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
 
     layers.forEach((layer, li) => {
       layer.pins?.forEach((p) => drawPin(group, p, t('pickedPoint')));
+      layer.transfers?.forEach((x) => drawTransfer(group, x, t('mapTransfer', { name: localStopName(x.name, lang) }), t('mapTransferWalk')));
       layer.stops.forEach((s, si) => {
         if (s.lat === undefined || s.lon === undefined) return;
         const marker = L.circleMarker([s.lat, s.lon], { radius: 5, color: layer.color, weight: 2.5, fillColor: '#fff', fillOpacity: 1 })

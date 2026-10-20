@@ -14,6 +14,7 @@ import { prepareAreas } from './lib-areas.mjs';
 import { cleanTexts } from './lib-text.mjs';
 import { addViaPlaces, attachViaRoutes } from './lib-via.mjs';
 import { attachRoutes } from './lib-routes.mjs';
+import { addTerminalStops, estimateTerminals } from './lib-terminals.mjs';
 import { applyOverrides } from './lib-overrides.mjs';
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
 
@@ -79,8 +80,12 @@ const osmPlaces = JSON.parse(await readFile(path.join(ROOT, 'data', 'osm', 'plac
 const osmStats = applyOsm(data.lines, osm, areas, path.join(ROOT, 'data', 'shapes'), osmPlaces);
 // what name matching could not place: evenly spaced along the route polyline between two known stops
 const interpolated = interpolateStops(data.lines, path.join(ROOT, 'data', 'shapes'));
+// timetables without a stop list: the two terminals (data/terminals.json) become the stops, so routes and estimates below apply
+const terminalStops = addTerminalStops(data.lines, ROOT);
 // OSRM road routes (data/routes.json, `npm run fetch:routes`) for directions without a SIGA polyline
 const routed = attachRoutes(data.lines, ROOT);
+const terminalTimes = estimateTerminals(data.lines, path.join(ROOT, 'data', 'shapes'));
+console.log('terminal-only directions given stops / routed and estimated:', terminalStops.done, '/', terminalTimes, '- terminals unknown for:', terminalStops.skipped.length);
 // "Via Aeroporto"-style notes: where the place lies in each direction (the app inserts it for the trips with the note); after the routes, whose polylines tell the stretch
 const viaPlaces = addViaPlaces(data.lines, osm, osmPlaces, JSON.parse(await readFile(path.join(ROOT, 'data', 'via-places.json'), 'utf8')), null, areas, path.join(ROOT, 'data', 'shapes'));
 // road routes through the via places (data/via-routes.json, `npm run fetch:via-routes`), so the map line passes them

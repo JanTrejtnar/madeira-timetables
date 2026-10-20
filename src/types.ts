@@ -51,6 +51,8 @@ export interface Direction {
   trips?: Trip[];
   /** true: times at stops after the first are estimates (distance / average speed); false: printed in the timetable. */
   isEstimated?: boolean;
+  /** the timetable prints no stop list: the stops are the two terminals (data/terminals.json), the times at the far end are estimated */
+  terminalsOnly?: boolean;
   /** Estimated minutes from the first stop and km along the route, one per stop (only when isEstimated). */
   stopOffsets?: number[];
   stopKm?: number[];
@@ -135,6 +137,8 @@ export interface MapLayer {
   detours?: ViaRoute[];
   /** planner leg: only the stretch from stop `from` to stop `to` of `stops` is drawn in full colour, the rest of the line faintly (`stops` = every stop of the trip, [lat, lon]) */
   ride?: { stops: ([number, number] | null)[]; from: number; to: number };
+  /** places where the traveller changes buses: the alighting stop, and the boarding stop of the next bus when it is another one (walk between them) */
+  transfers?: { name: string; at: [number, number]; to?: [number, number] }[];
   /** picked start / destination points drawn as red pins with a dashed line to their stop */
   pins?: MapPin[];
 }

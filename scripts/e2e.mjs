@@ -80,11 +80,13 @@ async function planner(from, to, { pick = false, time = '09:00' } = {}) {
   if (pick) {
     await sleep(300);
     await page.evaluate(() => document.querySelector('ul li button')?.click());
-  } else await page.click('main').catch(() => {});
-  await page.$eval('input[type=time]', (el, v) => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, v);
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-  }, time);
+  } else await iTo.press('Enter'); // typing alone changes nothing: Enter applies the typed text
+  await page.click('[data-testid=time-trigger]');
+  await page.focus('[data-testid=time-input]');
+  await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');
+  await page.keyboard.type(time);
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
   await sleep(900);
   return text();
 }

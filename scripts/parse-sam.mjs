@@ -41,6 +41,13 @@ function parseMarks(rest, keys) {
   const out = [];
   let i = 0;
   while (i < s.length) {
+    // a legend text printed in full in the cell ("Larano" for "La" = "Até Larano")
+    const alias = keys.aliases?.find(([w]) => s.toLowerCase().startsWith(w, i));
+    if (alias) {
+      out.push(alias[1]);
+      i += alias[0].length;
+      continue;
+    }
     const key = keys.find((k) => s.startsWith(k, i));
     if (key) {
       out.push(key);
@@ -224,6 +231,11 @@ async function parseSamTable(file, line, warn, tableIdx) {
     if (m) notes[m[1]] = m[2].trim();
   }
   const keys = Object.keys(notes).sort((a, b) => b.length - a.length);
+  // the last word of a legend text that starts with its key ("Até Larano" / "La") is sometimes printed in the cell instead of the key
+  keys.aliases = Object.entries(notes)
+    .map(([k, text]) => [(/(\S+)\s*$/.exec(text)?.[1] ?? '').toLowerCase(), k])
+    .filter(([w, k]) => w.length > k.length + 1 && w.startsWith(k.toLowerCase()) && !/^(via|até|de|sy)$/.test(w))
+    .sort((a, b) => b[0].length - a[0].length);
 
   const items = all.filter((i) => !inLegend(i) && i.y < infoY);
   const anchors = items.filter((i) => /^Nº\s?\d+\w*$/.test(i.str.trim()) && i.x < 140).sort((a, b) => a.y - b.y);

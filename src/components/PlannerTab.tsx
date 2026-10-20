@@ -8,6 +8,7 @@ import { isoToYmd, ymdToIso, type Picked, type PlannerForm } from '../lib/planne
 import { plan, type Itinerary } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
 import { fmtMinutes } from '../lib/time';
+import { DatePicker, TimePicker } from './Pickers';
 import { walkTo } from '../lib/walk';
 import type { Line, MapLayer, MapPin as PickedPin } from '../types';
 import { Card, Chip, dirLabel, EmptyState, EstTag, LineBadge, lineColor, lineRailCls, MapPin, PrecisionWarning, SectionTitle, TypeFilter, type LineTypeFilter, type Shared } from './common';
@@ -347,6 +348,15 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const first = tripStops(legs[0].trip)[legs[0].fromPos];
     const lastLeg = legs[legs.length - 1];
     const pins = [pinFor('from', dFrom.pt, first), pinFor('to', dTo.pt, tripStops(lastLeg.trip)[lastLeg.toPos])].filter((p): p is PickedPin => p !== null);
+    // every change of bus: the alighting stop, and the walk to the platform of the next bus when that is another stop
+    const transfers = legs.slice(0, -1).flatMap((l, i) => {
+      const a = tripStops(l.trip)[l.toPos];
+      const b = tripStops(legs[i + 1].trip)[legs[i + 1].fromPos];
+      if (a.lat === undefined || a.lon === undefined) return [];
+      const at: [number, number] = [a.lat, a.lon];
+      const apart = b.lat !== undefined && b.lon !== undefined && Math.hypot((b.lat - a.lat) * 110540, (b.lon - a.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180)) > 5;
+      return [{ name: a.name, at, ...(apart ? { to: [b.lat, b.lon] as [number, number] } : {}) }];
+    });
     return legs.map((l, i) => ({
       shapeId: l.trip.dir.shapeId,
       stops: tripStops(l.trip).slice(l.fromPos, l.toPos + 1),
@@ -354,6 +364,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       detours: detoursFor(l.trip.line, l.trip.dirIndex, l.trip.notes),
       ride: { stops: tripStops(l.trip).map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), from: l.fromPos, to: l.toPos },
       ...(i === 0 && pins.length ? { pins } : {}),
+      ...(i === 0 && transfers.length ? { transfers } : {}),
     }));
   }, [selected, dFrom.pt, dTo.pt]);
   const layers = rawLayers;
@@ -416,16 +427,15 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
-          <label className="flex h-9 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 pl-3 pr-2 dark:border-slate-700 dark:bg-slate-800/60">
-            <Icon name="clock" className="size-4 text-slate-400" />
-            <span className="sr-only">{t('departAt')}</span>
-            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="bg-transparent text-sm font-semibold tabular-nums outline-none" />
-          </label>
+          <TimePicker value={time} onChange={setTime} />
           <Chip active={isChip(0)} onClick={() => setDeparture(0)}>
             {t('chipNow')}
           </Chip>
           <Chip active={isChip(15)} onClick={() => setDeparture(15)}>
             {t('chipPlus15')}
+          </Chip>
+          <Chip active={isChip(30)} onClick={() => setDeparture(30)}>
+            {t('chipPlus30')}
           </Chip>
           <Chip active={isChip(60)} onClick={() => setDeparture(60)}>
             {t('chipPlus60')}
@@ -445,15 +455,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
               );
             })}
           </div>
-          <label className="flex h-9 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 pl-3 pr-2 dark:border-slate-700 dark:bg-slate-800/60">
-            <span className="sr-only">{t('dateLabel')}</span>
-            <input
-              type="date"
-              value={dateIso}
-              onChange={(e) => isoToYmd(e.target.value) && patch({ date: e.target.value === todayIso ? null : e.target.value })}
-              className="bg-transparent text-sm font-semibold tabular-nums outline-none"
-            />
-          </label>
+          <DatePicker value={dateIso} today={today} municipalities={shared.ctx.municipalities} onChange={(iso) => patch({ date: iso === todayIso ? null : iso })} />
           <p className="w-full px-1 text-xs text-slate-500 dark:text-slate-400" data-testid="day-info">
             {dayInfo.type === null ? t('noService') : t(`day_${dayInfo.type}`)}
             {dayInfo.reason === 'holiday' ? ` · ${t('reason_holiday')}: ${dayInfo.holiday?.name}` : dayInfo.reason === 'saturday-rule' ? ` · ${dayInfo.special}` : dayInfo.holiday ? ` · ${dayInfo.holiday.name}` : ''}

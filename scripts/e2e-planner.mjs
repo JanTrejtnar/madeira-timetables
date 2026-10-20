@@ -87,7 +87,12 @@ async function run(label, viewport) {
   // walking leg + persistent pin for the picked destination
   await typeIn('Odkud', 'Funchal');
   await page.keyboard.press('Enter');
-  await page.evaluate(() => { const i = document.querySelector('input[type=time]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(i, '08:00'); i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); });
+  await page.click('[data-testid=time-trigger]');
+  await page.focus('[data-testid=time-input]');
+  await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');
+  await page.keyboard.type('08:00');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
   await sleep(1500);
   const walk = await page.evaluate(() => document.querySelector('[data-testid=walk-out]')?.innerText);
   check(`${label}: itinerary ends with "Chůze k cíli: N m (~N min)"`, /Chůze k cíli: \d+ m \(~\d+ min\)/.test(walk ?? ''), walk);
@@ -115,10 +120,12 @@ async function run(label, viewport) {
 
   // 7. any date + holiday detection
   const dateSet = async (iso) => {
-    await page.evaluate((v) => { const i = document.querySelector('input[type=date]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(i, v); i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); }, iso);
+    await page.click('[data-testid=date-trigger]');
+    for (let k = 0; k < 24 && !(await page.$(`[data-date="${iso}"]`)); k++) await page.click('button[aria-label="Další měsíc"]');
+    await page.click(`[data-date="${iso}"]`);
     await sleep(300);
   };
-  check(`${label}: date input next to Dnes / Zítra`, (await page.$('input[type=date]')) !== null);
+  check(`${label}: date picker next to Dnes / Zítra`, (await page.$('[data-testid=date-trigger]')) !== null);
   await dateSet('2026-12-08');
   const info = await page.evaluate(() => document.querySelector('[data-testid=day-info]')?.innerText);
   check(`${label}: 8 Dec 2026 is shown as a holiday (Sunday timetable)`, /Svátek|Neděle|Imaculada|Conceição/i.test(info ?? ''), info);
@@ -150,7 +157,7 @@ async function run(label, viewport) {
   check(`${label}: line detail lists the stops before the map`, iStops >= 0 && (iMap < 0 || iStops < iMap), JSON.stringify(order));
   await page.evaluate(() => history.back());
   await sleep(700);
-  const after = { from: await value('Odkud'), to: await value('Kam'), url: await page.evaluate(() => location.search), date: await page.evaluate(() => document.querySelector('input[type=date]')?.value) };
+  const after = { from: await value('Odkud'), to: await value('Kam'), url: await page.evaluate(() => location.search), date: await page.evaluate(() => document.querySelector('[data-testid=date-trigger]')?.dataset.value) };
   check(`${label}: Back restores Odkud / Kam / date`, after.from === before.from && after.to === before.to && after.date === '2026-12-09', JSON.stringify(after));
   const times = (await text()).match(/\d\d:\d\d/g)?.length ?? 0;
   check(`${label}: and the previous results are shown again`, times >= 4, `${times} times`);
