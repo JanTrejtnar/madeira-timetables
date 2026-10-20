@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDataset } from './data';
 import { LANGS, LangContext, makeT, type Lang } from './i18n';
 import { isSchoolPeriod, serviceDay } from './lib/holidays';
@@ -12,6 +12,7 @@ import { EmptyState, SkeletonCards, type Shared } from './components/common';
 import { Icon, type IconName } from './components/Icons';
 import { RouteMap } from './components/RouteMap';
 import { useMedia } from './lib/hooks';
+import type { UserPos } from './lib/nearby';
 import type { MapFocus, MapLayer } from './types';
 
 type Tab = 'search' | 'route' | 'departures';
@@ -64,6 +65,33 @@ export function App() {
   const [mapLayers, setMapLayers] = useState<MapLayer[] | null>(null);
   const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
 
+  const [userPos, setUserPos] = useState<UserPos | null>(null);
+  const [geo, setGeo] = useState<Shared['geo']>('idle');
+  const [plannerFrom, setPlannerFrom] = useState<Shared['plannerFrom']>(null);
+  const [online, setOnline] = useState(() => navigator.onLine !== false);
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, []);
+  const locate = useCallback(() => {
+    if (!('geolocation' in navigator)) return setGeo('unsupported');
+    setGeo('busy');
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        setUserPos((prev) => ({ lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy, seq: (prev?.seq ?? 0) + 1 }));
+        setGeo('idle');
+      },
+      (e) => setGeo(e.code === 1 ? 'denied' : 'error'),
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 30_000 },
+    );
+  }, []);
+
   useEffect(() => {
     document.documentElement.lang = lang;
     store.set('lang', lang);
@@ -95,9 +123,18 @@ export function App() {
             desktop,
             setMap: setMapLayers,
             setMapFocus,
+            userPos,
+            geo,
+            locate,
+            plannerFrom,
+            useAsFrom: (name, key) => {
+              setPlannerFrom({ text: name, key, seq: Date.now() });
+              setTab('route');
+              if (location.hash) location.hash = '';
+            },
           }
         : null,
-    [data, net, ctx, desktop],
+    [data, net, ctx, desktop, userPos, geo, locate, plannerFrom],
   );
 
   const today = serviceDay(now);
@@ -198,6 +235,11 @@ export function App() {
             </nav>
           </header>
 
+          {!online && (
+            <div role="status" className="shrink-0 bg-amber-100 px-4 py-1.5 text-center text-xs font-medium text-amber-900 dark:bg-amber-400/15 dark:text-amber-200">
+              {t('offlineBanner')}
+            </div>
+          )}
           <main id="scroller" className="flex-1 px-4 pb-28 pt-4 lg:min-h-0 lg:overflow-y-auto lg:pb-6">
             {error && <EmptyState icon="alert" tone="warn" title={t('loadError')} />}
             {!data && !error && (
@@ -226,7 +268,7 @@ export function App() {
 
         {desktop && (
           <div className="relative h-dvh bg-slate-200 dark:bg-slate-800">
-            <RouteMap layers={mapLayers ?? []} focus={mapFocus} fill />
+            <RouteMap layers={mapLayers ?? []} focus={mapFocus} me={userPos} onLocate={locate} locating={geo === 'busy'} fill />
             {!mapLayers && (
               <div className="pointer-events-none absolute left-16 top-4 z-10 flex max-w-xs items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/90 px-4 py-3 text-sm text-slate-600 shadow-lg backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-900/90 dark:text-slate-300">
                 <Icon name="map" className="size-5 shrink-0 text-sky-600" />

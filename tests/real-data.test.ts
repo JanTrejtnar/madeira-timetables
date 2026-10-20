@@ -5,6 +5,7 @@ import { buildIndex, findConnections, searchLines, searchStops } from '../src/li
 import { buildNetwork, resolveNodes, servicesFor } from '../src/lib/network';
 import { plan } from '../src/lib/router';
 import { poiFor } from '../src/lib/aliases';
+import { departuresFrom, nearbyStops } from '../src/lib/nearby';
 import type { Dataset } from '../src/types';
 
 const file = 'public/data/schedules.json';
@@ -14,7 +15,7 @@ describe.skipIf(!existsSync(file))('real data (run `npm run build:data` first)',
   const ctx = { now: { y: 2026, m: 10, d: 19, minutes: 8 * 60 }, school: true, municipalities: ['Funchal'] as const };
 
   it('has the expected scale', () => {
-    expect(data.lines.length).toBe(137);
+    expect(data.lines.length).toBe(138); // 137 SIGA lines + Pico do Areeiro (Horários do Funchal)
     expect(data.lines.filter((l) => l.hasParsedSchedule).length).toBeGreaterThan(70);
   });
   it('searches by number, destination and stop', () => {
@@ -165,15 +166,44 @@ describe.skipIf(!existsSync(file))('coverage', () => {
     expect(searchLines(ix, 'curral das freiras').some((l) => l.number === '181')).toBe(true);
     expect(searchStops(ix, 'cabo girao').length).toBeGreaterThan(0);
     expect(searchStops(ix, 'ribeiro frio').length).toBeGreaterThan(0);
-    // no scheduled line to Pico do Arieiro in the data: an information card is shown instead
-    const poi = poiFor('Pico do Arieiro')!;
-    expect(poi.info?.cs).toMatch(/Poiso/);
-    expect(searchLines(ix, 'Pico do Arieiro')).toHaveLength(0);
+    // Pico do Areeiro is served by the Horários do Funchal shuttle (external line 9001)
+    for (const q of ['Pico do Arieiro', 'Pico do Areeiro', 'Arieiro']) {
+      expect(poiFor(q)?.lineId).toBe(9001);
+      expect(searchLines(ix, q).some((l) => l.id === 9001)).toBe(true);
+    }
     expect(searchStops(ix, 'poiso').length).toBeGreaterThan(0);
   });
   it('stops known only by name got approximate coordinates (181 Transbordo)', () => {
     const l = data.lines.find((x) => x.number === '181')!;
     for (const d of l.directions.filter((x) => x.variant === 'transbordo')) for (const s of d.stops) expect(s.lat).toBeDefined();
     expect(l.directions.some((d) => d.stops.some((s) => s.approx))).toBe(true);
+  });
+  it('Pico do Areeiro line: timetable, GPS and interpolated stops', () => {
+    const l = data.lines.find((x) => x.id === 9001)!;
+    expect(l.type).toBe('interurbano');
+    expect(l.operator).toBe('Horários do Funchal');
+    const [up, down] = l.directions;
+    expect(up.trips!.map((t) => t.times[0])).toEqual(['06:00', '13:30']);
+    expect(up.trips![0].times.at(-1)).toBe('06:45');
+    expect(down.trips!.map((t) => t.times[0])).toEqual(['12:15', '19:00']);
+    expect(down.departures.sunday!.map((d) => d.t)).toEqual(['12:15', '19:00']);
+    expect(down.trips![1].notes).toEqual(['a']);
+    for (const d of l.directions) {
+      expect(d.stops.every((s) => s.lat !== undefined)).toBe(true);
+      expect(d.stops.some((s) => s.isEstimatedLocation)).toBe(true);
+    }
+    const summit = up.stops.at(-1)!;
+    expect(summit.lat).toBeCloseTo(32.7357, 2);
+    // interpolated stops lie between their neighbours along the route (latitude rises towards the summit)
+    const lats = up.stops.map((s) => s.lat!);
+    expect([...lats].sort((x, y) => x - y)).toEqual(lats);
+  });
+  it('nearby stops: Pico do Areeiro summit is found from a position next to it', () => {
+    const net = buildNetwork(data.lines);
+    const r = nearbyStops(net, { lat: 32.7358, lon: -16.9283, acc: 10, seq: 1 });
+    expect(r.stops[0].name).toMatch(/Areeiro/);
+    expect(r.stops[0].dist).toBeLessThan(100);
+    const deps = departuresFrom(net, data.lines, r.stops.find((x) => /Parque/.test(x.name)) ?? r.stops[0], { now: { y: 2026, m: 10, d: 20, minutes: 12 * 60 }, school: true, municipalities: ['Funchal'] as const });
+    expect(deps.every((d) => d.next.inMin >= 0)).toBe(true);
   });
 });

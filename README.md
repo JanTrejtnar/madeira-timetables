@@ -69,3 +69,14 @@ The app is a static site; `npm run build` regenerates the data (`build:data`, fr
 2. Build command `npm run build`, build output directory `dist`, environment variable `NODE_VERSION=22` (also pinned in `.node-version`).
 3. Save and deploy; every push to `main` redeploys. `public/_headers` keeps `sw.js`/`index.html`/`schedules.json` revalidating so the PWA picks up new data.
 Direct deploy from a terminal: `npx wrangler login`, then `npm run deploy:cf`.
+
+## Lines outside SIGA
+
+`data/external/<id>.json` holds lines of other operators in the app's own format; `build:data` appends them to the dataset.
+Currently: **9001 Pico do Areeiro** (Horários do Funchal, transcribed from
+https://www.horariosdofunchal.pt/index.php/viajar/pico-do-areeiro by `scripts/make-external-pico.mjs`; road geometry from OSRM/OpenStreetMap
+via `scripts/fetch-pico-route.mjs`, committed as `data/shapes/9001.json` / `9002.json`). Stops between two stops with known coordinates
+get positions interpolated along the route (`scripts/lib-interpolate.mjs`, flag `isEstimatedLocation`).
+
+PWA icons are rendered from `public/icon.svg` by `node scripts/make-icons.mjs`. `node scripts/e2e-pwa.mjs` checks manifest, service-worker
+cache, offline reload and "stops near me" against `npx vite preview --port 4173`.

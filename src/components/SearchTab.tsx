@@ -5,6 +5,7 @@ import { poiFor } from '../lib/aliases';
 import { searchLines, searchStops, type Index } from '../lib/search';
 import { Card, EmptyState, LineBadge, matchesType, SearchInput, SectionTitle, SkeletonCards, TypeFilter, type LineTypeFilter, type Shared } from './common';
 import { Icon } from './Icons';
+import { Nearby } from './Nearby';
 
 export function SearchTab({ shared, index }: { shared: Shared; index: Index }) {
   const { t, lang } = useT();
@@ -23,15 +24,32 @@ export function SearchTab({ shared, index }: { shared: Shared; index: Index }) {
   // a destination without any scheduled line (e.g. Pico do Arieiro): explain it, and offer the nearest stops we know
   const poi = useMemo(() => poiFor(dq), [dq]);
   const noLines = !lines.length && !stops.length;
+  const poiLine = useMemo(() => (poi?.lineId ? shared.lines.find((l) => l.id === poi.lineId) ?? null : null), [poi, shared.lines]);
   const nearStops = useMemo(() => (poi?.near ?? []).flatMap((term) => searchStops(index, term, 3)), [poi, index]);
 
   return (
     <div className="flex flex-col gap-4">
       <SearchInput value={q} onChange={setQ} placeholder={t('searchPlaceholder')} autoFocus />
       <TypeFilter value={type} onChange={setType} className="self-start" />
+      <Nearby shared={shared} />
 
       {!q.trim() && <EmptyState icon="search" title={t('searchEmptyTitle')} body={t('searchHint')} />}
       {pending && q.trim() && <SkeletonCards n={3} />}
+      {!pending && poiLine && (
+        <Card className="flex flex-col gap-2 border-sky-200! bg-sky-50/60! dark:border-sky-400/30! dark:bg-sky-400/5!">
+          <button onClick={() => shared.openLine(poiLine.id)} className="flex items-start gap-3 text-left">
+            <LineBadge line={poiLine} />
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">
+                {poiLine.name} · <span className="font-normal text-slate-500">{t('offerLine')}</span>
+              </span>
+              <span className="block text-sm text-slate-600 dark:text-slate-400">{poiLine.route}</span>
+              {poiLine.info?.price && <span className="mt-1 block text-sm text-slate-600 dark:text-slate-400">{poiLine.info.price[lang]}</span>}
+            </span>
+            <Icon name="chevron" className="mt-1 size-4 shrink-0 text-slate-300" />
+          </button>
+        </Card>
+      )}
       {!pending && poi?.info && noLines && (
         <Card className="flex flex-col gap-2 border-sky-200! bg-sky-50/60! dark:border-sky-400/30! dark:bg-sky-400/5!">
           <div className="flex items-start gap-3">

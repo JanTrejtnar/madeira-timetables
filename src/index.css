@@ -77,3 +77,36 @@ body {
     filter: brightness(0.82) contrast(0.95) saturate(0.85);
   }
 }
+
+.me-dot {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #2563eb;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.5);
+}
+.me-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.45);
+  animation: me-pulse 1.8s ease-out infinite;
+}
+@keyframes me-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .me-dot::after {
+    animation: none;
+  }
+}

@@ -17,3 +17,4 @@ public/pdf/
 .DS_Store
 .vscode/
 .claude/
+!public/*.png

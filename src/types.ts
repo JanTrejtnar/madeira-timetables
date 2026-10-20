@@ -12,6 +12,8 @@ export interface Stop {
   lon?: number;
   /** coordinates were not printed with the timetable but matched by name against a stop of another route */
   approx?: boolean;
+  /** position interpolated along the route polyline between two stops with known positions (build:data) */
+  isEstimatedLocation?: boolean;
 }
 
 /** One run of a bus: a time at every stop (null = does not call there). */
@@ -65,6 +67,11 @@ export interface Line {
   generalNotes?: string[];
   dayLabels?: Partial<Record<DayKey, string>>;
   directions: Direction[];
+  /** operator outside SIGA (e.g. Horários do Funchal) and where its timetable was read */
+  operator?: string;
+  sourceUrl?: string;
+  /** prices and conditions shown on the line page, per UI language */
+  info?: { price?: Record<'cs' | 'en' | 'pt', string>; conditions?: Record<'cs' | 'en' | 'pt', string> };
 }
 
 export interface Dataset {

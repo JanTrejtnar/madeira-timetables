@@ -206,6 +206,10 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const [to, setTo] = useState<Picked>({ text: '', key: null });
   const [time, setTime] = useState(() => hhmm(shared.ctx.now.minutes));
   const [dayOffset, setDayOffset] = useState<0 | 1>(0);
+  const fromReq = shared.plannerFrom;
+  useEffect(() => {
+    if (fromReq) setFrom({ text: fromReq.text, key: fromReq.key });
+  }, [fromReq?.seq]); // eslint-disable-line react-hooks/exhaustive-deps
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   // the island-wide intercity network is the main use; urban lines can still be allowed as a fallback ("prefer")
   const [type, setType] = useState<LineTypeFilter>('interurbano');

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { addEstimates } from './lib-estimate.mjs';
 import { classifyLine } from './lib-classify.mjs';
 import { buildStopIndex, fillCoords } from './lib-coords.mjs';
+import { interpolateStops } from './lib-interpolate.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'public');
@@ -47,10 +48,19 @@ for (const l of data.lines) {
   }
   delete l.pdfFile;
 }
+// lines from other operators (data/external/<id>.json, not in SIGA), already in the app's format
+for (const f of (await readdir(path.join(ROOT, 'data', 'external'))).filter((x) => x.endsWith('.json')).sort()) {
+  const ext = JSON.parse(await readFile(path.join(ROOT, 'data', 'external', f), 'utf8'));
+  ext.isInterurbano = ext.type === 'interurbano';
+  data.lines.push(ext);
+}
 // stops known only by name: borrow coordinates from stops of other routes that carry the same name
 const coords = fillCoords(data.lines, buildStopIndex(data.lines));
+// what name matching could not place: evenly spaced along the route polyline between two known stops
+const interpolated = interpolateStops(data.lines, path.join(ROOT, 'data', 'shapes'));
 console.log('reclassified urbano -> interurbano:', reclassified.length ? reclassified.join('; ') : 'none');
 console.log('stop coordinates matched by name:', coords.filled, '(still without coordinates:', coords.missing + ')');
+console.log('stop coordinates interpolated along the route:', interpolated);
 await writeFile(path.join(OUT, 'data', 'schedules.json'), JSON.stringify(data));
 await cp(path.join(ROOT, 'data', 'shapes'), path.join(OUT, 'data', 'shapes'), { recursive: true });
 console.log('estimated directions:', estimated, rejected.length ? `(rejected: ${rejected.join('; ')})` : '');

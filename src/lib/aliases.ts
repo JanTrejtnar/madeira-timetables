@@ -14,6 +14,8 @@ export interface Poi {
   info?: Record<Lang, string>;
   /** normalised terms of the nearest regular stops, offered next to the info card */
   near?: string[];
+  /** line (id) that serves the place, offered as a card above the results */
+  lineId?: number;
 }
 
 const norm = (s: string) =>
@@ -34,15 +36,11 @@ export const POIS: Poi[] = [
   },
   {
     id: 'arieiro',
-    aliases: ['pico do arieiro', 'pico do areeiro', 'pico arieiro', 'pico areeiro', 'arieiro'],
-    terms: [],
-    name: 'Pico do Arieiro',
-    near: ['poiso'],
-    info: {
-      cs: 'Na Pico do Arieiro (1 818 m) nevede v datech SIGA žádná pravidelná linka. Nejbližší pravidelná zastávka v datech je Poiso; dál se jezdí autem, taxi nebo organizovaným výletem – podmínky ověřte u provozovatele.',
-      en: 'No scheduled SIGA line goes to Pico do Arieiro (1,818 m). The nearest regular stop in the data is Poiso; beyond that people go by car, taxi or an organised tour – check the conditions with the operator.',
-      pt: 'Nos dados da SIGA não há carreira regular para o Pico do Arieiro (1 818 m). A paragem regular mais próxima nos dados é o Poiso; daí em diante vai-se de carro, táxi ou passeio organizado – confirme as condições com o operador.',
-    },
+    aliases: ['pico do arieiro', 'pico do areeiro', 'pico arieiro', 'pico areeiro', 'arieiro', 'areeiro summit'],
+    terms: ['pico do areeiro'],
+    name: 'Pico do Areeiro',
+    /** the Horários do Funchal shuttle (data/external/9001.json) */
+    lineId: 9001,
   },
   {
     id: 'fanal',

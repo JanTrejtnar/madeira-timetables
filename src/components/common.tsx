@@ -4,6 +4,7 @@ import { useT } from '../i18n';
 import type { Network } from '../lib/network';
 import type { Upcoming } from '../lib/departures';
 import type { MapFocus } from '../types';
+import type { UserPos } from '../lib/nearby';
 import type { Ctx } from '../lib/departures';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
 import type { Direction, Line, MapLayer, Stop } from '../types';
@@ -20,6 +21,14 @@ export interface Shared {
   setMap: (layers: MapLayer[] | null) => void;
   /** centres the map on a stop of the shown route and opens its popup (desktop map) */
   setMapFocus: (focus: MapFocus | null) => void;
+  /** GPS position of the user (null until "stops near me" was used) */
+  userPos: UserPos | null;
+  geo: 'idle' | 'busy' | 'denied' | 'error' | 'unsupported';
+  locate: () => void;
+  /** opens the planner with this stop as the starting point */
+  useAsFrom: (name: string, key: string) => void;
+  /** starting point requested by useAsFrom; seq changes on every request */
+  plannerFrom: { text: string; key: string; seq: number } | null;
 }
 
 /** Colour of a line on maps and timelines: green = urbano, slate = interurbano. */

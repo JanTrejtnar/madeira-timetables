@@ -282,6 +282,33 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
         </section>
       )}
 
+      {line.info && (
+        <section className="flex flex-col gap-2 rounded-2xl border border-sky-200 bg-sky-50/60 p-4 text-sm dark:border-sky-400/30 dark:bg-sky-400/5">
+          {line.operator && (
+            <p>
+              <span className="text-slate-500">{t('lineOperator')}:</span> <b>{line.operator}</b>
+            </p>
+          )}
+          {line.info.price && (
+            <div>
+              <p className="font-semibold">{t('linePrice')}</p>
+              <p className="text-slate-600 dark:text-slate-300">{line.info.price[lang]}</p>
+            </div>
+          )}
+          {line.info.conditions && (
+            <div>
+              <p className="font-semibold">{t('lineConditions')}</p>
+              <p className="text-slate-600 dark:text-slate-300">{line.info.conditions[lang]}</p>
+            </div>
+          )}
+          {line.sourceUrl && (
+            <a href={line.sourceUrl} target="_blank" rel="noreferrer" className="text-sky-700 underline dark:text-sky-300">
+              {t('lineSourcePage')}
+            </a>
+          )}
+        </section>
+      )}
+
       {hasMap && !desktop && (
         <section ref={mapBox}>
           <SectionTitle>{t('map')}</SectionTitle>

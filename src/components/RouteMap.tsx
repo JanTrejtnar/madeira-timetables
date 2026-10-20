@@ -3,6 +3,7 @@ import L from 'leaflet';
 import { loadShape } from '../data';
 import { useT } from '../i18n';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
+import type { UserPos } from '../lib/nearby';
 import type { MapFocus, MapLayer, Stop } from '../types';
 import { iconSvg } from './Icons';
 
@@ -12,6 +13,7 @@ interface PopupLabels {
   arrival: string;
   departure: string;
   approx: string;
+  estimated: string;
 }
 
 function popupContent(s: Stop, labels: PopupLabels, time: string | null, first: boolean): HTMLElement {
@@ -28,7 +30,7 @@ function popupContent(s: Stop, labels: PopupLabels, time: string | null, first: 
   }
   if (s.approx) {
     const a = document.createElement('div');
-    a.textContent = labels.approx;
+    a.textContent = s.isEstimatedLocation ? labels.estimated : labels.approx;
     a.style.color = '#b45309';
     a.style.fontSize = '12px';
     box.appendChild(a);
@@ -66,9 +68,14 @@ interface Props {
   fill?: boolean;
   /** stop of the first layer to centre on; its popup opens with the passing time */
   focus?: MapFocus | null;
+  /** GPS position of the user, shown as a pulsing dot */
+  me?: UserPos | null;
+  /** adds the locate button to the map */
+  onLocate?: () => void;
+  locating?: boolean;
 }
 
-export function RouteMap({ layers, focus = null, fill = false }: Props) {
+export function RouteMap({ layers, focus = null, me = null, onLocate, locating = false, fill = false }: Props) {
   const { t } = useT();
   const el = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
@@ -91,7 +98,7 @@ export function RouteMap({ layers, focus = null, fill = false }: Props) {
     }).addTo(map);
     mapRef.current = map;
     const group = L.featureGroup().addTo(map);
-    const labels: PopupLabels = { google: t('mapGoogle'), mapy: t('mapMapyCz'), arrival: t('arrivalWord'), departure: t('departureWord'), approx: t('coordsApprox') };
+    const labels: PopupLabels = { google: t('mapGoogle'), mapy: t('mapMapyCz'), arrival: t('arrivalWord'), departure: t('departureWord'), approx: t('coordsApprox'), estimated: t('estimatedLocation') };
     let alive = true;
 
     layers.forEach((layer, li) => {
@@ -142,6 +149,34 @@ export function RouteMap({ layers, focus = null, fill = false }: Props) {
     };
   }, [layers, t, fill, lockDrag]);
 
+  // user position: pulsing dot plus accuracy circle; centres the map on every new fix
+  const meSeq = me?.seq;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !me) return;
+    const dot = L.marker([me.lat, me.lon], {
+      icon: L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }),
+      zIndexOffset: 1000,
+      keyboard: false,
+    })
+      .bindTooltip(t('yourPosition'))
+      .addTo(map);
+    const ring = L.circle([me.lat, me.lon], { radius: Math.min(me.acc, 500), color: '#2563eb', weight: 1, fillOpacity: 0.08 }).addTo(map);
+    return () => {
+      dot.remove();
+      ring.remove();
+    };
+  }, [me, layers, t, fill, lockDrag]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !me || meSeq === undefined) return;
+    // include the nearest shown stops so the user sees both themselves and where to walk
+    const pts: L.LatLngTuple[] = [[me.lat, me.lon]];
+    for (const l of layers) for (const s of l.stops.slice(0, 3)) if (s.lat !== undefined && s.lon !== undefined) pts.push([s.lat, s.lon]);
+    map.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 16, animate: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meSeq]);
+
   // tapping a stop in the list: pan to it, highlight it and open its popup (with the selected trip's time)
   const seq = focus?.seq;
   const stopIndex = focus?.stopIndex;
@@ -164,12 +199,28 @@ export function RouteMap({ layers, focus = null, fill = false }: Props) {
   }, [times, stopIndex]);
 
   return (
-    <div className={fill ? 'relative h-full w-full' : ''}>
+    <div className={fill ? 'relative h-full w-full' : 'relative'}>
       <div
         ref={el}
         className={`isolate overflow-hidden bg-slate-200 dark:bg-slate-800 ${fill ? 'h-full w-full' : 'h-72 w-full rounded-2xl border border-slate-200/70 dark:border-slate-700/70'}`}
         style={{ touchAction: lockDrag ? 'pan-y' : undefined }}
       />
+      {onLocate && (
+        <button
+          type="button"
+          onClick={onLocate}
+          disabled={locating}
+          aria-label={t('locateMe')}
+          title={t('locateMe')}
+          className="absolute right-3 top-3 z-500 flex size-10 items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 disabled:opacity-60 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700"
+        >
+          <svg viewBox="0 0 24 24" className={`size-5 ${locating ? 'animate-pulse' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="7" />
+            <circle cx="12" cy="12" r="2" fill="currentColor" />
+            <path d="M12 1v4M12 19v4M1 12h4M19 12h4" />
+          </svg>
+        </button>
+      )}
       {lockDrag && <p className="mt-1.5 px-1 text-xs text-slate-500">{t('mapHint')}</p>}
       {failed && (
         <p

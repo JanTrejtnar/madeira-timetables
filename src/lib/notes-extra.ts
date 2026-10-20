@@ -1,6 +1,16 @@
 // More note translations (Czech, English) for lines added later: SIGA Rodoeste / CAM sheets and manual transcriptions.
 // Place and stop names stay as printed.
 export const EXTRA: Record<string, [cs: string, en: string]> = {
+  'No horário de Inverno esta viagem é realizada pelas 18h00': ['V zimním jízdním řádu (25. 10.–27. 3.) se tato jízda koná v 18:00.', 'In the winter timetable (25 Oct–27 Mar) this trip runs at 18:00.'],
+  'Horário de Verão: 29/03/2026 a 24/10/2026 (última viagem 19h00). Horário de Inverno: 25/10/2026 a 27/03/2027 (última viagem 18h00).': [
+    'Letní jízdní řád: 29. 3. 2026–24. 10. 2026 (poslední jízda v 19:00). Zimní: 25. 10. 2026–27. 3. 2027 (poslední jízda v 18:00).',
+    'Summer timetable: 29 Mar 2026–24 Oct 2026 (last trip 19:00). Winter: 25 Oct 2026–27 Mar 2027 (last trip 18:00).',
+  ],
+  'O serviço é prestado todos os dias da semana, incluindo sábados, domingos e feriados, à exceção do dia 25 de dezembro.': ['Provoz každý den včetně sobot, nedělí a svátků, kromě 25. prosince.', 'Runs every day including Saturdays, Sundays and holidays, except 25 December.'],
+  'A HF reserva-se o direito de não realizar o serviço sempre que as condições atmosféricas não o permitam ou o acesso rodoviário seja interdito.': [
+    'Provozovatel může spoj zrušit, pokud to nedovolí počasí nebo je silnice uzavřena.',
+    'The operator may cancel the service when weather or a closed road prevents it.',
+  ],
   'termina viagem no Estreito de Câmara de Lobos': ['jízda končí v Estreito de Câmara de Lobos', 'trip ends at Estreito de Câmara de Lobos'],
   'Transbordo junto à entrada para a Estrada da Terra Chã.': ['Přestup u odbočky na Estrada da Terra Chã.', 'Change bus at the junction to Estrada da Terra Chã.'],
   'Transbordo junto à entrada para a Seara Velha de Baixo.': ['Přestup u odbočky na Seara Velha de Baixo.', 'Change bus at the junction to Seara Velha de Baixo.'],
