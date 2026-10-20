@@ -387,3 +387,48 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
     expect(hol).toBeLessThan(wd);
   });
 });
+
+describe.skipIf(!existsSync(file))('position precision and parishes of intercity lines (real data)', () => {
+  const data: Dataset = JSON.parse(readFileSync(file, 'utf8'));
+  const net = buildNetwork(data.lines);
+  const stops = data.lines.flatMap((l) => l.directions.flatMap((d) => d.stops));
+  const m = (a: [number, number], b: [number, number]) => Math.hypot((a[1] - b[1]) * 111320 * Math.cos((a[0] * Math.PI) / 180), (a[0] - b[0]) * 110540);
+
+  it('every positioned stop has a precision; only the four known values occur', () => {
+    const kinds = new Set<string>();
+    for (const s of stops) {
+      if (s.lat === undefined) expect(s.locationPrecision).toBeUndefined();
+      else kinds.add(String(s.locationPrecision));
+    }
+    expect([...kinds].sort()).toEqual(['exact', 'interpolated', 'name_match', 'settlement_center']);
+  });
+  it('precision follows the source: village centres are settlement_center, interpolated stops interpolated, official ones exact', () => {
+    for (const s of stops) {
+      if (s.isEstimatedLocation) expect(s.locationPrecision).toBe('interpolated');
+      if ((s as { source?: string }).source === 'gtfs') expect(s.locationPrecision).toBe('exact');
+    }
+    const centres = stops.filter((s) => s.locationPrecision === 'settlement_center');
+    expect(centres.length).toBeGreaterThan(100);
+    for (const s of centres) expect(s.approx).toBe(true);
+    expect(stops.find((s) => s.name === 'Seixal')?.locationPrecision).toBe('settlement_center');
+  });
+  it('Encumeada is the saddle Boca da Encumeada, not the tunnel', () => {
+    const e = stops.filter((s) => s.name === 'Encumeada');
+    expect(e.length).toBeGreaterThan(0);
+    for (const s of e) {
+      expect(m([s.lat!, s.lon!], [32.7543, -17.0189])).toBeLessThan(5);
+      expect(s.locationPrecision).toBe('exact');
+    }
+  });
+  it('Caniçal (line 702) is two stops in the Caniçal parish and offered as a group', () => {
+    const par = stops.filter((s) => s.par === 'Caniçal').map((s) => s.name);
+    expect(par).toContain('CANIÇAL');
+    expect(par.some((n) => /ABRA/.test(n))).toBe(true);
+    const g = suggest(net, data.lines, 'caniçal').find((x) => x.group);
+    expect(g?.key).toBe('@par:Caniçal');
+    expect(resolveNodes(net, '', g!.key).size).toBeGreaterThanOrEqual(2);
+    // the town stop is not placed on the stop of Baía d'Abra 3 km away
+    const town = stops.find((s) => s.name === 'CANIÇAL')!;
+    expect(m([town.lat!, town.lon!], [32.743124, -16.701429])).toBeGreaterThan(2000);
+  });
+});

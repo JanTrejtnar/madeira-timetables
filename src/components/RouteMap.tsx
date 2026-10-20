@@ -14,6 +14,7 @@ interface PopupLabels {
   departure: string;
   approx: string;
   estimated: string;
+  settlement: string;
 }
 
 function popupContent(s: Stop, labels: PopupLabels, time: string | null, first: boolean): HTMLElement {
@@ -28,7 +29,13 @@ function popupContent(s: Stop, labels: PopupLabels, time: string | null, first: 
     row.textContent = `${first ? labels.departure : labels.arrival}: ${time}`;
     box.appendChild(row);
   }
-  if (s.approx) {
+  if (s.locationPrecision === 'settlement_center') {
+    const w = document.createElement('div');
+    w.setAttribute('role', 'alert');
+    w.textContent = `⚠️ ${labels.settlement}`;
+    w.style.cssText = 'margin-top:4px;padding:4px 6px;border-radius:6px;background:#fffbeb;color:#92400e;font-weight:600;font-size:12px;';
+    box.appendChild(w);
+  } else if (s.approx) {
     const a = document.createElement('div');
     a.textContent = s.isEstimatedLocation ? labels.estimated : labels.approx;
     a.style.color = '#b45309';
@@ -98,7 +105,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
     }).addTo(map);
     mapRef.current = map;
     const group = L.featureGroup().addTo(map);
-    const labels: PopupLabels = { google: t('mapGoogle'), mapy: t('mapMapyCz'), arrival: t('arrivalWord'), departure: t('departureWord'), approx: t('coordsApprox'), estimated: t('estimatedLocation') };
+    const labels: PopupLabels = { google: t('mapGoogle'), mapy: t('mapMapyCz'), arrival: t('arrivalWord'), departure: t('departureWord'), approx: t('coordsApprox'), estimated: t('estimatedLocation'), settlement: t('settlementWarning') };
     let alive = true;
 
     layers.forEach((layer, li) => {
@@ -107,7 +114,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
         const marker = L.circleMarker([s.lat, s.lon], { radius: 5, color: layer.color, weight: 2.5, fillColor: '#fff', fillOpacity: 1 })
           .bindTooltip(s.name)
           // content is built when the popup opens, so it always shows the time of the currently selected trip
-          .bindPopup(() => popupContent(s, labels, li === 0 ? focusRef.current?.times[si] ?? null : null, si === 0), { autoPan: false })
+          .bindPopup(() => popupContent(s, labels, li === 0 ? focusRef.current?.times[si] ?? null : null, si === 0), { autoPan: true, autoPanPadding: [12, 12] })
           .addTo(group);
         if (li === 0) markers.current.set(si, marker);
       });
@@ -187,8 +194,11 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
     const m = markers.current.get(stopIndex);
     if (!m) return;
     m.bringToFront();
+    // open the popup once the map has settled, so it pans into view instead of being cut off by the map's edge
     map.flyTo(m.getLatLng(), Math.max(map.getZoom(), 14), { duration: 0.6 });
-    m.openPopup();
+    map.once('moveend', () => m.openPopup());
+    const fallback = setTimeout(() => !m.isPopupOpen() && m.openPopup(), 900);
+    return () => clearTimeout(fallback);
   }, [seq, stopIndex]);
   // another trip selected while a popup is open: refresh the time in it
   const times = focus?.times;

@@ -238,6 +238,22 @@ export function MapLinks({ stop }: { stop: Stop }) {
   );
 }
 
+/** Warning for a stop whose position is only the centre of its village. */
+export function PrecisionWarning({ stop, block = false }: { stop: Stop; block?: boolean }) {
+  const { t } = useT();
+  if (stop.locationPrecision !== 'settlement_center') return null;
+  return block ? (
+    <p role="alert" className="flex w-full items-start gap-1.5 rounded-lg bg-amber-50 px-2 py-1.5 text-xs font-semibold text-amber-800 dark:bg-amber-400/10 dark:text-amber-300">
+      <span aria-hidden="true">⚠️</span>
+      {t('settlementWarning')}
+    </p>
+  ) : (
+    <span title={t('settlementWarning')} aria-label={t('settlementWarning')} role="img" className="text-sm">
+      ⚠️
+    </span>
+  );
+}
+
 /** Small pin button that toggles the {@link MapLinks} of a stop. */
 export function MapPin({ stop }: { stop: Stop }) {
   const { t } = useT();
@@ -260,6 +276,7 @@ export function MapPin({ stop }: { stop: Stop }) {
       </button>
       {open && (
         <span onClick={(e) => e.stopPropagation()}>
+          <PrecisionWarning stop={stop} block />
           <MapLinks stop={stop} />
         </span>
       )}

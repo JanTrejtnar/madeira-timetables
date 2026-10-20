@@ -7,7 +7,7 @@ import { plan, type Itinerary } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
 import { fmtMinutes } from '../lib/time';
 import type { Line, MapLayer } from '../types';
-import { Card, Chip, dirLabel, EmptyState, EstTag, LineBadge, lineColor, lineRailCls, MapPin, SectionTitle, SkeletonCards, TypeFilter, type LineTypeFilter, type Shared } from './common';
+import { Card, Chip, dirLabel, EmptyState, EstTag, LineBadge, lineColor, lineRailCls, MapPin, PrecisionWarning, SectionTitle, SkeletonCards, TypeFilter, type LineTypeFilter, type Shared } from './common';
 import { Icon } from './Icons';
 import { MapPicker } from './MapPicker';
 
@@ -163,6 +163,7 @@ function StopName({ name, stop }: { name: string; stop: Parameters<typeof MapPin
   return (
     <div className="flex min-h-8 flex-wrap items-center gap-x-1 py-1 text-[15px] font-medium leading-5">
       <span className="min-w-0 wrap-break-word">{name}</span>
+      <PrecisionWarning stop={stop} />
       <MapPin stop={stop} />
     </div>
   );

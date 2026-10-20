@@ -4,7 +4,7 @@ import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } fro
 import { fmtMinutes } from '../lib/time';
 import { serviceDay } from '../lib/holidays';
 import type { DayKey, Direction, Line, MapFocus, MapLayer } from '../types';
-import { Card, Chip, dirLabel, EstTag, LineBadge, lineColor, lineRailCls, MapLinks, PdfButton, SectionTitle, type Shared } from './common';
+import { Card, Chip, dirLabel, EstTag, LineBadge, lineColor, lineRailCls, MapLinks, PdfButton, PrecisionWarning, SectionTitle, type Shared } from './common';
 import { Icon } from './Icons';
 import { RouteMap } from './RouteMap';
 
@@ -134,7 +134,8 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
     setMapFocus(mapFocus);
     return () => setMapFocus(null);
   }, [desktop, mapFocus, setMapFocus]);
-  const tapStop = (i: number) => {
+  /** force: the reader asked for the map ("show on map"), so scroll to it even when it is far below the list */
+  const tapStop = (i: number, force = false) => {
     if (hasTrips) setStopIdx(i);
     setFocusIdx(i);
     setFocusSeq((n) => n + 1);
@@ -143,7 +144,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
     const el = mapBox.current;
     if (!desktop && el) {
       const r = el.getBoundingClientRect();
-      if (r.top < window.innerHeight && r.bottom > 0 && (r.top < 0 || r.bottom > window.innerHeight)) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (force || (r.top < window.innerHeight && r.bottom > 0 && (r.top < 0 || r.bottom > window.innerHeight))) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
@@ -260,7 +261,9 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                 const label = stopTimeLabel(i);
                 const content = (
                   <>
-                    <span className={`min-w-0 flex-1 ${edge || active ? 'font-semibold' : ''}`}>{s.name}</span>
+                    <span className={`min-w-0 flex-1 ${edge || active ? 'font-semibold' : ''}`}>
+                      {s.name} <PrecisionWarning stop={s} />
+                    </span>
                     {label ? (
                       hasOffsets && i > 0 ? (
                         <EstTag>
@@ -318,6 +321,16 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                       </div>
                       {linksIdx === i && (
                         <div className="flex flex-wrap items-center gap-2 pb-2.5">
+                          <PrecisionWarning stop={s} block />
+                          {hasCoords && hasMap && (
+                            <button
+                              onClick={() => tapStop(i, true)}
+                              className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-sky-300 bg-sky-50 px-3 text-xs font-semibold text-sky-800 dark:border-sky-400/40 dark:bg-sky-400/10 dark:text-sky-200"
+                            >
+                              <Icon name="pin" className="size-3.5" strokeWidth={2} />
+                              {t('showOnMap')}
+                            </button>
+                          )}
                           <MapLinks stop={s} />
                           {!hasCoords && <span className="text-xs text-slate-400">{t('mapByName')}</span>}
                           {s.approx && <span className="text-xs text-amber-600">{t('coordsApprox')}</span>}

@@ -70,10 +70,22 @@ const osmPlaces = JSON.parse(await readFile(path.join(ROOT, 'data', 'osm', 'plac
 const osmStats = applyOsm(data.lines, osm, areas, path.join(ROOT, 'data', 'shapes'), osmPlaces);
 // what name matching could not place: evenly spaced along the route polyline between two known stops
 const interpolated = interpolateStops(data.lines, path.join(ROOT, 'data', 'shapes'));
+// precision of every position (the OSM step already set settlement_center / exact for its stops)
+const precision = { exact: 0, interpolated: 0, settlement_center: 0, name_match: 0 };
+for (const l of data.lines) {
+  for (const d of l.directions) {
+    for (const s of d.stops) {
+      if (s.lat === undefined) continue;
+      s.locationPrecision ??= s.isEstimatedLocation ? 'interpolated' : s.approx ? 'name_match' : 'exact';
+      precision[s.locationPrecision]++;
+    }
+  }
+}
 console.log('reclassified urbano -> interurbano:', reclassified.length ? reclassified.join('; ') : 'none');
 console.log('stop coordinates matched by name:', coords.filled, '(still without coordinates:', coords.missing + ')');
 console.log('stop coordinates interpolated along the route:', interpolated);
 console.log('OpenStreetMap', osm.fetched, '- stops placed by name:', JSON.stringify(osmStats));
+console.log('position precision:', JSON.stringify(precision));
 console.log('GTFS', gtfs.feedVersion, '- stops by code:', JSON.stringify(gtfsStats));
 console.log('municipality of stops:', JSON.stringify(assignMunicipalities(data.lines, gtfs, areas)));
 await writeFile(path.join(OUT, 'data', 'schedules.json'), JSON.stringify(data));

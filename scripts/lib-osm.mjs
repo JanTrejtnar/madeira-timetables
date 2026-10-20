@@ -19,6 +19,8 @@ const has = (s) => s.lat !== undefined && s.lon !== undefined;
 const PLACE_KM = 0.25; // stops this close count as one place (the two sides of a road)
 const SHAPE_KM = 0.15; // a candidate must lie this close to the route polyline
 const NEIGHBOUR_KM = 6;
+// hand-checked positions (key as keyOf() writes it): the saddle Boca da Encumeada, not the tunnel the name search finds
+const MANUAL = { encumeada: [32.7543, -17.0189] };
 // only real settlements: the thousands of `locality` / `neighbourhood` nodes carry too many common words
 const PLACE_TYPES = new Set(['city', 'town', 'village', 'suburb', 'hamlet']);
 // "Estreito (ESCOLA)" is the school, not the village; these qualifiers still name the village's own stop
@@ -33,6 +35,7 @@ const ALIASES = {
   'ribeira janela': 'Ribeira da Janela', 'jardim mar': 'Jardim do Mar', 'paul mar': 'Paúl do Mar', 'madalena mar': 'Madalena do Mar',
   'faja ovelha': 'Fajã da Ovelha', 'arco calheta': 'Arco da Calheta', 'estreito calheta': 'Estreito da Calheta', 'ponta pargo': 'Ponta do Pargo',
   'jardim serra': 'Jardim da Serra', 'st serra': 'Santo da Serra', 's serra': 'Santo da Serra', 'rib machico': 'Ribeira de Machico',
+  'baca d abra': "Baía d'Abra", 'baia d abra': "Baía d'Abra",
   'agua pena': 'Água de Pena', 'f penedo': 'Fajã do Penedo', 'faja penedo': 'Fajã do Penedo', 'ach castanheiro': 'Achada do Castanheiro',
 };
 /** Printed stop name -> cleaner name for matching: no "(Partida)" / "(Igreja)" qualifiers, no road suffix "ER 222", abbreviations resolved. */
@@ -76,7 +79,8 @@ function candidates(index, name) {
     if (extra < best) { best = extra; out = []; }
     if (extra === best) out.push(e.p);
   }
-  return out;
+  // "CANIÇAL" is not the stop "Caniçal/Praínha/Baía d'Abra" 3 km away: more than one extra word is a different place
+  return best <= 1 ? out : [];
 }
 
 /** Groups points that lie within PLACE_KM of each other. */
@@ -98,7 +102,7 @@ const distToPolyline = (poly, p) => poly.reduce((d, v) => Math.min(d, hav(v, p))
  */
 export function applyOsm(lines, osm, areas, shapesDir, places = []) {
   const index = buildOsmIndex(osm, places);
-  const r = { filled: 0, byHow: { unique: 0, shape: 0, neighbours: 0, municipality: 0, cluster: 0, place: 0 }, missing: 0 };
+  const r = { filled: 0, byHow: { unique: 0, shape: 0, neighbours: 0, municipality: 0, cluster: 0, place: 0, manual: 0 }, missing: 0 };
   const shapeCache = new Map();
   const shapeOf = (id) => {
     if (id == null) return null;
@@ -115,6 +119,13 @@ export function applyOsm(lines, osm, areas, shapesDir, places = []) {
       const poly = shapeOf(d.shapeId);
       d.stops.forEach((s, i) => {
         if (has(s)) return;
+        const manual = MANUAL[keyOf(canon(s.name))];
+        if (manual) {
+          Object.assign(s, { lat: manual[0], lon: manual[1], source: 'manual', locationPrecision: 'exact' });
+          r.byHow.manual++;
+          r.filled++;
+          return;
+        }
         let cand = cache.get(s.name);
         if (!cand) cache.set(s.name, (cand = clusters(candidates(index, s.name))));
         let how = '';
@@ -158,7 +169,7 @@ export function applyOsm(lines, osm, areas, shapesDir, places = []) {
           if (near.some((x) => hav(pick.p, x) > MAX_NEIGHBOUR_KM)) pick = null;
         }
         if (!pick) { r.missing++; return; }
-        Object.assign(s, { lat: +pick.p[0].toFixed(6), lon: +pick.p[1].toFixed(6), approx: true, source: 'osm' });
+        Object.assign(s, { lat: +pick.p[0].toFixed(6), lon: +pick.p[1].toFixed(6), approx: true, source: 'osm', locationPrecision: how === 'place' ? 'settlement_center' : 'exact' });
         r.byHow[how]++;
         r.filled++;
       });

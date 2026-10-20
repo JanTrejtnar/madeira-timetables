@@ -14,6 +14,12 @@ export interface Stop {
   approx?: boolean;
   /** position interpolated along the route polyline between two stops with known positions (build:data) */
   isEstimatedLocation?: boolean;
+  /**
+   * How trustworthy the position is: exact = official stop (SIGA / GTFS / OSM bus stop); interpolated = evenly spaced on the route
+   * polyline; settlement_center = centre of the village the stop is named after (platform not verified);
+   * name_match = taken from a stop of the same name on another route.
+   */
+  locationPrecision?: 'exact' | 'interpolated' | 'settlement_center' | 'name_match';
   /** Municipality (concelho) of the stop, set by build:data */
   muni?: string;
   /** Parish (freguesia) of the stop, set by build:data; "Name, Municipality" where the name exists twice */

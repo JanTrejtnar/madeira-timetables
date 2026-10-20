@@ -134,9 +134,52 @@ async function run(label, viewport) {
   await page.close();
 }
 
+
+// settlement-centre warning and "show on map" on a phone (line 139 has Seixal, a village centre)
+async function mobileMapChecks() {
+  const page = await browser.newPage();
+  await page.setViewport({ width: 390, height: 700, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  const id = await (async () => {
+    const r = await (await fetch(base + 'data/schedules.json')).json();
+    return r.lines.find((l) => l.number === '139').id;
+  })();
+  await page.goto(`${base}#/line/${id}`, { waitUntil: 'networkidle0' });
+  await page.reload({ waitUntil: 'networkidle0' });
+  await sleep(600);
+  const warnIcons = await page.evaluate(() => [...document.querySelectorAll('[role=img]')].filter((e) => /Orientační poloha/.test(e.getAttribute('aria-label') ?? '')).length);
+  check('phone: ⚠️ marker next to stops placed on a village centre', warnIcons > 0, String(warnIcons));
+  // expand the details of the Seixal stop (pin button in its row)
+  const opened = await page.evaluate(() => {
+    const li = [...document.querySelectorAll('ol li')].find((x) => /^Seixal/.test(x.innerText.trim()));
+    li?.querySelector('button[aria-expanded]')?.click();
+    return !!li;
+  });
+  await sleep(300);
+  const detail = await page.evaluate(() => document.body.innerText);
+  check('phone: expanded stop shows the warning text', opened && /Orientační poloha v obci – přesné nástupiště není v mapě ověřeno\./.test(detail));
+  check('phone: expanded stop offers "Ukázat na mapě"', /Ukázat na mapě/.test(detail));
+  const before = await page.evaluate(() => { const r = document.querySelector('.leaflet-container')?.getBoundingClientRect(); return r ? { top: r.top, bottom: r.bottom, h: innerHeight } : null; });
+  check('phone: the map starts below the viewport (list is long)', !!before && before.top > before.h, JSON.stringify(before));
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /Ukázat na mapě/.test(b.innerText))?.click());
+  await sleep(1800);
+  const after = await page.evaluate(() => {
+    const r = document.querySelector('.leaflet-container')?.getBoundingClientRect();
+    const pop = document.querySelector('.leaflet-popup');
+    const pr = pop?.getBoundingClientRect();
+    return { mapVisible: !!r && r.top >= 0 && r.bottom <= innerHeight, popup: !!pop, popupInView: !!pr && !!r && pr.top >= r.top - 1 && pr.bottom <= r.bottom + 1 && pr.top >= 0 && pr.bottom <= innerHeight, text: pop?.textContent ?? '' };
+  });
+  check('phone: "Ukázat na mapě" scrolls the whole map into view', after.mapVisible, JSON.stringify(after));
+  check('phone: the popup of the stop is open and in view, with the warning', after.popup && after.popupInView && /Orientační poloha/.test(after.text), after.text.slice(0, 120));
+  check('phone: no page errors (map section)', errors.length === 0, errors.join('; ').slice(0, 200));
+  await page.close();
+}
+
 try {
   await run('phone', { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   await run('desktop', { width: 1400, height: 900 });
+  await mobileMapChecks();
 } finally {
   await browser.close();
 }
