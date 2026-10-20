@@ -72,8 +72,8 @@ async function run(label, viewport) {
   await sleep(500);
   const res = await page.evaluate(() => document.querySelector('[data-testid=map-picker-result]')?.innerText);
   check(`${label}: tap finds the nearest stop and states the distance`, /Cabo Girão/i.test(res ?? '') && /\d+ m/.test(res ?? ''), res);
-  const markers = await page.evaluate(() => document.querySelectorAll('[data-testid=map-picker-map] path.leaflet-interactive').length);
-  check(`${label}: tapped point, link and found stop are drawn`, markers >= 3, String(markers));
+  const markers = await page.evaluate(() => document.querySelectorAll('[data-testid=map-picker-map] path, [data-testid=map-picker-map] .picked-pin').length);
+  check(`${label}: tapped point (red pin), link and found stop are drawn`, markers >= 3, String(markers));
   // far from any stop (zoom out is not needed: pan by tapping the sea corner is not guaranteed) -> use two taps at different spots
   await page.mouse.click(box.x + 5, box.y + box.height - 5);
   await sleep(400);
@@ -83,6 +83,21 @@ async function run(label, viewport) {
   await sleep(300);
   check(`${label}: Escape / Hotovo closes the picker`, (await page.$('[data-testid=map-picker]')) === null);
   check(`${label}: the field holds the stop found on the map`, /Girão|Girao/i.test((await value('Kam')) ?? '') || (await value('Kam')) !== '', await value('Kam'));
+
+  // walking leg + persistent pin for the picked destination
+  await typeIn('Odkud', 'Funchal');
+  await page.keyboard.press('Enter');
+  await page.evaluate(() => { const i = document.querySelector('input[type=time]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(i, '08:00'); i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); });
+  await sleep(1500);
+  const walk = await page.evaluate(() => document.querySelector('[data-testid=walk-out]')?.innerText);
+  check(`${label}: itinerary ends with "Chůze k cíli: N m (~N min)"`, /Chůze k cíli: \d+ m \(~\d+ min\)/.test(walk ?? ''), walk);
+  const pins = await page.evaluate(() => document.querySelectorAll('.picked-pin').length);
+  check(`${label}: the red pin stays on the map with the itinerary`, pins >= 1, String(pins));
+  check(`${label}: the picked point is kept in the URL`, /[?&]tp=3\d\.\d+(,|%2C)-1\d\.\d+/.test(await page.evaluate(() => location.search)));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await sleep(1200);
+  check(`${label}: pin and walk survive a reload`, (await page.$('[data-testid=walk-out]')) !== null && (await page.$$('.picked-pin')).length >= 1);
+  await page.evaluate(() => { const i = document.querySelector('input[aria-label="Kam"]'); i.focus(); });
 
   // 7. any date + holiday detection
   const dateSet = async (iso) => {
@@ -160,6 +175,17 @@ async function mobileMapChecks() {
   const detail = await page.evaluate(() => document.body.innerText);
   check('phone: expanded stop shows the warning text', opened && /Orientační poloha v obci – přesné nástupiště není v mapě ověřeno\./.test(detail));
   check('phone: expanded stop offers "Ukázat na mapě"', /Ukázat na mapě/.test(detail));
+  const box = await page.evaluate(() => {
+    const d = document.querySelector('[data-testid=stop-details]');
+    if (!d) return null;
+    const cs = getComputedStyle(d);
+    const items = [...d.querySelectorAll('a, button')].map((e) => e.getBoundingClientRect());
+    return { pad: parseFloat(cs.paddingTop), mb: parseFloat(cs.marginBottom), n: items.length, tops: new Set(items.map((r) => Math.round(r.top))).size, heights: new Set(items.map((r) => Math.round(r.height))).size, dup: /Poloha určena podle názvu/.test(d.innerText), warn: /Orientační poloha/.test(d.innerText) };
+  });
+  check('phone: expanded stop has inner padding >= 14 px and a bottom gap >= 10 px', !!box && box.pad >= 14 && box.mb >= 10, JSON.stringify(box));
+  check('phone: Ukázat na mapě / Google Maps / Mapy.cz in one row, one height', !!box && box.n === 3 && box.tops === 1 && box.heights === 1, JSON.stringify(box));
+  check('phone: no duplicate orange "Poloha určena podle názvu" under the warning', !!box && box.warn && !box.dup);
+  await page.screenshot({ path: process.env.SHOT_DIR ? `${process.env.SHOT_DIR}/stop-details.png` : undefined }).catch(() => {});
   const before = await page.evaluate(() => { const r = document.querySelector('.leaflet-container')?.getBoundingClientRect(); return r ? { top: r.top, bottom: r.bottom, h: innerHeight } : null; });
   check('phone: the map starts below the viewport (list is long)', !!before && before.top > before.h, JSON.stringify(before));
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /Ukázat na mapě/.test(b.innerText))?.click());

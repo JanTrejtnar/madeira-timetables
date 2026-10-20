@@ -6,6 +6,14 @@ import type { Ymd } from './holidays';
 export interface Picked {
   text: string;
   key: string | null;
+  /** point tapped on the map ("Pick on map"); dropped as soon as the text is edited */
+  pt?: { lat: number; lon: number };
+}
+
+const fmtPt = (p: { lat: number; lon: number }) => `${p.lat.toFixed(5)},${p.lon.toFixed(5)}`;
+function parsePt(s: string | null): Picked['pt'] {
+  const m = /^(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)$/.exec(s ?? '');
+  return m && Math.abs(+m[1]) <= 90 && Math.abs(+m[2]) <= 180 ? { lat: +m[1], lon: +m[2] } : undefined;
 }
 
 export interface PlannerForm {
@@ -43,8 +51,8 @@ export function formFromQuery(search: string, nowMinutes: number): PlannerForm {
   const time = q.get('time');
   const date = q.get('date');
   return {
-    from: { text: q.get('from') ?? '', key: q.get('fk') || null },
-    to: { text: q.get('to') ?? '', key: q.get('tk') || null },
+    from: { text: q.get('from') ?? '', key: q.get('fk') || null, pt: parsePt(q.get('fp')) },
+    to: { text: q.get('to') ?? '', key: q.get('tk') || null, pt: parsePt(q.get('tp')) },
     time: time && TIME.test(time) ? time : base.time,
     date: isoToYmd(date) ? date : null,
     type: type && TYPES.includes(type) ? type : 'all',
@@ -57,8 +65,10 @@ export function formToQuery(f: PlannerForm): string {
   const q = new URLSearchParams();
   if (f.from.text) q.set('from', f.from.text);
   if (f.from.key) q.set('fk', f.from.key);
+  if (f.from.pt) q.set('fp', fmtPt(f.from.pt));
   if (f.to.text) q.set('to', f.to.text);
   if (f.to.key) q.set('tk', f.to.key);
+  if (f.to.pt) q.set('tp', fmtPt(f.to.pt));
   if (f.from.text || f.to.text) q.set('time', f.time);
   if (f.date) q.set('date', f.date);
   if (f.type !== 'all') q.set('type', f.type);

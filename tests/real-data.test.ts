@@ -9,6 +9,9 @@ import { variantLabel } from '../src/lib/notes';
 import { plan } from '../src/lib/router';
 import { poiFor } from '../src/lib/aliases';
 import { departuresFrom, nearbyStops } from '../src/lib/nearby';
+import { decodeEntitiesInJson } from '../src/lib/text';
+import { walkTo } from '../src/lib/walk';
+import { cleanName } from '../scripts/lib-text.mjs';
 import type { Dataset } from '../src/types';
 
 const file = 'public/data/schedules.json';
@@ -422,13 +425,52 @@ describe.skipIf(!existsSync(file))('position precision and parishes of intercity
   });
   it('Caniçal (line 702) is two stops in the Caniçal parish and offered as a group', () => {
     const par = stops.filter((s) => s.par === 'Caniçal').map((s) => s.name);
-    expect(par).toContain('CANIÇAL');
-    expect(par.some((n) => /ABRA/.test(n))).toBe(true);
+    expect(par).toContain('Caniçal');
+    expect(par.some((n) => /Abra/.test(n))).toBe(true);
     const g = suggest(net, data.lines, 'caniçal').find((x) => x.group);
     expect(g?.key).toBe('@par:Caniçal');
     expect(resolveNodes(net, '', g!.key).size).toBeGreaterThanOrEqual(2);
     // the town stop is not placed on the stop of Baía d'Abra 3 km away
-    const town = stops.find((s) => s.name === 'CANIÇAL')!;
+    const town = stops.find((s) => s.name === 'Caniçal')!;
     expect(m([town.lat!, town.lon!], [32.743124, -16.701429])).toBeGreaterThan(2000);
+  });
+  it('texts: no HTML entities, no names in capitals except abbreviations', () => {
+    expect(readFileSync(file, 'utf8')).not.toMatch(/&#?\w+;/);
+    const names = new Set<string>();
+    for (const l of data.lines) for (const d of l.directions) for (const t of [d.from, d.to, d.route, ...d.stops.map((x) => x.name)]) t && names.add(t);
+    const shouting = [...names].filter((n) => /[A-ZÀ-Ý]/.test(n) && !/[a-zà-ÿ]/.test(n));
+    // only the abbreviations of the timetables (route codes, "G N R", "CAM STO A, BC ESCL, S")
+    expect(shouting.filter((n) => !/\d|^[A-Z ,]{1,30}$/.test(n))).toEqual([]);
+    expect(names.has("Baía d'Abra")).toBe(true);
+    expect(names.has('Caniçal')).toBe(true);
+  });
+  it('cleanName: Title Case with Portuguese small words and kept abbreviations', () => {
+    expect(cleanName("Caniçal - Baía D&#039;Abra")).toBe("Caniçal - Baía d'Abra");
+    expect(cleanName('CANIÇAL')).toBe('Caniçal');
+    expect(cleanName("BAÇA D'ABRA")).toBe("Baía d'Abra");
+    expect(cleanName('CENTRO - CAMPO DE CIMA/LAPEIRA')).toBe('Centro - Campo de Cima/Lapeira');
+    expect(cleanName('PORTO DA CRUZ E AREIA')).toBe('Porto da Cruz e Areia');
+    expect(cleanName('CAM LOMBADA ESCL')).toBe('CAM Lombada ESCL');
+    expect(cleanName('T-81')).toBe('T-81');
+    expect(JSON.parse(decodeEntitiesInJson('{"a":"D&#039;Abra &amp; Co"}')).a).toBe("D'Abra & Co");
+    expect(JSON.parse(decodeEntitiesInJson('{"a":"&quot;x&quot;"}')).a).toBe('"x"');
+  });
+  it('walk: 4 km/h, about 70 m per minute', () => {
+    const w = walkTo({ lat: 32.65, lon: -16.9 }, { lat: 32.65 + 280 / 111000, lon: -16.9 });
+    expect(w!.m).toBeGreaterThan(270);
+    expect(w!.m).toBeLessThan(290);
+    expect(w!.min).toBe(4);
+    expect(walkTo({ lat: 32.65, lon: -16.9 }, { lat: 32.65, lon: -16.9 })!.min).toBe(1);
+    expect(walkTo(undefined, { lat: 1, lon: 1 })).toBeNull();
+    expect(walkTo({ lat: 1, lon: 1 }, {})).toBeNull();
+  });
+  it('planner URL keeps the picked map points', () => {
+    const f = formFromQuery('?from=Pinga&fk=pinga&fp=32.65001,-16.90002&to=Funchal&tp=32.7,-16.95', 600);
+    expect(f.from.pt).toEqual({ lat: 32.65001, lon: -16.90002 });
+    expect(f.to.pt).toEqual({ lat: 32.7, lon: -16.95 });
+    const back = formFromQuery('?' + formToQuery(f), 600);
+    expect(back.from.pt).toEqual(f.from.pt);
+    expect(back.to.pt).toEqual(f.to.pt);
+    expect(formFromQuery('?from=a&fp=xx', 600).from.pt).toBeUndefined();
   });
 });

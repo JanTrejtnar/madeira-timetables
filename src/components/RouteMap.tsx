@@ -3,6 +3,7 @@ import L from 'leaflet';
 import { loadShape } from '../data';
 import { useT } from '../i18n';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
+import { drawPin } from '../lib/mapPin';
 import type { UserPos } from '../lib/nearby';
 import type { MapFocus, MapLayer, Stop } from '../types';
 import { iconSvg } from './Icons';
@@ -109,6 +110,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
     let alive = true;
 
     layers.forEach((layer, li) => {
+      layer.pins?.forEach((p) => drawPin(group, p, t('pickedPoint')));
       layer.stops.forEach((s, si) => {
         if (s.lat === undefined || s.lon === undefined) return;
         const marker = L.circleMarker([s.lat, s.lon], { radius: 5, color: layer.color, weight: 2.5, fillColor: '#fff', fillOpacity: 1 })

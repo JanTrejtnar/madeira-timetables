@@ -110,3 +110,22 @@ body {
     animation: none;
   }
 }
+
+/* everything that can be clicked shows the hand cursor (Tailwind's preflight resets buttons to the default arrow) */
+button:not(:disabled),
+a[href],
+summary,
+select,
+label:has(input[type='checkbox']),
+input[type='checkbox'],
+input[type='date'],
+input[type='time'],
+[role='button'],
+[role='option'],
+[role='tab'] {
+  cursor: pointer;
+}
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}

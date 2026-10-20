@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { useT } from '../i18n';
+import { drawPin } from '../lib/mapPin';
 import { nearestNode } from '../lib/network';
 import type { Picked } from '../lib/plannerForm';
 import type { Shared } from './common';
@@ -13,13 +14,14 @@ interface Props {
   shared: Shared;
   /** "From" / "To": which field is being filled */
   title: string;
+  kind: 'from' | 'to';
   current: Picked;
   onPick: (v: Picked) => void;
   onClose: () => void;
 }
 
 /** Full-screen map: tap anywhere and the nearest stop (within 1 km) is filled into the planner field. */
-export function MapPicker({ shared, title, current, onPick, onClose }: Props) {
+export function MapPicker({ shared, title, kind, current, onPick, onClose }: Props) {
   const { t } = useT();
   const el = useRef<HTMLDivElement>(null);
   const [res, setRes] = useState<{ name: string; metres: number } | 'none' | null>(null);
@@ -42,19 +44,22 @@ export function MapPicker({ shared, title, current, onPick, onClose }: Props) {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
     const layer = L.layerGroup().addTo(map);
+    const label = t('pickedPoint');
     const show = (lat: number, lon: number, stop: { lat: number; lon: number; name: string } | null) => {
       layer.clearLayers();
-      L.circleMarker([lat, lon], { radius: 7, color: '#be123c', weight: 2.5, fillColor: '#fff', fillOpacity: 1 }).addTo(layer);
-      if (stop) {
-        L.polyline([[lat, lon], [stop.lat, stop.lon]], { color: '#0284c7', weight: 3, dashArray: '4 6' }).addTo(layer);
-        L.circleMarker([stop.lat, stop.lon], { radius: 9, color: '#0284c7', weight: 3, fillColor: '#0ea5e9', fillOpacity: 1 }).bindTooltip(stop.name, { permanent: true, direction: 'top', offset: [0, -8] }).addTo(layer);
-      }
+      drawPin(layer, { kind, lat, lon, stop: stop ?? undefined }, label);
+      if (stop) L.circleMarker([stop.lat, stop.lon], { radius: 9, color: '#0284c7', weight: 3, fillColor: '#0ea5e9', fillOpacity: 1 }).bindTooltip(stop.name, { permanent: true, direction: 'top', offset: [0, -8] }).addTo(layer);
     };
-    // start on the stop already in the field, else on the user's position, else on the island
+    // start on the pin already set, else the stop in the field, else the user's position, else the island
     const startNode = current.key ? net.nodes.find((n) => n.key === current.key && n.lat !== undefined) : undefined;
-    if (startNode?.lat !== undefined && startNode.lon !== undefined) {
+    if (current.pt) {
+      const hit = nearestNode(net, current.pt.lat, current.pt.lon, PICK_RADIUS_M);
+      map.setView([current.pt.lat, current.pt.lon], 16);
+      show(current.pt.lat, current.pt.lon, hit && hit.node.lat !== undefined && hit.node.lon !== undefined ? { lat: hit.node.lat, lon: hit.node.lon, name: hit.node.name } : null);
+    } else if (startNode?.lat !== undefined && startNode.lon !== undefined) {
       map.setView([startNode.lat, startNode.lon], 15);
-      show(startNode.lat, startNode.lon, { lat: startNode.lat, lon: startNode.lon, name: startNode.name });
+      layer.clearLayers();
+      L.circleMarker([startNode.lat, startNode.lon], { radius: 9, color: '#0284c7', weight: 3, fillColor: '#0ea5e9', fillOpacity: 1 }).bindTooltip(startNode.name, { permanent: true, direction: 'top', offset: [0, -8] }).addTo(layer);
     } else if (userPos) map.setView([userPos.lat, userPos.lon], 14);
     else map.setView([32.75, -16.95], 10);
 
@@ -67,7 +72,7 @@ export function MapPicker({ shared, title, current, onPick, onClose }: Props) {
       }
       show(e.latlng.lat, e.latlng.lng, { lat: hit.node.lat, lon: hit.node.lon, name: hit.node.name });
       setRes({ name: hit.node.name, metres: Math.round(hit.metres) });
-      pickRef.current({ text: hit.node.name, key: hit.node.key });
+      pickRef.current({ text: hit.node.name, key: hit.node.key, pt: { lat: +e.latlng.lat.toFixed(5), lon: +e.latlng.lng.toFixed(5) } });
     });
     const ro = new ResizeObserver(() => map.invalidateSize());
     ro.observe(container);

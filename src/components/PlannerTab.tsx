@@ -6,10 +6,12 @@ import { isoToYmd, ymdToIso, type Picked, type PlannerForm } from '../lib/planne
 import { plan, type Itinerary } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
 import { fmtMinutes } from '../lib/time';
-import type { Line, MapLayer } from '../types';
+import { walkTo } from '../lib/walk';
+import type { Line, MapLayer, MapPin as PickedPin } from '../types';
 import { Card, Chip, dirLabel, EmptyState, EstTag, LineBadge, lineColor, lineRailCls, MapPin, PrecisionWarning, SectionTitle, SkeletonCards, TypeFilter, type LineTypeFilter, type Shared } from './common';
 import { Icon } from './Icons';
 import { MapPicker } from './MapPicker';
+import { RouteMap } from './RouteMap';
 
 function Combobox({ label, placeholder, value, onChange, shared, onPickMap }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; shared: Shared; onPickMap: () => void }) {
   const { t } = useT();
@@ -169,10 +171,23 @@ function StopName({ name, stop }: { name: string; stop: Parameters<typeof MapPin
   );
 }
 
-function ItineraryCard({ it, shared, selected, onSelect }: { it: Itinerary; shared: Shared; selected: boolean; onSelect: () => void }) {
+/** "🚶 Walk to the stop: 280 m (~4 min)" between the picked point and the bus. */
+function WalkNote({ label, testId }: { label: string; testId: string }) {
+  return (
+    <p className="py-2 text-sm leading-5 text-slate-600 dark:text-slate-300" data-testid={testId}>
+      <span aria-hidden="true">🚶 </span>
+      {label}
+    </p>
+  );
+}
+
+function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt }: { it: Itinerary; shared: Shared; selected: boolean; onSelect: () => void; fromPt?: Picked['pt']; toPt?: Picked['pt'] }) {
   const { t } = useT();
   const dur = it.arrive - it.depart;
   const last = it.legs.length - 1;
+  // walking from the point picked on the map to the first stop / from the last stop to the picked destination
+  const walkIn = walkTo(fromPt, it.legs[0].trip.dir.stops[it.legs[0].fromPos]);
+  const walkOut = walkTo(toPt, it.legs[last].trip.dir.stops[it.legs[last].toPos]);
   return (
     <Card className={`p-0! transition-shadow ${selected && shared.desktop ? 'ring-2 ring-sky-500/70' : ''}`}>
       <button onClick={onSelect} className="flex w-full items-center justify-between gap-3 rounded-t-2xl px-4 py-3 text-left">
@@ -187,6 +202,11 @@ function ItineraryCard({ it, shared, selected, onSelect }: { it: Itinerary; shar
         </span>
       </button>
       <div className="border-t border-slate-100 px-4 pb-3 pt-3 dark:border-slate-800">
+        {walkIn && (
+          <Row time={<span className="text-slate-500 tabular-nums dark:text-slate-400">{fmtMinutes(it.depart - walkIn.min)}</span>} below="dashed">
+            <WalkNote label={t('walkToStop', { m: walkIn.m, n: walkIn.min })} testId="walk-in" />
+          </Row>
+        )}
         {it.legs.map((l, i) => {
           const prev = it.legs[i - 1];
           const stops = l.trip.dir.stops;
@@ -197,7 +217,7 @@ function ItineraryCard({ it, shared, selected, onSelect }: { it: Itinerary; shar
               <Row
                 time={<Time min={l.depart} est={l.departEstimated} t={t} compact />}
                 dot={i === 0 ? 'start' : 'ring'}
-                above={prev ? 'dashed' : undefined}
+                above={prev || walkIn ? 'dashed' : undefined}
                 below={{ line }}
                 line={line}
               >
@@ -220,11 +240,16 @@ function ItineraryCard({ it, shared, selected, onSelect }: { it: Itinerary; shar
                 time={<Time min={l.arrive} est={l.arriveEstimated} t={t} compact />}
                 dot={isLast ? 'end' : 'ring'}
                 above={{ line }}
-                below={isLast ? undefined : 'dashed'}
+                below={isLast ? (walkOut ? 'dashed' : undefined) : 'dashed'}
                 line={line}
               >
                 <StopName name={stops[l.toPos].name} stop={stops[l.toPos]} />
               </Row>
+              {isLast && walkOut && (
+                <Row time={<span className="text-slate-500 tabular-nums dark:text-slate-400">{fmtMinutes(l.arrive + walkOut.min)}</span>}>
+                  <WalkNote label={t('walkToDest', { m: walkOut.m, n: walkOut.min })} testId="walk-out" />
+                </Row>
+              )}
               {!isLast && (
                 <Row below="dashed">
                   <p className="py-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
@@ -291,18 +316,22 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const anyEstimated = all.some(({ it }) => it.legs.some((l) => l.departEstimated || l.arriveEstimated));
   const selected = all.find((x) => x.key === selectedKey) ?? all[0];
 
-  // the selected itinerary is drawn on the big desktop map
-  const layers = useMemo<MapLayer[] | null>(
-    () =>
-      selected
-        ? selected.it.legs.map((l) => ({
-            shapeId: l.trip.dir.shapeId,
-            stops: l.trip.dir.stops.slice(l.fromPos, l.toPos + 1),
-            color: lineColor(l.trip.line),
-          }))
-        : null,
-    [selected],
-  );
+  // the selected itinerary is drawn on the map (desktop side map, small map on the phone when a point was picked)
+  const layers = useMemo<MapLayer[] | null>(() => {
+    if (!selected) return null;
+    const legs = selected.it.legs;
+    const pinFor = (kind: PickedPin['kind'], pt: Picked['pt'], stop: { lat?: number; lon?: number; name: string }): PickedPin | null =>
+      pt ? { kind, lat: pt.lat, lon: pt.lon, stop: stop.lat !== undefined && stop.lon !== undefined ? { lat: stop.lat, lon: stop.lon, name: stop.name } : undefined } : null;
+    const first = legs[0].trip.dir.stops[legs[0].fromPos];
+    const lastLeg = legs[legs.length - 1];
+    const pins = [pinFor('from', from.pt, first), pinFor('to', to.pt, lastLeg.trip.dir.stops[lastLeg.toPos])].filter((p): p is PickedPin => p !== null);
+    return legs.map((l, i) => ({
+      shapeId: l.trip.dir.shapeId,
+      stops: l.trip.dir.stops.slice(l.fromPos, l.toPos + 1),
+      color: lineColor(l.trip.line),
+      ...(i === 0 && pins.length ? { pins } : {}),
+    }));
+  }, [selected, from.pt, to.pt]);
   const { desktop, setMap } = shared;
   useEffect(() => {
     if (!desktop) return;
@@ -327,7 +356,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         <SectionTitle>{title}</SectionTitle>
         <div className="flex flex-col gap-3">
           {rows.map(({ key: k, it }) => (
-            <ItineraryCard key={k} it={it} shared={shared} selected={selected?.key === k} onSelect={() => setSelectedKey(k)} />
+            <ItineraryCard key={k} it={it} shared={shared} selected={selected?.key === k} onSelect={() => setSelectedKey(k)} fromPt={dFrom.pt} toPt={dTo.pt} />
           ))}
         </div>
       </section>
@@ -429,6 +458,11 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         </div>
       )}
 
+      {!pending && !desktop && layers?.[0]?.pins && (
+        <div data-testid="planner-map">
+          <RouteMap layers={layers} />
+        </div>
+      )}
       {!pending && renderList(t('directTitle'), 'd')}
       {!pending && renderList(`${result?.plan.direct.length === 0 ? `${t('noDirect')} ` : ''}${t('transferTitle')}`, 't')}
       {!pending && anyEstimated && (
@@ -441,6 +475,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         <MapPicker
           shared={shared}
           title={pickFor === 'from' ? t('from') : t('to')}
+          kind={pickFor}
           current={pickFor === 'from' ? from : to}
           onPick={(v) => (pickFor === 'from' ? setFrom(v) : setTo(v))}
           onClose={() => setPickFor(null)}

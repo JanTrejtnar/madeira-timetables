@@ -218,19 +218,24 @@ export function Times({ list, t }: { list: Upcoming[]; t: ReturnType<typeof useT
 const linkCls =
   'inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-800 dark:text-sky-300 dark:hover:bg-slate-700';
 
-/** Micro-buttons that open a stop in Google Maps / Mapy.cz. Without coordinates only a Google name search is offered. */
-export function MapLinks({ stop }: { stop: Stop }) {
+/**
+ * Micro-buttons that open a stop in Google Maps / Mapy.cz. Without coordinates only a Google name search is offered.
+ * `grid`: equal-width buttons of one height in a row (expanded stop of the line detail); `lead` is placed first.
+ */
+export function MapLinks({ stop, grid = false, lead }: { stop: Stop; grid?: boolean; lead?: ReactNode }) {
   const { t } = useT();
   const mapy = mapyCzUrl(stop);
+  const cls = grid ? `${linkCls} h-auto min-h-10 justify-center px-2 text-center leading-tight` : linkCls;
   return (
-    <span className="inline-flex flex-wrap gap-1.5">
-      <a href={googleMapsUrl(stop)} target="_blank" rel="noopener noreferrer" className={linkCls}>
-        <Icon name="pin" className="size-3.5" strokeWidth={2} />
+    <span className={grid ? 'grid grid-flow-col auto-cols-fr gap-2' : 'inline-flex flex-wrap gap-1.5'}>
+      {lead}
+      <a href={googleMapsUrl(stop)} target="_blank" rel="noopener noreferrer" className={cls}>
+        {!grid && <Icon name="pin" className="size-3.5" strokeWidth={2} />}
         {t('mapGoogle')}
       </a>
       {mapy && (
-        <a href={mapy} target="_blank" rel="noopener noreferrer" className={linkCls}>
-          <Icon name="map" className="size-3.5" strokeWidth={2} />
+        <a href={mapy} target="_blank" rel="noopener noreferrer" className={cls}>
+          {!grid && <Icon name="map" className="size-3.5" strokeWidth={2} />}
           {t('mapMapyCz')}
         </a>
       )}

@@ -320,20 +320,24 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                         </button>
                       </div>
                       {linksIdx === i && (
-                        <div className="flex flex-wrap items-center gap-2 pb-2.5">
+                        <div className="mb-2.5 mr-1 flex flex-col gap-2.5 rounded-xl border border-slate-200/70 bg-slate-50/70 p-3.5 dark:border-slate-700/70 dark:bg-slate-800/40" data-testid="stop-details">
                           <PrecisionWarning stop={s} block />
-                          {hasCoords && hasMap && (
-                            <button
-                              onClick={() => tapStop(i, true)}
-                              className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-sky-300 bg-sky-50 px-3 text-xs font-semibold text-sky-800 dark:border-sky-400/40 dark:bg-sky-400/10 dark:text-sky-200"
-                            >
-                              <Icon name="pin" className="size-3.5" strokeWidth={2} />
-                              {t('showOnMap')}
-                            </button>
-                          )}
-                          <MapLinks stop={s} />
+                          <MapLinks
+                            stop={s}
+                            grid
+                            lead={
+                              hasCoords && hasMap ? (
+                                <button
+                                  onClick={() => tapStop(i, true)}
+                                  className="inline-flex h-auto min-h-10 items-center justify-center gap-1.5 rounded-full border border-sky-300 bg-sky-50 px-2 text-center text-xs font-semibold leading-tight text-sky-800 dark:border-sky-400/40 dark:bg-sky-400/10 dark:text-sky-200"
+                                >
+                                  {t('showOnMap')}
+                                </button>
+                              ) : null
+                            }
+                          />
                           {!hasCoords && <span className="text-xs text-slate-400">{t('mapByName')}</span>}
-                          {s.approx && <span className="text-xs text-amber-600">{t('coordsApprox')}</span>}
+                          {s.approx && s.locationPrecision !== 'settlement_center' && <span className="text-xs text-amber-600">{t('coordsApprox')}</span>}
                         </div>
                       )}
                     </div>

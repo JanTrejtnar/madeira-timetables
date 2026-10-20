@@ -10,6 +10,7 @@ import { interpolateStops } from './lib-interpolate.mjs';
 import { snapShapeEnds } from './lib-shape-ends.mjs';
 import { applyOsm } from './lib-osm.mjs';
 import { prepareAreas } from './lib-areas.mjs';
+import { cleanTexts } from './lib-text.mjs';
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -58,6 +59,8 @@ for (const f of (await readdir(path.join(ROOT, 'data', 'external'))).filter((x) 
   ext.isInterurbano = ext.type === 'interurbano';
   data.lines.push(ext);
 }
+// HTML entities ("D&#039;Abra") and ALL CAPS names ("CANIÇAL") of the scraped text, before anything is matched by name
+const cleaned = cleanTexts(data.lines);
 // official positions from the Horários do Funchal GTFS feed (matched by stop code; data/gtfs/stops.json, `npm run fetch:gtfs`)
 const gtfs = JSON.parse(await readFile(path.join(ROOT, 'data', 'gtfs', 'stops.json'), 'utf8'));
 const gtfsStats = applyGtfs(data.lines, gtfs);
@@ -81,6 +84,7 @@ for (const l of data.lines) {
     }
   }
 }
+console.log('texts cleaned (entities, capitals):', cleaned);
 console.log('reclassified urbano -> interurbano:', reclassified.length ? reclassified.join('; ') : 'none');
 console.log('stop coordinates matched by name:', coords.filled, '(still without coordinates:', coords.missing + ')');
 console.log('stop coordinates interpolated along the route:', interpolated);

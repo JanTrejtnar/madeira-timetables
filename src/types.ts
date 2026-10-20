@@ -91,10 +91,20 @@ export interface Dataset {
 }
 
 /** One route drawn on the map: the shape polyline (if any) plus its stops. */
+/** A point the user picked on the map (planner "Pick on map") and the stop it was assigned to. */
+export interface MapPin {
+  kind: 'from' | 'to';
+  lat: number;
+  lon: number;
+  stop?: { lat: number; lon: number; name: string };
+}
+
 export interface MapLayer {
   shapeId: number | null;
   stops: Stop[];
   color: string;
+  /** picked start / destination points drawn as red pins with a dashed line to their stop */
+  pins?: MapPin[];
 }
 
 /** Stop of the first map layer to centre on and open the popup of, with the passing time of the selected trip. */

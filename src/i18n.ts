@@ -32,6 +32,9 @@ const dict = {
 		transferWord: "Přestup",
 		waitMin: "čekání {n} min",
 		walkMin: "pěšky {n} min",
+		walkToStop: "Chůze na zastávku: {m} m (~{n} min)",
+		walkToDest: "Chůze k cíli: {m} m (~{n} min)",
+		pickedPoint: "Vybraný bod na mapě",
 		estimatedLegend:
 			"~ = odhad z délky trasy a průměrné rychlosti, tento čas není v jízdním řádu.",
 		noTransfer: "bez přestupu",
@@ -195,6 +198,9 @@ const dict = {
 		transferWord: "Transfer",
 		waitMin: "wait {n} min",
 		walkMin: "walk {n} min",
+		walkToStop: "Walk to the stop: {m} m (~{n} min)",
+		walkToDest: "Walk to the destination: {m} m (~{n} min)",
+		pickedPoint: "Point picked on the map",
 		estimatedLegend:
 			"~ = estimate from route length and average speed; this time is not in the timetable.",
 		noTransfer: "no transfer",
@@ -357,6 +363,9 @@ const dict = {
 		transferWord: "Transbordo",
 		waitMin: "espera {n} min",
 		walkMin: "a pé {n} min",
+		walkToStop: "A pé até à paragem: {m} m (~{n} min)",
+		walkToDest: "A pé até ao destino: {m} m (~{n} min)",
+		pickedPoint: "Ponto escolhido no mapa",
 		estimatedLegend:
 			"~ = estimativa pelo comprimento do percurso e velocidade média; esta hora não consta do horário.",
 		noTransfer: "sem transbordo",
