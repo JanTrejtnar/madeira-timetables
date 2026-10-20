@@ -61,3 +61,11 @@ expects (names, stops, trip length = stop count, note keys, `manualSource`), and
 stored against the number of time patterns in the PDF text layer (>10 % difference = suspicious). Known, understood
 differences: 181 (page 2 is a transfer shuttle table that is not modelled), 96 (intermediate "Corticeiras"/"J. Serra" passage
 columns are not stored), 20/526/785/528 (SAM sub-tables, school variants), 127 (times in legend notes).
+
+## Deployment (Cloudflare Pages)
+The app is a static site; `npm run build` regenerates the data (`build:data`, from the committed `data/schedules.json`,
+`data/shapes` and `data/pdf-fallback`) and then type-checks and builds into `dist/`. No scrape cache is needed on CI.
+1. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git → pick `JanTrejtnar/madeira-timetables`, branch `main`.
+2. Build command `npm run build`, build output directory `dist`, environment variable `NODE_VERSION=22` (also pinned in `.node-version`).
+3. Save and deploy; every push to `main` redeploys. `public/_headers` keeps `sw.js`/`index.html`/`schedules.json` revalidating so the PWA picks up new data.
+Direct deploy from a terminal: `npx wrangler login`, then `npm run deploy:cf`.

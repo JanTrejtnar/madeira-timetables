@@ -132,4 +132,14 @@ describe.skipIf(!existsSync(file))('coverage', () => {
   it('no direction mixes up trip length and stop list', () => {
     for (const l of data.lines) for (const d of l.directions) for (const t of d.trips ?? []) expect(t.times.length).toBe(d.stops.length);
   });
+  it('line 181 includes the Transbordo shuttle page (Terra Chã / Seara Velha)', () => {
+    const l = data.lines.find((x) => x.number === '181')!;
+    const tr = l.directions.filter((d) => d.variant === 'transbordo');
+    expect(tr.length).toBe(4);
+    const all = tr.flatMap((d) => d.trips ?? []);
+    expect(all.length).toBe(6);
+    const f = tr.find((d) => d.stops[0].name === 'Funchal' && d.stops[1].name === 'ESTR Lombo Chão')!;
+    expect(f.trips![0].times).toEqual(['10:00', '11:20', '11:35', '11:50']);
+    expect(tr.some((d) => d.stops.some((s) => s.name === 'Seara Velha Baixo'))).toBe(true);
+  });
 });
