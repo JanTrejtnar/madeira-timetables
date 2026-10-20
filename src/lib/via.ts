@@ -43,7 +43,12 @@ export function viaAt(line: Line, dirIndex: number, dir: Direction, notes: reado
   for (const [after, list] of out) {
     const s = dir.stops[after];
     if (!placed(s)) continue;
-    // different notes: nearest first; the places of one note keep the order the timetable prints (it is the order of the route)
+    // physical order along the route polyline when every place has one (the printed order of a note may run against the direction of travel)
+    if (list.every((c) => c.place.at?.[dirIndex] !== undefined)) {
+      list.sort((x, y) => x.place.at![dirIndex] - y.place.at![dirIndex]);
+      continue;
+    }
+    // otherwise different notes: nearest first; the places of one note keep the order the timetable prints
     const first = new Map<string, number>();
     for (const c of list) first.set(c.code, Math.min(first.get(c.code) ?? Infinity, km(s, c.place)));
     list.sort((x, y) => (x.code === y.code ? x.k - y.k : first.get(x.code)! - first.get(y.code)!));
@@ -75,6 +80,17 @@ export function viaMinutesChain(dir: Direction, after: number, places: readonly 
   let t2 = times[b]!;
   if (t2 < t1) t2 += 1440;
   return places.map((_, i) => Math.round(t1 + ((t2 - t1) * cum[i + 1]) / (cum[way.length - 1] || 1)));
+}
+
+/**
+ * "*Serviço a pedido: Ilha, A. Marques e Silveira": the trip calls at these places only after a phone booking, so they are not
+ * inserted as stops. Returns the place names; null for other notes (also the booking instructions, which name no place).
+ */
+export function onRequestPlaces(note: string): string[] | null {
+  const m = /^\*?\s*servi[çc]o a pedido:\s*(.+)$/i.exec(note.normalize('NFC').trim());
+  if (!m || /[0-9@]/.test(m[1]) || m[1].length > 120) return null;
+  const names = m[1].replace(/\.$/, '').split(/,|\s+e\s+/i).map((x) => x.trim()).filter(Boolean);
+  return names.length ? names : null;
 }
 
 /** The stop objects of an inserted via place. */

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT, type Key } from '../i18n';
 import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } from '../lib/departures';
 import { fmtMinutes } from '../lib/time';
-import { withVia } from '../lib/via';
+import { onRequestPlaces, withVia } from '../lib/via';
 import { serviceDay } from '../lib/holidays';
 import type { DayKey, Direction, Line, MapFocus, MapLayer } from '../types';
 import { Card, Chip, dirLabel, EstTag, LineBadge, lineColor, lineRailCls, MapLinks, PdfButton, PrecisionWarning, SectionTitle, type Shared } from './common';
@@ -189,6 +189,9 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
   }, [desktop, setMapStopHandler]);
 
   const selNotes = sel?.notes ?? [];
+  /** places a trip reaches only after a phone booking ("*Serviço a pedido: ..."), from its notes (legend code or free text) */
+  const requestPlaces = (notes?: readonly string[]) => [...new Set((notes ?? []).flatMap((k) => onRequestPlaces(line.notes[k] ?? k) ?? []))];
+  const selRequest = requestPlaces(selNotes);
   const railCls = lineRailCls(line);
   const ringCls = line.type === 'urbano' ? 'border-emerald-600' : 'border-slate-700 dark:border-slate-400';
 
@@ -279,6 +282,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                     }`}
                   >
                     {x.t}
+                    {requestPlaces(x.notes).length ? <span className="ml-0.5 text-amber-600" aria-hidden>⚠</span> : null}
                     {x.notes?.length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70">{x.notes.map(tn).join(',')}</sup> : null}
                   </button>
                 );
@@ -286,6 +290,14 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
             </Card>
           ) : (
             <p className="px-1 text-sm text-slate-500">{t('noDeparturesInDir')}</p>
+          )}
+          {selRequest.length > 0 && (
+            <p className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200" data-testid="on-request">
+              <span aria-hidden>⚠️</span>
+              <span>
+                <b className="tabular-nums">{sel?.t}</b> – {t('onRequestWarn').replace('{places}', selRequest.join(', '))}
+              </span>
+            </p>
           )}
         </section>
       )}

@@ -96,6 +96,8 @@ export interface ViaPlace {
   lon: number;
   source: 'osm' | 'manual';
   after: Record<number, number>;
+  /** position along the route polyline per direction (index of its nearest point): places after the same stop are shown in this order */
+  at?: Record<number, number>;
   /** municipality and parish of the place (build:data), so the planner groups it with the stops of its parish */
   muni?: string;
   par?: string;

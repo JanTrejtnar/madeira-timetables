@@ -92,6 +92,7 @@ export function addViaPlaces(lines, osm, osmPlaces, manual, report = null, areas
           continue;
         }
         const after = {};
+        const at = {}; // position along the route polyline per direction: the physical order of the places of one stretch
         let best = null;
         let alreadyStop = false;
         let routed = false; // some direction that uses the note lists at least two stops with a position
@@ -124,6 +125,7 @@ export function addViaPlaces(lines, osm, osmPlaces, manual, report = null, areas
           else if (own.length === 1) pick = fits.get(own[0]);
           if (!pick) return;
           after[di] = pick.idx;
+          if (route) at[di] = route.nearest(pick.c.p);
           best = pick.c;
         });
         if (!best) {
@@ -135,7 +137,7 @@ export function addViaPlaces(lines, osm, osmPlaces, manual, report = null, areas
         const lon = +best.p[1].toFixed(6);
         const area = areas ? areaOf(areas, lat, lon) : null;
         report?.push({ line: l.number, code, text, name, status: 'resolved', how: best.how, ...(area?.parish ? { par: area.parish } : {}) });
-        found.push({ name: man?.name ?? name, lat, lon, source: best.how === 'manual' ? 'manual' : 'osm', after, ...(area?.muni ? { muni: area.muni } : {}), ...(area?.parish ? { par: area.parish } : {}) });
+        found.push({ name: man?.name ?? name, lat, lon, source: best.how === 'manual' ? 'manual' : 'osm', after, ...(Object.keys(at).length ? { at } : {}), ...(area?.muni ? { muni: area.muni } : {}), ...(area?.parish ? { par: area.parish } : {}) });
         n++;
       }
       if (found.length) (l.via ??= {})[code] = found;
