@@ -1,6 +1,7 @@
 // Copies parsed data into public/ for the app: schedules.json, route geometries and (small) original PDFs
 // of lines whose schedule could not be parsed. Everything else links to the original siga.madeira.gov.pt PDF.
 import { cp, mkdir, readFile, writeFile, readdir, rm, stat } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { addEstimates } from './lib-estimate.mjs';
@@ -11,7 +12,7 @@ import { snapShapeEnds } from './lib-shape-ends.mjs';
 import { applyOsm } from './lib-osm.mjs';
 import { prepareAreas } from './lib-areas.mjs';
 import { cleanTexts } from './lib-text.mjs';
-import { addViaPlaces } from './lib-via.mjs';
+import { addViaPlaces, attachViaRoutes } from './lib-via.mjs';
 import { attachRoutes } from './lib-routes.mjs';
 import { applyOverrides } from './lib-overrides.mjs';
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
@@ -82,6 +83,10 @@ const interpolated = interpolateStops(data.lines, path.join(ROOT, 'data', 'shape
 const routed = attachRoutes(data.lines, ROOT);
 // "Via Aeroporto"-style notes: where the place lies in each direction (the app inserts it for the trips with the note); after the routes, whose polylines tell the stretch
 const viaPlaces = addViaPlaces(data.lines, osm, osmPlaces, JSON.parse(await readFile(path.join(ROOT, 'data', 'via-places.json'), 'utf8')), null, areas, path.join(ROOT, 'data', 'shapes'));
+// road routes through the via places (data/via-routes.json, `npm run fetch:via-routes`), so the map line passes them
+const viaRoutesFile = path.join(ROOT, 'data', 'via-routes.json');
+const viaRouted = existsSync(viaRoutesFile) ? attachViaRoutes(data.lines, JSON.parse(await readFile(viaRoutesFile, 'utf8'))) : 0;
+console.log('via stretches routed through their places:', viaRouted);
 // precision of every position (the OSM step already set settlement_center / exact for its stops)
 const precision = { exact: 0, interpolated: 0, settlement_center: 0, name_match: 0 };
 for (const l of data.lines) {

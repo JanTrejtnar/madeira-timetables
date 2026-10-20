@@ -11,10 +11,10 @@ const UP = [
   ['Poiso', '06:27', '13:57', { lat: 32.7127, lon: -16.8878 }],
   ['CAM Florestal das Serras de Santo António', '06:35', '14:05'],
   ['Parque do Pico do Areeiro', '06:40', '14:10'],
-  ['Pico do Areeiro - rotunda junto ao Radar', '06:45', '14:15', { lat: 32.7357, lon: -16.9287 }],
+  ['Pico do Areeiro', '06:45', '14:15', { lat: 32.7357, lon: -16.9287 }],
 ];
 const DOWN = [
-  ['Pico do Areeiro - rotunda junto ao Radar', '12:15', '19:00'],
+  ['Pico do Areeiro', '12:15', '19:00'],
   ['Parque do Pico do Areeiro', '12:20', '19:05'],
   ['CAM Florestal das Serras de Santo António', '12:25', '19:10'],
   ['Poiso', '12:33', '19:18'],

@@ -81,7 +81,7 @@ for (const [label, vp] of [['phone', { width: 390, height: 844, isMobile: true, 
   check('208: trip 17:00 selectable', await pickTrip('17:00'));
   const stopsText = async () => page.evaluate(() => [...document.querySelectorAll('ol li')].map((li) => li.innerText.replace(/\s+/g, ' ').trim()));
   const withAirport = await stopsText();
-  const iAir = withAirport.findIndex((x) => x.startsWith('Aeroporto'));
+  const iAir = withAirport.findIndex((x) => x.startsWith('Letiště'));
   check('208 17:00 (note a): Aeroporto is in the stop list between Funchal and Machico', iAir > 0 && withAirport[0].startsWith('Funchal') && withAirport[iAir + 1]?.startsWith('Machico'), withAirport.slice(0, 5).join(' | '));
   check('208 17:00: the inserted stop carries an estimated time and a "this trip only" label', /~\d\d:\d\d/.test(withAirport[iAir] ?? '') && /Via/.test(withAirport[iAir] ?? ''), withAirport[iAir]);
   const marks = await page.evaluate(() => document.querySelectorAll('.leaflet-overlay-pane path.leaflet-interactive').length);
@@ -90,7 +90,7 @@ for (const [label, vp] of [['phone', { width: 390, height: 844, isMobile: true, 
   const other = l208.directions[di].trips.find((t) => t.days.includes('weekday') && !t.notes?.includes('a') && t.times[1]);
   const ok2 = await pickTrip(other.times[1]);
   const plain = await stopsText();
-  check('208, a trip without the note: no Aeroporto row', ok2 && !plain.some((x) => x.startsWith('Aeroporto')), plain.slice(0, 3).join(' | '));
+  check('208, a trip without the note: no Aeroporto row', ok2 && !plain.some((x) => x.startsWith('Letiště')), plain.slice(0, 3).join(' | '));
   // Via Rápida is only a note: 139 never gets a fictitious stop
   await open(l139.id);
   const t139 = await page.evaluate(() => [...document.querySelectorAll('ol li')].map((li) => li.innerText.replace(/\s+/g, ' ').trim()));

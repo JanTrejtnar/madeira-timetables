@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT, type Key } from '../i18n';
+import { localStopName } from '../lib/text';
 import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } from '../lib/departures';
 import { fmtMinutes } from '../lib/time';
-import { onRequestPlaces, withVia } from '../lib/via';
+import { onRequestPlaces, withVia, detoursFor } from '../lib/via';
 import { serviceDay } from '../lib/holidays';
 import type { DayKey, Direction, Line, MapFocus, MapLayer } from '../types';
-import { Card, Chip, dirLabel, EstTag, LineBadge, lineColor, lineRailCls, MapLinks, PdfButton, PrecisionWarning, SectionTitle, type Shared } from './common';
+import { Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, PrecisionWarning, SectionTitle, type Shared } from './common';
 import { Icon } from './Icons';
 import { RouteMap } from './RouteMap';
 
@@ -134,7 +135,10 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
     return v ? `~${v}` : null;
   };
   const hasMap = !!dir && (dir.stops.some((s) => s.lat !== undefined) || dir.shapeId !== null);
-  const layers = useMemo<MapLayer[]>(() => (dir ? [{ shapeId: dir.shapeId, stops: shownStops, color: lineColor(line) }] : []), [dir, line, shownStops]);
+  const noteKey = sel?.notes?.join('') ?? '';
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const detours = useMemo(() => detoursFor(line, dirIndex, sel?.notes), [line, dirIndex, noteKey]);
+  const layers = useMemo<MapLayer[]>(() => (dir ? [{ shapeId: dir.shapeId, stops: shownStops, color: lineColor(line), ...(detours.length ? { detours } : {}) }] : []), [dir, line, shownStops, detours]);
   // on desktop the route is drawn on the big map next to the sidebar, on mobile it is shown inline
   const { desktop, setMap } = shared;
   useEffect(() => {
@@ -315,7 +319,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                 const content = (
                   <>
                     <span className={`min-w-0 flex-1 ${edge || active ? 'font-semibold' : ''}`}>
-                      {s.name} {s.via ? <ViaTag /> : <PrecisionWarning stop={s} />}
+                      {localStopName(s.name, lang)} {s.via ? <ViaTag /> : <PrecisionWarning stop={s} />}
                     </span>
                     {label ? (
                       (hasOffsets && i > 0) || s.via ? (
@@ -425,7 +429,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
               const dim = selNotes.length > 0 && !on;
               return (
                 <li key={k} className={on ? 'rounded-lg bg-sky-50 px-2 py-1 font-medium dark:bg-sky-400/10' : dim ? 'opacity-40' : ''}>
-                  <b>{k}</b> – {tn(v)}
+                  <b>{k}</b> – <Linkified text={tn(v)} />
                 </li>
               );
             })}
@@ -433,12 +437,12 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
               .filter((k) => !(k in line.notes))
               .map((k) => (
                 <li key={`sel-${k}`} className="rounded-lg bg-sky-50 px-2 py-1 font-medium dark:bg-sky-400/10">
-                  {tn(k)}
+                  <Linkified text={tn(k)} />
                 </li>
               ))}
             {line.generalNotes?.map((n, i) => (
               <li key={`g${i}`} className="text-slate-500">
-                {tn(n)}
+                <Linkified text={tn(n)} />
               </li>
             ))}
           </ul>
@@ -455,13 +459,13 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
           {line.info.price && (
             <div>
               <p className="font-semibold">{t('linePrice')}</p>
-              <p className="text-slate-600 dark:text-slate-300">{line.info.price[lang]}</p>
+              <p className="text-slate-600 dark:text-slate-300"><Linkified text={line.info.price[lang]} /></p>
             </div>
           )}
           {line.info.conditions && (
             <div>
               <p className="font-semibold">{t('lineConditions')}</p>
-              <p className="text-slate-600 dark:text-slate-300">{line.info.conditions[lang]}</p>
+              <p className="text-slate-600 dark:text-slate-300"><Linkified text={line.info.conditions[lang]} /></p>
             </div>
           )}
           {line.sourceUrl && (

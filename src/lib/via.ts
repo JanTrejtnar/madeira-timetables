@@ -1,7 +1,7 @@
 // "Via X" notes (e.g. 208 "a" = "Via Aeroporto"): for a trip carrying such a note, the place is a real call between two stops of
 // the list. build:data resolves the place (`line.via`); here it is inserted into the stop list of the selected trip (and into the
 // planner's trips) with a time interpolated between the neighbouring stops. "Via Rápida" (motorway) has no entry and stays a note.
-import type { Direction, Line, Stop, ViaPlace } from '../types';
+import type { Direction, Line, Stop, ViaPlace, ViaRoute } from '../types';
 import { fmtMinutes, toMinutes } from './time';
 
 export interface ShownStops {
@@ -131,4 +131,46 @@ export function withVia(line: Line, dirIndex: number, dir: Direction, notes: rea
     });
   });
   return { stops, srcIdx, viaTimes };
+}
+
+/** Road routes through the via places a trip with `notes` calls at in direction `dirIndex` (drawn instead of the straight stretch of the shape). */
+export function detoursFor(line: Line, dirIndex: number, notes: readonly string[] | undefined): ViaRoute[] {
+  if (!line.viaRoutes || !notes?.length) return [];
+  const out: ViaRoute[] = [];
+  for (const code of notes) for (const [key, r] of Object.entries(line.viaRoutes)) if (key.startsWith(`${code}|${dirIndex}|`)) out.push(r);
+  return out;
+}
+
+const sq = (p: readonly number[], q: readonly number[]) => (p[0] - q[0]) ** 2 + ((p[1] - q[1]) * 0.84) ** 2;
+/** The shape with each detour replacing the stretch between its two anchor points (detours that do not fit the shape are ignored). */
+export function spliceDetours(shape: [number, number][], detours: readonly ViaRoute[] | undefined): [number, number][] {
+  if (!detours?.length) return shape;
+  const nearest = (p: readonly number[], from: number) => {
+    let best = from;
+    let bd = Infinity;
+    for (let i = from; i < shape.length; i++) {
+      const d = sq(shape[i], p);
+      if (d < bd) { bd = d; best = i; }
+    }
+    return { i: best, d: bd };
+  };
+  const found = detours
+    .map((r) => {
+      const a = nearest(r.a, 0);
+      const b = nearest(r.b, a.i);
+      return a.d < 1e-6 && b.d < 1e-6 && b.i > a.i ? { r, from: a.i, to: b.i } : null;
+    })
+    .filter((x): x is { r: ViaRoute; from: number; to: number } => x !== null)
+    .sort((x, y) => x.from - y.from);
+  const out: [number, number][] = [];
+  let at = 0;
+  for (const f of found) {
+    if (f.from < at - 1) continue; // overlaps the previous detour (neighbouring ones share their anchor point)
+    out.push(...shape.slice(at, Math.max(at, f.from)));
+    const prev = out.at(-1);
+    out.push(...(prev && prev[0] === f.r.pts[0][0] && prev[1] === f.r.pts[0][1] ? f.r.pts.slice(1) : f.r.pts));
+    at = f.to + 1;
+  }
+  out.push(...shape.slice(at));
+  return out;
 }

@@ -320,3 +320,25 @@ export function TypeFilter({ value, onChange, className = '' }: { value: LineTyp
     </div>
   );
 }
+
+const CONTACT = /([\w.+-]+@[\w-]+(?:\.[\w-]+)+)|(?<![\d+])((?:\+351[ ]?)?[29]\d{2}[ ]?\d{3}[ ]?\d{3})(?!\d)/g;
+const contactCls = 'font-medium text-sky-700 underline cursor-pointer dark:text-sky-300';
+
+/** Text with e-mail addresses as mailto: links and Portuguese phone numbers as tel: links. */
+export function Linkified({ text }: { text: string }) {
+  const out: ReactNode[] = [];
+  let last = 0;
+  for (const m of text.matchAll(CONTACT)) {
+    const at = m.index ?? 0;
+    if (at > last) out.push(text.slice(last, at));
+    if (m[1]) {
+      out.push(<a key={at} href={`mailto:${m[1]}`} className={contactCls}>{m[1]}</a>);
+    } else {
+      const digits = m[2].replace(/\D/g, '').replace(/^351/, '');
+      out.push(<a key={at} href={`tel:+351${digits}`} className={contactCls}>{m[2]}</a>);
+    }
+    last = at + m[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return <>{out}</>;
+}

@@ -83,11 +83,20 @@ export interface Line {
   directions: Direction[];
   /** "Via X" notes (key = legend code, or the note text itself in hand-made transcriptions) -> the places the trip calls at, in printed order; `after[dirIndex]` = index of the stop each follows */
   via?: Record<string, ViaPlace[]>;
+  /** road route through the via places of a stretch, key `note|dirIndex|stopIndex` (build:data): replaces the polyline between a and b on the map */
+  viaRoutes?: Record<string, ViaRoute>;
   /** operator outside SIGA (e.g. Horários do Funchal) and where its timetable was read */
   operator?: string;
   sourceUrl?: string;
   /** prices and conditions shown on the line page, per UI language */
   info?: { price?: Record<'cs' | 'en' | 'pt', string>; conditions?: Record<'cs' | 'en' | 'pt', string> };
+}
+
+export interface ViaRoute {
+  /** the polyline points the route replaces between (nearest points) */
+  a: [number, number];
+  b: [number, number];
+  pts: [number, number][];
 }
 
 export interface ViaPlace {
@@ -122,6 +131,8 @@ export interface MapLayer {
   shapeId: number | null;
   stops: Stop[];
   color: string;
+  /** road routes through "Via" places of the drawn trip, spliced into the shape */
+  detours?: ViaRoute[];
   /** picked start / destination points drawn as red pins with a dashed line to their stop */
   pins?: MapPin[];
 }

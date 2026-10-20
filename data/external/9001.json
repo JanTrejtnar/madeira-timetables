@@ -37,7 +37,7 @@
   {
    "variant": "up",
    "from": "Teleférico - paragem Teleférico-Término (4A)",
-   "to": "Pico do Areeiro - rotunda junto ao Radar",
+   "to": "Pico do Areeiro",
    "shapeId": 9001,
    "stopSource": "pdf",
    "stops": [
@@ -90,7 +90,7 @@
     },
     {
      "code": null,
-     "name": "Pico do Areeiro - rotunda junto ao Radar",
+     "name": "Pico do Areeiro",
      "lat": 32.7357,
      "lon": -16.9287
     }
@@ -164,14 +164,14 @@
   },
   {
    "variant": "down",
-   "from": "Pico do Areeiro - rotunda junto ao Radar",
+   "from": "Pico do Areeiro",
    "to": "Teleférico - paragem Teleférico - Término (4A)",
    "shapeId": 9002,
    "stopSource": "pdf",
    "stops": [
     {
      "code": null,
-     "name": "Pico do Areeiro - rotunda junto ao Radar",
+     "name": "Pico do Areeiro",
      "lat": 32.7357,
      "lon": -16.9287
     },

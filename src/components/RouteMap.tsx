@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { loadShape } from '../data';
-import { useT } from '../i18n';
+import { useT, type Lang } from '../i18n';
+import { localStopName } from '../lib/text';
+import { spliceDetours } from '../lib/via';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
 import { drawPin } from '../lib/mapPin';
 import type { UserPos } from '../lib/nearby';
@@ -18,10 +20,10 @@ interface PopupLabels {
   settlement: string;
 }
 
-function popupContent(s: Stop, labels: PopupLabels, time: string | null, first: boolean): HTMLElement {
+function popupContent(s: Stop, lang: Lang, labels: PopupLabels, time: string | null, first: boolean): HTMLElement {
   const box = document.createElement('div');
   const title = document.createElement('strong');
-  title.textContent = s.name;
+  title.textContent = localStopName(s.name, lang);
   box.appendChild(title);
   if (time) {
     const row = document.createElement('div');
@@ -86,7 +88,7 @@ interface Props {
 }
 
 export function RouteMap({ layers, focus = null, me = null, onLocate, locating = false, fill = false, onStopClick }: Props) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const el = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
@@ -118,9 +120,9 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
       layer.stops.forEach((s, si) => {
         if (s.lat === undefined || s.lon === undefined) return;
         const marker = L.circleMarker([s.lat, s.lon], { radius: 5, color: layer.color, weight: 2.5, fillColor: '#fff', fillOpacity: 1 })
-          .bindTooltip(s.name)
+          .bindTooltip(localStopName(s.name, lang))
           // content is built when the popup opens, so it always shows the time of the currently selected trip
-          .bindPopup(() => popupContent(s, labels, li === 0 ? focusRef.current?.times[si] ?? null : null, si === 0), { autoPan: true, autoPanPadding: [12, 12] })
+          .bindPopup(() => popupContent(s, lang, labels, li === 0 ? focusRef.current?.times[si] ?? null : null, si === 0), { autoPan: true, autoPanPadding: [12, 12] })
           .addTo(group);
         if (li === 0) {
           markers.current.set(si, marker);
@@ -148,7 +150,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
         loadShape(layer.shapeId as number)
           .then((pts) => {
             if (!alive) return;
-            L.polyline(pts, { color: layer.color, weight: 5, opacity: 0.85, lineCap: 'round', lineJoin: 'round' }).addTo(group).bringToBack();
+            L.polyline(spliceDetours(pts, layer.detours), { color: layer.color, weight: 5, opacity: 0.85, lineCap: 'round', lineJoin: 'round' }).addTo(group).bringToBack();
             fit();
           })
           .catch(() => alive && setFailed(true));

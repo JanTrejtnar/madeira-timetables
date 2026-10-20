@@ -5,6 +5,13 @@ export const MIN_TRANSFER = 5; // minutes between arrival and the next departure
 /** Longer buffer when at least one of the two buses has estimated (not printed) times: mountain roads are slow. */
 export const MIN_TRANSFER_ESTIMATED = 12;
 const MAX_WAIT = 120; // do not offer transfers with a longer wait than this
+/** A transfer must arrive this much earlier than the best direct bus to be offered. */
+export const TRANSFER_PENALTY = 10;
+/** Score adjustments (minutes) of the transfer point: official terminals win over a "Via" place that is no guaranteed stop. */
+const HUB_BONUS = 3;
+const VIA_PENALTY = 10;
+/** A first leg of one stop and a couple of minutes is a city hop to the terminal: walking there is the same. */
+const isMicro = (stops: number, minutes: number) => stops <= 1 && minutes <= 3;
 const HORIZON = 48 * 60; // services cover yesterday, the day itself and tomorrow
 
 export interface Leg {
@@ -90,9 +97,11 @@ export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to:
     const l1depart = t1.times[i] as number;
     if (l1depart > departAt + HORIZON) continue;
     let best: Itinerary | null = null;
+    let bestScore = Infinity;
     for (let k = i + 1; k < t1.nodes.length; k++) {
       const arriveK = t1.times[k];
       if (arriveK === null) continue;
+      if (isMicro(k - i, arriveK - l1depart)) continue;
       for (const { node, walk } of net.near.get(t1.nodes[k]) ?? []) {
         for (const c of second.get(node) ?? []) {
           if (c.trip === t1 || (c.trip.line.id === t1.line.id && c.trip.dirIndex === t1.dirIndex)) continue;
@@ -101,7 +110,9 @@ export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to:
           const ready = arriveK + buffer + walk;
           if (tm < ready || tm - ready > MAX_WAIT) continue;
           const arrive = c.trip.times[c.j] as number;
-          if (!best || arrive < best.arrive || (arrive === best.arrive && walk < best.walk)) {
+          const score = arrive + (net.viaOnly.has(node) ? VIA_PENALTY : 0) - (net.nodes[node].transferHub ? HUB_BONUS : 0);
+          if (!best || score < bestScore || (score === bestScore && walk < best.walk)) {
+            bestScore = score;
             best = { legs: [leg(t1, i, k), leg(c.trip, c.m, c.j)], depart: l1depart, arrive, walk };
           }
         }
@@ -132,7 +143,7 @@ export function plan(net: Network, trips: Trip[], from: Set<number>, to: Set<num
   const nearest = d[0];
   // transfers help when there is no direct trip, it leaves much later, or a transfer arrives clearly earlier
   const needTransfers = !nearest || nearest.depart - departAt > 60;
-  const t = withTransfer(net, trips, from, to, departAt, walkIn).filter((x) => needTransfers || x.arrive + 5 < bestDirectArrive);
+  const t = withTransfer(net, trips, from, to, departAt, walkIn).filter((x) => needTransfers || x.arrive + TRANSFER_PENALTY < bestDirectArrive);
   return { direct: d.slice(0, 8), transfers: t.slice(0, 6) };
 }
 

@@ -1,7 +1,9 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useT } from '../i18n';
+import { localStopName } from '../lib/text';
+import { detoursFor } from '../lib/via';
 import { addDays, serviceDay } from '../lib/holidays';
-import { resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
+import { hubsNear, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
 import { isoToYmd, ymdToIso, type Picked, type PlannerForm } from '../lib/plannerForm';
 import { plan, type Itinerary } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
@@ -14,7 +16,7 @@ import { MapPicker } from './MapPicker';
 import { RouteMap } from './RouteMap';
 
 function Combobox({ label, placeholder, value, onChange, shared, onPickMap }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; shared: Shared; onPickMap: () => void }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const debounced = useDebounced(value.text, 120);
@@ -32,7 +34,7 @@ function Combobox({ label, placeholder, value, onChange, shared, onPickMap }: { 
     if (active >= 0) box.current?.querySelector(`[id="${listId}-${active}"]`)?.scrollIntoView({ block: 'nearest' });
   }, [active, listId]);
 
-  const labelOf = (s: Suggestion) => (s.group ? t('allStopsOf', { name: s.name }) : s.name);
+  const labelOf = (s: Suggestion) => (s.group ? t('allStopsOf', { name: s.name }) : localStopName(s.name, lang));
   const pick = (s: Suggestion) => {
     onChange({ text: labelOf(s), key: s.key });
     setOpen(false);
@@ -110,6 +112,16 @@ function Combobox({ label, placeholder, value, onChange, shared, onPickMap }: { 
   );
 }
 
+/** straight-line reach (about 12 minutes on foot over winding roads) within which a transfer hub counts as a start of the journey */
+const HUB_WALK_M = 650;
+
+/** The last value of a field that was picked (suggestion or map point); typing in between does not change it. */
+function useCommitted(v: Picked): Picked {
+  const ref = useRef(v);
+  if (v.key !== null || v.pt) ref.current = v;
+  return ref.current;
+}
+
 const hhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 
 function Time({ min, est, t, compact = false }: { min: number; est: boolean; t: ReturnType<typeof useT>['t']; compact?: boolean }) {
@@ -162,9 +174,10 @@ function Row({ time, dot, above, below, line, children }: { time?: ReactNode; do
 }
 
 function StopName({ name, stop }: { name: string; stop: Parameters<typeof MapPin>[0]['stop'] }) {
+  const { lang } = useT();
   return (
     <div className="flex min-h-8 flex-wrap items-center gap-x-1 py-1 text-[15px] font-medium leading-5">
-      <span className="min-w-0 wrap-break-word">{name}</span>
+      <span className="min-w-0 wrap-break-word">{localStopName(name, lang)}</span>
       <PrecisionWarning stop={stop} />
       <MapPin stop={stop} />
     </div>
@@ -181,8 +194,8 @@ function WalkNote({ label, testId }: { label: string; testId: string }) {
   );
 }
 
-function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt, startAt }: { it: Itinerary; shared: Shared; selected: boolean; onSelect: () => void; fromPt?: Picked['pt']; toPt?: Picked['pt']; startAt: number }) {
-  const { t } = useT();
+function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt }: { it: Itinerary; shared: Shared; selected: boolean; onSelect: () => void; fromPt?: Picked['pt']; toPt?: Picked['pt'] }) {
+  const { t, lang } = useT();
   const dur = it.arrive - it.depart;
   const last = it.legs.length - 1;
   // walking from the point picked on the map to the first stop / from the last stop to the picked destination
@@ -203,8 +216,8 @@ function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt, startAt }
       </button>
       <div className="border-t border-slate-100 px-4 pb-3 pt-3 dark:border-slate-800">
         {walkIn && (
-          <Row time={<span className="text-slate-500 tabular-nums dark:text-slate-400">{fmtMinutes(startAt)}</span>} below="dashed">
-            <WalkNote label={t('walkToStop', { m: walkIn.m, n: walkIn.min, at: fmtMinutes(startAt + walkIn.min) })} testId="walk-in" />
+          <Row time={<span className="text-slate-500 tabular-nums dark:text-slate-400">{fmtMinutes(it.legs[0].depart - walkIn.min)}</span>} below="dashed">
+            <WalkNote label={t('walkToStop', { m: walkIn.m, n: walkIn.min, at: fmtMinutes(it.legs[0].depart) })} testId="walk-in" />
           </Row>
         )}
         {it.legs.map((l, i) => {
@@ -255,7 +268,7 @@ function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt, startAt }
                   <p className="py-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
                     <b className="font-semibold text-slate-600 dark:text-slate-300">{t('transferWord')}</b>
                     {' · '}
-                    {tripStops(it.legs[i + 1].trip)[it.legs[i + 1].fromPos].name}
+                    {localStopName(tripStops(it.legs[i + 1].trip)[it.legs[i + 1].fromPos].name, lang)}
                     {' · '}
                     {t('waitMin', { n: it.legs[i + 1].depart - l.arrive })}
                     {it.walk > 0 ? ` · ${t('walkMin', { n: it.walk })}` : ''}
@@ -306,6 +319,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     // walking from a picked start point: a bus counts only when it leaves after departAt + the walk to its stop
     let walkIn: Map<number, number> | undefined;
     if (dFrom.pt) {
+      // a terminal within walking reach is a boarding point too: leaving from there beats a one-stop city hop to it
+      for (const hub of hubsNear(shared.net, dFrom.pt.lat, dFrom.pt.lon, HUB_WALK_M)) A.add(hub.id);
       walkIn = new Map();
       for (const id of A) {
         const w = walkTo(dFrom.pt, shared.net.nodes[id]);
@@ -326,21 +341,30 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const selected = all.find((x) => x.key === selectedKey) ?? all[0];
 
   // the selected itinerary is drawn on the map (desktop side map, small map on the phone when a point was picked)
-  const layers = useMemo<MapLayer[] | null>(() => {
+  // while a field is being typed (no suggestion chosen yet) the pins keep the last picked point
+  const cFrom = useCommitted(from);
+  const cTo = useCommitted(to);
+  const rawLayers = useMemo<MapLayer[] | null>(() => {
     if (!selected) return null;
     const legs = selected.it.legs;
     const pinFor = (kind: PickedPin['kind'], pt: Picked['pt'], stop: { lat?: number; lon?: number; name: string }): PickedPin | null =>
       pt ? { kind, lat: pt.lat, lon: pt.lon, stop: stop.lat !== undefined && stop.lon !== undefined ? { lat: stop.lat, lon: stop.lon, name: stop.name } : undefined } : null;
     const first = tripStops(legs[0].trip)[legs[0].fromPos];
     const lastLeg = legs[legs.length - 1];
-    const pins = [pinFor('from', from.pt, first), pinFor('to', to.pt, tripStops(lastLeg.trip)[lastLeg.toPos])].filter((p): p is PickedPin => p !== null);
+    const pins = [pinFor('from', cFrom.pt, first), pinFor('to', cTo.pt, tripStops(lastLeg.trip)[lastLeg.toPos])].filter((p): p is PickedPin => p !== null);
     return legs.map((l, i) => ({
       shapeId: l.trip.dir.shapeId,
       stops: tripStops(l.trip).slice(l.fromPos, l.toPos + 1),
       color: lineColor(l.trip.line),
+      detours: detoursFor(l.trip.line, l.trip.dirIndex, l.trip.notes),
       ...(i === 0 && pins.length ? { pins } : {}),
     }));
-  }, [selected, from.pt, to.pt]);
+  }, [selected, cFrom.pt, cTo.pt]);
+  // a new object only when the drawn content differs, so keystrokes in the fields never redraw the map
+  const layersRef = useRef<{ key: string; val: MapLayer[] | null }>({ key: 'null', val: null });
+  const layersKey = JSON.stringify(rawLayers);
+  if (!pending && layersRef.current.key !== layersKey) layersRef.current = { key: layersKey, val: rawLayers };
+  const layers = layersRef.current.val;
   const { desktop, setMap } = shared;
   useEffect(() => {
     if (!desktop) return;
@@ -365,7 +389,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         <SectionTitle>{title}</SectionTitle>
         <div className="flex flex-col gap-3">
           {rows.map(({ key: k, it }) => (
-            <ItineraryCard key={k} it={it} shared={shared} selected={selected?.key === k} onSelect={() => setSelectedKey(k)} fromPt={dFrom.pt} toPt={dTo.pt} startAt={departAt} />
+            <ItineraryCard key={k} it={it} shared={shared} selected={selected?.key === k} onSelect={() => setSelectedKey(k)} fromPt={dFrom.pt} toPt={dTo.pt} />
           ))}
         </div>
       </section>

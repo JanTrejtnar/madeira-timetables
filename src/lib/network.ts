@@ -18,6 +18,8 @@ export interface Node {
   muni?: string;
   /** parish (freguesia) */
   par?: string;
+  /** official transfer terminal: the end of lines of at least HUB_LINES lines (Funchal, Machico ...), never a "Via" place */
+  transferHub?: boolean;
 }
 
 export interface Network {
@@ -32,10 +34,14 @@ export interface Network {
   aliases: Map<string, { name: string; nodes: Set<number> }>;
   /** node of a "Via X" place, key `${lineId}:${note}#${index within the note}` (trips with that note call there) */
   viaNodes: Map<string, number>;
+  /** nodes that exist only as "Via X" places (no timetable stop): a transfer there is not guaranteed */
+  viaOnly: Set<number>;
   /** nodes within walking distance (including the node itself with 0 minutes) */
   near: Map<number, { node: number; walk: number }[]>;
 }
 
+/** a terminal served by this many lines is a transfer hub */
+const HUB_LINES = 4;
 const CLUSTER_M = 250;
 const WALK_M = 200;
 const WALK_M_PER_MIN = 70;
@@ -92,6 +98,20 @@ export function buildNetwork(lines: Line[]): Network {
   const viaNodes = new Map<string, number>();
   for (const line of lines) for (const [code, list] of Object.entries(line.via ?? {})) list.forEach((v, k) => viaNodes.set(`${line.id}:${code}#${k}`, nodeFor(viaStop(v)).id));
 
+  const viaOnly = new Set<number>();
+  const onTimetable = new Set<number>([...dirNodes.values()].flat());
+  for (const id of viaNodes.values()) if (!onTimetable.has(id)) viaOnly.add(id);
+  // terminals (first / last stop of a direction) that many lines share are the places to change buses
+  const ends = new Map<number, Set<number>>();
+  for (const line of lines) {
+    line.directions.forEach((_, di) => {
+      const ids = dirNodes.get(dirKey(line, di));
+      if (!ids) return;
+      for (const id of [ids[0], ids[ids.length - 1]]) (ends.get(id) ?? ends.set(id, new Set()).get(id)!).add(line.id);
+    });
+  }
+  for (const [id, ls] of ends) if (ls.size >= HUB_LINES) nodes[id].transferHub = true;
+
   // walking links between nearby nodes with different names (e.g. two stops around one square)
   const near = new Map<number, { node: number; walk: number }[]>();
   const located = nodes.filter((n) => n.lat !== undefined).sort((a, b) => (a.lat as number) - (b.lat as number));
@@ -107,7 +127,7 @@ export function buildNetwork(lines: Line[]): Network {
       }
     }
   }
-  return { nodes, dirNodes, keyToNodes, aliases, near, viaNodes };
+  return { nodes, dirNodes, keyToNodes, aliases, near, viaNodes, viaOnly };
 }
 
 /** A bus run with an (absolute, minutes since 00:00 of the searched date) time at each stop it calls at. */
@@ -328,4 +348,10 @@ export function nearestNode(net: Network, lat: number, lon: number, maxM: number
     if (d <= maxM && (!best || d < best.metres)) best = { node: n, metres: d };
   }
   return best;
+}
+
+/** Transfer hubs within `maxM` metres of a point (the walking alternative to a short city hop to the terminal). */
+export function hubsNear(net: Network, lat: number, lon: number, maxM: number): Node[] {
+  const p = { lat, lon };
+  return net.nodes.filter((n) => n.transferHub && n.lat !== undefined && n.lon !== undefined && metres(n as Required<Node>, p) <= maxM);
 }

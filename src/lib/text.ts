@@ -15,3 +15,11 @@ export function decodeEntitiesInJson(text: string): string {
     return ch === '"' || ch === '\\' ? '\\' + ch : ch;
   });
 }
+
+/** Stop names shown in the UI language: only places with a plain equivalent (the data keeps the printed Portuguese name). */
+const LOCAL_NAMES: Record<string, Record<'cs' | 'en' | 'pt', string>> = {
+  aeroporto: { cs: 'Letiště', en: 'Airport', pt: 'Aeroporto' },
+};
+export function localStopName(name: string, lang: 'cs' | 'en' | 'pt'): string {
+  return LOCAL_NAMES[name.trim().toLowerCase()]?.[lang] ?? name;
+}

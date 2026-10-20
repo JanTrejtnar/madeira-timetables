@@ -145,3 +145,31 @@ export function addViaPlaces(lines, osm, osmPlaces, manual, report = null, areas
   }
   return n;
 }
+
+export const routeKey = (code, dir, after) => `${code}|${dir}|${after}`;
+/** Identity of the places of a stretch: a stored road route is used only while they have not moved. */
+export const placesSig = (places) => places.map((p) => `${p.lat},${p.lon}`).join(';');
+
+/**
+ * `line.viaRoutes[code|dir|after] = { a, b, pts }`: the road route through the via places of a stretch (data/via-routes.json,
+ * `npm run fetch:via-routes`), replacing the polyline between its points nearest to a and b on the map. Entries of moved places are dropped.
+ */
+export function attachViaRoutes(lines, store) {
+  let n = 0;
+  for (const l of lines) {
+    for (const [code, places] of Object.entries(l.via ?? {})) {
+      l.directions.forEach((d, di) => {
+        const groups = new Map();
+        for (const p of places) if (p.after[di] !== undefined) (groups.get(p.after[di]) ?? groups.set(p.after[di], []).get(p.after[di])).push(p);
+        for (const [after, list] of groups) {
+          if (list.every((p) => p.at?.[di] !== undefined)) list.sort((a, b) => a.at[di] - b.at[di]);
+          const e = store.routes?.[`${l.id}|${routeKey(code, di, after)}`];
+          if (!e || e.sig !== placesSig(list)) continue;
+          (l.viaRoutes ??= {})[routeKey(code, di, after)] = { a: e.a, b: e.b, pts: e.pts };
+          n++;
+        }
+      });
+    }
+  }
+  return n;
+}
