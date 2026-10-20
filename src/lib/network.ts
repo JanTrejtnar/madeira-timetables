@@ -15,6 +15,8 @@ export interface Node {
   lon?: number;
   /** municipality (concelho) */
   muni?: string;
+  /** parish (freguesia) */
+  par?: string;
 }
 
 export interface Network {
@@ -69,11 +71,12 @@ export function buildNetwork(lines: Line[]): Network {
           if (node && node.lat === undefined) Object.assign(node, p);
         } else node = cands[0];
         if (!node) {
-          node = { id: nodes.length, key, name: displayName(s.name), ...(s.lat !== undefined ? { lat: s.lat, lon: s.lon } : {}), ...(s.muni ? { muni: s.muni } : {}) };
+          node = { id: nodes.length, key, name: displayName(s.name), ...(s.lat !== undefined ? { lat: s.lat, lon: s.lon } : {}), ...(s.muni ? { muni: s.muni } : {}), ...(s.par ? { par: s.par } : {}) };
           nodes.push(node);
           keyToNodes.set(key, [...(keyToNodes.get(key) ?? []), node.id]);
         }
         if (!node.muni && s.muni) node.muni = s.muni;
+        if (!node.par && s.par) node.par = s.par;
         return node.id;
       });
       dirNodes.set(dirKey(line, di), ids);
@@ -169,7 +172,24 @@ export interface Suggestion {
 /** Municipalities of Madeira that can be picked as a whole ("all stops of Santana"). */
 export const MUNICIPALITIES = ['Funchal', 'Câmara de Lobos', 'Ribeira Brava', 'Ponta do Sol', 'Calheta', 'Porto Moniz', 'São Vicente', 'Santana', 'Machico', 'Santa Cruz', 'Porto Santo'] as const;
 export const GROUP_PREFIX = '@muni:';
+/** "all stops of <parish>" (Curral das Freiras, Caniçal, Camacha, …) */
+export const PARISH_PREFIX = '@par:';
 const muniKeys = MUNICIPALITIES.map((m) => [m, norm(m)] as const);
+
+const areaCache = new WeakMap<Network, { byMuni: Map<string, Set<number>>; byParish: Map<string, Set<number>> }>();
+/** Node ids per municipality and per parish (cached per network). */
+function areaNodes(net: Network) {
+  let c = areaCache.get(net);
+  if (!c) {
+    c = { byMuni: new Map(), byParish: new Map() };
+    for (const n of net.nodes) {
+      if (n.muni) (c.byMuni.get(n.muni) ?? c.byMuni.set(n.muni, new Set()).get(n.muni)!).add(n.id);
+      if (n.par) (c.byParish.get(n.par) ?? c.byParish.set(n.par, new Set()).get(n.par)!).add(n.id);
+    }
+    areaCache.set(net, c);
+  }
+  return c;
+}
 
 export function suggest(net: Network, lines: Line[], query: string, limit = 10): Suggestion[] {
   const q = norm(query);
@@ -187,18 +207,42 @@ export function suggest(net: Network, lines: Line[], query: string, limit = 10):
   }
   const seen = new Map<string, Suggestion>();
   const groups: Suggestion[] = [];
-  for (const [m, k] of muniKeys) {
-    if (!k.startsWith(q) && !(q.length >= 4 && k.includes(q))) continue;
-    const ids = new Set(net.nodes.filter((x) => x.muni === m).map((x) => x.id));
-    if (!ids.size) continue;
+  const linesOf = (ids: Set<number>) => {
     const ls = new Set<number>();
     for (const line of lines) line.directions.forEach((_, di) => { if ((net.dirNodes.get(dirKey(line, di)) ?? []).some((id) => ids.has(id))) ls.add(line.id); });
-    groups.push({ key: GROUP_PREFIX + m, name: m, lines: ls.size, group: true });
+    return ls.size;
+  };
+  const wanted = (name: string) => {
+    const k = norm(name);
+    return k.startsWith(q) || (q.length >= 4 && k.includes(q));
+  };
+  const rank = (a: Suggestion, b: Suggestion) => Number(norm(b.name) === q) - Number(norm(a.name) === q) || Number(norm(b.name).startsWith(q)) - Number(norm(a.name).startsWith(q)) || b.lines - a.lines;
+  const { byMuni, byParish } = areaNodes(net);
+  const muniGroups: Suggestion[] = [];
+  for (const m of MUNICIPALITIES) {
+    const ids = byMuni.get(m);
+    if (ids?.size && wanted(m)) muniGroups.push({ key: GROUP_PREFIX + m, name: m, lines: linesOf(ids), group: true });
   }
-  groups.sort((a, b) => Number(norm(b.name) === q) - Number(norm(a.name) === q) || Number(norm(b.name).startsWith(q)) - Number(norm(a.name).startsWith(q)) || b.lines - a.lines);
+  // parishes with at least 2 stops; one named like its municipality is the municipality group already
+  const parishGroups: Suggestion[] = [];
+  for (const [p, ids] of byParish) {
+    if (ids.size < 2 || muniKeys.some(([, k]) => k === norm(p)) || !wanted(p)) continue;
+    parishGroups.push({ key: PARISH_PREFIX + p, name: p, lines: linesOf(ids), group: true });
+  }
+  muniGroups.sort(rank);
+  parishGroups.sort(rank);
+  groups.push(...muniGroups, ...parishGroups.slice(0, 4));
+  // a stop named like a group whose stops all belong to the group adds nothing: "Porto Moniz (all stops)" covers it
+  const groupNodes = new Map<string, Set<number>>();
+  for (const g of groups) groupNodes.set(norm(g.name), g.key.startsWith(GROUP_PREFIX) ? byMuni.get(g.name)! : byParish.get(g.name)!);
+  const covered = (key: string) => {
+    const set = groupNodes.get(key);
+    const ids = net.keyToNodes.get(key);
+    return !!set && !!ids?.length && ids.every((id) => set.has(id));
+  };
   const groupKeys = new Set(groups.map((g) => norm(g.name)));
   for (const n of net.nodes) {
-    if (!hit(n.key)) continue;
+    if (!hit(n.key) || covered(n.key)) continue;
     if (!seen.has(n.key)) seen.set(n.key, { key: n.key, name: n.name, lines: count.get(n.key)?.size ?? 0 });
   }
   for (const [k, a] of net.aliases) {
@@ -223,6 +267,10 @@ export function resolveNodes(net: Network, input: string, pickedKey?: string | n
     for (const x of net.nodes) if (x.muni === muni) out.add(x.id);
     if (out.size) return out;
   }
+  if (pickedKey?.startsWith(PARISH_PREFIX)) {
+    for (const id of areaNodes(net).byParish.get(pickedKey.slice(PARISH_PREFIX.length)) ?? []) out.add(id);
+    if (out.size) return out;
+  }
   if (pickedKey) {
     for (const id of net.keyToNodes.get(pickedKey) ?? []) out.add(id);
     for (const id of net.aliases.get(pickedKey)?.nodes ?? []) out.add(id);
@@ -234,4 +282,17 @@ export function resolveNodes(net: Network, input: string, pickedKey?: string | n
   for (const n of net.nodes) if (hit(n.key)) out.add(n.id);
   for (const [k, a] of net.aliases) if (hit(k)) for (const id of a.nodes) out.add(id);
   return out;
+}
+
+/** Nearest stop (node with coordinates) within `maxM` metres of a point, or null. */
+export function nearestNode(net: Network, lat: number, lon: number, maxM: number): { node: Node; metres: number } | null {
+  let best: { node: Node; metres: number } | null = null;
+  const p = { lat, lon };
+  for (const n of net.nodes) {
+    if (n.lat === undefined || n.lon === undefined) continue;
+    if (Math.abs(n.lat - lat) * 110540 > maxM) continue;
+    const d = metres(n as Required<Node>, p);
+    if (d <= maxM && (!best || d < best.metres)) best = { node: n, metres: d };
+  }
+  return best;
 }

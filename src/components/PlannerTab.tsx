@@ -1,33 +1,60 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useT } from '../i18n';
-import { addDays } from '../lib/holidays';
-import { resolveNodes, servicesFor, suggest } from '../lib/network';
+import { addDays, serviceDay } from '../lib/holidays';
+import { resolveNodes, servicesFor, suggest, type Suggestion } from '../lib/network';
+import { isoToYmd, ymdToIso, type Picked, type PlannerForm } from '../lib/plannerForm';
 import { plan, type Itinerary } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
 import { fmtMinutes } from '../lib/time';
 import type { Line, MapLayer } from '../types';
 import { Card, Chip, dirLabel, EmptyState, EstTag, LineBadge, lineColor, lineRailCls, MapPin, SectionTitle, SkeletonCards, TypeFilter, type LineTypeFilter, type Shared } from './common';
 import { Icon } from './Icons';
+import { MapPicker } from './MapPicker';
 
-interface Picked {
-  text: string;
-  key: string | null;
-}
-
-function Combobox({ label, placeholder, value, onChange, shared }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; shared: Shared }) {
+function Combobox({ label, placeholder, value, onChange, shared, onPickMap }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; shared: Shared; onPickMap: () => void }) {
   const { t } = useT();
   const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);
   const debounced = useDebounced(value.text, 120);
   const items = useMemo(() => (open ? suggest(shared.net, shared.lines, debounced) : []), [open, debounced, shared.net, shared.lines]);
   const box = useRef<HTMLDivElement>(null);
+  const listId = useId();
   useEffect(() => {
     const close = (e: PointerEvent) => box.current && !box.current.contains(e.target as Node) && setOpen(false);
     document.addEventListener('pointerdown', close);
     return () => document.removeEventListener('pointerdown', close);
   }, []);
+  // a new list starts without a highlighted item; the highlighted one is kept in view when scrolling with the arrows
+  useEffect(() => setActive(-1), [items]);
+  useEffect(() => {
+    if (active >= 0) box.current?.querySelector(`[id="${listId}-${active}"]`)?.scrollIntoView({ block: 'nearest' });
+  }, [active, listId]);
+
+  const labelOf = (s: Suggestion) => (s.group ? t('allStopsOf', { name: s.name }) : s.name);
+  const pick = (s: Suggestion) => {
+    onChange({ text: labelOf(s), key: s.key });
+    setOpen(false);
+  };
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      if (open) {
+        e.preventDefault();
+        setOpen(false);
+      }
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!open) return setOpen(true);
+      if (!items.length) return;
+      setActive((i) => (e.key === 'ArrowDown' ? (i + 1) % items.length : (i <= 0 ? items.length : i) - 1));
+    } else if (e.key === 'Enter' && open && items.length) {
+      // the highlighted item, else the first suggestion (a municipality group when a town is typed)
+      e.preventDefault();
+      pick(items[active >= 0 ? active : 0]);
+    }
+  };
 
   return (
-    <div ref={box} className="relative">
+    <div ref={box} className="relative flex items-center">
       <input
         value={value.text}
         onChange={(e) => {
@@ -35,33 +62,46 @@ function Combobox({ label, placeholder, value, onChange, shared }: { label: stri
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         aria-label={label}
+        role="combobox"
+        aria-expanded={open && items.length > 0}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
-        className="h-11 w-full rounded-lg bg-transparent px-2 text-base font-medium outline-none placeholder:font-normal placeholder:text-slate-400 focus:bg-slate-50 dark:focus:bg-slate-800/60"
+        className="h-11 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-base font-medium outline-none placeholder:font-normal placeholder:text-slate-400 focus:bg-slate-50 dark:focus:bg-slate-800/60"
       />
+      <button
+        type="button"
+        onClick={onPickMap}
+        aria-label={`${t('pickOnMap')}: ${label}`}
+        title={t('pickOnMap')}
+        className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-sky-600 dark:hover:bg-slate-800"
+      >
+        <Icon name="map" className="size-5" />
+      </button>
       {open && items.length > 0 && (
-        <ul className="absolute -left-9 -right-12 top-full z-30 mt-2 max-h-72 overflow-auto rounded-2xl border border-slate-200/70 bg-white py-1 shadow-xl dark:border-slate-700 dark:bg-slate-900">
-          {items.map((s) => {
-            const name = s.group ? t('allStopsOf', { name: s.name }) : s.name;
-            return (
-            <li key={s.key}>
+        <ul id={listId} role="listbox" className="absolute -left-9 -right-12 top-full z-30 mt-2 max-h-72 overflow-auto rounded-2xl border border-slate-200/70 bg-white py-1 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+          {items.map((s, i) => (
+            <li key={s.key} id={`${listId}-${i}`} role="option" aria-selected={i === active}>
               <button
-                className={`flex min-h-11 w-full items-center gap-3 px-4 text-left hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-800 dark:active:bg-slate-800 ${s.group ? 'bg-sky-50/70 font-semibold dark:bg-sky-400/10' : ''}`}
-                onClick={() => {
-                  onChange({ text: name, key: s.key });
-                  setOpen(false);
-                }}
+                tabIndex={-1}
+                className={`flex min-h-11 w-full items-center gap-3 px-4 text-left hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-800 dark:active:bg-slate-800 ${s.group ? 'font-semibold' : ''} ${
+                  i === active ? 'bg-sky-100 dark:bg-sky-400/20' : s.group ? 'bg-sky-50/70 dark:bg-sky-400/10' : ''
+                }`}
+                onMouseMove={() => i !== active && setActive(i)}
+                onClick={() => pick(s)}
               >
                 <Icon name="pin" className={`size-4 shrink-0 ${s.group ? 'text-sky-600' : 'text-slate-400'}`} />
-                <span className="min-w-0 flex-1 truncate">{name}</span>
+                <span className="min-w-0 flex-1 truncate">{labelOf(s)}</span>
                 <span className="shrink-0 text-xs text-slate-400">{s.lines}×</span>
               </button>
             </li>
-            );
-          })}
+          ))}
         </ul>
       )}
     </div>
@@ -206,19 +246,24 @@ function ItineraryCard({ it, shared, selected, onSelect }: { it: Itinerary; shar
 
 export function PlannerTab({ shared }: { shared: Shared }) {
   const { t } = useT();
-  const [from, setFrom] = useState<Picked>({ text: '', key: null });
-  const [to, setTo] = useState<Picked>({ text: '', key: null });
-  const [time, setTime] = useState(() => hhmm(shared.ctx.now.minutes));
-  const [dayOffset, setDayOffset] = useState<0 | 1>(0);
-  const fromReq = shared.plannerFrom;
-  useEffect(() => {
-    if (fromReq) setFrom({ text: fromReq.text, key: fromReq.key });
-  }, [fromReq?.seq]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { planner, setPlanner } = shared;
+  const { from, to, time, type, directOnly } = planner;
+  const patch = (p: Partial<PlannerForm>) => setPlanner((f) => ({ ...f, ...p }));
+  const setFrom = (v: Picked) => patch({ from: v });
+  const setTo = (v: Picked) => patch({ to: v });
+  const setTime = (v: string) => patch({ time: v });
+  const setType = (v: LineTypeFilter) => patch({ type: v });
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [type, setType] = useState<LineTypeFilter>('all');
-  const [directOnly, setDirectOnly] = useState(false);
+  const [pickFor, setPickFor] = useState<'from' | 'to' | null>(null);
 
-  const date = useMemo(() => addDays({ y: shared.ctx.now.y, m: shared.ctx.now.m, d: shared.ctx.now.d }, dayOffset), [shared.ctx.now.y, shared.ctx.now.m, shared.ctx.now.d, dayOffset]);
+  const { y: ny, m: nm, d: nd } = shared.ctx.now;
+  const today = useMemo(() => ({ y: ny, m: nm, d: nd }), [ny, nm, nd]);
+  const todayIso = ymdToIso(today);
+  const tomorrowIso = ymdToIso(addDays(today, 1));
+  // the chosen day (any date); null = today
+  const date = useMemo(() => isoToYmd(planner.date) ?? today, [planner.date, today]);
+  const dateIso = ymdToIso(date);
+  const dayInfo = useMemo(() => serviceDay(date, shared.ctx.municipalities), [date, shared.ctx.municipalities]);
   // all trips of the day; rebuilt only when the date or the school switch changes
   const trips = useMemo(() => servicesFor(shared.net, shared.lines, date, shared.ctx.school, shared.ctx.municipalities), [shared.net, shared.lines, date, shared.ctx.school, shared.ctx.municipalities]);
 
@@ -266,12 +311,11 @@ export function PlannerTab({ shared }: { shared: Shared }) {
 
   const setDeparture = (plusMin: number) => {
     const target = shared.ctx.now.minutes + plusMin;
-    setDayOffset(target >= 1440 ? 1 : 0);
-    setTime(hhmm(target % 1440));
+    patch({ date: target >= 1440 ? tomorrowIso : null, time: hhmm(target % 1440) });
   };
   const isChip = (plusMin: number) => {
     const target = shared.ctx.now.minutes + plusMin;
-    return time === hhmm(target % 1440) && dayOffset === (target >= 1440 ? 1 : 0);
+    return time === hhmm(target % 1440) && dateIso === (target >= 1440 ? tomorrowIso : todayIso);
   };
 
   const renderList = (title: ReactNode, key: 'd' | 't') => {
@@ -299,14 +343,13 @@ export function PlannerTab({ shared }: { shared: Shared }) {
             <Icon name="pin" className="size-4 text-sky-600" strokeWidth={2} />
           </div>
           <div className="flex min-w-0 flex-1 flex-col">
-            <Combobox label={t('from')} placeholder={t('fromPlaceholder')} value={from} onChange={setFrom} shared={shared} />
+            <Combobox label={t('from')} placeholder={t('fromPlaceholder')} value={from} onChange={setFrom} shared={shared} onPickMap={() => setPickFor('from')} />
             <div className="mx-2 h-px bg-slate-100 dark:bg-slate-800" />
-            <Combobox label={t('to')} placeholder={t('toPlaceholder')} value={to} onChange={setTo} shared={shared} />
+            <Combobox label={t('to')} placeholder={t('toPlaceholder')} value={to} onChange={setTo} shared={shared} onPickMap={() => setPickFor('to')} />
           </div>
           <button
             onClick={() => {
-              setFrom(to);
-              setTo(from);
+              patch({ from: to, to: from });
             }}
             aria-label={t('swap')}
             title={t('swap')}
@@ -332,24 +375,38 @@ export function PlannerTab({ shared }: { shared: Shared }) {
             {t('chipPlus60')}
           </Chip>
           <div className="ml-auto inline-flex rounded-full bg-slate-100 p-0.5 dark:bg-slate-800" role="group">
-            {([0, 1] as const).map((o) => (
-              <button
-                key={o}
-                aria-pressed={dayOffset === o}
-                onClick={() => setDayOffset(o)}
-                className={`h-8 rounded-full px-3 text-sm font-medium transition-colors ${
-                  dayOffset === o ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                {o === 0 ? t('dayToday') : t('dayTomorrow')}
-              </button>
-            ))}
+            {([null, tomorrowIso] as const).map((o) => {
+              const on = dateIso === (o ?? todayIso);
+              return (
+                <button
+                  key={o ?? 'today'}
+                  aria-pressed={on}
+                  onClick={() => patch({ date: o })}
+                  className={`h-8 rounded-full px-3 text-sm font-medium transition-colors ${on ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
+                >
+                  {o === null ? t('dayToday') : t('dayTomorrow')}
+                </button>
+              );
+            })}
           </div>
+          <label className="flex h-9 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 pl-3 pr-2 dark:border-slate-700 dark:bg-slate-800/60">
+            <span className="sr-only">{t('dateLabel')}</span>
+            <input
+              type="date"
+              value={dateIso}
+              onChange={(e) => isoToYmd(e.target.value) && patch({ date: e.target.value === todayIso ? null : e.target.value })}
+              className="bg-transparent text-sm font-semibold tabular-nums outline-none"
+            />
+          </label>
+          <p className="w-full px-1 text-xs text-slate-500 dark:text-slate-400" data-testid="day-info">
+            {dayInfo.type === null ? t('noService') : t(`day_${dayInfo.type}`)}
+            {dayInfo.reason === 'holiday' ? ` · ${t('reason_holiday')}: ${dayInfo.holiday?.name}` : dayInfo.reason === 'saturday-rule' ? ` · ${dayInfo.special}` : dayInfo.holiday ? ` · ${dayInfo.holiday.name}` : ''}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
           <TypeFilter value={type} onChange={setType} />
           <label className="flex min-h-9 cursor-pointer items-center gap-2 rounded-full px-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-            <input type="checkbox" checked={directOnly} onChange={(e) => setDirectOnly(e.target.checked)} className="size-4 accent-sky-600" />
+            <input type="checkbox" checked={directOnly} onChange={(e) => patch({ directOnly: e.target.checked })} className="size-4 accent-sky-600" />
             {t('directOnly')}
           </label>
         </div>
@@ -363,8 +420,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         <div className="flex justify-center">
           <Chip
             onClick={() => {
-              setType('all');
-              setDirectOnly(false);
+              patch({ type: 'all', directOnly: false });
             }}
           >
             {t('tryAllTypes')}
@@ -379,6 +435,15 @@ export function PlannerTab({ shared }: { shared: Shared }) {
           <EstTag>~</EstTag>
           <span>{t('estimatedLegend').replace(/^~ = /, '')}</span>
         </p>
+      )}
+      {pickFor && (
+        <MapPicker
+          shared={shared}
+          title={pickFor === 'from' ? t('from') : t('to')}
+          current={pickFor === 'from' ? from : to}
+          onPick={(v) => (pickFor === 'from' ? setFrom(v) : setTo(v))}
+          onClose={() => setPickFor(null)}
+        />
       )}
     </div>
   );

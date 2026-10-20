@@ -9,14 +9,14 @@ const norm = (s) =>
     .replace(/\s+/g, ' ')
     .trim();
 /** stop name without the direction marker ("…, D", "…, S2A", "T-49") */
-const keyOf = (name) => norm(name).replace(/ (d|s)\d*[a-z]?$/, '').replace(/ t \d+$/, '');
+export const keyOf = (name) => norm(name).replace(/ (d|s)\d*[a-z]?$/, '').replace(/ t \d+$/, '');
 // words that carry no identity ("ESTR Lombo Chão" = the junction at Lombo Chão)
 const NOISE = new Set(['estr', 'cam', 'caminho', 'estrada', 'rua', 'de', 'da', 'do', 'dos', 'das', 'e', 'a', 'o', 'ee', 'escola', 'esc', 'ant', 'antes', 'apos', 'junto', 'via']);
-const tokens = (k) => k.split(' ').filter((w) => w.length > 1 && !NOISE.has(w) && !/^\d+$/.test(w));
+export const tokens = (k) => k.split(' ').filter((w) => w.length > 1 && !NOISE.has(w) && !/^\d+$/.test(w));
 // names that denote a whole town: too many stops carry them to place one by name
 // positional qualifiers: "Terra Chã Cima" (upper) is printed, the stop list only has "Terra Chã-Ponte"
 const QUALIFIERS = new Set(['cima', 'baixo', 'alto', 'fundo', 'norte', 'sul']);
-const GENERIC = new Set(['funchal', 'centro', 'machico', 'santa cruz', 'st cruz', 'calheta', 'camacha', 'canico', 'porto moniz', 'ribeira brava', 'camara de lobos', 'ponta do sol', 'santana', 'sao vicente']);
+export const GENERIC = new Set(['funchal', 'centro', 'machico', 'santa cruz', 'st cruz', 'calheta', 'camacha', 'canico', 'porto moniz', 'ribeira brava', 'camara de lobos', 'ponta do sol', 'santana', 'sao vicente']);
 
 const R = 6371.0088;
 const rad = Math.PI / 180;

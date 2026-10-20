@@ -16,6 +16,8 @@ export interface Stop {
   isEstimatedLocation?: boolean;
   /** Municipality (concelho) of the stop, set by build:data */
   muni?: string;
+  /** Parish (freguesia) of the stop, set by build:data; "Name, Municipality" where the name exists twice */
+  par?: string;
 }
 
 /** One run of a bus: a time at every stop (null = does not call there). */

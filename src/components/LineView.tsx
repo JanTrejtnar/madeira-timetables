@@ -138,11 +138,12 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
     if (hasTrips) setStopIdx(i);
     setFocusIdx(i);
     setFocusSeq((n) => n + 1);
-    // on a phone the map is above the list: bring it into view so the jump is visible
+    // on a phone the map is below the list: only nudge it fully into view when it is already partly visible
+    // (otherwise tapping a stop would throw the reader away from the list)
     const el = mapBox.current;
     if (!desktop && el) {
       const r = el.getBoundingClientRect();
-      if (r.top < 0 || r.bottom > window.innerHeight) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (r.top < window.innerHeight && r.bottom > 0 && (r.top < 0 || r.bottom > window.innerHeight)) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
@@ -248,13 +249,6 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
         </section>
       )}
 
-      {hasMap && !desktop && (
-        <section ref={mapBox}>
-          <SectionTitle>{t('map')}</SectionTitle>
-          <RouteMap layers={layers} focus={mapFocus} />
-        </section>
-      )}
-
       {dir && (
         <section>
           <SectionTitle aside={<span className="text-xs text-slate-400">{dir.stops.length}</span>}>{t('stopsOfDirection')}</SectionTitle>
@@ -337,6 +331,13 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
           ) : (
             <p className="px-1 text-sm text-slate-500">{t('noStops')}</p>
           )}
+        </section>
+      )}
+
+      {hasMap && !desktop && (
+        <section ref={mapBox}>
+          <SectionTitle>{t('map')}</SectionTitle>
+          <RouteMap layers={layers} focus={mapFocus} />
         </section>
       )}
 

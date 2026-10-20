@@ -13,6 +13,7 @@ import { Icon, type IconName } from './components/Icons';
 import { RouteMap } from './components/RouteMap';
 import { useMedia } from './lib/hooks';
 import type { UserPos } from './lib/nearby';
+import { formFromQuery, formToQuery, type PlannerForm } from './lib/plannerForm';
 import type { MapFocus, MapLayer } from './types';
 
 type Tab = 'search' | 'route' | 'departures';
@@ -67,7 +68,13 @@ export function App() {
 
   const [userPos, setUserPos] = useState<UserPos | null>(null);
   const [geo, setGeo] = useState<Shared['geo']>('idle');
-  const [plannerFrom, setPlannerFrom] = useState<Shared['plannerFrom']>(null);
+  // planner form: kept here so it survives opening a line and going back, and mirrored into the URL query
+  const [planner, setPlanner] = useState<PlannerForm>(() => formFromQuery(location.search, nowInMadeira().minutes));
+  useEffect(() => {
+    const q = formToQuery(planner);
+    const url = `${location.pathname}${q ? `?${q}` : ''}${location.hash}`;
+    if (url !== `${location.pathname}${location.search}${location.hash}`) history.replaceState(history.state, '', url);
+  }, [planner]);
   const [online, setOnline] = useState(() => navigator.onLine !== false);
   useEffect(() => {
     const on = () => setOnline(true);
@@ -126,15 +133,16 @@ export function App() {
             userPos,
             geo,
             locate,
-            plannerFrom,
+            planner,
+            setPlanner,
             useAsFrom: (name, key) => {
-              setPlannerFrom({ text: name, key, seq: Date.now() });
+              setPlanner((p) => ({ ...p, from: { text: name, key } }));
               setTab('route');
               if (location.hash) location.hash = '';
             },
           }
         : null,
-    [data, net, ctx, desktop, userPos, geo, locate, plannerFrom],
+    [data, net, ctx, desktop, userPos, geo, locate, planner],
   );
 
   const today = serviceDay(now);

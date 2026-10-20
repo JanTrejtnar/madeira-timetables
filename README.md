@@ -87,3 +87,21 @@ cache, offline reload and "stops near me" against `npx vite preview --port 4173`
 - `build:data` matches SIGA stops to feed stops by stop code and takes the official position (fills missing ones, replaces SIGA's when within 150 m or when ours was only approximate); feed stop names also feed the name matching for text-only lines.
 - Every stop gets a municipality (`muni`): nearest reference point (feed stops labelled by the operator + parish seats), else a locality/town named in the stop name, else the neighbouring stops of the direction. Only an approximation by position – borders are not exact.
 - The planner suggests "<town> (all stops)" first; the search then runs from/to every stop of that municipality.
+
+## OpenStreetMap stops, parishes, map picking
+
+- `npm run fetch:osm` downloads bus stops (`highway=bus_stop`, `public_transport=platform`), village/town nodes and the
+  concelho/freguesia boundaries of Madeira from the Overpass API into `data/osm/` (committed, so `build:data` needs no
+  network; © OpenStreetMap contributors, ODbL).
+- `build:data` uses it after the GTFS feed and the name index of the other routes, only for stops that still have no
+  position: normalised name (abbreviations like "Estreito C.Lobos" resolved), disambiguated by the route polyline, the
+  neighbouring stops or the municipality of the line; a stop named after its village falls back to the village node.
+  Such stops are `approx: true, source: 'osm'` (matched by name) and listed as approximate in the app.
+- Every stop gets `muni` and `par` (parish) from the boundary polygons; parishes are offered as "(all stops)" next to the 11
+  municipalities (a stop with the same name as its group is not listed twice).
+- The drawn route is joined to the first/last stop (`lib-shape-ends.mjs`, gaps up to 120 m); `node scripts/check-shape-ends.mjs`
+  lists the rest. The Pico do Areeiro route (`npm run` → `node scripts/fetch-pico-route.mjs`) starts exactly on the GTFS stop 4A.
+- Planner: "pick on map" next to From/To (nearest stop within 1 km), any date (`<input type=date>`, holidays via `holidays.ts`),
+  arrow keys + Enter + Escape in the suggestions. The form is kept in App state and mirrored into the URL
+  (`?from=…&fk=…&to=…&tk=…&date=…&time=…`), so Back from a line detail (or a reload) restores the search.
+- `node scripts/e2e-planner.mjs <dev server url>` checks all of this in headless Chrome (phone and desktop).

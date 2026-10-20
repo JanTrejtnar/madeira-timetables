@@ -5,6 +5,7 @@
   "scripts": {
     "scrape": "node scripts/scrape.mjs",
     "parse": "node scripts/parse.mjs",
+    "fetch:osm": "node scripts/fetch-osm-stops.mjs",
     "fetch:gtfs": "node scripts/fetch-gtfs.mjs",
     "build:data": "node scripts/build-data.mjs",
     "audit": "node scripts/audit-schedules.mjs",

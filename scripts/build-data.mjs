@@ -7,6 +7,9 @@ import { addEstimates } from './lib-estimate.mjs';
 import { classifyLine } from './lib-classify.mjs';
 import { buildStopIndex, fillCoords } from './lib-coords.mjs';
 import { interpolateStops } from './lib-interpolate.mjs';
+import { snapShapeEnds } from './lib-shape-ends.mjs';
+import { applyOsm } from './lib-osm.mjs';
+import { prepareAreas } from './lib-areas.mjs';
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -59,15 +62,24 @@ for (const f of (await readdir(path.join(ROOT, 'data', 'external'))).filter((x) 
 const gtfs = JSON.parse(await readFile(path.join(ROOT, 'data', 'gtfs', 'stops.json'), 'utf8'));
 const gtfsStats = applyGtfs(data.lines, gtfs);
 // stops known only by name: borrow coordinates from stops of other routes (and feed stops) that carry the same name
+const osm = JSON.parse(await readFile(path.join(ROOT, 'data', 'osm', 'stops.json'), 'utf8'));
+const areas = prepareAreas(JSON.parse(await readFile(path.join(ROOT, 'data', 'osm', 'areas.json'), 'utf8')));
 const coords = fillCoords(data.lines, buildStopIndex([...data.lines, gtfsAsLine(gtfs)]));
+// still without a position: OpenStreetMap bus stops (data/osm/stops.json, `npm run fetch:osm`), matched by name
+const osmPlaces = JSON.parse(await readFile(path.join(ROOT, 'data', 'osm', 'places.json'), 'utf8')).places;
+const osmStats = applyOsm(data.lines, osm, areas, path.join(ROOT, 'data', 'shapes'), osmPlaces);
 // what name matching could not place: evenly spaced along the route polyline between two known stops
 const interpolated = interpolateStops(data.lines, path.join(ROOT, 'data', 'shapes'));
 console.log('reclassified urbano -> interurbano:', reclassified.length ? reclassified.join('; ') : 'none');
 console.log('stop coordinates matched by name:', coords.filled, '(still without coordinates:', coords.missing + ')');
 console.log('stop coordinates interpolated along the route:', interpolated);
+console.log('OpenStreetMap', osm.fetched, '- stops placed by name:', JSON.stringify(osmStats));
 console.log('GTFS', gtfs.feedVersion, '- stops by code:', JSON.stringify(gtfsStats));
-console.log('municipality of stops:', JSON.stringify(assignMunicipalities(data.lines, gtfs)));
+console.log('municipality of stops:', JSON.stringify(assignMunicipalities(data.lines, gtfs, areas)));
 await writeFile(path.join(OUT, 'data', 'schedules.json'), JSON.stringify(data));
 await cp(path.join(ROOT, 'data', 'shapes'), path.join(OUT, 'data', 'shapes'), { recursive: true });
+// the drawn route must leave from / arrive at the pins of the first and last stop
+const snapped = await snapShapeEnds(data.lines, path.join(OUT, 'data', 'shapes'));
+console.log('route lines joined to the end stops:', snapped.joined, '(gap over', snapped.maxGapM, 'm left alone:', snapped.skipped.length + ')');
 console.log('estimated directions:', estimated, rejected.length ? `(rejected: ${rejected.join('; ')})` : '');
 console.log('public/ updated:', data.lines.length, 'lines,', (await readdir(path.join(OUT, 'data', 'shapes'))).length, 'shapes,', local, 'local pdfs');

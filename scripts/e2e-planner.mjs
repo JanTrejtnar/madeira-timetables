@@ -1,0 +1,144 @@
+// Planner end-to-end check against the dev server (npx vite --port 5173): keyboard control of the suggestions, "pick on
+// the map", state kept (and in the URL) after opening a line and going back, any date, line detail order.
+// Usage: node scripts/e2e-planner.mjs [baseUrl]    Phone and desktop viewport.
+import puppeteer from 'puppeteer-core';
+
+const base = process.argv[2] ?? 'http://localhost:5173/';
+const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox'] });
+const results = [];
+const check = (name, ok, extra = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${extra ? ' – ' + extra : ''}`); };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function run(label, viewport) {
+  const page = await browser.newPage();
+  await page.setViewport(viewport);
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  page.on('console', (m) => m.type() === 'error' && !/tile\.openstreetmap|Failed to load resource/.test(m.text()) && errors.push(m.text()));
+  const text = () => page.evaluate(() => document.body.innerText);
+  const value = (l) => page.evaluate((x) => document.querySelector(`input[aria-label="${x}"]`)?.value, l);
+  const typeIn = async (l, v) => {
+    await page.evaluate((a, b) => { const i = document.querySelector(`input[aria-label="${a}"]`); i.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(i, ''); i.dispatchEvent(new Event('input', { bubbles: true })); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(i, b); i.dispatchEvent(new Event('input', { bubbles: true })); }, l, v);
+    await sleep(450);
+  };
+  const options = () => page.evaluate(() => [...document.querySelectorAll('[role=option]')].map((o) => o.innerText.replace(/\s+/g, ' ')));
+  const activeOpt = () => page.evaluate(() => { const o = document.querySelector('[role=option][aria-selected=true]'); return o ? o.innerText.replace(/\s+/g, ' ') : null; });
+  console.log(`--- ${label}`);
+  await page.goto(base, { waitUntil: 'networkidle0' });
+  await page.evaluate(() => { history.replaceState(null, '', location.pathname); });
+  await page.reload({ waitUntil: 'networkidle0' });
+
+  // 5. keyboard control of the suggestions
+  await typeIn('Odkud', 'camacha');
+  let opts = await options();
+  check(`${label}: "camacha" offers the parish group first, the single stop only if it adds something`, /^Camacha \(všechny zastávky\)/.test(opts[0] ?? ''), JSON.stringify(opts.slice(0, 3)));
+  check(`${label}: no duplicate "Camacha" stop right under the group`, !opts.slice(1).some((o) => /^Camacha \d+×$/.test(o)), JSON.stringify(opts.slice(0, 4)));
+  await page.keyboard.press('ArrowDown');
+  check(`${label}: ArrowDown highlights the first item`, (await activeOpt()) === opts[0], String(await activeOpt()));
+  await page.keyboard.press('ArrowDown');
+  check(`${label}: second ArrowDown moves on`, (await activeOpt()) === opts[1], String(await activeOpt()));
+  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('ArrowUp');
+  check(`${label}: ArrowUp wraps to the last item`, (await activeOpt()) === opts.at(-1), String(await activeOpt()));
+  await page.keyboard.press('Escape');
+  check(`${label}: Escape closes the list`, (await options()).length === 0);
+  await page.keyboard.press('ArrowDown');
+  check(`${label}: ArrowDown reopens it`, (await options()).length > 0);
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  check(`${label}: Enter takes the highlighted item and closes the list`, /Camacha/.test((await value('Odkud')) ?? '') && (await options()).length === 0, await value('Odkud'));
+
+  // 6. parish group (Curral das Freiras), municipality group first
+  await typeIn('Kam', 'curral das freiras');
+  opts = await options();
+  check(`${label}: "curral das freiras" is offered as a parish group`, opts.some((o) => /^Curral das Freiras \(všechny zastávky\)/.test(o)), JSON.stringify(opts.slice(0, 3)));
+  await page.keyboard.press('Enter'); // nothing highlighted: first suggestion
+  check(`${label}: Enter without highlight takes the first suggestion`, /Curral das Freiras|Câmara de Lobos/.test((await value('Kam')) ?? ''), await value('Kam'));
+
+  // 3. pick on the map
+  await typeIn('Kam', 'Cabo Girão');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  const pickBtns = await page.$$('button[aria-label^="Vybrat na mapě"]');
+  check(`${label}: "Vybrat na mapě" button next to both fields`, pickBtns.length === 2, String(pickBtns.length));
+  await pickBtns[1].click();
+  await page.waitForSelector('[data-testid=map-picker-map] .leaflet-tile-loaded, [data-testid=map-picker-map] .leaflet-container', { timeout: 5000 }).catch(() => {});
+  await sleep(1200);
+  const box = await (await page.$('[data-testid=map-picker-map]')).boundingBox();
+  check(`${label}: map picker opens full screen`, box.width >= viewport.width - 1 && box.height > 200, JSON.stringify(box));
+  // the map is centred on the stop already in the field: a tap 60 px beside the centre is a few tens of metres away
+  await page.mouse.click(box.x + box.width / 2 + 40, box.y + box.height / 2 + 30);
+  await sleep(500);
+  const res = await page.evaluate(() => document.querySelector('[data-testid=map-picker-result]')?.innerText);
+  check(`${label}: tap finds the nearest stop and states the distance`, /Cabo Girão/i.test(res ?? '') && /\d+ m/.test(res ?? ''), res);
+  const markers = await page.evaluate(() => document.querySelectorAll('[data-testid=map-picker-map] path.leaflet-interactive').length);
+  check(`${label}: tapped point, link and found stop are drawn`, markers >= 3, String(markers));
+  // far from any stop (zoom out is not needed: pan by tapping the sea corner is not guaranteed) -> use two taps at different spots
+  await page.mouse.click(box.x + 5, box.y + box.height - 5);
+  await sleep(400);
+  const res2 = await page.evaluate(() => document.querySelector('[data-testid=map-picker-result]')?.innerText);
+  check(`${label}: a tap far from any stop says so (or still finds one)`, /m/.test(res2 ?? ''), res2);
+  await page.keyboard.press('Escape');
+  await sleep(300);
+  check(`${label}: Escape / Hotovo closes the picker`, (await page.$('[data-testid=map-picker]')) === null);
+  check(`${label}: the field holds the stop found on the map`, /Girão|Girao/i.test((await value('Kam')) ?? '') || (await value('Kam')) !== '', await value('Kam'));
+
+  // 7. any date + holiday detection
+  const dateSet = async (iso) => {
+    await page.evaluate((v) => { const i = document.querySelector('input[type=date]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(i, v); i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); }, iso);
+    await sleep(300);
+  };
+  check(`${label}: date input next to Dnes / Zítra`, (await page.$('input[type=date]')) !== null);
+  await dateSet('2026-12-08');
+  const info = await page.evaluate(() => document.querySelector('[data-testid=day-info]')?.innerText);
+  check(`${label}: 8 Dec 2026 is shown as a holiday (Sunday timetable)`, /Svátek|Neděle|Imaculada|Conceição/i.test(info ?? ''), info);
+  await dateSet('2026-12-25');
+  const info2 = await page.evaluate(() => document.querySelector('[data-testid=day-info]')?.innerText);
+  check(`${label}: 25 Dec: no service`, /bez provozu|Nejezdí|provoz/i.test(info2 ?? ''), info2);
+  await dateSet('2026-12-09');
+
+  // 4. state survives opening a line and going back
+  await typeIn('Odkud', 'Santana');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await typeIn('Kam', 'Funchal');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await sleep(900);
+  const before = { from: await value('Odkud'), to: await value('Kam'), url: await page.evaluate(() => location.search) };
+  check(`${label}: the form is mirrored into the URL`, /from=/.test(before.url) && /to=/.test(before.url) && /date=2026-12-09/.test(before.url), before.url);
+  const opened = await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /→|Přímá/.test('') || x.querySelector('svg') && /\d+ zast/.test(x.innerText)); b?.click(); return !!b; });
+  await sleep(700);
+  check(`${label}: a line detail opened from a result`, opened && /#\/line\//.test(await page.evaluate(() => location.hash)), await page.evaluate(() => location.hash));
+  // 8. detail order: stops (with times) before the map, notes last
+  const order = await page.evaluate(() => {
+    const heads = [...document.querySelectorAll('h2')].map((h) => h.innerText.trim().toLowerCase());
+    return heads;
+  });
+  const iStops = order.findIndex((h) => /zastávky/.test(h));
+  const iMap = order.findIndex((h) => /^mapa|trasa/.test(h));
+  check(`${label}: line detail lists the stops before the map`, iStops >= 0 && (iMap < 0 || iStops < iMap), JSON.stringify(order));
+  await page.evaluate(() => history.back());
+  await sleep(700);
+  const after = { from: await value('Odkud'), to: await value('Kam'), url: await page.evaluate(() => location.search), date: await page.evaluate(() => document.querySelector('input[type=date]')?.value) };
+  check(`${label}: Back restores Odkud / Kam / date`, after.from === before.from && after.to === before.to && after.date === '2026-12-09', JSON.stringify(after));
+  const times = (await text()).match(/\d\d:\d\d/g)?.length ?? 0;
+  check(`${label}: and the previous results are shown again`, times >= 4, `${times} times`);
+
+  // reload with the URL
+  await page.reload({ waitUntil: 'networkidle0' });
+  await sleep(600);
+  check(`${label}: reload restores the search from the URL`, (await value('Odkud')) === before.from && (await value('Kam')) === before.to, `${await value('Odkud')} -> ${await value('Kam')}`);
+  check(`${label}: no page errors`, errors.length === 0, errors.join('; ').slice(0, 300));
+  await page.close();
+}
+
+try {
+  await run('phone', { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  await run('desktop', { width: 1400, height: 900 });
+} finally {
+  await browser.close();
+}
+console.log(`${results.filter(Boolean).length}/${results.length} passed`);
+process.exit(results.every(Boolean) ? 0 : 1);

@@ -2,7 +2,9 @@ import { readFileSync, existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { board } from '../src/lib/departures';
 import { buildIndex, findConnections, searchLines, searchStops } from '../src/lib/search';
-import { buildNetwork, resolveNodes, servicesFor, suggest } from '../src/lib/network';
+import { buildNetwork, nearestNode, resolveNodes, servicesFor, suggest } from '../src/lib/network';
+import { formFromQuery, formToQuery } from '../src/lib/plannerForm';
+import { serviceDay } from '../src/lib/holidays';
 import { variantLabel } from '../src/lib/notes';
 import { plan } from '../src/lib/router';
 import { poiFor } from '../src/lib/aliases';
@@ -276,5 +278,112 @@ describe.skipIf(!existsSync(file))('GTFS coordinates and municipality search (re
     expect(variantLabel('down', 'cs')).toBe('Dolů');
     expect(variantLabel('via Campanário e Adega', 'cs')).toBe('přes Campanário e Adega');
     expect(variantLabel('up', 'pt')).toBe('Subida');
+  });
+});
+
+describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, shape ends (real data)', () => {
+  const data: Dataset = JSON.parse(readFileSync(file, 'utf8'));
+  const net = buildNetwork(data.lines);
+  const m = (a: [number, number], b: [number, number]) => Math.hypot((a[1] - b[1]) * 111320 * Math.cos((a[0] * Math.PI) / 180), (a[0] - b[0]) * 110540);
+  const stopsNamed = (re: RegExp) => data.lines.flatMap((l) => l.directions.flatMap((d) => d.stops.filter((s) => re.test(s.name))));
+
+  it('the OSM extract is on Madeira and complete enough', () => {
+    const osm: { stops: { lat: number; lon: number }[] } = JSON.parse(readFileSync('data/osm/stops.json', 'utf8'));
+    expect(osm.stops.length).toBeGreaterThan(3000);
+    for (const s of osm.stops) {
+      expect(s.lat).toBeGreaterThan(32.3);
+      expect(s.lat).toBeLessThan(33.3);
+      expect(s.lon).toBeGreaterThan(-17.4);
+      expect(s.lon).toBeLessThan(-16.2);
+    }
+  });
+  it('Cabo Girão, Seixal and the airport now have a position on the map', () => {
+    const at = (re: RegExp) => stopsNamed(re).filter((s) => s.lat !== undefined);
+    expect(at(/^Cabo Girão/).length).toBeGreaterThan(0);
+    expect(m([at(/^Cabo Girão/)[0].lat!, at(/^Cabo Girão/)[0].lon!], [32.657944, -17.005213])).toBeLessThan(150);
+    expect(at(/^Seixal/).length).toBeGreaterThan(0);
+    expect(m([at(/^Seixal/)[0].lat!, at(/^Seixal/)[0].lon!], [32.8257, -17.1066])).toBeLessThan(1500);
+    const ap = stopsNamed(/^Aeroporto$/).filter((s) => s.lat !== undefined);
+    expect(ap.length).toBeGreaterThan(0);
+    expect(m([ap[0].lat!, ap[0].lon!], [32.6931, -16.7753])).toBeLessThan(500);
+  });
+  it('stops placed from OSM are marked approximate and lie on Madeira', () => {
+    const osmStops = data.lines.flatMap((l) => l.directions.flatMap((d) => d.stops.filter((s) => (s as { source?: string }).source === 'osm')));
+    expect(osmStops.length).toBeGreaterThan(200);
+    for (const s of osmStops) {
+      expect(s.approx).toBe(true);
+      expect(s.lat!).toBeGreaterThan(32.3);
+    }
+  });
+  it('the drawn route starts and ends at the first / last stop (at most 2 directions disagree by over 30 m)', () => {
+    let checked = 0;
+    const bad: string[] = [];
+    for (const l of data.lines) {
+      l.directions.forEach((d, i) => {
+        const f = `public/data/shapes/${d.shapeId}.json`;
+        if (d.shapeId == null || !d.stops.length || !existsSync(f)) return;
+        const poly: [number, number][] = JSON.parse(readFileSync(f, 'utf8'));
+        checked++;
+        for (const [s, p] of [[d.stops[0], poly[0]], [d.stops.at(-1)!, poly.at(-1)!]] as const) {
+          if (s.lat !== undefined && !s.approx && m([s.lat, s.lon!], p) > 30) bad.push(`${l.number}/${i}`);
+        }
+      });
+    }
+    expect(checked).toBeGreaterThan(100);
+    expect(bad.length, bad.join(', ')).toBeLessThanOrEqual(2);
+  });
+  it('Pico do Areeiro: the line leaves exactly from the Teleférico-Término pin', () => {
+    const line = data.lines.find((l) => l.id === 9001)!;
+    const d = line.directions[0];
+    const poly: [number, number][] = JSON.parse(readFileSync(`public/data/shapes/${d.shapeId}.json`, 'utf8'));
+    expect(m([d.stops[0].lat!, d.stops[0].lon!], poly[0])).toBeLessThan(1);
+    expect(m([32.647323, -16.902838], poly[0])).toBeLessThan(5);
+    const back = line.directions[1];
+    const polyBack: [number, number][] = JSON.parse(readFileSync(`public/data/shapes/${back.shapeId}.json`, 'utf8'));
+    expect(m([back.stops.at(-1)!.lat!, back.stops.at(-1)!.lon!], polyBack.at(-1)!)).toBeLessThan(1);
+  });
+  it('parishes are offered as "all stops of …", municipality groups first', () => {
+    for (const [q, name] of [['curral das freiras', 'Curral das Freiras'], ['caniço', 'Caniço'], ['camacha', 'Camacha'], ['ponta do pargo', 'Ponta do Pargo']] as const) {
+      const s = suggest(net, data.lines, q);
+      const g = s.find((x) => x.group && x.name === name);
+      expect(g, q).toBeTruthy();
+      expect(g!.key).toBe('@par:' + name);
+      const ids = resolveNodes(net, '', g!.key);
+      expect(ids.size, q).toBeGreaterThanOrEqual(2);
+      for (const id of ids) expect(net.nodes[id].par).toBe(name);
+    }
+    const s = suggest(net, data.lines, 'santa cruz');
+    expect(s[0].key).toBe('@muni:Santa Cruz');
+  });
+  it('a stop with the same name as its group is not listed twice', () => {
+    for (const q of ['porto moniz', 'curral das freiras', 'caniço', 'camacha']) {
+      const s = suggest(net, data.lines, q);
+      const g = s.filter((x) => x.group);
+      expect(g.length, q).toBeGreaterThan(0);
+      for (const x of s.filter((y) => !y.group)) {
+        const same = g.some((y) => y.name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase() === x.key);
+        if (same) expect.fail(`${q}: stop "${x.name}" duplicates its group`);
+      }
+    }
+  });
+  it('tapping the map picks the nearest stop within 1 km, nothing at sea', () => {
+    const stop = net.nodes.find((n) => n.key === 'cabo girao' && n.lat !== undefined)!;
+    const hit = nearestNode(net, stop.lat! + 0.0008, stop.lon! + 0.0004, 1000);
+    expect(hit?.node.key).toBe('cabo girao');
+    expect(hit!.metres).toBeLessThan(150);
+    expect(nearestNode(net, 32.45, -16.5, 1000)).toBeNull();
+  });
+  it('planner form survives the URL round trip, ignores bad values', () => {
+    const f = { from: { text: 'Santana (všechny zastávky)', key: '@muni:Santana' }, to: { text: 'Funchal', key: null }, time: '07:45', date: '2026-12-08', type: 'interurbano' as const, directOnly: true };
+    const back = formFromQuery('?' + formToQuery(f), 600);
+    expect(back).toEqual(f);
+    expect(formFromQuery('?date=2026-02-31&time=25:99&type=zzz', 600)).toMatchObject({ date: null, time: '10:00', type: 'all' });
+    expect(formToQuery(formFromQuery('', 600))).toBe('');
+  });
+  it('a chosen holiday date uses the Sunday timetable, the next day the weekday one', () => {
+    const hol = servicesFor(net, data.lines, { y: 2026, m: 12, d: 8 }, false, ['Funchal']).filter((t) => t.times[0]! >= 0 && t.times[0]! < 1440).length;
+    const wd = servicesFor(net, data.lines, { y: 2026, m: 12, d: 9 }, false, ['Funchal']).filter((t) => t.times[0]! >= 0 && t.times[0]! < 1440).length;
+    expect(serviceDay({ y: 2026, m: 12, d: 8 }).reason).toBe('holiday');
+    expect(hol).toBeLessThan(wd);
   });
 });

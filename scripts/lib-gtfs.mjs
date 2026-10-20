@@ -1,5 +1,7 @@
 // Official stop coordinates from the Horários do Funchal GTFS feed (data/gtfs/stops.json, see fetch-gtfs.mjs) and the
 // municipality (concelho) of every stop, used for the "all stops of <town>" search.
+import { areaOf } from './lib-areas.mjs';
+
 const R = 6371.0088;
 const rad = Math.PI / 180;
 function hav(a, b) {
@@ -90,15 +92,32 @@ const LOCALITIES = [
 // the town named in a stop name places stops that have no coordinates
 const TOWN_NAMES = [['Funchal', 'funchal'], ['Câmara de Lobos', 'camara de lobos'], ['Ribeira Brava', 'ribeira brava'], ['Ponta do Sol', 'ponta do sol'], ['Calheta', 'calheta'], ['Porto Moniz', 'porto moniz'], ['São Vicente', 'sao vicente'], ['Santana', 'santana'], ['Machico', 'machico'], ['Santa Cruz', 'santa cruz'], ['Porto Santo', 'porto santo']];
 
-/** Sets `muni` on every stop. Returns { byPosition, byName, none }. */
-export function assignMunicipalities(lines, gtfs) {
+/**
+ * Sets `muni` (concelho) and, with the OSM boundaries in `areas`, `par` (freguesia) on every stop. A stop with coordinates
+ * takes them from the polygon it lies in; without OSM boundaries the nearest reference point decides. Stops without
+ * coordinates are placed by a parish / town named in the stop name, then by the neighbouring stops of the direction.
+ * Returns { byPosition, byName, byContext, none }.
+ */
+export function assignMunicipalities(lines, gtfs, areas = null) {
   const refs = [];
   for (const [m, pts] of Object.entries(SEEDS)) for (const p of pts) refs.push({ m, p });
   for (const s of gtfs.stops) if (s.muni) refs.push({ m: s.muni, p: [s.lat, s.lon] });
   const r = { byPosition: 0, byName: 0, byContext: 0, none: 0 };
+  // parishes whose name identifies them in a stop name (longest first so "Santo António da Serra" beats "Santo António")
+  const uniq = (areas?.parishes ?? []).filter((p) => p.label === p.name && p.muni && norm(p.name).length >= 5);
+  const parishNames = uniq.map((p) => [norm(p.name), p]).sort((a, b) => b[0].length - a[0].length);
   for (const l of lines) {
     for (const d of l.directions) {
       for (const s of d.stops) {
+        if (has(s) && areas) {
+          const a = areaOf(areas, s.lat, s.lon);
+          if (a.muni) {
+            s.muni = a.muni;
+            if (a.parish) s.par = a.parish;
+            r.byPosition++;
+            continue;
+          }
+        }
         if (has(s)) {
           let best = refs[0];
           let bd = Infinity;
@@ -113,6 +132,8 @@ export function assignMunicipalities(lines, gtfs) {
           continue;
         }
         const n = norm(s.name);
+        const pa = parishNames.find(([k]) => new RegExp(`(^| )${k}( |$)`).test(n));
+        if (pa) { s.par = pa[1].label; s.muni = pa[1].muni ?? s.muni; if (s.muni) { r.byName++; continue; } }
         const t = TOWN_NAMES.find(([, k]) => new RegExp(`(^| )${k}( |$)`).test(n)) ?? LOCALITIES.flatMap(([m, ks]) => ks.filter((k) => new RegExp(`(^| )${k}( |$)`).test(n)).map((k) => [m, k])).sort((a, b) => b[1].length - a[1].length)[0];
         if (t) { s.muni = t[0]; r.byName++; }
       }
@@ -131,6 +152,20 @@ export function assignMunicipalities(lines, gtfs) {
         const after = st[j]?.muni;
         const m = before && after ? (before === after ? before : null) : j >= st.length && l.municipality && MUNI_NAMES.has(l.municipality) ? l.municipality : null;
         if (m) for (let k = i; k < j; k++) { st[k].muni = m; r.byContext++; }
+        i = j;
+      }
+    }
+  }
+  for (const l of lines) {
+    for (const d of l.directions) {
+      const st = d.stops;
+      for (let i = 0; i < st.length; i++) {
+        if (st[i].par) continue;
+        let j = i;
+        while (j < st.length && !st[j].par) j++;
+        const before = st[i - 1]?.par;
+        // only stops of the same municipality inherit the parish between two stops of one parish
+        if (before && before === st[j]?.par) for (let k = i; k < j; k++) if (!st[k].muni || st[k].muni === st[j].muni) { st[k].par = before; st[k].muni = st[j].muni; }
         i = j;
       }
     }

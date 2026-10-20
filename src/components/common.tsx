@@ -5,6 +5,7 @@ import type { Network } from '../lib/network';
 import type { Upcoming } from '../lib/departures';
 import type { MapFocus } from '../types';
 import type { UserPos } from '../lib/nearby';
+import type { PlannerForm } from '../lib/plannerForm';
 import type { Ctx } from '../lib/departures';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
 import type { Direction, Line, MapLayer, Stop } from '../types';
@@ -27,8 +28,9 @@ export interface Shared {
   locate: () => void;
   /** opens the planner with this stop as the starting point */
   useAsFrom: (name: string, key: string) => void;
-  /** starting point requested by useAsFrom; seq changes on every request */
-  plannerFrom: { text: string; key: string; seq: number } | null;
+  /** state of the planner form (kept across navigation, mirrored into the URL query) */
+  planner: PlannerForm;
+  setPlanner: (f: PlannerForm | ((prev: PlannerForm) => PlannerForm)) => void;
 }
 
 /** Colour of a line on maps and timelines: green = urbano, slate = interurbano. */
