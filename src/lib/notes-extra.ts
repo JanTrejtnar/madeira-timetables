@@ -2,6 +2,8 @@
 // Place and stop names stay as printed.
 export const EXTRA: Record<string, [cs: string, en: string]> = {
   'termina viagem no Estreito de Câmara de Lobos': ['jízda končí v Estreito de Câmara de Lobos', 'trip ends at Estreito de Câmara de Lobos'],
+  'Transbordo junto à entrada para a Estrada da Terra Chã.': ['Přestup u odbočky na Estrada da Terra Chã.', 'Change bus at the junction to Estrada da Terra Chã.'],
+  'Transbordo junto à entrada para a Seara Velha de Baixo.': ['Přestup u odbočky na Seara Velha de Baixo.', 'Change bus at the junction to Seara Velha de Baixo.'],
   'circula pela VIA RÁPIDA': ['jede po rychlostní silnici (VIA RÁPIDA)', 'runs on the expressway (VIA RÁPIDA)'],
   'inicia viagem no Estreito de Câmara de Lobos - PARAGEM DAMASQUEIRO (Estrada João Gonçalves Zarco)': [
     'jízda začíná v Estreito de Câmara de Lobos – zastávka DAMASQUEIRO (Estrada João Gonçalves Zarco)',

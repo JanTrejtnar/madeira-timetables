@@ -29,9 +29,13 @@ for (const l of data.lines) {
   }
   l.notes = Object.fromEntries(Object.entries(l.notes ?? {}).filter(([k]) => used.has(k)));
   for (const d of l.directions) if (d.estimateRejected) rejected.push(`${l.number}: ${d.estimateRejected}`);
-  const src = path.join(ROOT, 'data', 'raw', l.pdfFile);
-  if (!l.hasParsedSchedule && (await stat(src)).size <= MAX_LOCAL_PDF) {
-    const name = path.basename(l.pdfFile);
+  // data/raw is not in git (CI has no scrape cache): PDFs of unparsed lines are kept in data/pdf-fallback (committed copy)
+  const name = path.basename(l.pdfFile);
+  const rawSrc = path.join(ROOT, 'data', 'raw', l.pdfFile);
+  const fallbackSrc = path.join(ROOT, 'data', 'pdf-fallback', name);
+  const src = (await stat(rawSrc).then(() => true, () => false)) ? rawSrc : fallbackSrc;
+  if (!l.hasParsedSchedule && (await stat(src).then((x) => x.size <= MAX_LOCAL_PDF, () => false))) {
+    if (src === rawSrc) { await mkdir(path.dirname(fallbackSrc), { recursive: true }); await cp(rawSrc, fallbackSrc); }
     await cp(src, path.join(OUT, 'pdf', name));
     l.pdfLocal = `pdf/${name}`;
     local++;

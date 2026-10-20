@@ -8,10 +8,11 @@
     "build:data": "node scripts/build-data.mjs",
     "audit": "node scripts/audit-schedules.mjs",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run build:data && tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "dev:mobile": "node scripts/dev-mobile.mjs"
+    "dev:mobile": "node scripts/dev-mobile.mjs",
+    "deploy:cf": "npm run build && wrangler pages deploy dist --project-name madeira-timetables"
   },
   "type": "module",
   "devDependencies": {
@@ -34,5 +35,8 @@
     "leaflet": "^1.9.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
