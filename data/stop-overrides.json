@@ -5,6 +5,7 @@
     { "name": "Faial", "label": "Faial, village by Santana (lines 208, 53, 825) - not the Funchal quarter", "lines": ["208", "53", "825"], "lat": 32.7915, "lon": -16.8535, "locationPrecision": "exact" },
     { "name": "Moinhos", "label": "Moinhos, Faial parish - OSM bus stop Moinhos-S Roque Faial (Moinhos in Santa Cruz / Caniço is another place, so limited to these lines)", "lines": ["208", "53", "825"], "lat": 32.778477, "lon": -16.846774, "osmNode": 6584465574, "locationPrecision": "exact" },
     { "name": "Achada", "label": "Achada, neighbourhood between Porto da Cruz and Moinhos (OSM place; no bus stop of that name is mapped, so settlement_center)", "lines": ["208", "53", "825"], "lat": 32.766104, "lon": -16.840423, "locationPrecision": "settlement_center" },
+    { "name": "S. Roque do Faial", "label": "São Roque do Faial village - OSM bus stop Igreja de São Roque Faial (the name match had picked the Moinhos-S Roque Faial stop 1 km away, in the Faial parish)", "lines": ["56", "103", "138"], "lat": 32.770685, "lon": -16.856622, "osmNode": 1508889023, "locationPrecision": "exact" },
     { "name": "Rosário", "label": "Rosário (line 139)", "lines": ["139"], "lat": 32.777216, "lon": -17.03291, "osmNode": 147902557, "locationPrecision": "exact" }
   ]
 }

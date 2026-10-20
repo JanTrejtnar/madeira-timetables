@@ -106,6 +106,20 @@ export function assignMunicipalities(lines, gtfs, areas = null) {
   // parishes whose name identifies them in a stop name (longest first so "Santo António da Serra" beats "Santo António")
   const uniq = (areas?.parishes ?? []).filter((p) => p.label === p.name && p.muni && norm(p.name).length >= 5);
   const parishNames = uniq.map((p) => [norm(p.name), p]).sort((a, b) => b[0].length - a[0].length);
+  // "Fajã Ovelha", "Achadas Cruz", "Ponta Pargo": the parish name without its small words (da, do, de, ...); the words must be consecutive
+  const small = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+  const core = (x) => norm(x).split(' ').filter((w) => !small.has(w)).join(' ');
+  const cores = uniq.map((p) => [core(p.name), p]).filter(([c]) => c.split(' ').length >= 2).sort((a, b) => b[0].length - a[0].length);
+  // printed abbreviations / spellings that the word rule cannot derive from the parish name
+  const SPELLED = [['estreito', 'Estreito de Câmara de Lobos'], ['boaventura', 'Boa Ventura'], ['ponta pargo', 'Ponta do Pargo'], ['paul mar', 'Paul do Mar'], ['qa grande', 'Quinta Grande'], ['qta grande', 'Quinta Grande']];
+  const abbreviated = (n) => {
+    const c = ` ${core(n)} `;
+    const sp = SPELLED.find(([k]) => c.includes(` ${k} `));
+    const byLabel = (label) => uniq.find((p) => p.label === label);
+    if (sp && byLabel(sp[1])) return [norm(sp[1]), byLabel(sp[1])];
+    const hit = cores.filter(([k]) => c.includes(` ${k} `));
+    return hit.length && new Set(hit.map((h) => h[1].label)).size === 1 ? hit[0] : undefined;
+  };
   for (const l of lines) {
     for (const d of l.directions) {
       for (const s of d.stops) {
@@ -131,8 +145,8 @@ export function assignMunicipalities(lines, gtfs, areas = null) {
           r.byPosition++;
           continue;
         }
-        const n = norm(s.name);
-        const pa = parishNames.find(([k]) => new RegExp(`(^| )${k}( |$)`).test(n));
+        const n = norm(s.name).replace(/\bs\b/g, 'sao');
+        const pa = parishNames.find(([k]) => new RegExp(`(^| )${k}( |$)`).test(n)) ?? abbreviated(n);
         if (pa) { s.par = pa[1].label; s.muni = pa[1].muni ?? s.muni; if (s.muni) { r.byName++; continue; } }
         const t = TOWN_NAMES.find(([, k]) => new RegExp(`(^| )${k}( |$)`).test(n)) ?? LOCALITIES.flatMap(([m, ks]) => ks.filter((k) => new RegExp(`(^| )${k}( |$)`).test(n)).map((k) => [m, k])).sort((a, b) => b[1].length - a[1].length)[0];
         if (t) { s.muni = t[0]; r.byName++; }

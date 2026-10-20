@@ -10,6 +10,7 @@
     "fetch:routes": "node scripts/fetch-routes.mjs",
     "build:data": "node scripts/build-data.mjs",
     "audit": "node scripts/audit-schedules.mjs",
+    "audit:via": "node scripts/audit-via.mjs",
     "dev": "vite",
     "build": "npm run build:data && tsc -b && vite build",
     "preview": "vite preview",

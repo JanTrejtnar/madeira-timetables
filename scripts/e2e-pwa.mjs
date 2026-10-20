@@ -51,15 +51,15 @@ try {
   };
   await typeIn('Odkud', 'santana');
   const first = await page.evaluate(() => document.querySelector('ul li button')?.innerText.replace(/\s+/g, ' '));
-  check('"santana": first suggestion is the whole municipality', /^Santana \(všechny zastávky\)/.test(first ?? ''), first);
+  check('"santana": first suggestion is the group of the parish Santana (not the municipality)', /^Santana \(všechny zastávky\)/.test(first ?? ''), first);
   await page.evaluate(() => document.querySelector('ul li button')?.click());
   await typeIn('Kam', 'funchal');
   const firstTo = await page.evaluate(() => document.querySelector('ul li button')?.innerText.replace(/\s+/g, ' '));
-  check('"funchal": first suggestion is the whole municipality', /^Funchal \(všechny zastávky\)/.test(firstTo ?? ''), firstTo);
+  check('"funchal": no municipality group, the stop Funchal comes first', !/všechny zastávky/.test(firstTo ?? '') && /^Funchal/.test(firstTo ?? ''), firstTo);
   await page.evaluate(() => document.querySelector('ul li button')?.click());
   await sleep(900);
   const bodyG = await text(page);
-  check('Santana (all stops) -> Funchal (all stops) lists connections', (bodyG.match(/\d\d:\d\d/g) ?? []).length >= 4, (bodyG.match(/\d\d:\d\d/g) ?? []).length + ' times');
+  check('Santana (all stops) -> Funchal lists connections', (bodyG.match(/\d\d:\d\d/g) ?? []).length >= 4, (bodyG.match(/\d\d:\d\d/g) ?? []).length + ' times');
   await clickText(page, /^Hledat$/);
   await sleep(300);
 

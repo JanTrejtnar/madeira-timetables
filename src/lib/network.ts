@@ -69,7 +69,7 @@ export function buildNetwork(lines: Line[]): Network {
       const p = { lat: s.lat, lon: s.lon };
       node = cands.find((c) => c.lat !== undefined && metres(c as Required<Node>, p) <= CLUSTER_M) ?? cands.find((c) => c.lat === undefined);
       if (node && node.lat === undefined) Object.assign(node, p);
-    } else node = cands[0];
+    } else node = cands.find((c) => !s.par || !c.par || c.par === s.par); // without a position, a namesake of another parish is another stop
     if (!node) {
       node = { id: nodes.length, key, name: displayName(s.name), ...(s.lat !== undefined ? { lat: s.lat, lon: s.lon } : {}), ...(s.muni ? { muni: s.muni } : {}), ...(s.par ? { par: s.par } : {}) };
       nodes.push(node);
@@ -199,31 +199,29 @@ export interface Suggestion {
   key: string;
   name: string;
   lines: number;
-  /** "all stops of <municipality>": key is `@muni:<name>`, the UI adds the "(all stops)" wording */
+  /** "all stops of <parish>": key is `@par:<label>`, the UI adds the "(all stops)" wording */
   group?: boolean;
 }
 
-/** Municipalities of Madeira that can be picked as a whole ("all stops of Santana"). */
-export const MUNICIPALITIES = ['Funchal', 'Câmara de Lobos', 'Ribeira Brava', 'Ponta do Sol', 'Calheta', 'Porto Moniz', 'São Vicente', 'Santana', 'Machico', 'Santa Cruz', 'Porto Santo'] as const;
-export const GROUP_PREFIX = '@muni:';
-/** "all stops of <parish>" (Curral das Freiras, Caniçal, Camacha, …) */
+/** "all stops of <parish>" (freguesia, e.g. Santana, Faial, Caniçal): the keys of the group suggestions. Municipalities are not groups: they span valleys far apart. */
 export const PARISH_PREFIX = '@par:';
-const muniKeys = MUNICIPALITIES.map((m) => [m, norm(m)] as const);
 
-const areaCache = new WeakMap<Network, { byMuni: Map<string, Set<number>>; byParish: Map<string, Set<number>> }>();
-/** Node ids per municipality and per parish (cached per network). */
+const areaCache = new WeakMap<Network, { byParish: Map<string, Set<number>> }>();
+/** Node ids per parish (cached per network). */
 function areaNodes(net: Network) {
   let c = areaCache.get(net);
   if (!c) {
-    c = { byMuni: new Map(), byParish: new Map() };
+    c = { byParish: new Map() };
     for (const n of net.nodes) {
-      if (n.muni) (c.byMuni.get(n.muni) ?? c.byMuni.set(n.muni, new Set()).get(n.muni)!).add(n.id);
       if (n.par) (c.byParish.get(n.par) ?? c.byParish.set(n.par, new Set()).get(n.par)!).add(n.id);
     }
     areaCache.set(net, c);
   }
   return c;
 }
+
+/** Parish labels carry ", <municipality>" where the name exists twice; the part a user types is the name. */
+const parishName = (label: string) => label.split(',')[0];
 
 export function suggest(net: Network, lines: Line[], query: string, limit = 10): Suggestion[] {
   const q = norm(query);
@@ -251,30 +249,23 @@ export function suggest(net: Network, lines: Line[], query: string, limit = 10):
     return k.startsWith(q) || (q.length >= 4 && k.includes(q));
   };
   const rank = (a: Suggestion, b: Suggestion) => Number(norm(b.name) === q) - Number(norm(a.name) === q) || Number(norm(b.name).startsWith(q)) - Number(norm(a.name).startsWith(q)) || b.lines - a.lines;
-  const { byMuni, byParish } = areaNodes(net);
-  const muniGroups: Suggestion[] = [];
-  for (const m of MUNICIPALITIES) {
-    const ids = byMuni.get(m);
-    if (ids?.size && wanted(m)) muniGroups.push({ key: GROUP_PREFIX + m, name: m, lines: linesOf(ids), group: true });
-  }
-  // parishes with at least 2 stops; one named like its municipality is the municipality group already
-  const parishGroups: Suggestion[] = [];
+  const { byParish } = areaNodes(net);
+  // every parish with a stop is a group; the cadastre of the parish, never the whole municipality
   for (const [p, ids] of byParish) {
-    if (ids.size < 2 || muniKeys.some(([, k]) => k === norm(p)) || !wanted(p)) continue;
-    parishGroups.push({ key: PARISH_PREFIX + p, name: p, lines: linesOf(ids), group: true });
+    if (ids.size < 1 || !wanted(parishName(p))) continue;
+    groups.push({ key: PARISH_PREFIX + p, name: p, lines: linesOf(ids), group: true });
   }
-  muniGroups.sort(rank);
-  parishGroups.sort(rank);
-  groups.push(...muniGroups, ...parishGroups.slice(0, 4));
+  groups.sort(rank);
+  groups.splice(8);
   // a stop named like a group whose stops all belong to the group adds nothing: "Porto Moniz (all stops)" covers it
   const groupNodes = new Map<string, Set<number>>();
-  for (const g of groups) groupNodes.set(norm(g.name), g.key.startsWith(GROUP_PREFIX) ? byMuni.get(g.name)! : byParish.get(g.name)!);
+  for (const g of groups) groupNodes.set(norm(parishName(g.name)), byParish.get(g.name)!);
   const covered = (key: string) => {
     const set = groupNodes.get(key);
     const ids = net.keyToNodes.get(key);
     return !!set && !!ids?.length && ids.every((id) => set.has(id));
   };
-  const groupKeys = new Set(groups.map((g) => norm(g.name)));
+  const groupKeys = new Set(groups.map((g) => norm(parishName(g.name))));
   for (const n of net.nodes) {
     if (!hit(n.key) || covered(n.key)) continue;
     if (!seen.has(n.key)) seen.set(n.key, { key: n.key, name: n.name, lines: count.get(n.key)?.size ?? 0 });
@@ -294,13 +285,6 @@ export function suggest(net: Network, lines: Line[], query: string, limit = 10):
 /** Nodes for a user input: an exact suggestion key, or every node whose name contains the typed words. */
 export function resolveNodes(net: Network, input: string, pickedKey?: string | null): Set<number> {
   const out = new Set<number>();
-  // "all stops of <municipality>": picked from the suggestions, or the bare municipality name typed
-  const typed = muniKeys.find(([, k]) => k === norm(input));
-  const muni = pickedKey?.startsWith(GROUP_PREFIX) ? pickedKey.slice(GROUP_PREFIX.length) : !pickedKey ? typed?.[0] : undefined;
-  if (muni) {
-    for (const x of net.nodes) if (x.muni === muni) out.add(x.id);
-    if (out.size) return out;
-  }
   if (pickedKey?.startsWith(PARISH_PREFIX)) {
     for (const id of areaNodes(net).byParish.get(pickedKey.slice(PARISH_PREFIX.length)) ?? []) out.add(id);
     if (out.size) return out;

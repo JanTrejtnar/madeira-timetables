@@ -253,28 +253,63 @@ describe.skipIf(!existsSync(file))('GTFS coordinates and municipality search (re
     const missing = data.lines.reduce((n, l) => n + l.directions.reduce((m, d) => m + d.stops.filter((s) => s.lat === undefined).length, 0), 0);
     expect(missing).toBeLessThan(850);
   });
-  it('typing a town offers "all stops" first, before single stops', () => {
-    for (const q of ['funchal', 'santana', 'machico', 'santa cruz', 'ribeira brava', 'câmara de lobos', 'porto moniz', 'são vicente', 'calheta', 'ponta do sol']) {
+  it('typing a parish offers its "all stops" group first, never a municipality', () => {
+    for (const [q, key] of [['santana', '@par:Santana'], ['machico', '@par:Machico'], ['santa cruz', '@par:Santa Cruz'], ['ribeira brava', '@par:Ribeira Brava'], ['câmara de lobos', '@par:Câmara de Lobos'], ['porto moniz', '@par:Porto Moniz'], ['são vicente', '@par:São Vicente'], ['calheta', '@par:Calheta'], ['ponta do sol', '@par:Ponta do Sol']] as const) {
       const first = suggest(net, data.lines, q)[0];
       expect(first.group, q).toBe(true);
-      expect(first.key.startsWith('@muni:')).toBe(true);
+      expect(first.key, q).toBe(key);
     }
+    for (const q of ['funchal', 'santana', 'calheta', 'machico', 'faial']) expect(suggest(net, data.lines, q).some((x) => x.key.startsWith('@muni:')), q).toBe(false);
     expect(suggest(net, data.lines, 'pinga')[0].group).toBeFalsy();
   });
-  it('the group resolves to the stops of the municipality only', () => {
-    const santana = resolveNodes(net, '', '@muni:Santana');
-    const funchal = resolveNodes(net, '', '@muni:Funchal');
-    expect(santana.size).toBeGreaterThan(5);
-    expect(funchal.size).toBeGreaterThan(santana.size);
-    for (const id of santana) expect(net.nodes[id].muni).toBe('Santana');
-    expect([...santana].some((id) => funchal.has(id))).toBe(false);
+  it('the Santana group holds the stops of the parish Santana only, not Faial, Arco de São Jorge or São Jorge', () => {
+    const santana = resolveNodes(net, '', '@par:Santana');
+    expect(santana.size).toBeGreaterThanOrEqual(1);
+    for (const id of santana) expect(net.nodes[id].par).toBe('Santana');
+    const names = (key: string) => new Set([...resolveNodes(net, '', key)].map((id) => net.nodes[id].name));
+    expect(names('@par:Faial').has('Faial')).toBe(true);
+    expect(names('@par:Arco de São Jorge').has('Cabanas')).toBe(true);
+    expect(names('@par:São Roque do Faial').has('Ribeiro Frio')).toBe(true);
+    for (const n of ['Faial', 'Cabanas', 'Ribeiro Frio', 'Arco de S. Jorge', 'Moinhos']) expect(names('@par:Santana').has(n), n).toBe(false);
   });
-  it('connections from "all stops of Santana" to "all stops of Funchal" leave from several Santana stops, in time order', () => {
+  it('connections from "Santana (all stops)" leave from Santana itself, never from Faial or Arco de São Jorge', () => {
     const trips = servicesFor(net, data.lines, { y: 2026, m: 10, d: 19 }, true, ['Funchal']);
-    const p = plan(net, trips, resolveNodes(net, '', '@muni:Santana'), resolveNodes(net, '', '@muni:Funchal'), 8 * 60);
-    expect(p.direct.length).toBeGreaterThan(1);
+    const p = plan(net, trips, resolveNodes(net, '', '@par:Santana'), resolveNodes(net, 'Funchal', null), 8 * 60);
+    expect(p.direct.length).toBeGreaterThan(0);
+    for (const x of p.direct) {
+      const from = net.nodes[x.legs[0].trip.nodes[x.legs[0].fromPos]];
+      expect(from.par, x.legs[0].trip.line.number).toBe('Santana');
+    }
     for (let i = 1; i < p.direct.length; i++) expect(p.direct[i].depart).toBeGreaterThanOrEqual(p.direct[i - 1].depart);
-    expect(new Set(p.direct.map((x) => x.legs[0].trip.nodes[x.legs[0].fromPos])).size).toBeGreaterThan(1);
+    // the same search from the Faial group offers the Faial departures instead (lines 53 / 103 / 138 call at Faial)
+    const f = plan(net, trips, resolveNodes(net, '', '@par:Faial'), resolveNodes(net, 'Funchal', null), 8 * 60);
+    expect(f.direct.length).toBeGreaterThan(0);
+    for (const x of f.direct) expect(net.nodes[x.legs[0].trip.nodes[x.legs[0].fromPos]].par).toBe('Faial');
+  });
+  it('no group spans two municipalities of its own accord: every group stop lies in the group parish', () => {
+    const seen = new Map<string, Set<string>>();
+    for (const l of data.lines) for (const d of l.directions) for (const s of d.stops) if (s.par && s.muni) (seen.get(s.par) ?? seen.set(s.par, new Set()).get(s.par)!).add(s.muni);
+    for (const [par, munis] of seen) expect(munis.size, par).toBe(1);
+    expect(seen.size).toBeGreaterThanOrEqual(50);
+  });
+  it('S. Roque do Faial (lines 56 / 103 / 138) is the village, not the Moinhos bus stop 1 km away', () => {
+    const m = (a: [number, number], b: [number, number]) => Math.hypot((a[1] - b[1]) * 111320 * Math.cos((a[0] * Math.PI) / 180), (a[0] - b[0]) * 110540);
+    for (const n of ['56', '103', '138']) {
+      const st = data.lines.find((l) => l.number === n)!.directions[0].stops.find((s) => s.name === 'S. Roque do Faial')!;
+      expect(m([st.lat!, st.lon!], [32.770685, -16.856622]), n).toBeLessThan(30);
+      expect(st.par).toBe('São Roque do Faial');
+    }
+  });
+  it('every resolvable "Via X" note is a place on its lines, and corridors (Via Rápida) are not', () => {
+    const vias = data.lines.flatMap((l) => Object.entries(l.via ?? {}).map(([c, v]) => ({ l, c, v })));
+    expect(vias.length).toBeGreaterThanOrEqual(35);
+    const names = new Set(vias.map((x) => x.v.name));
+    for (const n of ['Aeroporto', 'Bemposta', 'Estádio da Madeira', 'Alto Lido', 'Fajã dos Rolos', 'Eira do Serrado']) expect(names.has(n), n).toBe(true);
+    for (const { l, c, v } of vias) {
+      expect(l.notes[c], `${l.number}:${c}`).toMatch(/^\s*via\s/i);
+      expect(l.notes[c]).not.toMatch(/r[aá]pida|expresso/i);
+      expect(Object.keys(v.after).length).toBeGreaterThan(0);
+    }
   });
   it('direction variants are translated', () => {
     expect(variantLabel('up', 'cs')).toBe('Nahoru');
@@ -346,7 +381,7 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
     const polyBack: [number, number][] = JSON.parse(readFileSync(`public/data/shapes/${back.shapeId}.json`, 'utf8'));
     expect(m([back.stops.at(-1)!.lat!, back.stops.at(-1)!.lon!], polyBack.at(-1)!)).toBeLessThan(1);
   });
-  it('parishes are offered as "all stops of …", municipality groups first', () => {
+  it('parishes are offered as "all stops of …"', () => {
     for (const [q, name] of [['curral das freiras', 'Curral das Freiras'], ['caniço', 'Caniço'], ['camacha', 'Camacha'], ['ponta do pargo', 'Ponta do Pargo']] as const) {
       const s = suggest(net, data.lines, q);
       const g = s.find((x) => x.group && x.name === name);
@@ -357,7 +392,7 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
       for (const id of ids) expect(net.nodes[id].par).toBe(name);
     }
     const s = suggest(net, data.lines, 'santa cruz');
-    expect(s[0].key).toBe('@muni:Santa Cruz');
+    expect(s[0].key).toBe('@par:Santa Cruz');
   });
   it('a stop with the same name as its group is not listed twice', () => {
     for (const q of ['porto moniz', 'curral das freiras', 'caniço', 'camacha']) {
@@ -378,7 +413,7 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
     expect(nearestNode(net, 32.45, -16.5, 1000)).toBeNull();
   });
   it('planner form survives the URL round trip, ignores bad values', () => {
-    const f = { from: { text: 'Santana (všechny zastávky)', key: '@muni:Santana' }, to: { text: 'Funchal', key: null }, time: '07:45', date: '2026-12-08', type: 'interurbano' as const, directOnly: true };
+    const f = { from: { text: 'Santana (všechny zastávky)', key: '@par:Santana' }, to: { text: 'Funchal', key: null }, time: '07:45', date: '2026-12-08', type: 'interurbano' as const, directOnly: true };
     const back = formFromQuery('?' + formToQuery(f), 600);
     expect(back).toEqual(f);
     expect(formFromQuery('?date=2026-02-31&time=25:99&type=zzz', 600)).toMatchObject({ date: null, time: '10:00', type: 'all' });
