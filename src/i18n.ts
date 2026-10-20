@@ -32,7 +32,7 @@ const dict = {
 		transferWord: "Přestup",
 		waitMin: "čekání {n} min",
 		walkMin: "pěšky {n} min",
-		walkToStop: "Chůze na zastávku: {m} m (~{n} min)",
+		walkToStop: "Chůze na zastávku: {m} m (~{n} min), na zastávce v {at}",
 		walkToDest: "Chůze k cíli: {m} m (~{n} min)",
 		pickedPoint: "Vybraný bod na mapě",
 		estimatedLegend:
@@ -198,7 +198,7 @@ const dict = {
 		transferWord: "Transfer",
 		waitMin: "wait {n} min",
 		walkMin: "walk {n} min",
-		walkToStop: "Walk to the stop: {m} m (~{n} min)",
+		walkToStop: "Walk to the stop: {m} m (~{n} min), at the stop at {at}",
 		walkToDest: "Walk to the destination: {m} m (~{n} min)",
 		pickedPoint: "Point picked on the map",
 		estimatedLegend:
@@ -363,7 +363,7 @@ const dict = {
 		transferWord: "Transbordo",
 		waitMin: "espera {n} min",
 		walkMin: "a pé {n} min",
-		walkToStop: "A pé até à paragem: {m} m (~{n} min)",
+		walkToStop: "A pé até à paragem: {m} m (~{n} min), na paragem às {at}",
 		walkToDest: "A pé até ao destino: {m} m (~{n} min)",
 		pickedPoint: "Ponto escolhido no mapa",
 		estimatedLegend:

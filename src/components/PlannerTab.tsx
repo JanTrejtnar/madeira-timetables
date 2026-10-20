@@ -181,7 +181,7 @@ function WalkNote({ label, testId }: { label: string; testId: string }) {
   );
 }
 
-function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt }: { it: Itinerary; shared: Shared; selected: boolean; onSelect: () => void; fromPt?: Picked['pt']; toPt?: Picked['pt'] }) {
+function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt, startAt }: { it: Itinerary; shared: Shared; selected: boolean; onSelect: () => void; fromPt?: Picked['pt']; toPt?: Picked['pt']; startAt: number }) {
   const { t } = useT();
   const dur = it.arrive - it.depart;
   const last = it.legs.length - 1;
@@ -203,8 +203,8 @@ function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt }: { it: I
       </button>
       <div className="border-t border-slate-100 px-4 pb-3 pt-3 dark:border-slate-800">
         {walkIn && (
-          <Row time={<span className="text-slate-500 tabular-nums dark:text-slate-400">{fmtMinutes(it.depart - walkIn.min)}</span>} below="dashed">
-            <WalkNote label={t('walkToStop', { m: walkIn.m, n: walkIn.min })} testId="walk-in" />
+          <Row time={<span className="text-slate-500 tabular-nums dark:text-slate-400">{fmtMinutes(startAt)}</span>} below="dashed">
+            <WalkNote label={t('walkToStop', { m: walkIn.m, n: walkIn.min, at: fmtMinutes(startAt + walkIn.min) })} testId="walk-in" />
           </Row>
         )}
         {it.legs.map((l, i) => {
@@ -303,7 +303,16 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const B = resolveNodes(shared.net, dTo.text, dTo.key);
     if (!dFrom.text.trim() || !dTo.text.trim()) return null;
     const only = type === 'all' ? trips : trips.filter((tr) => tr.line.type === type);
-    const found = plan(shared.net, only, A, B, departAt);
+    // walking from a picked start point: a bus counts only when it leaves after departAt + the walk to its stop
+    let walkIn: Map<number, number> | undefined;
+    if (dFrom.pt) {
+      walkIn = new Map();
+      for (const id of A) {
+        const w = walkTo(dFrom.pt, shared.net.nodes[id]);
+        if (w) walkIn.set(id, w.min);
+      }
+    }
+    const found = plan(shared.net, only, A, B, departAt, walkIn);
     return { A: A.size, B: B.size, plan: directOnly ? { ...found, transfers: [] } : found };
   }, [shared.net, trips, dFrom, dTo, departAt, type, directOnly]);
 
@@ -356,7 +365,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         <SectionTitle>{title}</SectionTitle>
         <div className="flex flex-col gap-3">
           {rows.map(({ key: k, it }) => (
-            <ItineraryCard key={k} it={it} shared={shared} selected={selected?.key === k} onSelect={() => setSelectedKey(k)} fromPt={dFrom.pt} toPt={dTo.pt} />
+            <ItineraryCard key={k} it={it} shared={shared} selected={selected?.key === k} onSelect={() => setSelectedKey(k)} fromPt={dFrom.pt} toPt={dTo.pt} startAt={departAt} />
           ))}
         </div>
       </section>

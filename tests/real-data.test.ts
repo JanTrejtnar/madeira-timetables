@@ -2,11 +2,11 @@ import { readFileSync, existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { board } from '../src/lib/departures';
 import { buildIndex, findConnections, searchLines, searchStops } from '../src/lib/search';
-import { buildNetwork, nearestNode, resolveNodes, servicesFor, suggest } from '../src/lib/network';
+import { buildNetwork, nearestNode, resolveNodes, servicesFor, suggest, type Trip } from '../src/lib/network';
 import { formFromQuery, formToQuery } from '../src/lib/plannerForm';
 import { serviceDay } from '../src/lib/holidays';
 import { variantLabel } from '../src/lib/notes';
-import { plan } from '../src/lib/router';
+import { direct, plan } from '../src/lib/router';
 import { poiFor } from '../src/lib/aliases';
 import { departuresFrom, nearbyStops } from '../src/lib/nearby';
 import { decodeEntitiesInJson } from '../src/lib/text';
@@ -457,12 +457,29 @@ describe.skipIf(!existsSync(file))('position precision and parishes of intercity
   });
   it('walk: 4 km/h, about 70 m per minute', () => {
     const w = walkTo({ lat: 32.65, lon: -16.9 }, { lat: 32.65 + 280 / 111000, lon: -16.9 });
-    expect(w!.m).toBeGreaterThan(270);
-    expect(w!.m).toBeLessThan(290);
-    expect(w!.min).toBe(4);
+    // 280 m straight x 1.3 for winding roads = ~364 m -> 5 min
+    expect(w!.m).toBeGreaterThan(355);
+    expect(w!.m).toBeLessThan(375);
+    expect(w!.min).toBe(5);
     expect(walkTo({ lat: 32.65, lon: -16.9 }, { lat: 32.65, lon: -16.9 })!.min).toBe(1);
     expect(walkTo(undefined, { lat: 1, lon: 1 })).toBeNull();
     expect(walkTo({ lat: 1, lon: 1 }, {})).toBeNull();
+  });
+  it('names: two-letter Portuguese words are lower case, initials stay', () => {
+    expect(cleanName('RUA NO CAMINHO EM BAIXO')).toBe('Rua no Caminho em Baixo');
+    expect(cleanName('IGREJA DA FAJA AO MAR')).toBe('Igreja da Faja ao Mar');
+    expect(cleanName('NA PONTA')).toBe('Na Ponta');
+    expect(cleanName('G N R')).toBe('G N R');
+  });
+  it('router: with a walk to the stop, a bus leaving too early is not offered', () => {
+    const mk = (times: number[]): Trip => ({ line: { id: 1 } as Trip['line'], dirIndex: 0, dir: {} as Trip['dir'], nodes: [0, 1], times, estimated: false });
+    const trips = [mk([14 * 60 + 5, 14 * 60 + 30]), mk([14 * 60 + 15, 14 * 60 + 40]), mk([14 * 60 + 10, 14 * 60 + 35])];
+    const walk = new Map([[0, 10]]);
+    const start = 14 * 60;
+    const dep = (w?: Map<number, number>) => direct(trips, new Set([0]), new Set([1]), start, w).map((x) => x.depart);
+    expect(dep()).toEqual([14 * 60 + 5, 14 * 60 + 10, 14 * 60 + 15]);
+    expect(dep(walk)).toEqual([14 * 60 + 10, 14 * 60 + 15]); // 14:05 would be missed, 14:10 is just made
+    expect(dep(new Map([[0, 16]]))).toEqual([]);
   });
   it('planner URL keeps the picked map points', () => {
     const f = formFromQuery('?from=Pinga&fk=pinga&fp=32.65001,-16.90002&to=Funchal&tp=32.7,-16.95', 600);

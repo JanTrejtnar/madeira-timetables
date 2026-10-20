@@ -97,6 +97,20 @@ async function run(label, viewport) {
   await page.reload({ waitUntil: 'networkidle0' });
   await sleep(1200);
   check(`${label}: pin and walk survive a reload`, (await page.$('[data-testid=walk-out]')) !== null && (await page.$$('.picked-pin')).length >= 1);
+  // a start point picked 1 km from the stop: no offered bus may leave before the walk is over
+  const u = new URL(await page.evaluate(() => location.href));
+  u.searchParams.set('fp', '32.6600,-16.9300');
+  u.searchParams.set('time', '08:00');
+  await page.goto(u.href, { waitUntil: 'networkidle0' });
+  await sleep(1500);
+  const cards = await page.evaluate(() => [...document.querySelectorAll('[data-testid=walk-in]')].map((w) => {
+    const card = w.closest('div.border-t')?.parentElement;
+    const m = /na zastávce v (\d\d:\d\d)/.exec(w.innerText);
+    const dep = /^\s*(\d\d:\d\d)/.exec(card?.querySelector('button')?.innerText ?? '');
+    return { at: m?.[1], dep: dep?.[1], text: w.innerText };
+  }));
+  const hm = (x) => (x ? Number(x.slice(0, 2)) * 60 + Number(x.slice(3)) : NaN);
+  check(`${label}: walking from a picked start point shows the walk and no missed bus`, cards.length > 0 && cards.every((c) => hm(c.dep) >= hm(c.at) && hm(c.at) > 8 * 60), JSON.stringify(cards.slice(0, 3)));
   await page.evaluate(() => { const i = document.querySelector('input[aria-label="Kam"]'); i.focus(); });
 
   // 7. any date + holiday detection

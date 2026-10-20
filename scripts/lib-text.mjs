@@ -14,7 +14,7 @@ export function decodeEntities(s) {
 }
 
 // lower-case in Portuguese names (except at the start)
-const SMALL = new Set(['de', 'da', 'do', 'dos', 'das', 'e']);
+const SMALL = new Set(['de', 'da', 'do', 'dos', 'das', 'e', 'ao', 'aos', 'as', 'na', 'nas', 'no', 'nos', 'em']);
 // abbreviations of the timetables / operators that stay in capitals
 const KEEP = new Set([
   'SAM', 'HF', 'CAM', 'ESCL', 'ESTR', 'RTP', 'CTT', 'EDF', 'ER', 'ISAL', 'STA', 'QTA', 'STO', 'APS', 'DR', 'AV', 'ENT', 'LEV', 'TV', 'RIB', 'LMB', 'BC', 'ENG',
@@ -38,7 +38,7 @@ function titleWord(w, first) {
 /** True for a name with letters but none in lower case. */
 const allCaps = (s) => /[A-ZÀ-Ý]/.test(s) && !/[a-zà-ÿ]/.test(s);
 
-/** Entities decoded, spaces collapsed, ALL CAPS names in Title Case ("d'" and de/da/do/dos/das/e in lower case, abbreviations kept). */
+/** Entities decoded, spaces collapsed, ALL CAPS names in Title Case ("d'" and de/da/do/dos/das/e/ao/as/na/no/em in lower case, abbreviations kept). */
 export function cleanName(raw) {
   let s = decodeEntities(raw).replace(/\s+/g, ' ').trim();
   if (allCaps(s)) {
