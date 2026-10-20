@@ -476,7 +476,9 @@
     "id": 1000,
     "family": "siga-grid",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "direction from Tribunal has no printed destination; using \"Tribunal\""
+    ]
   },
   {
     "number": "105",
@@ -492,7 +494,9 @@
     "id": 1002,
     "family": "siga-grid",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "direction from Tribunal has no printed destination; using \"Tribunal\""
+    ]
   },
   {
     "number": "201",
@@ -1051,7 +1055,11 @@
     "id": 6003,
     "family": "cam-school",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "direction from CENTRO has no printed destination; using \"CENTRO - CALHETA\"",
+      "direction from CALHETA has no printed destination; using \"CENTRO - CALHETA\"",
+      "direction from AEROPORTO has no printed destination; using \"CENTRO - CALHETA\""
+    ]
   },
   {
     "number": "995",

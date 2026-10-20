@@ -53,3 +53,11 @@ Re-run the generator after correcting a transcription, then `npm run parse && np
 Lines with printed per-trip destinations (96, 137) have their own parser (`scripts/parse-rowtables.mjs`).
 Not parsed: the Funchal urban lines 032, 060-062, 090, 094 and 105 (several destination variants per table or
 arrival/departure rows distinguished only by shading); the app offers their PDF.
+
+## Audit (`npm run audit`)
+`scripts/audit-schedules.mjs` checks `data/schedules.json` and writes `data/audit-report.json`:
+time format and ascending order (00:00-02:59 counts as the end of the service day), empty day lists, the structure the app
+expects (names, stops, trip length = stop count, note keys, `manualSource`), and a cross-check of the number of times
+stored against the number of time patterns in the PDF text layer (>10 % difference = suspicious). Known, understood
+differences: 181 (page 2 is a transfer shuttle table that is not modelled), 96 (intermediate "Corticeiras"/"J. Serra" passage
+columns are not stored), 20/526/785/528 (SAM sub-tables, school variants), 127 (times in legend notes).

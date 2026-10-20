@@ -6,6 +6,7 @@
     "scrape": "node scripts/scrape.mjs",
     "parse": "node scripts/parse.mjs",
     "build:data": "node scripts/build-data.mjs",
+    "audit": "node scripts/audit-schedules.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",

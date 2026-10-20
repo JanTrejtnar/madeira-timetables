@@ -51,6 +51,8 @@ function attachShapes(dirs, shapes) {
 }
 
 const mins = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+/** sort key of a service day: 00:00-02:59 belongs to the end of the previous day */
+const sk = (t) => (mins(t) < 180 ? mins(t) + 1440 : mins(t));
 /** Shared validation for the simple (terminal-only) families. */
 function finishSimple(out, warn) {
   if (out.directions.length === 2) for (const [i, d] of out.directions.entries()) if (!d.to) d.to = out.directions[1 - i].from;
@@ -59,7 +61,7 @@ function finishSimple(out, warn) {
     for (const [k, list] of Object.entries(d.departures)) {
       n += list.length;
       let wraps = 0;
-      for (let i = 1; i < list.length; i++) if (mins(list[i].t) < mins(list[i - 1].t)) wraps++;
+      for (let i = 1; i < list.length; i++) if (sk(list[i].t) < sk(list[i - 1].t)) wraps++;
       if (wraps > 0 || list.some((x) => +x.t.slice(0, 2) > 29 || +x.t.slice(3) > 59)) {
         warn(`non-monotonic or invalid times in ${d.from} (${k}); schedule rejected`);
         out.rejected = true;
@@ -82,7 +84,6 @@ async function applyManual(out, warn) {
   const file = path.join(ROOT, 'data', 'manual', `${out.id}.json`);
   if (!(await exists(file))) return;
   const m = JSON.parse(await readFile(file, 'utf8'));
-  const sk = (t) => (mins(t) < 180 ? mins(t) + 1440 : mins(t));
   out.family = 'manual';
   out.manualSource = m.source;
   out.notes = m.notes ?? {};
@@ -100,6 +101,22 @@ async function applyManual(out, warn) {
   out.hasParsedSchedule = out.directions.some((d) => d.trips.length || Object.values(d.departures).some((l) => l.length));
   out.warnings.length = 0;
   warn('manual transcription');
+}
+
+/** Source quirks the app should not see: terminal stops without a name, directions without a destination, empty day lists. */
+function tidyDirections(out, warn) {
+  for (const d of out.directions) {
+    if (!d.to) {
+      d.to = out.directions.length === 1 ? d.from ?? out.route : out.route;
+      warn(`direction from ${d.from} has no printed destination; using "${d.to}"`);
+    }
+    if (d.stops?.length) {
+      if (!d.stops[0].name?.trim() && d.from) d.stops[0].name = d.from;
+      const last = d.stops[d.stops.length - 1];
+      if (!last.name?.trim() && d.to) last.name = d.to;
+    }
+    for (const [k, list] of Object.entries(d.departures ?? {})) if (!list.length) delete d.departures[k];
+  }
 }
 
 const lines = JSON.parse(await readFile(path.join(ROOT, 'data', 'lines.json'), 'utf8'));
@@ -146,7 +163,7 @@ for (const line of lines) {
             const first = t.times.find(Boolean);
             if (first) for (const day of t.days) (departures[day] ??= []).push({ t: first, ...(t.notes?.length ? { notes: t.notes } : {}) });
           }
-          for (const l of Object.values(departures)) l.sort((x, y) => mins(x.t) - mins(y.t));
+          for (const l of Object.values(departures)) l.sort((x, y) => sk(x.t) - sk(y.t));
           return { ...d, stopSource: 'pdf', stops: d.stops.map((name) => ({ code: null, name })), departures };
         });
         finishSimple(out, warn);
@@ -213,6 +230,7 @@ for (const line of lines) {
   } catch (e) {
     warn(`parser crashed: ${e.message}`);
   }
+  tidyDirections(out, warn);
   await applyManual(out, warn);
   result.push(out);
   report.push({ number: out.number, id: out.id, family: out.family, ok: out.hasParsedSchedule, warnings });
