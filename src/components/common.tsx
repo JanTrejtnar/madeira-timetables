@@ -22,6 +22,8 @@ export interface Shared {
   setMap: (layers: MapLayer[] | null) => void;
   /** centres the map on a stop of the shown route and opens its popup (desktop map) */
   setMapFocus: (focus: MapFocus | null) => void;
+  /** registers the handler of a click on a stop marker of the map (index into the first layer's stops); null unregisters */
+  setMapStopHandler: (fn: ((index: number) => void) | null) => void;
   /** GPS position of the user (null until "stops near me" was used) */
   userPos: UserPos | null;
   geo: 'idle' | 'busy' | 'denied' | 'error' | 'unsupported';

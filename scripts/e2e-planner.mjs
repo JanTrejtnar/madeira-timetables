@@ -164,7 +164,7 @@ async function run(label, viewport) {
 }
 
 
-// settlement-centre warning and "show on map" on a phone (line 139 has Seixal, a village centre)
+// settlement-centre warning and "show on map" on a phone (line 139 has Ribeira da Janela, a village centre)
 async function mobileMapChecks() {
   const page = await browser.newPage();
   await page.setViewport({ width: 390, height: 700, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
@@ -179,9 +179,9 @@ async function mobileMapChecks() {
   await sleep(600);
   const warnIcons = await page.evaluate(() => [...document.querySelectorAll('[role=img]')].filter((e) => /Orientační poloha/.test(e.getAttribute('aria-label') ?? '')).length);
   check('phone: ⚠️ marker next to stops placed on a village centre', warnIcons > 0, String(warnIcons));
-  // expand the details of the Seixal stop (pin button in its row)
+  // expand the details of the Ribeira da Janela stop (pin button in its row)
   const opened = await page.evaluate(() => {
-    const li = [...document.querySelectorAll('ol li')].find((x) => /^Seixal/.test(x.innerText.trim()));
+    const li = [...document.querySelectorAll('ol li')].find((x) => /^Ribeira da Janela/.test(x.innerText.trim()));
     li?.querySelector('button[aria-expanded]')?.click();
     return !!li;
   });

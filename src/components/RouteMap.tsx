@@ -81,9 +81,11 @@ interface Props {
   /** adds the locate button to the map */
   onLocate?: () => void;
   locating?: boolean;
+  /** a stop marker of the first layer was clicked (index into that layer's stops) */
+  onStopClick?: (index: number) => void;
 }
 
-export function RouteMap({ layers, focus = null, me = null, onLocate, locating = false, fill = false }: Props) {
+export function RouteMap({ layers, focus = null, me = null, onLocate, locating = false, fill = false, onStopClick }: Props) {
   const { t } = useT();
   const el = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
@@ -91,6 +93,8 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
   const markers = useRef(new Map<number, L.CircleMarker>());
   const focusRef = useRef<MapFocus | null>(focus);
   focusRef.current = focus;
+  const clickRef = useRef(onStopClick);
+  clickRef.current = onStopClick;
   // inline maps on touch screens: one finger scrolls the page, two fingers move the map
   const lockDrag = touch && !fill;
 
@@ -118,7 +122,10 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
           // content is built when the popup opens, so it always shows the time of the currently selected trip
           .bindPopup(() => popupContent(s, labels, li === 0 ? focusRef.current?.times[si] ?? null : null, si === 0), { autoPan: true, autoPanPadding: [12, 12] })
           .addTo(group);
-        if (li === 0) markers.current.set(si, marker);
+        if (li === 0) {
+          markers.current.set(si, marker);
+          marker.on('click', () => clickRef.current?.(si));
+        }
       });
     });
     const fit = () => {
@@ -189,6 +196,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
   // tapping a stop in the list: pan to it, highlight it and open its popup (with the selected trip's time)
   const seq = focus?.seq;
   const stopIndex = focus?.stopIndex;
+  const fromMap = focus?.fromMap;
   useEffect(() => {
     const map = mapRef.current;
     for (const [i, m] of markers.current) m.setStyle({ radius: i === stopIndex ? 9 : 5, fillColor: i === stopIndex ? m.options.color : '#fff' });
@@ -196,6 +204,8 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
     const m = markers.current.get(stopIndex);
     if (!m) return;
     m.bringToFront();
+    // clicked on the map itself: the popup is already open and the map where the reader put it
+    if (fromMap) return;
     // open the popup once the map has settled, so it pans into view instead of being cut off by the map's edge
     map.flyTo(m.getLatLng(), Math.max(map.getZoom(), 14), { duration: 0.6 });
     map.once('moveend', () => m.openPopup());

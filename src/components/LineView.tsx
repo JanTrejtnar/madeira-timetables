@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT, type Key } from '../i18n';
 import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } from '../lib/departures';
 import { fmtMinutes } from '../lib/time';
+import { withVia } from '../lib/via';
 import { serviceDay } from '../lib/holidays';
 import type { DayKey, Direction, Line, MapFocus, MapLayer } from '../types';
 import { Card, Chip, dirLabel, EstTag, LineBadge, lineColor, lineRailCls, MapLinks, PdfButton, PrecisionWarning, SectionTitle, type Shared } from './common';
@@ -39,6 +40,12 @@ function bestStop(dir: Line['directions'][number] | undefined): number {
   return best;
 }
 
+/** Marks a place inserted from a "Via X" note: it is called at only on the selected trip, and its time is interpolated. */
+function ViaTag() {
+  const { t } = useT();
+  return <span className="ml-1 rounded-full bg-sky-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-sky-800 dark:bg-sky-400/15 dark:text-sky-200">{t('viaStop')}</span>;
+}
+
 export function LineView({ line, initialDir, shared, onBack }: { line: Line; initialDir?: number; shared: Shared; onBack: () => void }) {
   const { t, lang } = useT();
   const tn = (s: string) => translateNote(s, lang);
@@ -50,7 +57,9 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
   /** stop last tapped in the list (drives the map popup); null = none yet */
   const [focusIdx, setFocusIdx] = useState<number | null>(null);
   const [focusSeq, setFocusSeq] = useState(0);
+  const [focusFromMap, setFocusFromMap] = useState(false);
   const mapBox = useRef<HTMLElement>(null);
+  const rowRefs = useRef(new Map<number, HTMLLIElement>());
   const keys = useMemo(() => dayKeysOf(line), [line]);
   const [day, setDay] = useState<DayKey | undefined>(() => defaultDay(keys, shared));
   useEffect(() => {
@@ -79,6 +88,8 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dirIndex, line.id, day]);
   useEffect(() => setSelKey(null), [day]);
+  // another trip: the open stop details may belong to a "via" row that is no longer there
+  useEffect(() => setLinksIdx(null), [selKey]);
 
   const dir = line.directions[dirIndex] ?? line.directions[0];
   const hasTrips = !!dir?.trips?.length;
@@ -113,8 +124,17 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
     return v ? (hasOffsets && i > 0 ? `~${v}` : v) : null;
   };
 
+  // "Via Aeroporto" notes: the place is a stop of the selected trip (list and map); same array as dir.stops when there is none
+  const shown = useMemo(() => (dir ? withVia(line, dirIndex, dir, sel?.notes, stopTimes) : null), [line, dirIndex, dir, sel, stopTimes]);
+  const shownStops = shown?.stops ?? dir?.stops ?? [];
+  const shownLabel = (i: number) => {
+    const src = (shown ? shown.srcIdx[i] : i);
+    if (src !== null) return stopTimeLabel(src);
+    const v = shown?.viaTimes[i];
+    return v ? `~${v}` : null;
+  };
   const hasMap = !!dir && (dir.stops.some((s) => s.lat !== undefined) || dir.shapeId !== null);
-  const layers = useMemo<MapLayer[]>(() => (dir ? [{ shapeId: dir.shapeId, stops: dir.stops, color: lineColor(line) }] : []), [dir, line]);
+  const layers = useMemo<MapLayer[]>(() => (dir ? [{ shapeId: dir.shapeId, stops: shownStops, color: lineColor(line) }] : []), [dir, line, shownStops]);
   // on desktop the route is drawn on the big map next to the sidebar, on mobile it is shown inline
   const { desktop, setMap } = shared;
   useEffect(() => {
@@ -124,11 +144,11 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
   }, [desktop, hasMap, setMap, layers]);
 
   const mapFocus = useMemo<MapFocus | null>(
-    () => (focusIdx === null ? null : { stopIndex: focusIdx, seq: focusSeq, times: stopTimes.map((_, i) => stopTimeLabel(i)) }),
+    () => (focusIdx === null ? null : { stopIndex: focusIdx, seq: focusSeq, times: shownStops.map((_, i) => shownLabel(i)), fromMap: focusFromMap }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [focusIdx, focusSeq, stopTimes],
+    [focusIdx, focusSeq, stopTimes, shown, focusFromMap],
   );
-  const { setMapFocus } = shared;
+  const { setMapFocus, setMapStopHandler } = shared;
   useEffect(() => {
     if (!desktop) return;
     setMapFocus(mapFocus);
@@ -136,7 +156,9 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
   }, [desktop, mapFocus, setMapFocus]);
   /** force: the reader asked for the map ("show on map"), so scroll to it even when it is far below the list */
   const tapStop = (i: number, force = false) => {
-    if (hasTrips) setStopIdx(i);
+    const src = (shown ? shown.srcIdx[i] : i);
+    if (hasTrips && src !== null) setStopIdx(src);
+    setFocusFromMap(false);
     setFocusIdx(i);
     setFocusSeq((n) => n + 1);
     // on a phone the map is below the list: only nudge it fully into view when it is already partly visible
@@ -147,6 +169,24 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
       if (force || (r.top < window.innerHeight && r.bottom > 0 && (r.top < 0 || r.bottom > window.innerHeight))) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
+
+  /** a stop marker was clicked on the map: open that stop in the list and scroll the list to it */
+  const onMapStop = (i: number) => {
+    const src = (shown ? shown.srcIdx[i] : i);
+    if (hasTrips && src !== null) setStopIdx(src);
+    setFocusFromMap(true);
+    setFocusIdx(i);
+    setFocusSeq((n) => n + 1);
+    setLinksIdx(i);
+    setTimeout(() => rowRefs.current.get(i)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+  };
+  const onMapStopRef = useRef(onMapStop);
+  onMapStopRef.current = onMapStop;
+  useEffect(() => {
+    if (!desktop) return;
+    setMapStopHandler((i) => onMapStopRef.current(i));
+    return () => setMapStopHandler(null);
+  }, [desktop, setMapStopHandler]);
 
   const selNotes = sel?.notes ?? [];
   const railCls = lineRailCls(line);
@@ -252,27 +292,28 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
 
       {dir && (
         <section>
-          <SectionTitle aside={<span className="text-xs text-slate-400">{dir.stops.length}</span>}>{t('stopsOfDirection')}</SectionTitle>
-          {dir.stops.length ? (
+          <SectionTitle aside={<span className="text-xs text-slate-400">{shownStops.length}</span>}>{t('stopsOfDirection')}</SectionTitle>
+          {shownStops.length ? (
             <ol className="rounded-2xl border border-slate-200/70 bg-white py-2 pr-2 text-sm dark:border-slate-700/70 dark:bg-slate-900">
-              {dir.stops.map((s, i) => {
-                const edge = i === 0 || i === dir.stops.length - 1;
-                const active = hasTrips ? i === stopIdx : i === focusIdx;
-                const label = stopTimeLabel(i);
+              {shownStops.map((s, i) => {
+                const edge = i === 0 || i === shownStops.length - 1;
+                const src = (shown ? shown.srcIdx[i] : i);
+                const active = hasTrips ? src === stopIdx : i === focusIdx;
+                const label = shownLabel(i);
                 const content = (
                   <>
                     <span className={`min-w-0 flex-1 ${edge || active ? 'font-semibold' : ''}`}>
-                      {s.name} <PrecisionWarning stop={s} />
+                      {s.name} {s.via ? <ViaTag /> : <PrecisionWarning stop={s} />}
                     </span>
                     {label ? (
-                      hasOffsets && i > 0 ? (
+                      (hasOffsets && i > 0) || s.via ? (
                         <EstTag>
                           <span className="text-xs tabular-nums">{label}</span>
                         </EstTag>
                       ) : (
                         <span className={`text-sm font-semibold tabular-nums ${i === 0 ? 'text-sky-700 dark:text-sky-300' : ''}`}>{label}</span>
                       )
-                    ) : hasTrips && sel ? (
+                    ) : hasTrips && sel && !s.via ? (
                       <span className="text-xs text-slate-300 dark:text-slate-600" title={t('noTimeAtStop')}>
                         –
                       </span>
@@ -281,9 +322,9 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                   </>
                 );
                 const hasCoords = s.lat !== undefined && s.lon !== undefined;
-                const last = i === dir.stops.length - 1;
+                const last = i === shownStops.length - 1;
                 return (
-                  <li key={i} className="grid grid-cols-[2.75rem_minmax(0,1fr)]">
+                  <li key={i} ref={(el) => { if (el) rowRefs.current.set(i, el); else rowRefs.current.delete(i); }} className="grid grid-cols-[2.75rem_minmax(0,1fr)]">
                     <div className="relative">
                       {i > 0 && <span className={`absolute left-1/2 top-0 h-5.5 w-1 -translate-x-1/2 ${railCls}`} />}
                       {!last && <span className={`absolute bottom-0 left-1/2 top-5.5 w-1 -translate-x-1/2 ${railCls}`} />}
@@ -354,7 +395,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
       {hasMap && !desktop && (
         <section ref={mapBox}>
           <SectionTitle>{t('map')}</SectionTitle>
-          <RouteMap layers={layers} focus={mapFocus} />
+          <RouteMap layers={layers} focus={mapFocus} onStopClick={onMapStop} />
         </section>
       )}
 

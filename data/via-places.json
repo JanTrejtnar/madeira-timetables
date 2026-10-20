@@ -1,0 +1,6 @@
+{
+  "_comment": "Hand-placed destinations of \"Via X\" timetable notes that OpenStreetMap cannot resolve by name (key = normalised name). Shown on the map and in the stop list for the trips carrying the note.",
+  "places": {
+    "aeroporto": { "name": "Aeroporto", "lat": 32.69312, "lon": -16.775302, "osmNode": 10205435861, "label": "Madeira Airport bus stop (OSM 01 - Aeroporto)" }
+  }
+}

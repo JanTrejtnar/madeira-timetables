@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataset } from './data';
 import { LANGS, LangContext, makeT, type Lang } from './i18n';
 import { isSchoolPeriod, serviceDay } from './lib/holidays';
@@ -65,6 +65,9 @@ export function App() {
   const desktop = useMedia('(min-width: 1024px)');
   const [mapLayers, setMapLayers] = useState<MapLayer[] | null>(null);
   const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);
+  const mapStopHandler = useRef<((index: number) => void) | null>(null);
+  const setMapStopHandler = useCallback((fn: ((index: number) => void) | null) => { mapStopHandler.current = fn; }, []);
+  const onMapStop = useCallback((i: number) => mapStopHandler.current?.(i), []);
 
   const [userPos, setUserPos] = useState<UserPos | null>(null);
   const [geo, setGeo] = useState<Shared['geo']>('idle');
@@ -130,6 +133,7 @@ export function App() {
             desktop,
             setMap: setMapLayers,
             setMapFocus,
+            setMapStopHandler,
             userPos,
             geo,
             locate,
@@ -276,7 +280,7 @@ export function App() {
 
         {desktop && (
           <div className="relative h-dvh bg-slate-200 dark:bg-slate-800">
-            <RouteMap layers={mapLayers ?? []} focus={mapFocus} me={userPos} onLocate={locate} locating={geo === 'busy'} fill />
+            <RouteMap layers={mapLayers ?? []} focus={mapFocus} onStopClick={onMapStop} me={userPos} onLocate={locate} locating={geo === 'busy'} fill />
             {!mapLayers && (
               <div className="pointer-events-none absolute left-16 top-4 z-10 flex max-w-xs items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/90 px-4 py-3 text-sm text-slate-600 shadow-lg backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-900/90 dark:text-slate-300">
                 <Icon name="map" className="size-5 shrink-0 text-sky-600" />

@@ -27,6 +27,7 @@ const PLACE_TYPES = new Set(['city', 'town', 'village', 'suburb', 'hamlet']);
 const VILLAGE_STOP = /^(partida|igreja|salao|bomba|centro)$/;
 const villageName = (name) => [...name.matchAll(/\(([^)]*)\)/g)].every((m) => VILLAGE_STOP.test(keyOf(m[1])));
 const MAX_NEIGHBOUR_KM = 20;
+const PLATFORM_KM = 0.35; // a platform this close to the village centre stands for the village stop
 
 // Abbreviations printed in the timetables (key as keyOf() writes it) -> the name used on the map
 const ALIASES = {
@@ -60,7 +61,26 @@ export function buildOsmIndex(osm, places = []) {
   }
   const exact = new Map();
   for (const e of stops) (exact.get(e.key) ?? exact.set(e.key, []).get(e.key)).push(e);
-  return { stops, exact, placeIdx };
+  // every bus stop / platform, named or not: a settlement without a stop of its name still has a platform near its centre
+  const platforms = osm.stops.map((s) => [s.lat, s.lon]);
+  return { stops, exact, placeIdx, platforms };
+}
+
+/**
+ * A stop known only as a village: the road platform (highway=bus_stop / public_transport=platform) nearest to the village
+ * centre, within PLATFORM_KM and, when the route polyline is known, on the route. null when there is none (the centre is used).
+ */
+function platformNear(index, centre, poly) {
+  let best = null;
+  let bd = PLATFORM_KM;
+  for (const p of index.platforms) {
+    const d = hav(p, centre);
+    if (d >= bd) continue;
+    if (poly && distToPolyline(poly, p) >= SHAPE_KM) continue;
+    bd = d;
+    best = p;
+  }
+  return best;
 }
 
 /** Closest name match: exact key, else the stops whose words include all of the name's words with the fewest extra words. */
@@ -102,7 +122,7 @@ const distToPolyline = (poly, p) => poly.reduce((d, v) => Math.min(d, hav(v, p))
  */
 export function applyOsm(lines, osm, areas, shapesDir, places = []) {
   const index = buildOsmIndex(osm, places);
-  const r = { filled: 0, byHow: { unique: 0, shape: 0, neighbours: 0, municipality: 0, cluster: 0, place: 0, manual: 0 }, missing: 0 };
+  const r = { filled: 0, byHow: { unique: 0, shape: 0, neighbours: 0, municipality: 0, cluster: 0, place: 0, platform: 0, manual: 0 }, missing: 0 };
   const shapeCache = new Map();
   const shapeOf = (id) => {
     if (id == null) return null;
@@ -134,7 +154,11 @@ export function applyOsm(lines, osm, areas, shapesDir, places = []) {
           // no bus stop of that name: the village / hamlet of that name (a stop named after its village)
           const k = keyOf(canon(s.name));
           const pl = k && villageName(s.name) ? index.placeIdx.get(k) : null;
-          if (pl?.length === 1) { pick = { p: pl[0] }; how = 'place'; }
+          if (pl?.length === 1) {
+            const plat = platformNear(index, pl[0], poly);
+            if (plat) { pick = { p: plat }; how = 'platform'; }
+            else { pick = { p: pl[0] }; how = 'place'; }
+          }
           else { r.missing++; return; }
         }
         if (!pick && cand.length === 1) { pick = cand[0]; how = 'unique'; }
@@ -169,11 +193,20 @@ export function applyOsm(lines, osm, areas, shapesDir, places = []) {
           if (near.some((x) => hav(pick.p, x) > MAX_NEIGHBOUR_KM)) pick = null;
         }
         if (!pick) { r.missing++; return; }
-        Object.assign(s, { lat: +pick.p[0].toFixed(6), lon: +pick.p[1].toFixed(6), approx: true, source: 'osm', locationPrecision: how === 'place' ? 'settlement_center' : 'exact' });
+        Object.assign(s, { lat: +pick.p[0].toFixed(6), lon: +pick.p[1].toFixed(6), approx: true, source: 'osm', locationPrecision: how === 'place' ? 'settlement_center' : how === 'platform' ? 'name_match' : 'exact' });
         r.byHow[how]++;
         r.filled++;
       });
     }
   }
   return r;
+}
+
+/** Bus stops (clustered) named like `name`, else the village of that name: [{ p: [lat, lon], how }]. Used for "Via X" notes. */
+export function namedPlaces(index, name) {
+  const found = clusters(candidates(index, name));
+  if (found.length) return found.map((c) => ({ p: c.p, how: 'stop' }));
+  const k = keyOf(canon(name));
+  const pl = k && !GENERIC.has(k) ? index.placeIdx.get(k) : null;
+  return pl?.length === 1 ? [{ p: pl[0], how: 'place' }] : [];
 }

@@ -11,6 +11,9 @@ import { snapShapeEnds } from './lib-shape-ends.mjs';
 import { applyOsm } from './lib-osm.mjs';
 import { prepareAreas } from './lib-areas.mjs';
 import { cleanTexts } from './lib-text.mjs';
+import { addViaPlaces } from './lib-via.mjs';
+import { attachRoutes } from './lib-routes.mjs';
+import { applyOverrides } from './lib-overrides.mjs';
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -64,6 +67,8 @@ const cleaned = cleanTexts(data.lines);
 // official positions from the Horários do Funchal GTFS feed (matched by stop code; data/gtfs/stops.json, `npm run fetch:gtfs`)
 const gtfs = JSON.parse(await readFile(path.join(ROOT, 'data', 'gtfs', 'stops.json'), 'utf8'));
 const gtfsStats = applyGtfs(data.lines, gtfs);
+// hand-checked positions (data/stop-overrides.json) win over GTFS, SIGA and every name match below
+const overridden = applyOverrides(data.lines, JSON.parse(await readFile(path.join(ROOT, 'data', 'stop-overrides.json'), 'utf8')));
 // stops known only by name: borrow coordinates from stops of other routes (and feed stops) that carry the same name
 const osm = JSON.parse(await readFile(path.join(ROOT, 'data', 'osm', 'stops.json'), 'utf8'));
 const areas = prepareAreas(JSON.parse(await readFile(path.join(ROOT, 'data', 'osm', 'areas.json'), 'utf8')));
@@ -73,6 +78,10 @@ const osmPlaces = JSON.parse(await readFile(path.join(ROOT, 'data', 'osm', 'plac
 const osmStats = applyOsm(data.lines, osm, areas, path.join(ROOT, 'data', 'shapes'), osmPlaces);
 // what name matching could not place: evenly spaced along the route polyline between two known stops
 const interpolated = interpolateStops(data.lines, path.join(ROOT, 'data', 'shapes'));
+// "Via Aeroporto"-style notes: where the place lies in each direction (the app inserts it for the trips with the note)
+const viaPlaces = addViaPlaces(data.lines, osm, osmPlaces, JSON.parse(await readFile(path.join(ROOT, 'data', 'via-places.json'), 'utf8')));
+// OSRM road routes (data/routes.json, `npm run fetch:routes`) for directions without a SIGA polyline
+const routed = attachRoutes(data.lines, ROOT);
 // precision of every position (the OSM step already set settlement_center / exact for its stops)
 const precision = { exact: 0, interpolated: 0, settlement_center: 0, name_match: 0 };
 for (const l of data.lines) {
@@ -84,12 +93,15 @@ for (const l of data.lines) {
     }
   }
 }
+console.log('OSRM routes attached to directions without a shape:', JSON.stringify(routed));
+console.log('"Via X" notes resolved to a place:', viaPlaces, data.lines.flatMap((l) => Object.entries(l.via ?? {}).map(([c, v]) => `${l.number}:${c}=${v.name}`)).join(' '));
 console.log('texts cleaned (entities, capitals):', cleaned);
 console.log('reclassified urbano -> interurbano:', reclassified.length ? reclassified.join('; ') : 'none');
 console.log('stop coordinates matched by name:', coords.filled, '(still without coordinates:', coords.missing + ')');
 console.log('stop coordinates interpolated along the route:', interpolated);
 console.log('OpenStreetMap', osm.fetched, '- stops placed by name:', JSON.stringify(osmStats));
 console.log('position precision:', JSON.stringify(precision));
+console.log('manual overrides (data/stop-overrides.json) applied to stops:', overridden);
 console.log('GTFS', gtfs.feedVersion, '- stops by code:', JSON.stringify(gtfsStats));
 console.log('municipality of stops:', JSON.stringify(assignMunicipalities(data.lines, gtfs, areas)));
 await writeFile(path.join(OUT, 'data', 'schedules.json'), JSON.stringify(data));
