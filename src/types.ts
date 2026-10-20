@@ -133,6 +133,8 @@ export interface MapLayer {
   color: string;
   /** road routes through "Via" places of the drawn trip, spliced into the shape */
   detours?: ViaRoute[];
+  /** planner leg: only the stretch from stop `from` to stop `to` of `stops` is drawn in full colour, the rest of the line faintly (`stops` = every stop of the trip, [lat, lon]) */
+  ride?: { stops: ([number, number] | null)[]; from: number; to: number };
   /** picked start / destination points drawn as red pins with a dashed line to their stop */
   pins?: MapPin[];
 }

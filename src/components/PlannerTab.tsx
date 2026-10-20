@@ -10,12 +10,12 @@ import { useDebounced } from '../lib/hooks';
 import { fmtMinutes } from '../lib/time';
 import { walkTo } from '../lib/walk';
 import type { Line, MapLayer, MapPin as PickedPin } from '../types';
-import { Card, Chip, dirLabel, EmptyState, EstTag, LineBadge, lineColor, lineRailCls, MapPin, PrecisionWarning, SectionTitle, SkeletonCards, TypeFilter, type LineTypeFilter, type Shared } from './common';
+import { Card, Chip, dirLabel, EmptyState, EstTag, LineBadge, lineColor, lineRailCls, MapPin, PrecisionWarning, SectionTitle, TypeFilter, type LineTypeFilter, type Shared } from './common';
 import { Icon } from './Icons';
 import { MapPicker } from './MapPicker';
 import { RouteMap } from './RouteMap';
 
-function Combobox({ label, placeholder, value, onChange, shared, onPickMap }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; shared: Shared; onPickMap: () => void }) {
+function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPickMap }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; onCommit: () => void; shared: Shared; onPickMap: () => void }) {
   const { t, lang } = useT();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -54,6 +54,11 @@ function Combobox({ label, placeholder, value, onChange, shared, onPickMap }: { 
       // the highlighted item, else the first suggestion (a municipality group when a town is typed)
       e.preventDefault();
       pick(items[active >= 0 ? active : 0]);
+    } else if (e.key === 'Enter') {
+      // typed text without a suggestion to take: search for it as it stands
+      e.preventDefault();
+      onCommit();
+      setOpen(false);
     }
   };
 
@@ -114,13 +119,6 @@ function Combobox({ label, placeholder, value, onChange, shared, onPickMap }: { 
 
 /** straight-line reach (about 12 minutes on foot over winding roads) within which a transfer hub counts as a start of the journey */
 const HUB_WALK_M = 650;
-
-/** The last value of a field that was picked (suggestion or map point); typing in between does not change it. */
-function useCommitted(v: Picked): Picked {
-  const ref = useRef(v);
-  if (v.key !== null || v.pt) ref.current = v;
-  return ref.current;
-}
 
 const hhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 
@@ -285,7 +283,7 @@ function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt }: { it: I
 
 export function PlannerTab({ shared }: { shared: Shared }) {
   const { t } = useT();
-  const { planner, setPlanner } = shared;
+  const { planner, setPlanner, applied, commit } = shared;
   const { from, to, time, type, directOnly } = planner;
   const patch = (p: Partial<PlannerForm>) => setPlanner((f) => ({ ...f, ...p }));
   const setFrom = (v: Picked) => patch({ from: v });
@@ -306,8 +304,9 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   // all trips of the day; rebuilt only when the date or the school switch changes
   const trips = useMemo(() => servicesFor(shared.net, shared.lines, date, shared.ctx.school, shared.ctx.municipalities), [shared.net, shared.lines, date, shared.ctx.school, shared.ctx.municipalities]);
 
-  const dFrom = useDebounced(from, 150);
-  const dTo = useDebounced(to, 150);
+  // results and map follow the applied values: a picked suggestion / map point or Enter, never the keystrokes
+  const dFrom = applied.from;
+  const dTo = applied.to;
   const [h, m] = time.split(':').map(Number);
   const departAt = (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
 
@@ -331,7 +330,6 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     return { A: A.size, B: B.size, plan: directOnly ? { ...found, transfers: [] } : found };
   }, [shared.net, trips, dFrom, dTo, departAt, type, directOnly]);
 
-  const pending = (from !== dFrom || to !== dTo) && !!from.text.trim() && !!to.text.trim();
   const empty = result && !result.plan.direct.length && !result.plan.transfers.length;
   const all = useMemo(
     () => (result ? [...result.plan.direct.map((it, i) => ({ key: `d${i}`, it })), ...result.plan.transfers.map((it, i) => ({ key: `t${i}`, it }))] : []),
@@ -341,9 +339,6 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const selected = all.find((x) => x.key === selectedKey) ?? all[0];
 
   // the selected itinerary is drawn on the map (desktop side map, small map on the phone when a point was picked)
-  // while a field is being typed (no suggestion chosen yet) the pins keep the last picked point
-  const cFrom = useCommitted(from);
-  const cTo = useCommitted(to);
   const rawLayers = useMemo<MapLayer[] | null>(() => {
     if (!selected) return null;
     const legs = selected.it.legs;
@@ -351,20 +346,17 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       pt ? { kind, lat: pt.lat, lon: pt.lon, stop: stop.lat !== undefined && stop.lon !== undefined ? { lat: stop.lat, lon: stop.lon, name: stop.name } : undefined } : null;
     const first = tripStops(legs[0].trip)[legs[0].fromPos];
     const lastLeg = legs[legs.length - 1];
-    const pins = [pinFor('from', cFrom.pt, first), pinFor('to', cTo.pt, tripStops(lastLeg.trip)[lastLeg.toPos])].filter((p): p is PickedPin => p !== null);
+    const pins = [pinFor('from', dFrom.pt, first), pinFor('to', dTo.pt, tripStops(lastLeg.trip)[lastLeg.toPos])].filter((p): p is PickedPin => p !== null);
     return legs.map((l, i) => ({
       shapeId: l.trip.dir.shapeId,
       stops: tripStops(l.trip).slice(l.fromPos, l.toPos + 1),
       color: lineColor(l.trip.line),
       detours: detoursFor(l.trip.line, l.trip.dirIndex, l.trip.notes),
+      ride: { stops: tripStops(l.trip).map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), from: l.fromPos, to: l.toPos },
       ...(i === 0 && pins.length ? { pins } : {}),
     }));
-  }, [selected, cFrom.pt, cTo.pt]);
-  // a new object only when the drawn content differs, so keystrokes in the fields never redraw the map
-  const layersRef = useRef<{ key: string; val: MapLayer[] | null }>({ key: 'null', val: null });
-  const layersKey = JSON.stringify(rawLayers);
-  if (!pending && layersRef.current.key !== layersKey) layersRef.current = { key: layersKey, val: rawLayers };
-  const layers = layersRef.current.val;
+  }, [selected, dFrom.pt, dTo.pt]);
+  const layers = rawLayers;
   const { desktop, setMap } = shared;
   useEffect(() => {
     if (!desktop) return;
@@ -406,13 +398,14 @@ export function PlannerTab({ shared }: { shared: Shared }) {
             <Icon name="pin" className="size-4 text-sky-600" strokeWidth={2} />
           </div>
           <div className="flex min-w-0 flex-1 flex-col">
-            <Combobox label={t('from')} placeholder={t('fromPlaceholder')} value={from} onChange={setFrom} shared={shared} onPickMap={() => setPickFor('from')} />
+            <Combobox label={t('from')} placeholder={t('fromPlaceholder')} value={from} onChange={setFrom} onCommit={() => commit({ from })} shared={shared} onPickMap={() => setPickFor('from')} />
             <div className="mx-2 h-px bg-slate-100 dark:bg-slate-800" />
-            <Combobox label={t('to')} placeholder={t('toPlaceholder')} value={to} onChange={setTo} shared={shared} onPickMap={() => setPickFor('to')} />
+            <Combobox label={t('to')} placeholder={t('toPlaceholder')} value={to} onChange={setTo} onCommit={() => commit({ to })} shared={shared} onPickMap={() => setPickFor('to')} />
           </div>
           <button
             onClick={() => {
               patch({ from: to, to: from });
+              commit({ from: to, to: from });
             }}
             aria-label={t('swap')}
             title={t('swap')}
@@ -475,11 +468,10 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         </div>
       </Card>
 
-      {!result && !pending && <EmptyState icon="route" title={t('plannerEmptyTitle')} body={t('plannerHint')} />}
-      {pending && <SkeletonCards n={2} tall />}
-      {!pending && result && (result.A === 0 || result.B === 0) && <EmptyState icon="alert" tone="warn" title={t('noStopNodesTitle')} body={t('noStopNodes')} />}
-      {!pending && empty && result.A > 0 && result.B > 0 && <EmptyState icon="frown" title={t('noConnectionTitle')} body={t('noConnectionBody')} />}
-      {!pending && empty && result.A > 0 && result.B > 0 && (type !== 'all' || directOnly) && (
+      {!result && <EmptyState icon="route" title={t('plannerEmptyTitle')} body={t('plannerHint')} />}
+      {result && (result.A === 0 || result.B === 0) && <EmptyState icon="alert" tone="warn" title={t('noStopNodesTitle')} body={t('noStopNodes')} />}
+      {empty && result.A > 0 && result.B > 0 && <EmptyState icon="frown" title={t('noConnectionTitle')} body={t('noConnectionBody')} />}
+      {empty && result.A > 0 && result.B > 0 && (type !== 'all' || directOnly) && (
         <div className="flex justify-center">
           <Chip
             onClick={() => {
@@ -491,14 +483,14 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         </div>
       )}
 
-      {!pending && !desktop && layers?.[0]?.pins && (
+      {!desktop && layers?.[0]?.pins && (
         <div data-testid="planner-map">
           <RouteMap layers={layers} />
         </div>
       )}
-      {!pending && renderList(t('directTitle'), 'd')}
-      {!pending && renderList(`${result?.plan.direct.length === 0 ? `${t('noDirect')} ` : ''}${t('transferTitle')}`, 't')}
-      {!pending && anyEstimated && (
+      {renderList(t('directTitle'), 'd')}
+      {renderList(`${result?.plan.direct.length === 0 ? `${t('noDirect')} ` : ''}${t('transferTitle')}`, 't')}
+      {anyEstimated && (
         <p className="flex items-start gap-2 px-1 text-xs text-slate-500">
           <EstTag>~</EstTag>
           <span>{t('estimatedLegend').replace(/^~ = /, '')}</span>

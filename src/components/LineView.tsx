@@ -194,6 +194,9 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
 
   const selNotes = sel?.notes ?? [];
   /** places a trip reaches only after a phone booking ("*Serviço a pedido: ..."), from its notes (legend code or free text) */
+  // the grid shows the time and short legend codes only; the text of a free-text note ("Via Ilha, …") is shown below for the selected time
+  const legendCodes = (notes?: readonly string[]) => (notes ?? []).filter((k) => k in line.notes && k.length <= 3);
+  const hasFreeNote = (notes?: readonly string[]) => (notes ?? []).some((k) => !(k in line.notes) || k.length > 3);
   const requestPlaces = (notes?: readonly string[]) => [...new Set((notes ?? []).flatMap((k) => onRequestPlaces(line.notes[k] ?? k) ?? []))];
   const selRequest = requestPlaces(selNotes);
   const railCls = lineRailCls(line);
@@ -287,13 +290,19 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                   >
                     {x.t}
                     {requestPlaces(x.notes).length ? <span className="ml-0.5 text-amber-600" aria-hidden>⚠</span> : null}
-                    {x.notes?.length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70">{x.notes.map(tn).join(',')}</sup> : null}
+                    {legendCodes(x.notes).length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70">{legendCodes(x.notes).map(tn).join(',')}</sup> : null}
+                    {hasFreeNote(x.notes) && !requestPlaces(x.notes).length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70" title={(x.notes ?? []).map(tn).join('; ')}>*</sup> : null}
                   </button>
                 );
               })}
             </Card>
           ) : (
             <p className="px-1 text-sm text-slate-500">{t('noDeparturesInDir')}</p>
+          )}
+          {sel && selRequest.length === 0 && hasFreeNote(selNotes) && (
+            <p className="rounded-xl bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:bg-sky-400/10 dark:text-sky-200" data-testid="trip-note">
+              <b className="tabular-nums">{sel.t}</b> – {selNotes.filter((k) => !legendCodes([k]).length).map((k) => tn(k)).join('; ')}
+            </p>
           )}
           {selRequest.length > 0 && (
             <p className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200" data-testid="on-request">
@@ -360,7 +369,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                             setLinksIdx(i);
                           }}
                           aria-pressed={active}
-                          className="flex min-h-11 min-w-0 flex-1 items-center gap-2 pr-1 text-left"
+                          className="flex min-h-11 min-w-0 flex-1 items-center gap-2 py-2 pl-4 pr-2 text-left"
                         >
                           {content}
                         </button>
@@ -377,7 +386,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                         </button>
                       </div>
                       {linksIdx === i && (
-                        <div className="mb-2.5 mr-1 flex flex-col gap-2.5 rounded-xl border border-slate-200/70 bg-slate-50/70 p-3.5 dark:border-slate-700/70 dark:bg-slate-800/40" data-testid="stop-details">
+                        <div className="mx-3 mb-3 flex flex-col gap-2.5 rounded-xl border border-slate-200/70 bg-slate-50/70 p-3.5 dark:border-slate-700/70 dark:bg-slate-800/40" data-testid="stop-details">
                           <PrecisionWarning stop={s} block />
                           <MapLinks
                             stop={s}

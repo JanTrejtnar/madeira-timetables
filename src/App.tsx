@@ -13,7 +13,7 @@ import { Icon, type IconName } from './components/Icons';
 import { RouteMap } from './components/RouteMap';
 import { useMedia } from './lib/hooks';
 import type { UserPos } from './lib/nearby';
-import { formFromQuery, formToQuery, type PlannerForm } from './lib/plannerForm';
+import { formFromQuery, formToQuery, settled, type PlannerForm } from './lib/plannerForm';
 import type { MapFocus, MapLayer } from './types';
 
 type Tab = 'search' | 'route' | 'departures';
@@ -73,11 +73,21 @@ export function App() {
   const [geo, setGeo] = useState<Shared['geo']>('idle');
   // planner form: kept here so it survives opening a line and going back, and mirrored into the URL query
   const [planner, setPlanner] = useState<PlannerForm>(() => formFromQuery(location.search, nowInMadeira().minutes));
+  // what the results and the map are computed for: follows a pick (suggestion, map point) at once, typed text only on Enter
+  const [applied, setApplied] = useState<Shared['applied']>(() => ({ from: planner.from, to: planner.to }));
   useEffect(() => {
-    const q = formToQuery(planner);
+    setApplied((a) => {
+      const from = settled(planner.from) ? planner.from : a.from;
+      const to = settled(planner.to) ? planner.to : a.to;
+      return from === a.from && to === a.to ? a : { from, to };
+    });
+  }, [planner.from, planner.to]);
+  const commit = useCallback((v: Partial<Shared['applied']>) => setApplied((a) => ({ ...a, ...v })), []);
+  useEffect(() => {
+    const q = formToQuery({ ...planner, from: applied.from, to: applied.to });
     const url = `${location.pathname}${q ? `?${q}` : ''}${location.hash}`;
     if (url !== `${location.pathname}${location.search}${location.hash}`) history.replaceState(history.state, '', url);
-  }, [planner]);
+  }, [planner, applied]);
   const [online, setOnline] = useState(() => navigator.onLine !== false);
   useEffect(() => {
     const on = () => setOnline(true);
@@ -138,6 +148,8 @@ export function App() {
             geo,
             locate,
             planner,
+            applied,
+            commit,
             setPlanner,
             useAsFrom: (name, key) => {
               setPlanner((p) => ({ ...p, from: { text: name, key } }));
@@ -146,7 +158,7 @@ export function App() {
             },
           }
         : null,
-    [data, net, ctx, desktop, userPos, geo, locate, planner],
+    [data, net, ctx, desktop, userPos, geo, locate, planner, applied, commit],
   );
 
   const today = serviceDay(now);
@@ -272,6 +284,8 @@ export function App() {
                 )}
                 <p className="mt-8 text-center text-xs text-slate-400">
                   {t('dataFrom')} {data.generatedAt.slice(0, 10)}
+                  <br />
+                  <span data-testid="build-info">v{__APP_VERSION__} · Build: {__BUILD_TIME__}</span>
                 </p>
               </>
             )}

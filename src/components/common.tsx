@@ -32,12 +32,16 @@ export interface Shared {
   useAsFrom: (name: string, key: string) => void;
   /** state of the planner form (kept across navigation, mirrored into the URL query) */
   planner: PlannerForm;
+  /** the picked from / to the results are computed for: changes on a pick or Enter, not while typing */
+  applied: Pick<PlannerForm, 'from' | 'to'>;
+  /** applies the given values as they are (Enter on typed text, swap) */
+  commit: (v: Partial<Shared['applied']>) => void;
   setPlanner: (f: PlannerForm | ((prev: PlannerForm) => PlannerForm)) => void;
 }
 
-/** Colour of a line on maps and timelines: green = urbano, slate = interurbano. */
-export const lineColor = (line: Line) => (line.type === 'urbano' ? '#059669' : '#334155');
-export const lineRailCls = (line: Line) => (line.type === 'urbano' ? 'bg-emerald-600' : 'bg-slate-700 dark:bg-slate-400');
+/** Colour of a line on maps and timelines: green = urbano, sky blue = interurbano. */
+export const lineColor = (line: Line) => (line.type === 'urbano' ? '#059669' : '#0284c7');
+export const lineRailCls = (line: Line) => (line.type === 'urbano' ? 'bg-emerald-600' : 'bg-sky-600 dark:bg-sky-400');
 
 export function LineBadge({ line, large = false }: { line: Line; large?: boolean }) {
   const urban = line.type === 'urbano';
@@ -45,7 +49,7 @@ export function LineBadge({ line, large = false }: { line: Line; large?: boolean
     <span
       className={`inline-flex shrink-0 items-center justify-center rounded-lg font-bold tabular-nums tracking-tight text-white ${
         large ? 'h-10 min-w-14 px-3 text-xl' : 'h-7 min-w-11 px-2 text-sm'
-      } ${urban ? 'bg-emerald-700' : 'bg-slate-800 dark:bg-slate-600'}`}
+      } ${urban ? 'bg-emerald-700' : 'bg-sky-700 dark:bg-sky-600'}`}
     >
       {line.number}
     </span>

@@ -12,6 +12,18 @@ const HUB_BONUS = 3;
 const VIA_PENALTY = 10;
 /** A first leg of one stop and a couple of minutes is a city hop to the terminal: walking there is the same. */
 const isMicro = (stops: number, minutes: number) => stops <= 1 && minutes <= 3;
+/** A first leg of one or two stops that ends within this distance of where it starts is never offered: the traveller walks. */
+const WALK_INSTEAD_M = 1000;
+const MAX_HOP_STOPS = 2;
+function shortHop(net: Network, from: number, to: number, stops: number, minutes: number): boolean {
+  if (isMicro(stops, minutes)) return true;
+  if (stops > MAX_HOP_STOPS) return false;
+  const a = net.nodes[from];
+  const b = net.nodes[to];
+  if (a.lat === undefined || a.lon === undefined || b.lat === undefined || b.lon === undefined) return false;
+  const m = Math.hypot((a.lon - b.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180), (a.lat - b.lat) * 110540);
+  return m <= WALK_INSTEAD_M;
+}
 const HORIZON = 48 * 60; // services cover yesterday, the day itself and tomorrow
 
 export interface Leg {
@@ -101,7 +113,7 @@ export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to:
     for (let k = i + 1; k < t1.nodes.length; k++) {
       const arriveK = t1.times[k];
       if (arriveK === null) continue;
-      if (isMicro(k - i, arriveK - l1depart)) continue;
+      if (shortHop(net, t1.nodes[i], t1.nodes[k], k - i, arriveK - l1depart)) continue;
       for (const { node, walk } of net.near.get(t1.nodes[k]) ?? []) {
         for (const c of second.get(node) ?? []) {
           if (c.trip === t1 || (c.trip.line.id === t1.line.id && c.trip.dirIndex === t1.dirIndex)) continue;

@@ -10,6 +10,9 @@ export interface Picked {
   pt?: { lat: number; lon: number };
 }
 
+/** A field whose value is final: a suggestion or map point was picked, or the field is empty. Typed text is not settled until Enter. */
+export const settled = (p: Picked) => p.key !== null || !!p.pt || !p.text.trim();
+
 const fmtPt = (p: { lat: number; lon: number }) => `${p.lat.toFixed(5)},${p.lon.toFixed(5)}`;
 function parsePt(s: string | null): Picked['pt'] {
   const m = /^(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)$/.exec(s ?? '');

@@ -2,9 +2,14 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import pkg from './package.json' with { type: 'json' };
+
+// shown in the footer so a deployed build can be told apart from a stale cached one
+const buildTime = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Atlantic/Madeira', dateStyle: 'short', timeStyle: 'short' }).format(new Date());
 
 export default defineConfig({
   base: './',
+  define: { __APP_VERSION__: JSON.stringify(pkg.version), __BUILD_TIME__: JSON.stringify(buildTime) },
   plugins: [
     react(),
     tailwindcss(),

@@ -4,6 +4,7 @@ import { loadShape } from '../data';
 import { useT, type Lang } from '../i18n';
 import { localStopName } from '../lib/text';
 import { spliceDetours } from '../lib/via';
+import { rideSplit } from '../lib/ride';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
 import { drawPin } from '../lib/mapPin';
 import type { UserPos } from '../lib/nearby';
@@ -97,15 +98,27 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
   focusRef.current = focus;
   const clickRef = useRef(onStopClick);
   clickRef.current = onStopClick;
-  // inline maps on touch screens: one finger scrolls the page, two fingers move the map
-  const lockDrag = touch && !fill;
+  // inline maps: one finger moves the map (the page scrolls outside it), the corner button opens it full screen
+  const canFull = !fill;
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    if (!full) return;
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && setFull(false);
+    document.addEventListener('keydown', key);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', key);
+      document.body.style.overflow = prev;
+    };
+  }, [full]);
 
   useEffect(() => {
     const container = el.current;
     if (!container) return;
     setFailed(false);
     markers.current = new Map();
-    const map = L.map(container, { scrollWheelZoom: fill, dragging: !lockDrag, touchZoom: true, zoomControl: !lockDrag });
+    const map = L.map(container, { scrollWheelZoom: fill, dragging: true, touchZoom: true, zoomControl: true });
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -150,7 +163,14 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
         loadShape(layer.shapeId as number)
           .then((pts) => {
             if (!alive) return;
-            L.polyline(spliceDetours(pts, layer.detours), { color: layer.color, weight: 5, opacity: 0.85, lineCap: 'round', lineJoin: 'round' }).addTo(group).bringToBack();
+            const full = spliceDetours(pts, layer.detours);
+            const style = { color: layer.color, lineCap: 'round', lineJoin: 'round' } as const;
+            const cut = layer.ride ? rideSplit(full, layer.ride.stops, layer.ride.from, layer.ride.to) : null;
+            if (cut) {
+              // the rest of the line is only a hint: faint, thin, and outside the group so the view fits the ride
+              for (const rest of [cut.before, cut.after]) if (rest.length > 1) L.polyline(rest, { ...style, weight: 3, opacity: 0.25, interactive: false }).addTo(map).bringToBack();
+              L.polyline(cut.ride, { ...style, weight: 5, opacity: 0.9 }).addTo(group).bringToBack();
+            } else L.polyline(full, { ...style, weight: 5, opacity: 0.85 }).addTo(group).bringToBack();
             fit();
           })
           .catch(() => alive && setFailed(true));
@@ -165,7 +185,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
       mapRef.current = null;
       markers.current = new Map();
     };
-  }, [layers, t, fill, lockDrag]);
+  }, [layers, t, fill]);
 
   // user position: pulsing dot plus accuracy circle; centres the map on every new fix
   const meSeq = me?.seq;
@@ -184,7 +204,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
       dot.remove();
       ring.remove();
     };
-  }, [me, layers, t, fill, lockDrag]);
+  }, [me, layers, t, fill]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !me || meSeq === undefined) return;
@@ -223,12 +243,25 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
   }, [times, stopIndex]);
 
   return (
-    <div className={fill ? 'relative h-full w-full' : 'relative'}>
-      <div
-        ref={el}
-        className={`isolate overflow-hidden bg-slate-200 dark:bg-slate-800 ${fill ? 'h-full w-full' : 'h-72 w-full rounded-2xl border border-slate-200/70 dark:border-slate-700/70'}`}
-        style={{ touchAction: lockDrag ? 'pan-y' : undefined }}
-      />
+    <div className={full ? 'fixed inset-0 z-1000 bg-white dark:bg-slate-950' : fill ? 'relative h-full w-full' : 'relative'}>
+      {/* the size classes sit on a wrapper: Leaflet owns the class list of its own container, which React must not rewrite */}
+      <div className={`overflow-hidden ${fill || full ? 'h-full w-full' : 'h-72 w-full rounded-2xl border border-slate-200/70 dark:border-slate-700/70'}`}>
+        <div ref={el} className="isolate size-full bg-slate-200 dark:bg-slate-800" style={{ touchAction: touch ? 'none' : undefined }} />
+      </div>
+      {canFull && (
+        <button
+          type="button"
+          onClick={() => setFull((v) => !v)}
+          aria-label={full ? t('mapExitFullscreen') : t('mapFullscreen')}
+          title={full ? t('mapExitFullscreen') : t('mapFullscreen')}
+          data-testid="map-fullscreen"
+          className={`absolute z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700 ${full ? 'right-3 top-[max(0.75rem,env(safe-area-inset-top))]' : 'right-3 top-3'}`}
+        >
+          <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            {full ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
+          </svg>
+        </button>
+      )}
       {onLocate && (
         <button
           type="button"
@@ -245,7 +278,6 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
           </svg>
         </button>
       )}
-      {lockDrag && <p className="mt-1.5 px-1 text-xs text-slate-500">{t('mapHint')}</p>}
       {failed && (
         <p
           className={
