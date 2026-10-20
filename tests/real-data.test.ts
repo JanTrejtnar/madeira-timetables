@@ -585,4 +585,22 @@ describe.skipIf(!existsSync(file))('manual overrides, generated routes and "Via"
       expect(len / 1000).toBeLessThan(80);
     }
   });
+  it('208: Moinhos and Achada lie in the Porto da Cruz - Faial corridor (not at Caniço) and the route passes through both', () => {
+    const l208 = data.lines.find((l) => l.number === '208')!;
+    const di = l208.directions.findIndex((d) => d.stops[0].name === 'Funchal' && d.stops.at(-1)!.name === 'Faial' && d.stops.some((s) => s.name === 'Achada'));
+    const d = l208.directions[di];
+    const moinhos = d.stops.find((s) => s.name === 'Moinhos')!;
+    const achada = d.stops.find((s) => s.name === 'Achada')!;
+    expect(m([moinhos.lat!, moinhos.lon!], [32.778477, -16.846774])).toBeLessThan(2);
+    expect(moinhos.locationPrecision).toBe('exact');
+    expect(m([achada.lat!, achada.lon!], [32.766104, -16.840423])).toBeLessThan(2);
+    // an unverified place is not presented as an exact platform
+    expect(achada.locationPrecision).toBe('settlement_center');
+    const pts = JSON.parse(readFileSync(new URL(`../public/data/shapes/${d.shapeId}.json`, import.meta.url), 'utf8')) as [number, number][];
+    for (const s of [moinhos, achada]) expect(Math.min(...pts.map((p) => m(p, [s.lat!, s.lon!])))).toBeLessThan(100);
+    // the line 505 Moinhos (Santa Cruz concelho) is another place and keeps its position
+    const l505 = data.lines.find((l) => l.number === '505')!;
+    const m505 = l505.directions[0].stops.find((s) => s.name === 'Moinhos')!;
+    expect(m([m505.lat!, m505.lon!], [32.6648, -16.837])).toBeLessThan(50);
+  });
 });

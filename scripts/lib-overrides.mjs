@@ -12,7 +12,9 @@ export function applyOverrides(lines, file) {
         const o = list.find((x) => x.key === k && (!x.lines || x.lines.includes(l.number)));
         if (!o) continue;
         for (const f of ['approx', 'isEstimatedLocation']) delete s[f];
-        Object.assign(s, { lat: o.lat, lon: o.lon, source: 'override', locationPrecision: o.locationPrecision ?? 'exact', ...(o.osmNode ? { osmNode: o.osmNode } : {}) });
+        const precision = o.locationPrecision ?? 'exact';
+        // an exact override is an official position; anything else stays flagged as approximate
+        Object.assign(s, { lat: o.lat, lon: o.lon, source: 'override', locationPrecision: precision, ...(precision !== 'exact' ? { approx: true } : {}), ...(o.osmNode ? { osmNode: o.osmNode } : {}) });
         n++;
       }
     }

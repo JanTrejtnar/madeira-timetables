@@ -36,7 +36,8 @@ export function buildStopIndex(lines) {
   for (const l of lines) {
     for (const d of l.directions) {
       for (const s of d.stops) {
-        if (!has(s) || s.approx) continue;
+        // hand-placed overrides are valid for the lines they name only: a namesake elsewhere (Moinhos of line 505) must not borrow them
+        if (!has(s) || s.approx || s.source === 'override') continue;
         const k = keyOf(s.name);
         if (!k) continue;
         const e = { key: k, tok: new Set(tokens(k)), p: [s.lat, s.lon] };
