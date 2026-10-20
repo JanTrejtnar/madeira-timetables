@@ -15,7 +15,7 @@ import { cleanTexts } from './lib-text.mjs';
 import { addViaPlaces, attachViaRoutes } from './lib-via.mjs';
 import { attachRoutes } from './lib-routes.mjs';
 import { addTerminalStops, estimateTerminals } from './lib-terminals.mjs';
-import { applyOverrides } from './lib-overrides.mjs';
+import { applyOverrides, applyFunchalTerminals, terminalWalks } from './lib-overrides.mjs';
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -82,6 +82,11 @@ const osmStats = applyOsm(data.lines, osm, areas, path.join(ROOT, 'data', 'shape
 const interpolated = interpolateStops(data.lines, path.join(ROOT, 'data', 'shapes'));
 // timetables without a stop list: the two terminals (data/terminals.json) become the stops, so routes and estimates below apply
 const terminalStops = addTerminalStops(data.lines, ROOT);
+// the Funchal end of each line sits at the terminal of its operator (data/stop-overrides.json funchalTerminals), before the routes are drawn from it
+const stopOverrides = JSON.parse(await readFile(path.join(ROOT, 'data', 'stop-overrides.json'), 'utf8'));
+const funchalMoved = applyFunchalTerminals(data.lines, stopOverrides);
+data.terminalWalks = terminalWalks(stopOverrides);
+console.log('Funchal ends moved to the operator terminal:', funchalMoved, '- walking links:', JSON.stringify(data.terminalWalks));
 // OSRM road routes (data/routes.json, `npm run fetch:routes`) for directions without a SIGA polyline
 const routed = attachRoutes(data.lines, ROOT);
 const terminalTimes = estimateTerminals(data.lines, path.join(ROOT, 'data', 'shapes'));

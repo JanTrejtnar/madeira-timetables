@@ -1,5 +1,6 @@
 // Parser for two SIGA Rodoeste PDFs whose tables list one trip per row with its final destination:
-//   Carreira 96  (Funchal - Corticeiras, Jardim Serra e Corrida): outbound table + inbound table side by side
+//   Carreira 96  (Funchal - Corticeiras, Jardim Serra e Corrida): outbound table + inbound table side by side; inbound trips from
+//                Corrida / Jardim Serra keep the printed passing time at Corticeiras
 //   Carreira 137 (Funchal - Covão): outbound page and inbound ("Origem") page, three day tables each.
 // The column positions are fixed per file/page (measured on the PDFs) and every result is validated.
 import { pdfItems } from './lib-pdf.mjs';
@@ -150,7 +151,9 @@ export async function parseRowTables(file, lineNumber, warn) {
               const first = o0 ?? o1 ?? o2;
               const marks = [...(first?.marks ?? []), ...(e?.marks ?? []), ...(f?.marks ?? []), ...(c[3] ? [c[3]] : []), ...(note0 ? [note0] : [])];
               if (!e && !f && !first) ok = false;
-              else if (origin) add(origin, 'Funchal', [origin, CAMARA, 'Funchal'], [first.t, e?.t ?? null, f?.t ?? null], own[b].key, marks);
+              // trips from Corrida / Jardim Serra pass Corticeiras (the "Passagem Prevista" column), unless they go via Fôro
+              else if (origin === 'Corticeiras') add(origin, 'Funchal', [origin, CAMARA, 'Funchal'], [first.t, e?.t ?? null, f?.t ?? null], own[b].key, marks);
+              else if (origin) add(origin, 'Funchal', [origin, 'Corticeiras', CAMARA, 'Funchal'], [first.t, o2?.t ?? null, e?.t ?? null, f?.t ?? null], own[b].key, marks);
               else add(CAMARA, 'Funchal', [CAMARA, 'Funchal'], [e?.t ?? null, f?.t ?? null], own[b].key, marks);
             }
           }

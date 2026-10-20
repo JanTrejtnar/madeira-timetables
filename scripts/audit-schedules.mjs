@@ -111,6 +111,8 @@ function countStored(line) {
     if (d.trips?.length) n += d.trips.reduce((a, t) => a + t.times.filter(Boolean).length, 0);
     else n += Object.values(d.departures ?? {}).reduce((a, l) => a + l.length, 0);
   }
+  // a printed holiday table has no day key of its own (the planner treats holidays as Sundays): its times are kept in a general note
+  for (const g of line.generalNotes ?? []) if (/^Feriados:/.test(g)) n += (g.match(/\b\d{1,2}:\d{2}\b/g) ?? []).length;
   return n;
 }
 
@@ -120,7 +122,7 @@ async function pdfTimeCount(line) {
   try { items = line.family === 'sam' ? await visibleItems(file) : await pdfItems(file); } catch { return null; }
   if (!items.length) return null; // scan: no text layer
   // not departures: footer revision dates ("DE/HF - 13.02.2023") and "CL-20:30" cut-off notes
-  const text = items.map((i) => i.str).join(' ').replace(/\b\d{1,2}[./]\d{1,2}[./]\d{2,4}\b/g, ' ').replace(/\bCL-\d{1,2}:\d{2}/g, ' ');
+  const text = items.map((i) => i.str).join(' ').replace(/\b\d{1,2}[./]\d{1,2}[./]\d{2,4}\b/g, ' ').replace(/\bCL-\d{1,2}:\d{2}/g, ' ').replace(/(?<=^|\s)[àa]s\s+\d{1,2}[:h]\d{2}/gi, ' '); // "passagem no Camacha Shopping às 14:15" in a legend text
   return (text.match(PDF_TIME_RE) ?? []).length;
 }
 

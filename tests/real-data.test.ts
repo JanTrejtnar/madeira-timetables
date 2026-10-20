@@ -503,7 +503,10 @@ describe.skipIf(!existsSync(file))('position precision and parishes of intercity
       if (s.isEstimatedLocation) expect(s.locationPrecision).toBe('interpolated');
       if ((s as { source?: string }).source === 'gtfs') expect(s.locationPrecision).toBe('exact');
     }
-    const centres = stops.filter((s) => s.locationPrecision === 'settlement_center');
+    // the two terminals of a line without a stop list (data/terminals.json) are villages by nature: counted apart
+    const terminalStops = data.lines.flatMap((l) => l.directions.filter((d) => d.terminalsOnly).flatMap((d) => d.stops));
+    for (const s of terminalStops.filter((x) => x.locationPrecision === 'settlement_center')) expect(s.approx).toBe(true);
+    const centres = stops.filter((s) => s.locationPrecision === 'settlement_center' && !terminalStops.includes(s));
     // a road platform near the village has priority: only villages without any platform nearby stay settlement_center
     expect(centres.length).toBeGreaterThan(0);
     expect(centres.length).toBeLessThan(60);

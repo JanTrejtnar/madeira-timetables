@@ -8,6 +8,7 @@
     "fetch:osm": "node scripts/fetch-osm-stops.mjs",
     "fetch:gtfs": "node scripts/fetch-gtfs.mjs",
     "fetch:routes": "node scripts/fetch-routes.mjs",
+    "resolve:terminals": "node scripts/resolve-terminals.mjs",
     "fetch:via-routes": "node scripts/fetch-via-routes.mjs",
     "build:data": "node scripts/build-data.mjs",
     "audit": "node scripts/audit-schedules.mjs",

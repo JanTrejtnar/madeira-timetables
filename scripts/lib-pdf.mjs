@@ -184,5 +184,7 @@ function plusFonts(runs, shifted) {
  */
 function looksPlain(str) {
   if ([...str].some((ch) => ch.charCodeAt(0) < 32)) return false;
+  // a lowercase letter that is no accent glyph code cannot be shifted text (its codes end at 96): "Fazenda" is plain
+  if ([...str].some((ch) => ch.charCodeAt(0) >= 97 && ch.charCodeAt(0) <= 122 && !(ch.charCodeAt(0) in ACCENTS))) return true;
   return /^\s*\d{1,2}[:.]\d{2}(\s*[A-Za-z]{0,3})*\s*$/.test(str) || /^\s*-+\s*$/.test(str) || /^[A-Za-z]{1,2}$/.test(str.trim());
 }

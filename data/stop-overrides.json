@@ -1,11 +1,194 @@
 {
   "_comment": "Hand-checked stop positions. A matching stop gets these coordinates with absolute priority over SIGA / GTFS / OSM name matching; its settlement_center warning is dropped. `name` is compared like a stop name (case, accents, punctuation ignored); `lines` (optional) limits the override to those line numbers.",
   "overrides": [
-    { "name": "Machico", "label": "Machico terminal (main transfer hub)", "lat": 32.721648, "lon": -16.770177, "osmNode": 1093953107, "locationPrecision": "exact" },
-    { "name": "Faial", "label": "Faial, village by Santana (lines 208, 53, 825) - not the Funchal quarter", "lines": ["208", "53", "825"], "lat": 32.7915, "lon": -16.8535, "locationPrecision": "exact" },
-    { "name": "Moinhos", "label": "Moinhos, Faial parish - OSM bus stop Moinhos-S Roque Faial (Moinhos in Santa Cruz / Caniço is another place, so limited to these lines)", "lines": ["208", "53", "825"], "lat": 32.778477, "lon": -16.846774, "osmNode": 6584465574, "locationPrecision": "exact" },
-    { "name": "Achada", "label": "Achada, neighbourhood between Porto da Cruz and Moinhos (OSM place; no bus stop of that name is mapped, so settlement_center)", "lines": ["208", "53", "825"], "lat": 32.766104, "lon": -16.840423, "locationPrecision": "settlement_center" },
-    { "name": "S. Roque do Faial", "label": "São Roque do Faial village - OSM bus stop Igreja de São Roque Faial (the name match had picked the Moinhos-S Roque Faial stop 1 km away, in the Faial parish)", "lines": ["56", "103", "138"], "lat": 32.770685, "lon": -16.856622, "osmNode": 1508889023, "locationPrecision": "exact" },
-    { "name": "Rosário", "label": "Rosário (line 139)", "lines": ["139"], "lat": 32.777216, "lon": -17.03291, "osmNode": 147902557, "locationPrecision": "exact" }
-  ]
+    {
+      "name": "Machico",
+      "label": "Machico terminal (main transfer hub)",
+      "lat": 32.721648,
+      "lon": -16.770177,
+      "osmNode": 1093953107,
+      "locationPrecision": "exact"
+    },
+    {
+      "name": "Faial",
+      "label": "Faial, village by Santana (lines 208, 53, 825) - not the Funchal quarter",
+      "lines": [
+        "208",
+        "53",
+        "825"
+      ],
+      "lat": 32.7915,
+      "lon": -16.8535,
+      "locationPrecision": "exact"
+    },
+    {
+      "name": "Moinhos",
+      "label": "Moinhos, Faial parish - OSM bus stop Moinhos-S Roque Faial (Moinhos in Santa Cruz / Caniço is another place, so limited to these lines)",
+      "lines": [
+        "208",
+        "53",
+        "825"
+      ],
+      "lat": 32.778477,
+      "lon": -16.846774,
+      "osmNode": 6584465574,
+      "locationPrecision": "exact"
+    },
+    {
+      "name": "Achada",
+      "label": "Achada, neighbourhood between Porto da Cruz and Moinhos (OSM place; no bus stop of that name is mapped, so settlement_center)",
+      "lines": [
+        "208",
+        "53",
+        "825"
+      ],
+      "lat": 32.766104,
+      "lon": -16.840423,
+      "locationPrecision": "settlement_center"
+    },
+    {
+      "name": "S. Roque do Faial",
+      "label": "São Roque do Faial village - OSM bus stop Igreja de São Roque Faial (the name match had picked the Moinhos-S Roque Faial stop 1 km away, in the Faial parish)",
+      "lines": [
+        "56",
+        "103",
+        "138"
+      ],
+      "lat": 32.770685,
+      "lon": -16.856622,
+      "osmNode": 1508889023,
+      "locationPrecision": "exact"
+    },
+    {
+      "name": "Rosário",
+      "label": "Rosário (line 139)",
+      "lines": [
+        "139"
+      ],
+      "lat": 32.777216,
+      "lon": -17.03291,
+      "osmNode": 147902557,
+      "locationPrecision": "exact"
+    }
+  ],
+  "funchalTerminals": {
+    "_comment": "Which Funchal terminal a line's Funchal end uses, by operator / sub-network. Applied in build:data after the terminal-only stops are made: the first or last stop of a direction whose name starts with \"Funchal\" gets the group's position (name stays \"Funchal\"), so `npm run fetch:routes` routes OSRM from these exact nodes. Lines not listed (6xx / 181 / 502 with SIGA or GTFS positions, 500) are left alone.",
+    "groups": [
+      {
+        "id": "rodoeste",
+        "terminal": "Terminal Autocarros Rodoeste",
+        "operator": "Rodoeste (west)",
+        "lat": 32.64721,
+        "lon": -16.90725,
+        "lines": [
+          "3",
+          "4",
+          "6",
+          "7",
+          "8",
+          "27",
+          "80",
+          "96",
+          "107",
+          "115",
+          "123",
+          "137",
+          "139",
+          "142",
+          "146",
+          "154",
+          "201",
+          "228"
+        ]
+      },
+      {
+        "id": "cam",
+        "terminal": "CAM Funchal (Rua da Ribeira de João Gomes)",
+        "operator": "CAM long-distance (north-east)",
+        "lat": 32.64765,
+        "lon": -16.9158,
+        "lines": [
+          "53",
+          "56",
+          "103",
+          "138",
+          "208"
+        ]
+      },
+      {
+        "id": "teleferico",
+        "terminal": "Teleférico-Término 4A",
+        "operator": "CAM / EACL Caniço",
+        "lat": 32.64732,
+        "lon": -16.90284,
+        "lines": [
+          "155",
+          "157",
+          "551",
+          "552",
+          "553",
+          "554",
+          "555",
+          "556",
+          "557"
+        ]
+      },
+      {
+        "id": "sam",
+        "terminal": "Terminal SAM (Edifício 2000 / Av. do Mar)",
+        "operator": "SAM (east)",
+        "lat": 32.64715,
+        "lon": -16.9061,
+        "lines": [
+          "20",
+          "111",
+          "113",
+          "501",
+          "505",
+          "701",
+          "702",
+          "703",
+          "704",
+          "825",
+          "Via Rápida",
+          "Aerobus"
+        ]
+      }
+    ],
+    "walks": {
+      "_comment": "Guaranteed walking links between the Funchal terminals (group ids). minutes = the least walking time; build:data raises it to the straight-line distance / 70 m per minute, so two terminals far apart are never closer in the planner than on foot.",
+      "links": [
+        {
+          "a": "rodoeste",
+          "b": "sam",
+          "minutes": 2
+        },
+        {
+          "a": "sam",
+          "b": "teleferico",
+          "minutes": 5
+        },
+        {
+          "a": "rodoeste",
+          "b": "teleferico",
+          "minutes": 5
+        },
+        {
+          "a": "teleferico",
+          "b": "cam",
+          "minutes": 8
+        },
+        {
+          "a": "sam",
+          "b": "cam",
+          "minutes": 10
+        },
+        {
+          "a": "rodoeste",
+          "b": "cam",
+          "minutes": 10
+        }
+      ]
+    }
+  }
 }

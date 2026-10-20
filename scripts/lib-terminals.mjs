@@ -6,12 +6,12 @@ import path from 'node:path';
 import { keyOf } from './lib-coords.mjs';
 import { stopDistances, speedFor } from './lib-estimate.mjs';
 
-function resolve(terminals, line, name) {
-  const k = keyOf(name.replace(/�/g, ''));
-  const t = terminals[k];
-  if (!t || (t.lines && !t.lines.includes(String(line.number)))) return null;
-  return t;
+/** The terminal entry of a printed name for a line: an entry, or a list of entries when namesakes (Vargem, Moinhos, Corrida ...) exist, each limited by `lines`. */
+export function findTerminal(terminals, line, name) {
+  const v = terminals[keyOf(name.replace(/�/g, ''))];
+  return (Array.isArray(v) ? v : v ? [v] : []).find((t) => !t.lines || t.lines.includes(String(line.number))) ?? null;
 }
+const resolve = findTerminal;
 
 /** Gives stop-less directions their two terminals. Returns { done: number of directions, skipped: [line:name, ...] }. */
 export function addTerminalStops(lines, root) {
@@ -26,7 +26,8 @@ export function addTerminalStops(lines, root) {
       const a = resolve(terminals, l, d.from);
       const b = resolve(terminals, l, d.to);
       if (!a || !b) { out.skipped.push(`${l.number}: ${d.from} - ${d.to}`); continue; }
-      d.stops = [a, b].map((t) => ({ code: null, name: t.name, lat: t.lat, lon: t.lon, approx: true, locationPrecision: 'settlement_center' }));
+      // a bus stop of OSM is an official position; the middle of a village (or a hand-checked terminal) is only approximate
+      d.stops = [a, b].map((t) => ({ code: null, name: t.name, lat: t.lat, lon: t.lon, ...(t.precision === 'exact' ? { locationPrecision: 'exact' } : { approx: true, locationPrecision: 'settlement_center' }) }));
       d.terminalsOnly = true;
       out.done++;
     }

@@ -809,10 +809,10 @@
     "family": "sam",
     "ok": true,
     "warnings": [
-      "dropped a weekday trip whose times go backwards (07:30 07:15 07:35 07:50 08:00)",
+      "left out 07:15 of a weekday trip: not in rising order in the printed row (07:30 07:15 07:35 07:50 08:00)",
       "dropped a weekday trip whose times go backwards (07:45 07:15 07:55 07:50 08:10 08:20)",
-      "dropped a weekday trip whose times go backwards (09:45 09:55 10:05 10:00 10:15 10:30 11:30)",
-      "dropped a weekday trip whose times go backwards (13:00 13:10 13:05 13:30 14:15)",
+      "left out 10:05, 10:00 of a weekday trip: not in rising order in the printed row (09:45 09:55 10:05 10:00 10:15 10:30 11:30)",
+      "left out 13:10, 13:05 of a weekday trip: not in rising order in the printed row (13:00 13:10 13:05 13:30 14:15)",
       "note \"Até S.Cruz\" has no legend text"
     ]
   },
@@ -957,7 +957,7 @@
     "family": "sam",
     "ok": true,
     "warnings": [
-      "dropped a weekday trip whose times go backwards (18:20 18:27 18:30 18:35 18:40 18:25)"
+      "left out 18:25 of a weekday trip: not in rising order in the printed row (18:20 18:27 18:30 18:35 18:40 18:25)"
     ]
   },
   {
@@ -982,7 +982,7 @@
     "family": "sam",
     "ok": true,
     "warnings": [
-      "dropped a weekday trip whose times go backwards (07:35 07:55 07:40 08:25)"
+      "left out 07:55, 07:40 of a weekday trip: not in rising order in the printed row (07:35 07:55 07:40 08:25)"
     ]
   },
   {

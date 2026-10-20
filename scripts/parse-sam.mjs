@@ -203,7 +203,7 @@ function analyzeSegment(part, day, keys) {
 /** Some PDFs hold several tables (e.g. a line and its variant); each is parsed on its own and the directions are joined. */
 export async function parseSam(file, line, warn) {
   const all = mergeTouching(await visibleItems(file));
-  const heads = all.filter((i) => /^Nºs?d+w*$/.test(i.str.trim()) && i.x < 140);
+  const heads = all.filter((i) => /^Nº\s?\d+\w*$/.test(i.str.trim()) && i.x < 140);
   const n = Math.max(1, heads.length);
   const parts = [];
   for (let k = 0; k < n; k++) {
@@ -219,7 +219,9 @@ async function parseSamTable(file, line, warn, tableIdx) {
   const all = mergeTouching(await visibleItems(file));
   const obs = all.find((i) => /OBSERVA/i.test(i.str));
   const legendX = obs ? obs.x - 3 : Infinity;
-  const inLegend = (i) => obs && i.x >= legendX && i.y >= obs.y - 2;
+  // the legend box ends after its last entry (and a wrapped line): a second, wider table below it may reach under the legend's x range
+  const legendEnd = Math.max(-Infinity, ...all.filter((i) => obs && i.x >= legendX && i.y >= obs.y - 2 && /^\s*[A-Za-z]{1,3}\s+-\s+/.test(i.str)).map((i) => i.y)) + 14;
+  const inLegend = (i) => obs && i.x >= legendX && i.y >= obs.y - 2 && i.y <= legendEnd;
   const info = all.find((i) => /^Informa/.test(i.str.trim()));
   const infoY = info ? info.y - 2 : Infinity;
 
@@ -370,14 +372,34 @@ async function parseSamTable(file, line, warn, tableIdx) {
         // with a shared terminal column a lone time belongs to the other direction
         if (p.shared && times.filter(Boolean).length < 2) continue;
         if (p.labels?.[ri]) tripNotes.push(p.labels[ri]);
-        let prev = -1;
-        let bad = false;
-        for (const t of times) {
-          if (!t) continue;
-          let m = mins(t);
-          if (m < prev && prev >= 1200 && m < 360) m += 1440;
-          if (m < prev) bad = true;
-          prev = m;
+        const goesBack = (list) => {
+          let prev = -1;
+          for (const t of list) {
+            if (!t) continue;
+            let m = mins(t);
+            if (m < prev && prev >= 1200 && m < 360) m += 1440;
+            if (m < prev) return true;
+            prev = m;
+          }
+          return false;
+        };
+        let bad = goesBack(times);
+        // a time that breaks an otherwise rising row is a typo in the source (e.g. 18:25 after 18:40). The fewest times whose removal
+        // makes the row rise are left out; when two choices are equally good (07:55 / 07:40) both are left out. The rest of the trip stays.
+        if (bad) {
+          const idx = times.map((t, i) => (t ? i : -1)).filter((i) => i >= 0);
+          const subsets = (k, from = 0) => (k === 0 ? [[]] : idx.slice(from).flatMap((v, n) => subsets(k - 1, from + n + 1).map((rest) => [v, ...rest])));
+          for (let k = 1; k <= 3 && bad; k++) {
+            // the first time is the trip itself (its departure): only the other times are doubted
+            const ok = subsets(k).filter((rm) => !rm.includes(idx[0]) && !goesBack(times.map((t, i) => (rm.includes(i) ? null : t))));
+            if (!ok.length) continue;
+            const out = [...new Set(ok.flat())];
+            if (out.length > 2 || idx.length - out.length < 2) break; // a row with more doubtful times than that is not trusted at all
+            warn(`left out ${out.map((i) => times[i]).join(', ')} of a ${p.day} trip: not in rising order in the printed row (${idx.map((i) => times[i]).join(' ')})`);
+            for (const i of out) times[i] = null;
+            droppedTimes += out.length;
+            bad = false;
+          }
         }
         total++;
         if (bad) {

@@ -18,6 +18,8 @@ export interface Node {
   muni?: string;
   /** parish (freguesia) */
   par?: string;
+  /** Funchal terminal id of the stops merged into this node */
+  terminal?: string;
   /** official transfer terminal: the end of lines of at least HUB_LINES lines (Funchal, Machico ...), never a "Via" place */
   transferHub?: boolean;
 }
@@ -54,7 +56,7 @@ const metres = (a: { lat: number; lon: number }, b: { lat: number; lon: number }
 const displayName = (name: string) => name.replace(/,?\s*(D|S)\d*[A-Z]?$/, '').trim();
 export const dirKey = (line: Line, dirIndex: number) => `${line.id}:${dirIndex}`;
 
-export function buildNetwork(lines: Line[]): Network {
+export function buildNetwork(lines: Line[], terminalWalks: readonly { a: string; b: string; min: number }[] = []): Network {
   const nodes: Node[] = [];
   const keyToNodes = new Map<string, number[]>();
   const dirNodes = new Map<string, number[]>();
@@ -69,7 +71,7 @@ export function buildNetwork(lines: Line[]): Network {
 
   const nodeFor = (s: Stop): Node => {
     const key = stopKey(s.name);
-    const cands = (keyToNodes.get(key) ?? []).map((i) => nodes[i]);
+    const cands = (keyToNodes.get(key) ?? []).map((i) => nodes[i]).filter((c) => c.terminal === s.terminal);
     let node: Node | undefined;
     if (s.lat !== undefined && s.lon !== undefined) {
       const p = { lat: s.lat, lon: s.lon };
@@ -77,7 +79,7 @@ export function buildNetwork(lines: Line[]): Network {
       if (node && node.lat === undefined) Object.assign(node, p);
     } else node = cands.find((c) => !s.par || !c.par || c.par === s.par); // without a position, a namesake of another parish is another stop
     if (!node) {
-      node = { id: nodes.length, key, name: displayName(s.name), ...(s.lat !== undefined ? { lat: s.lat, lon: s.lon } : {}), ...(s.muni ? { muni: s.muni } : {}), ...(s.par ? { par: s.par } : {}) };
+      node = { id: nodes.length, key, name: displayName(s.name), ...(s.terminal ? { terminal: s.terminal } : {}), ...(s.lat !== undefined ? { lat: s.lat, lon: s.lon } : {}), ...(s.muni ? { muni: s.muni } : {}), ...(s.par ? { par: s.par } : {}) };
       nodes.push(node);
       keyToNodes.set(key, [...(keyToNodes.get(key) ?? []), node.id]);
     }
@@ -125,6 +127,19 @@ export function buildNetwork(lines: Line[]): Network {
         near.get(located[i].id)!.push({ node: located[j].id, walk });
         near.get(located[j].id)!.push({ node: located[i].id, walk });
       }
+    }
+  }
+  // guaranteed links between the Funchal terminals: at least the stated walking time, and never less than the nodes' own distance
+  const link = (x: number, y: number, walk: number) => {
+    const list = near.get(x)!;
+    const e = list.find((l) => l.node === y);
+    if (e) e.walk = Math.max(e.walk, walk);
+    else list.push({ node: y, walk });
+  };
+  for (const w of terminalWalks) {
+    for (const x of nodes.filter((n) => n.terminal === w.a)) for (const y of nodes.filter((n) => n.terminal === w.b)) {
+      link(x.id, y.id, w.min);
+      link(y.id, x.id, w.min);
     }
   }
   return { nodes, dirNodes, keyToNodes, aliases, near, viaNodes, viaOnly };

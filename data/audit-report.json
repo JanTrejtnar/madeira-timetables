@@ -1,112 +1,14 @@
 {
- "generatedAt": "2026-10-20T20:53:19.799Z",
+ "generatedAt": "2026-10-20T21:40:32.429Z",
  "tolerance": 0.1,
  "summary": {
   "lines": 137,
   "parsed": 130,
-  "clean": 121,
-  "flagged": 9,
+  "clean": 127,
+  "flagged": 3,
   "unparsed": 7
  },
  "suspicious": [
-  {
-   "number": "602",
-   "id": 81,
-   "type": "interurbano",
-   "family": "siga-grid",
-   "parsed": true,
-   "errors": [],
-   "warnings": [],
-   "info": [
-    "Funchal > Rochão Carreiras: no weekend departures (only weekday)",
-    "Rochão Carreiras > Funchal: no weekend departures (only weekday)"
-   ],
-   "stored": 6,
-   "storedDepartures": 6,
-   "pdfTimes": 8,
-   "diff": -2,
-   "ratio": 0.25,
-   "suspicious": true
-  },
-  {
-   "number": "96",
-   "id": 2010,
-   "type": "interurbano",
-   "family": "rowtables",
-   "parsed": true,
-   "errors": [],
-   "warnings": [],
-   "info": [
-    "Funchal > Fôro-Corticeiras-Fontes: no weekend departures (only weekday)",
-    "Estreito de Câmara de Lobos > Funchal: no weekend departures (only weekday)"
-   ],
-   "stored": 293,
-   "storedDepartures": 122,
-   "pdfTimes": 333,
-   "diff": -40,
-   "ratio": 0.12,
-   "suspicious": true
-  },
-  {
-   "number": "127",
-   "id": 2015,
-   "type": "interurbano",
-   "family": "manual",
-   "parsed": true,
-   "errors": [],
-   "warnings": [],
-   "info": [
-    "Ribeira Brava > Lugar da Serra: no weekend departures (only weekday)",
-    "Ribeira Brava > Lugar da Serra: no weekend departures (only weekday_school)",
-    "Ribeira Brava > Boa Morte: no weekend departures (only weekday)",
-    "Ribeira Brava > São João: no weekend departures (only weekday_school)",
-    "Lugar da Serra > Ribeira Brava: no weekend departures (only weekday, weekday_school)",
-    "Lugar da Serra > Ribeira Brava: no weekend departures (only weekday)",
-    "Moreno > Ribeira Brava: no weekday departures (only sunday)"
-   ],
-   "stored": 35,
-   "storedDepartures": 35,
-   "pdfTimes": 39,
-   "diff": -4,
-   "ratio": 0.103,
-   "suspicious": true
-  },
-  {
-   "number": "20",
-   "id": 4000,
-   "type": "interurbano",
-   "family": "sam",
-   "parsed": true,
-   "errors": [],
-   "warnings": [],
-   "info": [
-    "SANTO SERRA > Funchal: no weekend departures (only weekday)",
-    "ST. SERRA > Funchal: no weekday departures (only sunday)",
-    "SANTO SERRA > Funchal: no weekday departures (only saturday)"
-   ],
-   "stored": 136,
-   "storedDepartures": 18,
-   "pdfTimes": 159,
-   "diff": -23,
-   "ratio": 0.145,
-   "suspicious": true
-  },
-  {
-   "number": "526",
-   "id": 4015,
-   "type": "urbano",
-   "family": "sam",
-   "parsed": true,
-   "errors": [],
-   "warnings": [],
-   "info": [],
-   "stored": 60,
-   "storedDepartures": 30,
-   "pdfTimes": 75,
-   "diff": -15,
-   "ratio": 0.2,
-   "suspicious": true
-  },
   {
    "number": "785",
    "id": 4017,
@@ -118,29 +20,11 @@
    "info": [
     "Porto Cruz > Porto Cruz: no weekend departures (only weekday)"
    ],
-   "stored": 11,
-   "storedDepartures": 2,
+   "stored": 16,
+   "storedDepartures": 3,
    "pdfTimes": 21,
-   "diff": -10,
-   "ratio": 0.476,
-   "suspicious": true
-  },
-  {
-   "number": "528",
-   "id": 4020,
-   "type": "urbano",
-   "family": "sam",
-   "parsed": true,
-   "errors": [],
-   "warnings": [],
-   "info": [
-    "Santa Cruz > Santa Cruz: no weekend departures (only weekday)"
-   ],
-   "stored": 35,
-   "storedDepartures": 6,
-   "pdfTimes": 39,
-   "diff": -4,
-   "ratio": 0.103,
+   "diff": -5,
+   "ratio": 0.238,
    "suspicious": true
   }
  ],
@@ -987,9 +871,9 @@
    "info": [],
    "stored": 22,
    "storedDepartures": 22,
-   "pdfTimes": 24,
-   "diff": -2,
-   "ratio": 0.083,
+   "pdfTimes": 23,
+   "diff": -1,
+   "ratio": 0.043,
    "suspicious": false
   },
   {
@@ -1006,10 +890,10 @@
    ],
    "stored": 6,
    "storedDepartures": 6,
-   "pdfTimes": 8,
-   "diff": -2,
-   "ratio": 0.25,
-   "suspicious": true
+   "pdfTimes": 6,
+   "diff": 0,
+   "ratio": 0,
+   "suspicious": false
   },
   {
    "number": "604",
@@ -1038,9 +922,9 @@
    "info": [],
    "stored": 80,
    "storedDepartures": 80,
-   "pdfTimes": 82,
-   "diff": -2,
-   "ratio": 0.024,
+   "pdfTimes": 81,
+   "diff": -1,
+   "ratio": 0.012,
    "suspicious": false
   },
   {
@@ -1058,9 +942,9 @@
    "info": [],
    "stored": 97,
    "storedDepartures": 97,
-   "pdfTimes": 99,
-   "diff": -2,
-   "ratio": 0.02,
+   "pdfTimes": 98,
+   "diff": -1,
+   "ratio": 0.01,
    "suspicious": false
   },
   {
@@ -1095,9 +979,9 @@
    ],
    "stored": 91,
    "storedDepartures": 73,
-   "pdfTimes": 92,
-   "diff": -1,
-   "ratio": 0.011,
+   "pdfTimes": 91,
+   "diff": 0,
+   "ratio": 0,
    "suspicious": false
   },
   {
@@ -1404,12 +1288,12 @@
     "Funchal > Fôro-Corticeiras-Fontes: no weekend departures (only weekday)",
     "Estreito de Câmara de Lobos > Funchal: no weekend departures (only weekday)"
    ],
-   "stored": 293,
+   "stored": 330,
    "storedDepartures": 122,
-   "pdfTimes": 333,
-   "diff": -40,
-   "ratio": 0.12,
-   "suspicious": true
+   "pdfTimes": 332,
+   "diff": -2,
+   "ratio": 0.006,
+   "suspicious": false
   },
   {
    "number": "220",
@@ -1501,12 +1385,12 @@
     "Lugar da Serra > Ribeira Brava: no weekend departures (only weekday)",
     "Moreno > Ribeira Brava: no weekday departures (only sunday)"
    ],
-   "stored": 35,
+   "stored": 39,
    "storedDepartures": 35,
    "pdfTimes": 39,
-   "diff": -4,
-   "ratio": 0.103,
-   "suspicious": true
+   "diff": 0,
+   "ratio": 0,
+   "suspicious": false
   },
   {
    "number": "137",
@@ -1914,12 +1798,12 @@
     "ST. SERRA > Funchal: no weekday departures (only sunday)",
     "SANTO SERRA > Funchal: no weekday departures (only saturday)"
    ],
-   "stored": 136,
-   "storedDepartures": 18,
+   "stored": 148,
+   "storedDepartures": 21,
    "pdfTimes": 159,
-   "diff": -23,
-   "ratio": 0.145,
-   "suspicious": true
+   "diff": -11,
+   "ratio": 0.069,
+   "suspicious": false
   },
   {
    "number": "701",
@@ -1968,9 +1852,9 @@
    "info": [],
    "stored": 88,
    "storedDepartures": 20,
-   "pdfTimes": 92,
-   "diff": -4,
-   "ratio": 0.043,
+   "pdfTimes": 91,
+   "diff": -3,
+   "ratio": 0.033,
    "suspicious": false
   },
   {
@@ -2199,13 +2083,16 @@
    "parsed": true,
    "errors": [],
    "warnings": [],
-   "info": [],
-   "stored": 60,
-   "storedDepartures": 30,
+   "info": [
+    "Porto Novo > Santa Cruz: no weekend departures (only weekday)",
+    "Santa Cruz > Porto Novo: no weekend departures (only weekday)"
+   ],
+   "stored": 75,
+   "storedDepartures": 34,
    "pdfTimes": 75,
-   "diff": -15,
-   "ratio": 0.2,
-   "suspicious": true
+   "diff": 0,
+   "ratio": 0,
+   "suspicious": false
   },
   {
    "number": "527",
@@ -2236,11 +2123,11 @@
    "info": [
     "Porto Cruz > Porto Cruz: no weekend departures (only weekday)"
    ],
-   "stored": 11,
-   "storedDepartures": 2,
+   "stored": 16,
+   "storedDepartures": 3,
    "pdfTimes": 21,
-   "diff": -10,
-   "ratio": 0.476,
+   "diff": -5,
+   "ratio": 0.238,
    "suspicious": true
   },
   {
@@ -2275,9 +2162,9 @@
    ],
    "stored": 140,
    "storedDepartures": 16,
-   "pdfTimes": 141,
-   "diff": -1,
-   "ratio": 0.007,
+   "pdfTimes": 140,
+   "diff": 0,
+   "ratio": 0,
    "suspicious": false
   },
   {
@@ -2291,12 +2178,12 @@
    "info": [
     "Santa Cruz > Santa Cruz: no weekend departures (only weekday)"
    ],
-   "stored": 35,
-   "storedDepartures": 6,
+   "stored": 37,
+   "storedDepartures": 7,
    "pdfTimes": 39,
-   "diff": -4,
-   "ratio": 0.103,
-   "suspicious": true
+   "diff": -2,
+   "ratio": 0.051,
+   "suspicious": false
   },
   {
    "number": "Via Rápida",

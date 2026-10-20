@@ -22,6 +22,8 @@ export interface Stop {
   locationPrecision?: 'exact' | 'interpolated' | 'settlement_center' | 'name_match';
   /** not a stop of the timetable: a "Via X" place inserted for the selected trip (position estimated, time interpolated) */
   via?: boolean;
+  /** id of the Funchal terminal the stop belongs to (data/stop-overrides.json funchalTerminals): stops of two terminals are never one node */
+  terminal?: string;
   /** Municipality (concelho) of the stop, set by build:data */
   muni?: string;
   /** Parish (freguesia) of the stop, set by build:data; "Name, Municipality" where the name exists twice */
@@ -118,6 +120,8 @@ export interface Dataset {
   generatedAt: string;
   source: string;
   lines: Line[];
+  /** guaranteed walking links between the Funchal terminals (minutes), see data/stop-overrides.json */
+  terminalWalks?: { a: string; b: string; min: number }[];
 }
 
 /** One route drawn on the map: the shape polyline (if any) plus its stops. */

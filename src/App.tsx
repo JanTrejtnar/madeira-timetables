@@ -129,7 +129,7 @@ export function App() {
   const school = (schoolOverride !== null && overrideDay === dayStamp ? schoolOverride : null) ?? isSchoolPeriod(now);
   const autoSchool = isSchoolPeriod(now);
   const ctx = useMemo(() => ({ now, school, municipalities: ['Funchal'] as const }), [now, school]);
-  const net = useMemo(() => (data ? buildNetwork(data.lines) : null), [data]);
+  const net = useMemo(() => (data ? buildNetwork(data.lines, data.terminalWalks) : null), [data]);
   const shared: Shared | null = useMemo(
     () =>
       data && net
