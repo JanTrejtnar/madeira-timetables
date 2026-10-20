@@ -4,7 +4,7 @@ import { keysFor, listFor, withMinutes } from './departures';
 import { norm, stopKey } from './search';
 import { toMinutes } from './time';
 import type { Direction, Line, Stop } from '../types';
-import { viaAt, viaMinutes, viaStop } from './via';
+import { viaAt, viaMinutesChain, viaStop } from './via';
 import { expandTerms } from './aliases';
 
 export interface Node {
@@ -30,7 +30,7 @@ export interface Network {
    * the direction they belong to. Lets users search by town/terminal name.
    */
   aliases: Map<string, { name: string; nodes: Set<number> }>;
-  /** node of a "Via X" place, key `${lineId}:${noteCode}` (trips with that note call there) */
+  /** node of a "Via X" place, key `${lineId}:${note}#${index within the note}` (trips with that note call there) */
   viaNodes: Map<string, number>;
   /** nodes within walking distance (including the node itself with 0 minutes) */
   near: Map<number, { node: number; walk: number }[]>;
@@ -90,7 +90,7 @@ export function buildNetwork(lines: Line[]): Network {
   }
   // places of "Via X" notes: the same node as a stop of that name nearby, else a node of their own
   const viaNodes = new Map<string, number>();
-  for (const line of lines) for (const [code, v] of Object.entries(line.via ?? {})) viaNodes.set(`${line.id}:${code}`, nodeFor(viaStop(v)).id);
+  for (const line of lines) for (const [code, list] of Object.entries(line.via ?? {})) list.forEach((v, k) => viaNodes.set(`${line.id}:${code}#${k}`, nodeFor(viaStop(v)).id));
 
   // walking links between nearby nodes with different names (e.g. two stops around one square)
   const near = new Map<number, { node: number; walk: number }[]>();
@@ -150,14 +150,15 @@ function tripsOfDirection(
         ns.push(nodes[i]);
         st.push(s);
         ts.push(shifted[i]);
-        for (const { code, place } of calls.get(i) ?? []) {
-          const m = viaMinutes(dir, i, place, shifted);
-          const id = net.viaNodes.get(`${line.id}:${code}`);
-          if (m === null || id === undefined) continue; // the trip does not run through that stretch
+        const here = calls.get(i) ?? [];
+        const ms = viaMinutesChain(dir, i, here.map((c) => c.place), shifted);
+        here.forEach(({ code, k, place }, j) => {
+          const id = net.viaNodes.get(`${line.id}:${code}#${k}`);
+          if (ms[j] === null || id === undefined) return; // the trip does not run through that stretch
           ns.push(id);
           st.push(viaStop(place));
-          ts.push(m);
-        }
+          ts.push(ms[j]);
+        });
       });
       out.push({ line, dirIndex, dir, nodes: ns, stops: st, times: ts, estimated, ...(notes ? { notes } : {}) });
       return;
@@ -199,21 +200,28 @@ export interface Suggestion {
   key: string;
   name: string;
   lines: number;
-  /** "all stops of <parish>": key is `@par:<label>`, the UI adds the "(all stops)" wording */
+  /** "all stops of <parish>" (key `@par:<label>`) or of a city (key `@muni:<name>`); the UI adds the "(all stops)" wording */
   group?: boolean;
 }
 
 /** "all stops of <parish>" (freguesia, e.g. Santana, Faial, Caniçal): the keys of the group suggestions. Municipalities are not groups: they span valleys far apart. */
 export const PARISH_PREFIX = '@par:';
+/**
+ * The one exception: Funchal is a group of its own. Its parishes (Sé, São Martinho, Santa Luzia ...) are unknown to people looking for
+ * "the town", and its municipality is one built-up area, not valleys far apart.
+ */
+export const CITY_PREFIX = '@muni:';
+export const CITY_GROUPS = ['Funchal'];
 
-const areaCache = new WeakMap<Network, { byParish: Map<string, Set<number>> }>();
-/** Node ids per parish (cached per network). */
+const areaCache = new WeakMap<Network, { byParish: Map<string, Set<number>>; byCity: Map<string, Set<number>> }>();
+/** Node ids per parish and per city group (cached per network). */
 function areaNodes(net: Network) {
   let c = areaCache.get(net);
   if (!c) {
-    c = { byParish: new Map() };
+    c = { byParish: new Map(), byCity: new Map() };
     for (const n of net.nodes) {
       if (n.par) (c.byParish.get(n.par) ?? c.byParish.set(n.par, new Set()).get(n.par)!).add(n.id);
+      if (n.muni && CITY_GROUPS.includes(n.muni)) (c.byCity.get(n.muni) ?? c.byCity.set(n.muni, new Set()).get(n.muni)!).add(n.id);
     }
     areaCache.set(net, c);
   }
@@ -249,17 +257,20 @@ export function suggest(net: Network, lines: Line[], query: string, limit = 10):
     return k.startsWith(q) || (q.length >= 4 && k.includes(q));
   };
   const rank = (a: Suggestion, b: Suggestion) => Number(norm(b.name) === q) - Number(norm(a.name) === q) || Number(norm(b.name).startsWith(q)) - Number(norm(a.name).startsWith(q)) || b.lines - a.lines;
-  const { byParish } = areaNodes(net);
+  const { byParish, byCity } = areaNodes(net);
   // every parish with a stop is a group; the cadastre of the parish, never the whole municipality
   for (const [p, ids] of byParish) {
     if (ids.size < 1 || !wanted(parishName(p))) continue;
     groups.push({ key: PARISH_PREFIX + p, name: p, lines: linesOf(ids), group: true });
   }
+  for (const [city, ids] of byCity) {
+    if (wanted(city)) groups.push({ key: CITY_PREFIX + city, name: city, lines: linesOf(ids), group: true });
+  }
   groups.sort(rank);
   groups.splice(8);
   // a stop named like a group whose stops all belong to the group adds nothing: "Porto Moniz (all stops)" covers it
   const groupNodes = new Map<string, Set<number>>();
-  for (const g of groups) groupNodes.set(norm(parishName(g.name)), byParish.get(g.name)!);
+  for (const g of groups) groupNodes.set(norm(parishName(g.name)), g.key.startsWith(CITY_PREFIX) ? byCity.get(g.name)! : byParish.get(g.name)!);
   const covered = (key: string) => {
     const set = groupNodes.get(key);
     const ids = net.keyToNodes.get(key);
@@ -287,6 +298,10 @@ export function resolveNodes(net: Network, input: string, pickedKey?: string | n
   const out = new Set<number>();
   if (pickedKey?.startsWith(PARISH_PREFIX)) {
     for (const id of areaNodes(net).byParish.get(pickedKey.slice(PARISH_PREFIX.length)) ?? []) out.add(id);
+    if (out.size) return out;
+  }
+  if (pickedKey?.startsWith(CITY_PREFIX)) {
+    for (const id of areaNodes(net).byCity.get(pickedKey.slice(CITY_PREFIX.length)) ?? []) out.add(id);
     if (out.size) return out;
   }
   if (pickedKey) {

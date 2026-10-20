@@ -78,10 +78,10 @@ const osmPlaces = JSON.parse(await readFile(path.join(ROOT, 'data', 'osm', 'plac
 const osmStats = applyOsm(data.lines, osm, areas, path.join(ROOT, 'data', 'shapes'), osmPlaces);
 // what name matching could not place: evenly spaced along the route polyline between two known stops
 const interpolated = interpolateStops(data.lines, path.join(ROOT, 'data', 'shapes'));
-// "Via Aeroporto"-style notes: where the place lies in each direction (the app inserts it for the trips with the note)
-const viaPlaces = addViaPlaces(data.lines, osm, osmPlaces, JSON.parse(await readFile(path.join(ROOT, 'data', 'via-places.json'), 'utf8')));
 // OSRM road routes (data/routes.json, `npm run fetch:routes`) for directions without a SIGA polyline
 const routed = attachRoutes(data.lines, ROOT);
+// "Via Aeroporto"-style notes: where the place lies in each direction (the app inserts it for the trips with the note); after the routes, whose polylines tell the stretch
+const viaPlaces = addViaPlaces(data.lines, osm, osmPlaces, JSON.parse(await readFile(path.join(ROOT, 'data', 'via-places.json'), 'utf8')), null, areas, path.join(ROOT, 'data', 'shapes'));
 // precision of every position (the OSM step already set settlement_center / exact for its stops)
 const precision = { exact: 0, interpolated: 0, settlement_center: 0, name_match: 0 };
 for (const l of data.lines) {
@@ -94,7 +94,7 @@ for (const l of data.lines) {
   }
 }
 console.log('OSRM routes attached to directions without a shape:', JSON.stringify(routed));
-console.log('"Via X" notes resolved to a place:', viaPlaces, data.lines.flatMap((l) => Object.entries(l.via ?? {}).map(([c, v]) => `${l.number}:${c}=${v.name}`)).join(' '));
+console.log('"Via X" notes resolved to a place:', viaPlaces, data.lines.flatMap((l) => Object.entries(l.via ?? {}).map(([c, v]) => `${l.number}:${c}=${v.map((x) => x.name).join('+')}`)).join(' '));
 console.log('texts cleaned (entities, capitals):', cleaned);
 console.log('reclassified urbano -> interurbano:', reclassified.length ? reclassified.join('; ') : 'none');
 console.log('stop coordinates matched by name:', coords.filled, '(still without coordinates:', coords.missing + ')');

@@ -81,8 +81,8 @@ export interface Line {
   generalNotes?: string[];
   dayLabels?: Partial<Record<DayKey, string>>;
   directions: Direction[];
-  /** "Via X" notes (key = note code) that name a place the trip calls at; `after[dirIndex]` = index of the stop it follows */
-  via?: Record<string, ViaPlace>;
+  /** "Via X" notes (key = legend code, or the note text itself in hand-made transcriptions) -> the places the trip calls at, in printed order; `after[dirIndex]` = index of the stop each follows */
+  via?: Record<string, ViaPlace[]>;
   /** operator outside SIGA (e.g. Horários do Funchal) and where its timetable was read */
   operator?: string;
   sourceUrl?: string;
@@ -96,6 +96,9 @@ export interface ViaPlace {
   lon: number;
   source: 'osm' | 'manual';
   after: Record<number, number>;
+  /** municipality and parish of the place (build:data), so the planner groups it with the stops of its parish */
+  muni?: string;
+  par?: string;
 }
 
 export interface Dataset {

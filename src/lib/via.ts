@@ -24,22 +24,29 @@ const placed = (s: Stop | undefined): s is Stop & { lat: number; lon: number } =
 
 export interface ViaCall {
   code: string;
+  /** index of the place within the note ("Via Ilha e St. António" has two) */
+  k: number;
   place: ViaPlace;
 }
 
-/** The "via" places a trip with `notes` calls at in direction `dirIndex`, per stop index they follow (nearest to that stop first). */
+/** The "via" places a trip with `notes` calls at in direction `dirIndex`, per stop index they follow (the places of one note in printed order, notes nearest to that stop first). */
 export function viaAt(line: Line, dirIndex: number, dir: Direction, notes: readonly string[] | undefined): Map<number, ViaCall[]> {
   const out = new Map<number, ViaCall[]>();
   if (!line.via || !notes?.length) return out;
   for (const code of notes) {
-    const place: ViaPlace | undefined = line.via[code];
-    const after = place?.after[dirIndex];
-    if (!place || after === undefined || !dir.stops[after]) continue;
-    (out.get(after) ?? out.set(after, []).get(after)!).push({ code, place });
+    (line.via[code] ?? []).forEach((place, k) => {
+      const after = place.after[dirIndex];
+      if (after === undefined || !dir.stops[after]) return;
+      (out.get(after) ?? out.set(after, []).get(after)!).push({ code, k, place });
+    });
   }
   for (const [after, list] of out) {
     const s = dir.stops[after];
-    if (placed(s)) list.sort((x, y) => km(s, x.place) - km(s, y.place));
+    if (!placed(s)) continue;
+    // different notes: nearest first; the places of one note keep the order the timetable prints (it is the order of the route)
+    const first = new Map<string, number>();
+    for (const c of list) first.set(c.code, Math.min(first.get(c.code) ?? Infinity, km(s, c.place)));
+    list.sort((x, y) => (x.code === y.code ? x.k - y.k : first.get(x.code)! - first.get(y.code)!));
   }
   return out;
 }
@@ -49,23 +56,39 @@ export function viaAt(line: Line, dirIndex: number, dir: Direction, notes: reado
  * in proportion to the distance. null when the trip has no time on one side (it does not run through that stretch).
  */
 export function viaMinutes(dir: Direction, after: number, place: { lat: number; lon: number }, times: readonly (number | null)[]): number | null {
+  return viaMinutesChain(dir, after, [place], times)[0];
+}
+
+/** Passing times of several places that follow the same stop, in the order given: proportional to the way travelled through them. */
+export function viaMinutesChain(dir: Direction, after: number, places: readonly { lat: number; lon: number }[], times: readonly (number | null)[]): (number | null)[] {
   let a = after;
   while (a >= 0 && times[a] == null) a--;
   let b = after + 1;
   while (b < dir.stops.length && times[b] == null) b++;
   const sa = dir.stops[a];
   const sb = dir.stops[b];
-  if (a < 0 || b >= dir.stops.length || !placed(sa) || !placed(sb)) return null;
-  const d1 = km(sa, place);
-  const d2 = km(sb, place);
+  if (a < 0 || b >= dir.stops.length || !placed(sa) || !placed(sb)) return places.map(() => null);
+  const way = [sa, ...places, sb];
+  const cum = [0];
+  for (let i = 1; i < way.length; i++) cum.push(cum[i - 1] + km(way[i - 1], way[i]));
   const t1 = times[a]!;
   let t2 = times[b]!;
   if (t2 < t1) t2 += 1440;
-  return Math.round(t1 + ((t2 - t1) * d1) / (d1 + d2 || 1));
+  return places.map((_, i) => Math.round(t1 + ((t2 - t1) * cum[i + 1]) / (cum[way.length - 1] || 1)));
 }
 
 /** The stop objects of an inserted via place. */
-export const viaStop = (p: ViaPlace): Stop => ({ code: null, name: p.name, lat: p.lat, lon: p.lon, approx: true, locationPrecision: 'exact', via: true });
+export const viaStop = (p: ViaPlace): Stop => ({
+  code: null,
+  name: p.name,
+  lat: p.lat,
+  lon: p.lon,
+  approx: true,
+  locationPrecision: 'exact',
+  via: true,
+  ...(p.muni ? { muni: p.muni } : {}),
+  ...(p.par ? { par: p.par } : {}),
+});
 
 /**
  * The stops of `dir` as shown for a trip with `notes`; `times` = passing time at every stop of `dir` (null = none).
@@ -83,12 +106,13 @@ export function withVia(line: Line, dirIndex: number, dir: Direction, notes: rea
     stops.push(s);
     srcIdx.push(i);
     viaTimes.push(null);
-    for (const { place } of inserts.get(i) ?? []) {
-      const m = viaMinutes(dir, i, place, mins);
+    const calls = inserts.get(i) ?? [];
+    const ms = viaMinutesChain(dir, i, calls.map((c) => c.place), mins);
+    calls.forEach(({ place }, j) => {
       stops.push(viaStop(place));
       srcIdx.push(null);
-      viaTimes.push(m === null ? null : fmtMinutes(m % 1440));
-    }
+      viaTimes.push(ms[j] === null ? null : fmtMinutes(ms[j]! % 1440));
+    });
   });
   return { stops, srcIdx, viaTimes };
 }

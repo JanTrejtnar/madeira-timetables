@@ -259,7 +259,7 @@ describe.skipIf(!existsSync(file))('GTFS coordinates and municipality search (re
       expect(first.group, q).toBe(true);
       expect(first.key, q).toBe(key);
     }
-    for (const q of ['funchal', 'santana', 'calheta', 'machico', 'faial']) expect(suggest(net, data.lines, q).some((x) => x.key.startsWith('@muni:')), q).toBe(false);
+    for (const q of ['santana', 'calheta', 'machico', 'faial']) expect(suggest(net, data.lines, q).some((x) => x.key.startsWith('@muni:')), q).toBe(false);
     expect(suggest(net, data.lines, 'pinga')[0].group).toBeFalsy();
   });
   it('the Santana group holds the stops of the parish Santana only, not Faial, Arco de São Jorge or São Jorge', () => {
@@ -301,15 +301,72 @@ describe.skipIf(!existsSync(file))('GTFS coordinates and municipality search (re
     }
   });
   it('every resolvable "Via X" note is a place on its lines, and corridors (Via Rápida) are not', () => {
-    const vias = data.lines.flatMap((l) => Object.entries(l.via ?? {}).map(([c, v]) => ({ l, c, v })));
+    const vias = data.lines.flatMap((l) => Object.entries(l.via ?? {}).flatMap(([c, list]) => list.map((v) => ({ l, c, v }))));
     expect(vias.length).toBeGreaterThanOrEqual(35);
     const names = new Set(vias.map((x) => x.v.name));
     for (const n of ['Aeroporto', 'Bemposta', 'Estádio da Madeira', 'Alto Lido', 'Fajã dos Rolos', 'Eira do Serrado']) expect(names.has(n), n).toBe(true);
     for (const { l, c, v } of vias) {
-      expect(l.notes[c], `${l.number}:${c}`).toMatch(/^\s*via\s/i);
-      expect(l.notes[c]).not.toMatch(/r[aá]pida|expresso/i);
+      const text = l.notes[c] ?? c; // free-text notes of hand-made transcriptions are their own key
+      expect(text, `${l.number}:${c}`).toMatch(/(^|\.\s+)via\s/i);
+      expect(text).not.toMatch(/r[aá]pida|expresso/i);
       expect(Object.keys(v.after).length).toBeGreaterThan(0);
     }
+  });
+  it('multi-place Via notes of the Santana network (56 / 103 / 138) are split at commas and "e" and every place is resolved', () => {
+    const l103 = data.lines.find((l) => l.number === '103')!;
+    const names = (note: string) => l103.via![note].map((p) => p.name);
+    expect(names('Via Ilha e St. António')).toEqual(['Ilha', 'Santo António']);
+    expect(names('Via Cº Chão, Silveira, A. Marques e Ilha')).toEqual(['Caminho Chão', 'Silveira', 'Achada do Marques', 'Ilha']);
+    for (const n of ['56', '103', '138']) {
+      const l = data.lines.find((x) => x.number === n)!;
+      const all = Object.values(l.via ?? {}).flat();
+      expect(all.some((p) => p.name === 'Ilha' && p.par === 'Ilha'), n).toBe(true);
+      expect(all.some((p) => p.name === 'Silveira'), n).toBe(true);
+    }
+    // Ilha is the village at its church, between Santana and São Jorge (outbound) and between São Jorge and Santana (back)
+    const ilha = l103.via!['Via Ilha e St. António'][0];
+    expect(Math.hypot((ilha.lat - 32.8112) * 111000, (ilha.lon + 16.9115) * 93500)).toBeLessThan(150);
+    const st = (d: number, i: number) => l103.directions[d].stops[i].name;
+    expect(st(0, l103.via!['Via St. António e Ilha'][1].after[0])).toBe('Santana');
+    expect(st(1, ilha.after[1])).toBe('São Jorge');
+  });
+  it('withVia lists both places of "Via St. António e Ilha" in printed order with rising times', () => {
+    const l = data.lines.find((x) => x.number === '103')!;
+    const trip = l.directions[0].trips!.find((t) => t.notes?.includes('Via St. António e Ilha'))!;
+    const r = withVia(l, 0, l.directions[0], trip.notes, trip.times);
+    const at = r.stops.map((s) => s.name);
+    expect(at.indexOf('Santo António')).toBeGreaterThan(at.indexOf('Faial'));
+    expect(at.indexOf('Santo António')).toBeLessThan(at.indexOf('Santana'));
+    expect(at.indexOf('Ilha')).toBeGreaterThan(at.indexOf('Santana'));
+    expect(at.indexOf('Ilha')).toBeLessThan(at.indexOf('São Jorge'));
+    expect(r.viaTimes[at.indexOf('Santo António')]! < r.viaTimes[at.indexOf('Ilha')]!).toBe(true);
+  });
+  it('planner: "Ilha (all stops)" exists and Ilha -> Funchal offers only the 56 / 103 / 138 trips with Via Ilha, from Ilha', () => {
+    const g = suggest(net, data.lines, 'ilha').find((x) => x.group && x.name === 'Ilha');
+    expect(g, 'Ilha group').toBeTruthy();
+    expect(g!.key).toBe('@par:Ilha');
+    const ids = resolveNodes(net, '', g!.key);
+    expect(ids.size).toBeGreaterThanOrEqual(1);
+    for (const id of ids) expect(net.nodes[id].par).toBe('Ilha');
+    const trips = servicesFor(net, data.lines, { y: 2026, m: 10, d: 24 }, true, ['Funchal']); // a Saturday
+    const p = plan(net, trips, ids, resolveNodes(net, 'Funchal', null), 6 * 60);
+    expect(p.direct.length).toBeGreaterThan(0);
+    for (const x of p.direct) {
+      const leg = x.legs[0];
+      expect(net.nodes[leg.trip.nodes[leg.fromPos]].par).toBe('Ilha');
+      expect(['56', '103', '138']).toContain(leg.trip.line.number);
+      expect(leg.trip.notes?.some((n) => /ilha/i.test(n)), leg.trip.line.number).toBe(true);
+    }
+  });
+  it('Funchal is the one city group: all its parishes, in addition to the parish groups of the countryside', () => {
+    const s = suggest(net, data.lines, 'funchal');
+    expect(s.find((x) => x.key === '@muni:Funchal')?.group).toBe(true);
+    const ids = resolveNodes(net, '', '@muni:Funchal');
+    expect(ids.size).toBeGreaterThan(100);
+    expect(new Set([...ids].map((id) => net.nodes[id].par)).size).toBeGreaterThanOrEqual(5);
+    for (const id of ids) expect(net.nodes[id].muni).toBe('Funchal');
+    const trips = servicesFor(net, data.lines, { y: 2026, m: 10, d: 19 }, true, ['Funchal']);
+    expect(plan(net, trips, ids, resolveNodes(net, '', '@par:Santana'), 7 * 60).direct.length).toBeGreaterThan(0);
   });
   it('direction variants are translated', () => {
     expect(variantLabel('up', 'cs')).toBe('Nahoru');
@@ -569,12 +626,12 @@ describe.skipIf(!existsSync(file))('manual overrides, generated routes and "Via"
   });
   it('208 note "a" = Via Aeroporto is a real place between Funchal and Machico; "Via Rápida" is not', () => {
     expect(l208.notes.a).toMatch(/aeroporto/i);
-    const v = l208.via!.a;
+    const v = l208.via!.a[0];
     expect(v.name).toBe('Aeroporto');
     expect(m([v.lat, v.lon], [32.693, -16.775])).toBeLessThan(500);
     const di = l208.directions.findIndex((d) => d.stops[0].name === 'Funchal' && d.stops[1].name === 'Machico');
     expect(v.after[di]).toBe(0);
-    for (const l of data.lines) for (const x of Object.values(l.via ?? {})) expect(x.name).not.toMatch(/r[aá]pida/i);
+    for (const l of data.lines) for (const x of Object.values(l.via ?? {}).flat()) expect(x.name).not.toMatch(/r[aá]pida/i);
     expect(data.lines.find((l) => l.number === '139')!.via).toBeUndefined();
   });
   it('withVia inserts the airport into the 17:00 trip of 208 only, with a time between Funchal and Machico', () => {

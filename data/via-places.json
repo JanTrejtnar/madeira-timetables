@@ -187,6 +187,58 @@
       "lat": 32.731757,
       "lon": -16.970856,
       "label": "Fajã Escura, Curral das Freiras (OSM hamlet)"
-    }
+    },
+    "ilha": {
+      "name": "Ilha",
+      "lat": 32.811175,
+      "lon": -16.911526,
+      "label": "Igreja da Ilha, Ilha, Santana (OSM, Nominatim)"
+    },
+    "st antonio": {
+      "name": "Santo António",
+      "lat": 32.80799,
+      "lon": -16.872233,
+      "label": "Santo António, Santana (OSM neighbourhood); the timetable prints \"St. António\""
+    },
+    "l galego": {
+      "name": "Lombo do Galego",
+      "lat": 32.773235,
+      "lon": -16.874181,
+      "label": "Lombo do Galego, Santana (OSM village); the timetable prints \"Lº Galego\""
+    },
+    "c chao": {
+      "name": "Caminho Chão",
+      "lat": 32.814289,
+      "lon": -16.887645,
+      "label": "Caminho Chão, Pico do Tanoeiro, Santana (OSM stop); the timetable prints \"Cº Chão\""
+    },
+    "a marques": {
+      "name": "Achada do Marques",
+      "lat": 32.79838,
+      "lon": -16.908345,
+      "label": "Achada do Marques, Santana (OSM village); the timetable prints \"A. Marques\""
+    },
+    "ach c gordo": {
+      "name": "Achada do Cedro Gordo",
+      "lat": 32.752937,
+      "lon": -16.87072,
+      "label": "Achada do Cedro Gordo, Santana (OSM locality); the timetable prints \"Ach. C. Gordo\""
+    },
+    "silveira": [
+      {
+        "name": "Silveira",
+        "lat": 32.80216,
+        "lon": -16.895225,
+        "label": "Silveira, Santana (OSM neighbourhood)",
+        "muni": "Santana"
+      },
+      {
+        "name": "Silveira",
+        "lat": 32.814811,
+        "lon": -16.96438,
+        "label": "Silveira, São Vicente (OSM locality)",
+        "muni": "São Vicente"
+      }
+    ]
   }
 }

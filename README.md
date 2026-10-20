@@ -86,11 +86,12 @@ cache, offline reload and "stops near me" against `npx vite preview --port 4173`
 - `npm run fetch:gtfs` downloads https://www.horariosdofunchal.pt/googletransit.zip and keeps the stops in `data/gtfs/stops.json` (committed, so `build:data` works offline).
 - `build:data` matches SIGA stops to feed stops by stop code and takes the official position (fills missing ones, replaces SIGA's when within 150 m or when ours was only approximate); feed stop names also feed the name matching for text-only lines.
 - Every stop gets a municipality (`muni`): nearest reference point (feed stops labelled by the operator + parish seats), else a locality/town named in the stop name, else the neighbouring stops of the direction. Only an approximation by position – borders are not exact.
-- The planner suggests "<parish> (all stops)" first; the search then runs from/to every stop of that parish (freguesia). Municipalities are not groups: Santana spans Faial, São Jorge or Arco de São Jorge, valleys apart.
+- The planner suggests "<parish> (all stops)" first; the search then runs from/to every stop of that parish (freguesia). Municipalities are not groups: Santana spans Faial, São Jorge or Arco de São Jorge, valleys apart. The one exception is Funchal: "Funchal (all stops)" covers every stop of the municipality (Sé, São Martinho, Santa Luzia ...), because people look for the town, not for its parishes.
 
 ## "Via X" notes
 
 - `npm run audit:via` lists every "Via ..." note of every timetable and why it is (not) a stop of the trips: `resolved` (position known, inserted into the trips carrying the note), `corridor` (Via Rápida / Expresso: label only), `no-stop-list` (the line has no parsed stop list), `already-a-stop`, `off-route`, `no-position`, `not-a-place` (several places or a street list).
+- A note may name several places ("Via Ilha e St. António", "Via Cº Chão, Silveira, A. Marques e Ilha"): the text after "Via" is split at commas and "e", each place is resolved on its own and inserted in the printed order. Hand-made transcriptions (`data/manual/`) keep such notes as free text on the trip, so the text itself is the key (`line.via[text]`). Abbreviations (St. = Santo, Lº = Lombo do, Cº = Caminho, Ach. = Achada) are keys of `data/via-places.json`. With a route polyline the place goes to the stretch of road nearest to it; a place inserted this way also carries its parish, so "Ilha (all stops)" contains it.
 - Positions: OSM names, else `data/via-places.json` (hand-placed; a key may list namesakes, the one on the route is used).
 
 ## OpenStreetMap stops, parishes, map picking

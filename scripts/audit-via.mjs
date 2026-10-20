@@ -5,13 +5,14 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { addViaPlaces } from './lib-via.mjs';
+import { prepareAreas } from './lib-areas.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const rd = async (f) => JSON.parse(await readFile(path.join(ROOT, f), 'utf8'));
 const data = await rd('public/data/schedules.json');
 const report = [];
 for (const l of data.lines) delete l.via;
-addViaPlaces(data.lines, await rd('data/osm/stops.json'), (await rd('data/osm/places.json')).places, await rd('data/via-places.json'), report);
+addViaPlaces(data.lines, await rd('data/osm/stops.json'), (await rd('data/osm/places.json')).places, await rd('data/via-places.json'), report, prepareAreas(await rd('data/osm/areas.json')), path.join(ROOT, 'data', 'shapes'));
 
 const byStatus = {};
 const places = new Map();
