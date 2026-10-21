@@ -34,6 +34,18 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   const [failed, setFailed] = useState(false);
   const [sel, setSel] = useState<Selection>(null);
   const [hidden, setHidden] = useState<ReadonlySet<OperatorId>>(new Set());
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    if (!full) return;
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && setFull(false);
+    document.addEventListener('keydown', key);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', key);
+      document.body.style.overflow = prev;
+    };
+  }, [full]);
   const selRef = useRef(setSel);
   selRef.current = setSel;
 
@@ -257,7 +269,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   const picked = sel?.kind === 'line' ? lineById.get(sel.id) : null;
 
   return (
-    <div className="relative h-full w-full" data-testid="network-map">
+    <div className={full ? 'fixed inset-0 z-1000 bg-white dark:bg-slate-950' : 'relative h-full w-full'} data-testid="network-map">
       <div ref={el} className="isolate size-full bg-slate-200 dark:bg-slate-800" style={{ touchAction: touch ? 'none' : undefined }} />
       <div className="pointer-events-none absolute left-3 top-3 z-500 flex max-w-[calc(100%-4.5rem)] flex-wrap gap-1.5" data-testid="network-legend">
         {OPERATORS.map((o) => {
@@ -288,6 +300,18 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
           <circle cx="12" cy="12" r="7" />
           <circle cx="12" cy="12" r="2" fill="currentColor" />
           <path d="M12 1v4M12 19v4M1 12h4M19 12h4" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={() => setFull((v) => !v)}
+        aria-label={full ? t('mapExitFullscreen') : t('mapFullscreen')}
+        title={full ? t('mapExitFullscreen') : t('mapFullscreen')}
+        data-testid="map-fullscreen"
+        className="absolute right-3 top-16 z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700"
+      >
+        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          {full ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
         </svg>
       </button>
       {failed && <p className="absolute bottom-4 left-4 z-500 rounded-xl bg-white/95 px-3 py-2 text-xs text-amber-700 shadow-md dark:bg-slate-900/95 dark:text-amber-300">{t('mapUnavailable')}</p>}

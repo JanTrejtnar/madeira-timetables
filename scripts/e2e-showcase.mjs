@@ -227,6 +227,13 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await clickTab(page, 'Mapa');
   await sleep(1500);
   check('the network map draws lines on a canvas, not thousands of SVG paths', await page.evaluate(() => !!document.querySelector('[data-testid=network-map] canvas') && document.querySelectorAll('[data-testid=network-map] svg path').length < 20));
+  await page.click('[data-testid=network-map] [data-testid=map-fullscreen]');
+  await sleep(500);
+  const fs = await page.evaluate(() => { const r = document.querySelector('[data-testid=network-map]').getBoundingClientRect(); return r.width === innerWidth && r.height === innerHeight && r.top === 0; });
+  check('the network map has a fullscreen button that fills the screen', fs);
+  await page.click('[data-testid=network-map] [data-testid=map-fullscreen]');
+  await sleep(400);
+  check('...and it closes again', await page.evaluate(() => document.querySelector('[data-testid=network-map]').getBoundingClientRect().height < innerHeight));
   check('no page errors', errors.length === 0, errors.join('; '));
   await page.close();
 }

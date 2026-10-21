@@ -125,7 +125,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
   const clickRef = useRef(onStopClick);
   clickRef.current = onStopClick;
   // inline maps: one finger moves the map (the page scrolls outside it), the corner button opens it full screen
-  const canFull = !fill;
+  const canFull = true;
   const [full, setFull] = useState(false);
   useEffect(() => {
     if (!full) return;
@@ -279,7 +279,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
           aria-label={full ? t('mapExitFullscreen') : t('mapFullscreen')}
           title={full ? t('mapExitFullscreen') : t('mapFullscreen')}
           data-testid="map-fullscreen"
-          className={`absolute z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700 ${full ? 'right-3 top-[max(0.75rem,env(safe-area-inset-top))]' : 'right-3 top-3'}`}
+          className={`absolute z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700 ${full ? 'right-3 top-[max(0.75rem,env(safe-area-inset-top))]' : onLocate ? 'right-3 top-16' : 'right-3 top-3'}`}
         >
           <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             {full ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
