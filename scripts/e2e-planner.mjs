@@ -91,28 +91,35 @@ async function run(label, viewport) {
   await page.keyboard.press('Enter');
   await page.keyboard.press('Escape');
   await sleep(1500);
+  const listWalk = await page.evaluate(() => document.querySelector('[data-testid=connection] [data-testid=walk-out]')?.innerText);
+  check(`${label}: the result card ends with the walk "Chůze N m · N min"`, /Chůze \d+ m · \d+ min/.test(listWalk ?? ''), listWalk);
+  await page.evaluate(() => document.querySelector('[data-testid=connection]')?.click());
+  await sleep(800);
   const walk = await page.evaluate(() => document.querySelector('[data-testid=walk-out]')?.innerText);
-  check(`${label}: itinerary ends with "Chůze k cíli: N m (~N min)"`, /Chůze k cíli: \d+ m \(~\d+ min\)/.test(walk ?? ''), walk);
+  check(`${label}: the connection detail ends with "Chůze k cíli: N m (~N min)"`, /Chůze k cíli: \d+ m \(~\d+ min\)/.test(walk ?? ''), walk);
   const pins = await page.evaluate(() => document.querySelectorAll('.picked-pin').length);
   check(`${label}: the red pin stays on the map with the itinerary`, pins >= 1, String(pins));
   check(`${label}: the picked point is kept in the URL`, /[?&]tp=3\d\.\d+(,|%2C)-1\d\.\d+/.test(await page.evaluate(() => location.search)));
   await page.reload({ waitUntil: 'networkidle0' });
   await sleep(1200);
+  await page.evaluate(() => document.querySelector('[data-testid=connection]')?.click());
+  await sleep(800);
   check(`${label}: pin and walk survive a reload`, (await page.$('[data-testid=walk-out]')) !== null && (await page.$$('.picked-pin')).length >= 1);
+  await page.evaluate(() => document.querySelector('[data-testid=connection-back]')?.click());
+  await sleep(300);
   // a start point picked 1 km from the stop: no offered bus may leave before the walk is over
   const u = new URL(await page.evaluate(() => location.href));
   u.searchParams.set('fp', '32.6600,-16.9300');
   u.searchParams.set('time', '08:00');
   await page.goto(u.href, { waitUntil: 'networkidle0' });
   await sleep(1500);
-  const cards = await page.evaluate(() => [...document.querySelectorAll('[data-testid=walk-in]')].map((w) => {
-    const card = w.closest('div.border-t')?.parentElement;
-    const m = /na zastávce v (\d\d:\d\d)/.exec(w.innerText);
-    const dep = /^\s*(\d\d:\d\d)/.exec(card?.querySelector('button')?.innerText ?? '');
-    return { at: m?.[1], dep: dep?.[1], text: w.innerText };
+  const cards = await page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].map((card) => {
+    const w = card.querySelector('[data-testid=walk-in]');
+    const dep = /(\d\d:\d\d)/.exec(card.innerText.replace(w?.innerText ?? '', '').replace(card.querySelector('[data-testid=connection-date]')?.innerText ?? '', ''));
+    return { walk: Number(/· (\d+) min/.exec(w?.innerText ?? '')?.[1]), dep: dep?.[1], text: w?.innerText };
   }));
   const hm = (x) => (x ? Number(x.slice(0, 2)) * 60 + Number(x.slice(3)) : NaN);
-  check(`${label}: walking from a picked start point shows the walk and no missed bus`, cards.length > 0 && cards.every((c) => hm(c.dep) >= hm(c.at) && hm(c.at) > 8 * 60), JSON.stringify(cards.slice(0, 3)));
+  check(`${label}: walking from a picked start point shows the walk and no missed bus`, cards.length > 0 && cards.every((c) => c.walk > 0 && hm(c.dep) >= 8 * 60 + c.walk), JSON.stringify(cards.slice(0, 3)));
   await page.evaluate(() => { const i = document.querySelector('input[aria-label="Kam"]'); i.focus(); });
 
   // 7. any date + holiday detection
@@ -142,7 +149,9 @@ async function run(label, viewport) {
   await sleep(900);
   const before = { from: await value('Odkud'), to: await value('Kam'), url: await page.evaluate(() => location.search) };
   check(`${label}: the form is mirrored into the URL`, /from=/.test(before.url) && /to=/.test(before.url) && /date=2026-12-09/.test(before.url), before.url);
-  const opened = await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /→|Přímá/.test('') || x.querySelector('svg') && /\d+ zast/.test(x.innerText)); b?.click(); return !!b; });
+  await page.evaluate(() => document.querySelector('[data-testid=connection]')?.click());
+  await sleep(500);
+  const opened = await page.evaluate(() => { const b = document.querySelector('[data-testid=open-leg]'); b?.click(); return !!b; });
   await sleep(700);
   check(`${label}: a line detail opened from a result`, opened && /#\/line\//.test(await page.evaluate(() => location.hash)), await page.evaluate(() => location.hash));
   // 8. detail order: stops (with times) before the map, notes last
@@ -155,6 +164,9 @@ async function run(label, viewport) {
   check(`${label}: line detail lists the stops before the map`, iStops >= 0 && (iMap < 0 || iStops < iMap), JSON.stringify(order));
   await page.evaluate(() => history.back());
   await sleep(700);
+  // Back from a line returns to the connection detail it was opened from; one more step back reaches the list
+  await page.evaluate(() => document.querySelector('[data-testid=connection-back]')?.click());
+  await sleep(300);
   const after = { from: await value('Odkud'), to: await value('Kam'), url: await page.evaluate(() => location.search), date: await page.evaluate(() => document.querySelector('[data-testid=date-trigger]')?.dataset.value) };
   check(`${label}: Back restores Odkud / Kam / date`, after.from === before.from && after.to === before.to && after.date === '2026-12-09', JSON.stringify(after));
   const times = (await text()).match(/\d\d:\d\d/g)?.length ?? 0;

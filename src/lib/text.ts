@@ -23,3 +23,11 @@ const LOCAL_NAMES: Record<string, Record<'cs' | 'en' | 'pt', string>> = {
 export function localStopName(name: string, lang: 'cs' | 'en' | 'pt'): string {
   return LOCAL_NAMES[name.trim().toLowerCase()]?.[lang] ?? name;
 }
+
+/** The Funchal bus terminals share the stop name "Funchal"; the terminal tells them apart ("Funchal (CAM)"). */
+const TERMINALS: Record<string, string> = { rodoeste: 'Rodoeste', teleferico: 'Teleférico', sam: 'SAM', cam: 'CAM' };
+export function stopLabel(stop: { name: string; terminal?: string }, lang: 'cs' | 'en' | 'pt'): string {
+  const name = localStopName(stop.name, lang);
+  const terminal = stop.terminal ? TERMINALS[stop.terminal] : undefined;
+  return terminal && stop.name.trim().toLowerCase() === 'funchal' ? `${name} (${terminal})` : name;
+}

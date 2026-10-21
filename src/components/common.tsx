@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { assetUrl } from '../data';
 import { useT } from '../i18n';
 import type { Network } from '../lib/network';
@@ -12,12 +12,21 @@ import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
 import type { Direction, Line, MapLayer, Stop } from '../types';
 import { Icon, type IconName } from './Icons';
 
+/** What the planner knows about the ends of a ridden leg: the picked point to walk from / to, or `true` when the boarding / alighting stop itself is the start / destination. */
+export interface RideEnds {
+  start?: { lat: number; lon: number } | true;
+  end?: { lat: number; lon: number } | true;
+}
+
 export interface Shared {
   ctx: Ctx;
   lines: Line[];
   net: Network;
   /** `ride`: stop indices (of the direction's stop list) where the traveller gets on and off; the line card shows that stretch */
-  openLine: (id: number, dirIndex?: number, ride?: { from: number; to: number }) => void;
+  openLine: (id: number, dirIndex?: number, ride?: { from: number; to: number }, ends?: RideEnds) => void;
+  /** key of the connection opened in the planner's detail page (null = the list); kept here so it survives a trip to the line detail and back */
+  openConn: string | null;
+  setOpenConn: (key: string | null) => void;
   /** true when the side-by-side layout with the big map is active */
   desktop: boolean;
   /** shows routes on the big desktop map (null clears it) */
@@ -129,18 +138,39 @@ export function SectionTitle({ children, aside }: { children: ReactNode; aside?:
 }
 
 export function SearchInput({ value, onChange, placeholder, autoFocus = false }: { value: string; onChange: (v: string) => void; placeholder: string; autoFocus?: boolean }) {
+  const { t } = useT();
+  const input = useRef<HTMLInputElement>(null);
   return (
     <label className="relative block">
       <Icon name="search" className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
       <input
-        type="search"
+        ref={input}
+        type="text"
+        inputMode="search"
+        enterKeyHint="search"
+        autoComplete="off"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
         autoFocus={autoFocus}
-        className="h-12 w-full rounded-2xl border border-slate-200/70 bg-white pl-11 pr-4 text-base outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-500/15 dark:border-slate-700/70 dark:bg-slate-900"
+        className="h-12 w-full rounded-2xl border border-slate-200/70 bg-white pl-11 pr-12 text-base outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-500/15 dark:border-slate-700/70 dark:bg-slate-900"
       />
+      {value && (
+        <button
+          type="button"
+          onClick={() => {
+            onChange('');
+            input.current?.focus();
+          }}
+          aria-label={t('clearText')}
+          title={t('clearText')}
+          data-testid="clear-search"
+          className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+        >
+          <Icon name="close" className="size-4" strokeWidth={2.25} />
+        </button>
+      )}
     </label>
   );
 }

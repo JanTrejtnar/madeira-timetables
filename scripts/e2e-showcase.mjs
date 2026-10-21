@@ -85,7 +85,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await sleep(2500);
   const body = await page.evaluate(() => document.body.innerText);
   check('Funchal -> Cabo Girão (place): connections are found', (body.match(/\d\d:\d\d/g) ?? []).length >= 4, (body.match(/\d\d:\d\d/g) ?? []).length + ' times');
-  check('the walk from the last stop to the place is shown', /Chůze k cíli: \d+ m/.test(body), body.match(/Chůze k cíli[^\n]*/)?.[0] ?? 'missing');
+  check('the walk from the last stop to the place is shown', /Chůze \d+ m · \d+ min/.test(body), body.match(/Chůze \d[^\n]*/)?.[0] ?? 'missing');
   check('the walking route was requested from the foot router', footRequests.length > 0, footRequests[0]?.slice(0, 120) ?? 'no request');
   const walkDrawn = await page.evaluate(() => [...document.querySelectorAll('.leaflet-overlay-pane path')].some((p) => p.getAttribute('stroke-dasharray') === '1 7'));
   check('the walk is drawn along the streets (dotted street route, not the straight dashed line)', walkDrawn);
@@ -123,7 +123,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await clickOption(page, /Cabo Girão/);
   await sleep(2500);
   const body = await page.evaluate(() => document.body.innerText);
-  check('foot router unreachable: connections and the straight-line walk are still shown', /Chůze k cíli: \d+ m/.test(body) && (body.match(/\d\d:\d\d/g) ?? []).length >= 4);
+  check('foot router unreachable: connections and the straight-line walk are still shown', /Chůze \d+ m · \d+ min/.test(body) && (body.match(/\d\d:\d\d/g) ?? []).length >= 4);
   const dashed = await page.evaluate(() => [...document.querySelectorAll('.leaflet-overlay-pane path')].some((p) => p.getAttribute('stroke-dasharray') === '5 7'));
   check('...and the walk is drawn as the straight dashed line', dashed);
   check('no page errors', errors.length === 0, errors.join('; '));
@@ -135,7 +135,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   const { page, errors } = await open({ width: 1280, height: 900 });
   const hasMap = await page.evaluate(() => !!document.querySelector('[data-testid=network-map] canvas') && !document.querySelector('[data-testid=planner-map]'));
   check('desktop: the idle map shows the whole network on a canvas', hasMap);
-  const legend = await page.evaluate(() => [...document.querySelectorAll('[data-testid=network-legend] button')].map((b) => b.innerText.trim()));
+  const legend = await page.evaluate(() => [...document.querySelectorAll('[data-testid=network-legend] > span')].map((b) => b.innerText.trim()));
   check('the legend names the four operators', legend.join('|') === 'Horários do Funchal|Rodoeste|SAM|CAM / EACL', legend.join('|'));
   // tap Machico (a terminal of many lines): its pixel from the Web Mercator maths at the initial view
   const line701 = data.lines.find((l) => l.number === '701');
@@ -192,7 +192,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   check('"(všechny zastávky)" is a small light qualifier beside the field, the field holds the name', await page.evaluate(() => {
     const i = document.querySelector('input[aria-label="Odkud"]');
     const s = document.querySelector('[data-testid=group-suffix]');
-    return i.value === 'Funchal' && !!s && /všechny zastávky/.test(s.textContent) && getComputedStyle(s).fontSize === '12px';
+    return i.value === 'Funchal' && !!s && /všechny zastávky/.test(s.textContent) && getComputedStyle(s).fontSize === '11px';
   }));
   await typeIn(page, 'Kam', 'Cabo Gir');
   await clickOption(page, /Cabo Girão/);
@@ -202,8 +202,12 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   const pins = await page.evaluate(() => [...document.querySelectorAll('.picked-pin')].map((p) => p.textContent.trim()).sort().join(','));
   check('the map shows both the start (A) and the destination (B) marker', pins === 'A,B', pins);
   check('the map base is the darkened OpenStreetMap (no API key)', await page.evaluate(() => [...document.querySelectorAll('img.leaflet-tile')].some((i) => /tile\.openstreetmap\.org/.test(i.src) && !!i.closest('.leaflet-layer.dark-tiles'))));
-  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /^\s*\d+\s/.test(b.innerText) && b.className.includes('rounded-xl') && b.querySelector('svg'))?.click());
-  await sleep(900);
+  await page.evaluate(() => document.querySelector('[data-testid=connection]')?.click());
+  await sleep(500);
+  await page.evaluate(() => document.querySelector('[data-testid=open-leg]')?.click());
+  await sleep(1200);
+  const linePins = await page.evaluate(() => [...document.querySelectorAll('.picked-pin')].map((p) => p.textContent.trim()).sort().join(','));
+  check('the line detail map shows the start (A) and destination (B) of the search', linePins === 'A,B', linePins);
   const ride = await page.evaluate(() => {
     const rows = [...document.querySelectorAll('li[data-ride]')];
     return { n: rows.length, off: rows.filter((r) => r.dataset.ride === 'off').length, ends: rows.filter((r) => r.dataset.ride === 'end').length, faded: rows.filter((r) => r.dataset.ride === 'off').every((r) => r.className.includes('opacity-40')), hash: location.hash };
@@ -234,6 +238,84 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await page.click('[data-testid=network-map] [data-testid=map-fullscreen]');
   await sleep(400);
   check('...and it closes again', await page.evaluate(() => document.querySelector('[data-testid=network-map]').getBoundingClientRect().height < innerHeight));
+  check('no page errors', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+
+// ---- 9. settings, language dropdown, clear buttons, IDOS-style results
+{
+  const { page, errors } = await open({ width: 390, height: 844, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  const head = await page.evaluate(() => document.querySelector('header').innerText);
+  check('the header has no school switch and no Now / +15 min chips', !/Školní (období|prázdniny)/.test(head) );
+  await typeIn(page, 'Odkud', 'Funchal');
+  await clickOption(page, /všechny zastávky/);
+  check('the planner has no Now / +15 min / +30 min / +1 hour chips', !/Nyní|\+15 min|\+30 min|\+1 hodina/.test(await page.evaluate(() => document.body.innerText)));
+  check('clear button in a filled planner field empties it', await (async () => {
+    await page.click('[data-testid=clear-input]');
+    return (await page.evaluate(() => document.querySelector('input[aria-label="Odkud"]').value)) === '';
+  })());
+  await typeIn(page, 'Odkud', 'Funchal');
+  await clickOption(page, /všechny zastávky/);
+  await typeIn(page, 'Kam', 'Cabo Gir');
+  await clickOption(page, /Cabo Girão/);
+  await sleep(2000);
+  const cards = await page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].map((c) => ({ date: c.querySelector('[data-testid=connection-date]')?.innerText, text: c.innerText.replace(/\s+/g, ' ') })));
+  check('every result card shows its date', cards.length > 0 && cards.every((c) => /\d{1,2}\. ?\d{1,2}\./.test(c.date ?? '')), JSON.stringify(cards.slice(0, 2).map((c) => c.date)));
+  check('results from Funchal name the terminal, e.g. "Funchal (Rodoeste)"', cards.some((c) => /Funchal \((Rodoeste|CAM|SAM|Teleférico)\)/.test(c.text)), cards[0]?.text);
+  await page.evaluate(() => document.querySelector('[data-testid=connection]').click());
+  await sleep(1200);
+  const det = await page.evaluate(() => ({
+    back: !!document.querySelector('[data-testid=connection-back]'),
+    form: !!document.querySelector('input[aria-label="Odkud"]'),
+    fold: !!document.querySelector('[data-testid=toggle-stops]'),
+    mid: document.querySelectorAll('[data-testid=mid-stops] li').length,
+    pins: [...document.querySelectorAll('.picked-pin')].map((p) => p.textContent.trim()).sort().join(','),
+    legs: document.querySelectorAll('[data-testid=open-leg]').length,
+  }));
+  check('a click on a result opens the connection detail (no form), with the map and A/B', det.back && !det.form && det.legs >= 1 && det.pins === 'A,B', JSON.stringify(det));
+  await page.evaluate(() => document.querySelector('[data-testid=toggle-stops]')?.click());
+  check('"Mezizastávky: N" unfolds the intermediate stops', (await page.evaluate(() => document.querySelectorAll('[data-testid=mid-stops] li').length)) > 0);
+  await page.evaluate(() => document.querySelector('[data-testid=open-leg]').click());
+  await sleep(1000);
+  check('a bus of the detail opens its line', /^#\/line\//.test(await page.evaluate(() => location.hash)));
+  await page.evaluate(() => history.back());
+  await sleep(700);
+  check('Back from the line returns to the connection detail', await page.evaluate(() => !!document.querySelector('[data-testid=connection-detail]')));
+  await page.evaluate(() => document.querySelector('[data-testid=connection-back]').click());
+  await sleep(300);
+  check('"Zpět na výsledky" returns to the list', (await page.$$('[data-testid=connection]')).length > 0);
+
+  // settings: the school switch and the build stamp live there
+  await page.click('[data-testid=open-settings]');
+  await sleep(300);
+  const set = await page.evaluate(() => ({
+    school: !!document.querySelector('[data-testid=settings] input[type=checkbox]'),
+    lastIsBuild: !!document.querySelector('[data-testid=settings] > p:last-child [data-testid=build-info]'),
+    info: document.querySelector('[data-testid=build-info]')?.closest('p')?.innerText.replace(/\s+/g, ' '),
+    inHeader: !!document.querySelector('header input[type=checkbox]'),
+  }));
+  check('settings: school switch inside, the data / build line is the last element, nothing in the header', set.school && set.lastIsBuild && !set.inHeader && /Data ze siga\.madeira\.gov\.pt, zpracováno \d{4}-\d\d-\d\d v\d+\.\d+\.\d+ · Build:/.test(set.info ?? ''), JSON.stringify(set));
+
+  // language dropdown with flags
+  await page.click('[data-testid=lang-menu] button');
+  const opts = await page.evaluate(() => [...document.querySelectorAll('[data-testid=lang-menu] [role=option]')].map((o) => ({ t: o.innerText.trim(), flag: !!o.querySelector('svg') })));
+  check('language dropdown lists three languages, each with a flag', opts.length === 3 && opts.every((o) => o.flag), JSON.stringify(opts));
+  await page.evaluate(() => [...document.querySelectorAll('[data-testid=lang-menu] [role=option] button')].find((b) => /English/.test(b.innerText))?.click());
+  await sleep(300);
+  check('choosing English switches the app', (await page.evaluate(() => document.documentElement.lang)) === 'en' && /School term|School holidays/.test(await page.evaluate(() => document.body.innerText)));
+  await page.click('[data-testid=lang-menu] button');
+  await page.evaluate(() => [...document.querySelectorAll('[data-testid=lang-menu] [role=option] button')].find((b) => /Čeština/.test(b.innerText))?.click());
+  await sleep(300);
+
+  // Linky search clear + the network map legend is a plain legend
+  await clickTab(page, 'Linky');
+  await sleep(300);
+  await page.type('input[aria-label]:not([type=checkbox])', 'Areeiro');
+  await page.click('[data-testid=clear-search]');
+  check('the Linky search has a clear button', (await page.evaluate(() => document.querySelector('input[type=text]').value)) === '');
+  await clickTab(page, 'Mapa');
+  await sleep(1200);
+  check('the network map legend is a small plain legend (no filter buttons)', await page.evaluate(() => !!document.querySelector('[data-testid=network-legend]') && document.querySelectorAll('[data-testid=network-legend] button').length === 0));
   check('no page errors', errors.length === 0, errors.join('; '));
   await page.close();
 }

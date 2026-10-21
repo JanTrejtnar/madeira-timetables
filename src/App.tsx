@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataset } from './data';
 import { LANGS, LangContext, makeT, type Lang } from './i18n';
+import { LangMenu } from './components/LangMenu';
+import { SettingsTab } from './components/SettingsTab';
 import { isSchoolPeriod, serviceDay } from './lib/holidays';
 import { nowInMadeira } from './lib/time';
 import { DeparturesTab } from './components/DeparturesTab';
@@ -8,7 +10,7 @@ import { LineView } from './components/LineView';
 import { PlannerTab } from './components/PlannerTab';
 import { buildNetwork } from './lib/network';
 import { SearchTab } from './components/SearchTab';
-import { EmptyState, SkeletonCards, type Shared } from './components/common';
+import { EmptyState, SkeletonCards, type RideEnds, type Shared } from './components/common';
 import { Icon, type IconName } from './components/Icons';
 import { RouteMap } from './components/RouteMap';
 import { NetworkMap } from './components/NetworkMap';
@@ -18,7 +20,7 @@ import type { UserPos } from './lib/nearby';
 import { formFromQuery, formToQuery, settled, type PlannerForm } from './lib/plannerForm';
 import type { MapFocus, MapLayer } from './types';
 
-type Tab = 'search' | 'route' | 'map' | 'departures';
+type Tab = 'search' | 'route' | 'map' | 'departures' | 'settings';
 
 const store = {
   get: (k: string) => {
@@ -54,6 +56,9 @@ export function App() {
   const t = useMemo(() => makeT(lang), [lang]);
   const [tab, setTab] = useState<Tab>('route');
   const [route, setRoute] = useState(parseHash);
+  // the planner's start / destination points of the leg that was opened (the hash only carries the ridden stretch)
+  const [openConn, setOpenConn] = useState<string | null>(null);
+  const [rideEnds, setRideEnds] = useState<RideEnds | undefined>();
   const [now, setNow] = useState(() => nowInMadeira());
   // The school term is detected from today's date. A manual choice is only an override for the day it was made.
   const dayStamp = `${now.y}-${now.m}-${now.d}`;
@@ -160,9 +165,12 @@ export function App() {
             ctx,
             lines: data.lines,
             net,
-            openLine: (id, dir, ride) => {
+            openLine: (id, dir, ride, ends) => {
+              setRideEnds(ends);
               location.hash = `#/line/${id}${dir !== undefined ? `/${dir}` : ''}${dir !== undefined && ride ? `/${ride.from}-${ride.to}` : ''}`;
             },
+            openConn,
+            setOpenConn,
             desktop,
             setMap: setMapLayers,
             setMapFocus,
@@ -175,11 +183,13 @@ export function App() {
             commit,
             setPlanner,
             useAsFrom: (name, key) => {
+              setOpenConn(null);
               setPlanner((p) => ({ ...p, from: { text: name, key } }));
               setTab('route');
               if (location.hash) location.hash = '';
             },
             useStopAs: (kind, name, key) => {
+              setOpenConn(null);
               setPlanner((p) => ({ ...p, [kind]: { text: name, key } }));
               setTab('route');
               if (location.hash) location.hash = '';
@@ -190,6 +200,7 @@ export function App() {
             rememberTrip,
             clearRecent,
             useTrip: (trip) => {
+              setOpenConn(null);
               setPlanner((p) => ({ ...p, from: trip.from, to: trip.to }));
               setApplied({ from: trip.from, to: trip.to });
               setTab('route');
@@ -197,7 +208,7 @@ export function App() {
             },
           }
         : null,
-    [data, net, ctx, desktop, userPos, geo, locate, planner, applied, commit, recent, favorites, toggleFavorite, rememberTrip, clearRecent],
+    [data, net, ctx, openConn, desktop, userPos, geo, locate, planner, applied, commit, recent, favorites, toggleFavorite, rememberTrip, clearRecent],
   );
 
   const today = serviceDay(now);
@@ -212,6 +223,7 @@ export function App() {
   const line = route && data ? data.lines.find((l) => l.id === route.id) : undefined;
 
   const selectTab = (k: Tab) => {
+    setOpenConn(null);
     setTab(k);
     if (route) location.hash = '';
   };
@@ -234,19 +246,19 @@ export function App() {
                 </span>
                 {t('appName')}
               </h1>
-              <div className="inline-flex rounded-full bg-slate-100 p-0.5 dark:bg-slate-800" role="group" aria-label={t('language')}>
-                {LANGS.map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => setLang(l)}
-                    aria-pressed={l === lang}
-                    className={`h-8 min-w-9 rounded-full px-2 text-xs font-semibold uppercase transition-colors ${
-                      l === lang ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'
-                    }`}
-                  >
-                    {l}
-                  </button>
-                ))}
+              <div className="flex items-center gap-1.5">
+                <LangMenu lang={lang} onChange={setLang} />
+                <button
+                  type="button"
+                  onClick={() => selectTab('settings')}
+                  aria-label={t('settings')}
+                  title={t('settings')}
+                  aria-current={tab === 'settings' && !route}
+                  data-testid="open-settings"
+                  className={`flex size-9 items-center justify-center rounded-full transition-colors ${tab === 'settings' && !route ? 'bg-slate-100 text-sky-700 dark:bg-slate-800 dark:text-sky-300' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800'}`}
+                >
+                  <Icon name="settings" className="size-5" />
+                </button>
               </div>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
@@ -255,32 +267,6 @@ export function App() {
               <span className="min-w-0">
                 {t('timetableToday')}: <b className="font-semibold text-slate-700 dark:text-slate-200">{todayLabel}</b>
               </span>
-              <label className="ml-auto inline-flex min-h-8 cursor-pointer items-center gap-2" title={t('schoolHint')}>
-                <input
-                  type="checkbox"
-                  className="peer sr-only"
-                  checked={school}
-                  onChange={(e) => {
-                    setSchoolOverride(e.target.checked);
-                    setOverrideDay(dayStamp);
-                    store.set('school', `${e.target.checked ? '1' : '0'}|${dayStamp}`);
-                  }}
-                />
-                <span className="relative h-5 w-9 shrink-0 rounded-full bg-slate-300 transition-colors after:absolute after:left-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-sky-600 peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-500 dark:bg-slate-600" />
-                {school ? t('schoolPeriod') : t('schoolHolidays')}
-                {school === autoSchool ? <span className="text-slate-400">({t('schoolAuto')})</span> : null}
-              </label>
-              {school !== autoSchool && (
-                <button
-                  className="min-h-8 rounded-md px-1.5 text-sky-700 underline dark:text-sky-300"
-                  onClick={() => {
-                    setSchoolOverride(null);
-                    store.set('school', '');
-                  }}
-                >
-                  {t('schoolReset')}
-                </button>
-              )}
             </div>
             <nav className="mt-3 hidden grid-cols-4 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 lg:grid" aria-label="Tabs">
               {tabs.map((x) => (
@@ -314,11 +300,11 @@ export function App() {
             {data && index && shared && (
               <>
                 {route && line ? (
-                  <LineView line={line} initialDir={route.dir} initialRide={route.ride} shared={shared} onBack={() => (history.length > 1 ? history.back() : (location.hash = ''))} />
+                  <LineView line={line} initialDir={route.dir} initialRide={route.ride} initialEnds={route.ride ? rideEnds : undefined} shared={shared} onBack={() => (history.length > 1 ? history.back() : (location.hash = ''))} />
                 ) : (
                   <>
                     {tab === 'map' && !desktop && (
-                      <div className="-mx-4 -mt-4 h-[calc(100dvh-17.5rem)] min-h-96" data-testid="map-tab">
+                      <div className="-mx-4 -mb-28 -mt-4 h-[calc(100dvh-8.75rem-env(safe-area-inset-bottom))] min-h-96" data-testid="map-tab">
                         <NetworkMap shared={shared} fill />
                       </div>
                     )}
@@ -326,13 +312,24 @@ export function App() {
                     {tab === 'search' && <SearchTab shared={shared} index={index} />}
                     {tab === 'route' && <PlannerTab shared={shared} />}
                     {tab === 'departures' && <DeparturesTab shared={shared} />}
+                    {tab === 'settings' && (
+                      <SettingsTab
+                        school={school}
+                        autoSchool={autoSchool}
+                        onSchool={(v) => {
+                          setSchoolOverride(v);
+                          setOverrideDay(dayStamp);
+                          store.set('school', `${v ? '1' : '0'}|${dayStamp}`);
+                        }}
+                        onSchoolReset={() => {
+                          setSchoolOverride(null);
+                          store.set('school', '');
+                        }}
+                        generatedAt={data.generatedAt}
+                      />
+                    )}
                   </>
                 )}
-                <p className="mt-8 text-center text-xs text-slate-400">
-                  {t('dataFrom')} {data.generatedAt.slice(0, 10)}
-                  <br />
-                  <span data-testid="build-info">v{__APP_VERSION__} · Build: {__BUILD_TIME__}</span>
-                </p>
               </>
             )}
           </main>

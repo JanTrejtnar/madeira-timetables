@@ -6,16 +6,16 @@ import { addDays, serviceDay } from '../lib/holidays';
 import { CITY_PREFIX, PARISH_PREFIX, FAR_PLACE_M, NEAR_PLACE_M, hubsNear, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
 import { norm } from '../lib/search';
 import { KIND_META, isPoiKey, loadPlaces, poiKey, searchPlaces, type Place, type PlaceIndex } from '../lib/places';
-import { cachedFoot, useFootRoutes, type FootPair } from '../lib/foot';
+import { useFootRoutes, type FootPair } from '../lib/foot';
 import { sameTrip } from '../lib/trips-store';
 import { isoToYmd, ymdToIso, type Picked, type PlannerForm } from '../lib/plannerForm';
-import { plan, type Itinerary } from '../lib/router';
+import { plan } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
-import { fmtMinutes } from '../lib/time';
 import { DatePicker, TimePicker } from './Pickers';
-import { WALK_M_PER_MIN, walkTo } from '../lib/walk';
-import type { Line, MapLayer, MapPin as PickedPin } from '../types';
-import { Card, Chip, dirLabel, EmptyState, EstTag, LineBadge, lineColor, lineRailCls, MapPin, PrecisionWarning, SectionTitle, TypeFilter, type LineTypeFilter, type Shared } from './common';
+import { ConnectionCard, ConnectionDetail } from './Connection';
+import { walkTo } from '../lib/walk';
+import type { MapLayer, MapPin as PickedPin } from '../types';
+import { Card, Chip, EmptyState, EstTag, lineColor, SectionTitle, TypeFilter, type LineTypeFilter, type Shared } from './common';
 import { Icon } from './Icons';
 import { MapPicker, PICK_RADIUS_M } from './MapPicker';
 import { RouteMap } from './RouteMap';
@@ -59,6 +59,7 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
   const debounced = useDebounced(value.text, 120);
   const items = useSuggestions(debounced, open, shared);
   const box = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();
   useEffect(() => {
     const close = (e: PointerEvent) => box.current && !box.current.contains(e.target as Node) && setOpen(false);
@@ -107,6 +108,7 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
   return (
     <div ref={box} className="relative flex items-center">
       <input
+        ref={inputRef}
         value={shownText}
         onChange={(e) => {
           onChange({ text: e.target.value, key: null });
@@ -124,12 +126,28 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
-        className="h-11 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-base font-medium outline-none placeholder:font-normal placeholder:text-slate-400 focus:bg-slate-50 dark:focus:bg-slate-800/60"
+        className="h-11 min-w-[4.5rem] flex-1 rounded-lg bg-transparent px-2 text-base font-medium outline-none placeholder:font-normal placeholder:text-slate-400 focus:bg-slate-50 dark:focus:bg-slate-800/60"
       />
       {isGroupValue && (
-        <span className="max-w-[42%] shrink-0 truncate pr-1 text-xs text-slate-400" data-testid="group-suffix">
+        <span className="min-w-0 max-w-[40%] truncate pr-1 text-[11px] text-slate-400" data-testid="group-suffix">
           {suffix}
         </span>
+      )}
+      {value.text && (
+        <button
+          type="button"
+          onClick={() => {
+            onChange({ text: '', key: null });
+            inputRef.current?.focus();
+            setOpen(true);
+          }}
+          aria-label={`${t('clearText')}: ${label}`}
+          title={t('clearText')}
+          data-testid="clear-input"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+        >
+          <Icon name="close" className="size-4" strokeWidth={2.25} />
+        </button>
       )}
       {onLocate && (
         <button
@@ -139,7 +157,7 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
           aria-label={t('useMyLocation')}
           title={t('useMyLocation')}
           data-testid="use-my-location"
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-sky-600 dark:hover:bg-slate-800"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-sky-600 dark:hover:bg-slate-800"
         >
           <Icon name="navigation" className={`size-5 ${locating ? 'animate-pulse' : ''}`} />
         </button>
@@ -149,7 +167,7 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
         onClick={onPickMap}
         aria-label={`${t('pickOnMap')}: ${label}`}
         title={t('pickOnMap')}
-        className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-sky-600 dark:hover:bg-slate-800"
+        className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-sky-600 dark:hover:bg-slate-800"
       >
         <Icon name="map" className="size-5" />
       </button>
@@ -192,182 +210,6 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
 /** straight-line reach (about 12 minutes on foot over winding roads) within which a transfer hub counts as a start of the journey */
 const HUB_WALK_M = 650;
 
-const hhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
-
-function Time({ min, est, t, compact = false }: { min: number; est: boolean; t: ReturnType<typeof useT>['t']; compact?: boolean }) {
-  return (
-    <span className="whitespace-nowrap tabular-nums">
-      {est ? (
-        <EstTag title={t('estimateWord')}>
-          ~{fmtMinutes(min)}
-        </EstTag>
-      ) : (
-        fmtMinutes(min)
-      )}
-      {min >= 1440 && <sup className={`ml-0.5 text-slate-400 ${compact ? 'text-[9px]' : 'text-[10px]'}`}>+1</sup>}
-    </span>
-  );
-}
-
-type Rail = { line: Line } | 'dashed';
-
-const railBar = (r: Rail, pos: string) =>
-  r === 'dashed' ? (
-    <span className={`absolute left-1/2 -translate-x-1/2 border-l-2 border-dashed border-slate-300 dark:border-slate-600 ${pos}`} />
-  ) : (
-    <span className={`absolute left-1/2 w-1 -translate-x-1/2 rounded-full ${lineRailCls(r.line)} ${pos}`} />
-  );
-
-/** One row of the metro-map style timeline: time | rail with dot | content. */
-function Row({ time, dot, above, below, line, children }: { time?: ReactNode; dot?: 'start' | 'ring' | 'end'; above?: Rail; below?: Rail; line?: Line; children: ReactNode }) {
-  const hasDot = dot !== undefined;
-  const ringTone = line ? (line.type === 'urbano' ? 'border-emerald-600' : 'border-slate-700 dark:border-slate-400') : 'border-slate-400';
-  return (
-    <div className="grid grid-cols-[4.5rem_1.25rem_minmax(0,1fr)] gap-x-2.5">
-      <div className="pt-1 text-right text-sm font-semibold leading-8">{time}</div>
-      <div className="relative">
-        {hasDot ? (
-          <>
-            {above && railBar(above, 'top-0 h-5')}
-            {below && railBar(below, 'top-5 bottom-0')}
-          </>
-        ) : (
-          below && railBar(below, 'inset-y-0')
-        )}
-        {dot === 'start' && <span className="absolute left-1/2 top-3.5 z-10 size-3 -translate-x-1/2 rounded-full bg-sky-600 ring-4 ring-white dark:ring-slate-900" />}
-        {dot === 'ring' && <span className={`absolute left-1/2 top-3.5 z-10 size-3 -translate-x-1/2 rounded-full border-[2.5px] bg-white dark:bg-slate-900 ${ringTone}`} />}
-        {dot === 'end' && <Icon name="pin" className="absolute left-1/2 top-2 z-10 size-5 -translate-x-1/2 fill-white text-sky-600 dark:fill-slate-900" strokeWidth={2} />}
-      </div>
-      <div className="min-w-0">{children}</div>
-    </div>
-  );
-}
-
-function StopName({ name, stop }: { name: string; stop: Parameters<typeof MapPin>[0]['stop'] }) {
-  const { lang } = useT();
-  return (
-    <div className="flex min-h-8 flex-wrap items-center gap-x-1 py-1 text-[15px] font-medium leading-5">
-      <span className="min-w-0 wrap-break-word">{localStopName(name, lang)}</span>
-      <PrecisionWarning stop={stop} />
-      <MapPin stop={stop} />
-    </div>
-  );
-}
-
-/** "🚶 Walk to the stop: 280 m (~4 min)" between the picked point and the bus. */
-function WalkNote({ label, testId }: { label: string; testId: string }) {
-  return (
-    <p className="py-2 text-sm leading-5 text-slate-600 dark:text-slate-300" data-testid={testId}>
-      <span aria-hidden="true">🚶 </span>
-      {label}
-    </p>
-  );
-}
-
-/** Positions of a leg in the direction's own stop list (the trip may carry extra "Via" places) */
-function srcRide(l: Itinerary['legs'][number]): { from: number; to: number } {
-  const stops = tripStops(l.trip);
-  const src = (pos: number) => stops.slice(0, pos).filter((s) => !s.via).length;
-  return { from: src(l.fromPos), to: src(l.toPos) };
-}
-
-function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt }: { it: Itinerary; shared: Shared; selected: boolean; onSelect: () => void; fromPt?: Picked['pt']; toPt?: Picked['pt'] }) {
-  const { t, lang } = useT();
-  const dur = it.arrive - it.depart;
-  const last = it.legs.length - 1;
-  // walking from the point picked on the map to the first stop / from the last stop to the picked destination
-  const inStop = tripStops(it.legs[0].trip)[it.legs[0].fromPos];
-  const outStop = tripStops(it.legs[last].trip)[it.legs[last].toPos];
-  // the walk along the streets once it was fetched (the selected itinerary fetches it), else the straight line corrected for winding roads
-  const real = (pt: Picked['pt'], stop: typeof inStop, back: boolean) => {
-    if (!pt || stop.lat === undefined || stop.lon === undefined) return null;
-    const route = back ? cachedFoot({ lat: stop.lat, lon: stop.lon }, pt) : cachedFoot(pt, { lat: stop.lat, lon: stop.lon });
-    return route ? { m: route.m, min: Math.max(1, Math.round(route.m / WALK_M_PER_MIN)) } : null;
-  };
-  const walkIn = real(fromPt, inStop, false) ?? walkTo(fromPt, inStop);
-  const walkOut = real(toPt, outStop, true) ?? walkTo(toPt, outStop);
-  return (
-    <Card className={`p-0! transition-shadow ${selected && shared.desktop ? 'ring-2 ring-sky-500/70' : ''}`}>
-      <button onClick={onSelect} className="flex w-full items-center justify-between gap-3 rounded-t-2xl px-4 py-3 text-left">
-        <span className="flex items-center gap-2 text-xl font-semibold">
-          <Time min={it.depart} est={it.legs[0].departEstimated} t={t} />
-          <Icon name="chevron" className="size-4 text-slate-300" />
-          <Time min={it.arrive} est={it.legs[last].arriveEstimated} t={t} />
-        </span>
-        <span className="flex flex-col items-end gap-0.5 text-right">
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-sm font-semibold tabular-nums dark:bg-slate-800">{dur} min</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">{it.legs.length === 1 ? t('noTransfer') : t('oneTransfer')}</span>
-        </span>
-      </button>
-      <div className="border-t border-slate-100 px-4 pb-3 pt-3 dark:border-slate-800">
-        {walkIn && (
-          <Row time={<span className="text-slate-500 tabular-nums dark:text-slate-400">{fmtMinutes(it.legs[0].depart - walkIn.min)}</span>} below="dashed">
-            <WalkNote label={t('walkToStop', { m: walkIn.m, n: walkIn.min, at: fmtMinutes(it.legs[0].depart) })} testId="walk-in" />
-          </Row>
-        )}
-        {it.legs.map((l, i) => {
-          const prev = it.legs[i - 1];
-          const stops = tripStops(l.trip);
-          const line = l.trip.line;
-          const isLast = i === last;
-          return (
-            <div key={i}>
-              <Row
-                time={<Time min={l.depart} est={l.departEstimated} t={t} compact />}
-                dot={i === 0 ? 'start' : 'ring'}
-                above={prev || walkIn ? 'dashed' : undefined}
-                below={{ line }}
-                line={line}
-              >
-                <StopName name={stops[l.fromPos].name} stop={stops[l.fromPos]} />
-              </Row>
-              <Row below={{ line }}>
-                <button
-                  className="my-1 flex w-full items-center gap-2.5 rounded-xl bg-slate-50 px-2.5 py-2 text-left transition-colors hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800"
-                  onClick={() => shared.openLine(line.id, l.trip.dirIndex, srcRide(l))}
-                >
-                  <LineBadge line={line} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">{dirLabel(l.trip.dir, line.name)}</span>
-                    <span className="block text-xs text-slate-500 dark:text-slate-400">{t('rideStops', { n: l.stops, m: l.arrive - l.depart })}</span>
-                  </span>
-                  <Icon name="chevron" className="size-4 shrink-0 text-slate-300" />
-                </button>
-              </Row>
-              <Row
-                time={<Time min={l.arrive} est={l.arriveEstimated} t={t} compact />}
-                dot={isLast ? 'end' : 'ring'}
-                above={{ line }}
-                below={isLast ? (walkOut ? 'dashed' : undefined) : 'dashed'}
-                line={line}
-              >
-                <StopName name={stops[l.toPos].name} stop={stops[l.toPos]} />
-              </Row>
-              {isLast && walkOut && (
-                <Row time={<span className="text-slate-500 tabular-nums dark:text-slate-400">{fmtMinutes(l.arrive + walkOut.min)}</span>}>
-                  <WalkNote label={t('walkToDest', { m: walkOut.m, n: walkOut.min })} testId="walk-out" />
-                </Row>
-              )}
-              {!isLast && (
-                <Row below="dashed">
-                  <p className="py-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                    <b className="font-semibold text-slate-600 dark:text-slate-300">{t('transferWord')}</b>
-                    {' · '}
-                    {localStopName(tripStops(it.legs[i + 1].trip)[it.legs[i + 1].fromPos].name, lang)}
-                    {' · '}
-                    {t('waitMin', { n: it.legs[i + 1].depart - l.arrive })}
-                    {it.walk > 0 ? ` · ${t('walkMin', { n: it.walk })}` : ''}
-                  </p>
-                </Row>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
-
 export function PlannerTab({ shared }: { shared: Shared }) {
   const { t, lang } = useT();
   const { planner, setPlanner, applied, commit } = shared;
@@ -380,7 +222,12 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const setTo = (v: Picked) => patch({ to: v });
   const setTime = (v: string) => patch({ time: v });
   const setType = (v: LineTypeFilter) => patch({ type: v });
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  // the connection opened in the detail page (null = the list of results)
+  // a stored connection belongs to the search it was opened for: another search (or day, time, filter) starts at the list again
+  const searchSig = JSON.stringify([applied.from, applied.to, planner.date, planner.time, planner.type, planner.directOnly, shared.ctx.school]);
+  const { openConn, setOpenConn } = shared;
+  const openKey = openConn?.startsWith(`${searchSig}`) ? openConn.slice(searchSig.length + 1) : null;
+  const setOpenKey = (k: string | null) => setOpenConn(k === null ? null : `${searchSig}${k}`);
   const [pickFor, setPickFor] = useState<'from' | 'to' | null>(null);
   // "My location": the position is asked for, then the nearest stop (within 1 km) becomes the start and the walk to it is shown under the field
   const { userPos, geo, locate } = shared;
@@ -482,7 +329,23 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     [result],
   );
   const anyEstimated = all.some(({ it }) => it.legs.some((l) => l.departEstimated || l.arriveEstimated));
-  const selected = all.find((x) => x.key === selectedKey) ?? all[0];
+  const selected = all.find((x) => x.key === openKey) ?? all[0];
+  const opened = openKey !== null && selected?.key === openKey ? selected : null;
+  const listScroll = useRef(0);
+  const scroller = () => document.getElementById('scroller');
+  const openConnection = (k: string) => {
+    listScroll.current = Math.max(window.scrollY, scroller()?.scrollTop ?? 0);
+    setOpenKey(k);
+    window.scrollTo(0, 0);
+    scroller()?.scrollTo(0, 0);
+  };
+  const closeConnection = () => {
+    setOpenKey(null);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, listScroll.current);
+      scroller()?.scrollTo(0, listScroll.current);
+    });
+  };
 
   // walking along the streets for the selected itinerary: from the picked point to the first stop, from the last stop to the picked point, between the platforms of a transfer
   const footPairs: FootPair[] = (() => {
@@ -554,15 +417,6 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   }, [searchable, dFrom, dTo, rememberTrip]);
   const starred = !!dFrom.text.trim() && !!dTo.text.trim() && shared.favorites.some((f) => sameTrip(f, { from: dFrom, to: dTo }));
 
-  const setDeparture = (plusMin: number) => {
-    const target = shared.ctx.now.minutes + plusMin;
-    patch({ date: target >= 1440 ? tomorrowIso : null, time: hhmm(target % 1440) });
-  };
-  const isChip = (plusMin: number) => {
-    const target = shared.ctx.now.minutes + plusMin;
-    return time === hhmm(target % 1440) && dateIso === (target >= 1440 ? tomorrowIso : todayIso);
-  };
-
   const renderList = (title: ReactNode, key: 'd' | 't') => {
     const rows = all.filter((x) => x.key.startsWith(key));
     if (!rows.length) return null;
@@ -571,12 +425,35 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         <SectionTitle>{title}</SectionTitle>
         <div className="flex flex-col gap-3">
           {rows.map(({ key: k, it }) => (
-            <ItineraryCard key={k} it={it} shared={shared} selected={selected?.key === k} onSelect={() => setSelectedKey(k)} fromPt={dFrom.pt} toPt={dTo.pt} />
+            <ConnectionCard key={k} it={it} shared={shared} date={dateIso} base={date} selected={selected?.key === k} onOpen={() => openConnection(k)} fromPt={dFrom.pt} toPt={dTo.pt} />
           ))}
         </div>
       </section>
     );
   };
+
+  const estimatedNote = anyEstimated ? (
+    <p className="flex items-start gap-2 px-1 text-xs text-slate-500">
+      <EstTag>~</EstTag>
+      <span>{t('estimatedLegend').replace(/^~ = /, '')}</span>
+    </p>
+  ) : null;
+
+  if (opened) {
+    return (
+      <ConnectionDetail
+        it={opened.it}
+        shared={shared}
+        date={dateIso}
+        base={date}
+        onBack={closeConnection}
+        fromPt={dFrom.pt}
+        toPt={dTo.pt}
+        map={!desktop && layers ? <div data-testid="planner-map"><RouteMap layers={layers} /></div> : null}
+        estimatedNote={estimatedNote}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -626,18 +503,6 @@ export function PlannerTab({ shared }: { shared: Shared }) {
 
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
           <TimePicker value={time} onChange={setTime} />
-          <Chip active={isChip(0)} onClick={() => setDeparture(0)}>
-            {t('chipNow')}
-          </Chip>
-          <Chip active={isChip(15)} onClick={() => setDeparture(15)}>
-            {t('chipPlus15')}
-          </Chip>
-          <Chip active={isChip(30)} onClick={() => setDeparture(30)}>
-            {t('chipPlus30')}
-          </Chip>
-          <Chip active={isChip(60)} onClick={() => setDeparture(60)}>
-            {t('chipPlus60')}
-          </Chip>
           <div className="ml-auto inline-flex rounded-full bg-slate-100 p-0.5 dark:bg-slate-800" role="group">
             {([null, tomorrowIso] as const).map((o) => {
               const on = dateIso === (o ?? todayIso);
@@ -690,19 +555,9 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         </div>
       )}
 
-      {!desktop && layers?.[0]?.pins && (
-        <div data-testid="planner-map">
-          <RouteMap layers={layers} />
-        </div>
-      )}
       {renderList(t('directTitle'), 'd')}
       {renderList(`${result?.plan.direct.length === 0 ? `${t('noDirect')} ` : ''}${t('transferTitle')}`, 't')}
-      {anyEstimated && (
-        <p className="flex items-start gap-2 px-1 text-xs text-slate-500">
-          <EstTag>~</EstTag>
-          <span>{t('estimatedLegend').replace(/^~ = /, '')}</span>
-        </p>
-      )}
+      {estimatedNote}
       {pickFor && (
         <MapPicker
           shared={shared}

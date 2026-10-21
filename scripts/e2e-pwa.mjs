@@ -24,7 +24,7 @@ try {
   // manifest
   const mf = await page.evaluate(async () => (await fetch(document.querySelector('link[rel=manifest]').href)).json());
   const sizes = mf.icons.map((i) => `${i.sizes}/${i.purpose}`);
-  check('manifest name + theme_color', !!mf.name && mf.theme_color === '#0284c7', mf.name);
+  check('manifest name "Madeira Buses" + theme_color', mf.name === 'Madeira Buses' && mf.short_name === 'Madeira Buses' && mf.theme_color === '#0284c7', mf.name);
   check('manifest has 192 and 512 PNG + maskable', ['192x192/any', '512x512/any', '512x512/maskable'].every((x) => sizes.includes(x)), sizes.join(' '));
   const apple = await page.evaluate(() => document.querySelector('link[rel=apple-touch-icon]')?.href);
   check('apple-touch-icon link', !!apple && (await page.evaluate(async (u) => (await fetch(u)).ok, apple)));

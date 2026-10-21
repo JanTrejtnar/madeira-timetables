@@ -17,8 +17,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Madeira Autocarros',
-        short_name: 'Autocarros',
+        name: 'Madeira Buses',
+        short_name: 'Madeira Buses',
         description: 'Jízdní řády autobusů na Madeiře (offline)',
         lang: 'cs',
         theme_color: '#0284c7',

@@ -152,6 +152,8 @@ const lit = await page.$$eval('li.bg-sky-50', (l) => l.length);
 check('line 181: notes of the selected time highlighted, others dimmed', dim > 0 && lit > 0, `dimmed ${dim}, highlighted ${lit}`);
 
 // the school period comes from the date, no switch interaction needed
+await page.evaluate(() => document.querySelector('[data-testid=open-settings]')?.click());
+await new Promise((r) => setTimeout(r, 300));
 const schoolLabel = await page.evaluate(() => document.body.innerText.match(/Školní období|Školní prázdniny/)?.[0] ?? '');
 check('school period is detected automatically', schoolLabel !== '', schoolLabel);
 

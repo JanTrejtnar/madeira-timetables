@@ -33,7 +33,6 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   const [overview, setOverview] = useState<Overview | null>(null);
   const [failed, setFailed] = useState(false);
   const [sel, setSel] = useState<Selection>(null);
-  const [hidden, setHidden] = useState<ReadonlySet<OperatorId>>(new Set());
   const [full, setFull] = useState(false);
   useEffect(() => {
     if (!full) return;
@@ -230,16 +229,6 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
     };
   }, [net, linesAt, fill, lang, overview]);
 
-  // operators switched off in the legend
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    for (const [id, g] of operatorGroups.current) {
-      if (hidden.has(id)) g.remove();
-      else if (!map.hasLayer(g)) g.addTo(map);
-    }
-  }, [hidden, overview]);
-
   // the selected stop or line stands out
   useEffect(() => {
     const map = mapRef.current;
@@ -271,22 +260,13 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   return (
     <div className={full ? 'fixed inset-0 z-1000 bg-white dark:bg-slate-950' : 'relative h-full w-full'} data-testid="network-map">
       <div ref={el} className="isolate size-full bg-slate-200 dark:bg-slate-800" style={{ touchAction: touch ? 'none' : undefined }} />
-      <div className="pointer-events-none absolute left-3 top-3 z-500 flex max-w-[calc(100%-4.5rem)] flex-wrap gap-1.5" data-testid="network-legend">
-        {OPERATORS.map((o) => {
-          const off = hidden.has(o.id);
-          return (
-            <button
-              key={o.id}
-              type="button"
-              aria-pressed={!off}
-              onClick={() => setHidden((h) => { const n = new Set(h); if (n.has(o.id)) n.delete(o.id); else n.add(o.id); return n; })}
-              className={`pointer-events-auto flex h-8 items-center gap-1.5 rounded-full bg-white/95 px-2.5 text-xs font-semibold shadow-md ring-1 ring-slate-200 backdrop-blur dark:bg-slate-900/95 dark:ring-slate-700 ${off ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}`}
-            >
-              <span className="size-2.5 rounded-full" style={{ background: off ? '#cbd5e1' : o.color }} />
-              {o.name}
-            </button>
-          );
-        })}
+      <div className="pointer-events-none absolute bottom-7 left-2 z-500 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-x-2.5 gap-y-0.5 rounded-lg bg-white/75 px-2 py-1 text-[10px] font-medium leading-4 text-slate-600 backdrop-blur-sm dark:bg-slate-900/70 dark:text-slate-300" data-testid="network-legend">
+        {OPERATORS.map((o) => (
+          <span key={o.id} className="inline-flex items-center gap-1">
+            <span className="h-0.5 w-3 rounded-full" style={{ background: o.color }} />
+            {o.name}
+          </span>
+        ))}
       </div>
       <button
         type="button"

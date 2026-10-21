@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT, type Key } from '../i18n';
-import { localStopName } from '../lib/text';
+import { stopLabel } from '../lib/text';
 import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } from '../lib/departures';
 import { fmtMinutes } from '../lib/time';
 import { onRequestPlaces, withVia, detoursFor } from '../lib/via';
 import { serviceDay } from '../lib/holidays';
-import type { DayKey, Direction, Line, MapFocus, MapLayer } from '../types';
-import { Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, PrecisionWarning, SectionTitle, type Shared } from './common';
+import type { DayKey, Direction, Line, MapFocus, MapLayer, MapPin } from '../types';
+import { Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, PrecisionWarning, SectionTitle, type RideEnds, type Shared } from './common';
 import { Icon } from './Icons';
 import { RouteMap } from './RouteMap';
+import { useFootRoutes } from '../lib/foot';
 
 function defaultDay(keys: DayKey[], shared: Shared): DayKey | undefined {
   const type = serviceDay(shared.ctx.now, shared.ctx.municipalities).type;
@@ -47,7 +48,7 @@ function ViaTag() {
   return <span className="ml-1 rounded-full bg-sky-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-sky-800 dark:bg-sky-400/15 dark:text-sky-200">{t('viaStop')}</span>;
 }
 
-export function LineView({ line, initialDir, initialRide, shared, onBack }: { line: Line; initialDir?: number; initialRide?: { from: number; to: number }; shared: Shared; onBack: () => void }) {
+export function LineView({ line, initialDir, initialRide, initialEnds, shared, onBack }: { line: Line; initialDir?: number; initialRide?: { from: number; to: number }; initialEnds?: RideEnds; shared: Shared; onBack: () => void }) {
   const { t, lang } = useT();
   const tn = (s: string) => translateNote(s, lang);
   const [dirIndex, setDirIndex] = useState(initialDir ?? 0);
@@ -150,7 +151,30 @@ export function LineView({ line, initialDir, initialRide, shared, onBack }: { li
   const noteKey = sel?.notes?.join('') ?? '';
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const detours = useMemo(() => detoursFor(line, dirIndex, sel?.notes), [line, dirIndex, noteKey]);
-  const layers = useMemo<MapLayer[]>(() => (dir ? [{ shapeId: dir.shapeId, stops: shownStops, color: lineColor(line), ...(detours.length ? { detours } : {}), ...(rideShown ? { ride: { stops: shownStops.map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), ...rideShown } } : {}) }] : []), [dir, line, shownStops, detours, rideShown]);
+  // planner start / destination of the ridden stretch: the A / B pins and the walk between the picked point and the stop
+  const endStops = useMemo(() => {
+    if (!initialRide || !initialEnds || !dir || dirIndex !== (initialDir ?? 0)) return null;
+    const ll = (s?: { lat?: number; lon?: number }) => (s?.lat !== undefined && s.lon !== undefined ? { lat: s.lat, lon: s.lon } : null);
+    return { start: ll(dir.stops[initialRide.from]), end: ll(dir.stops[initialRide.to]) };
+  }, [initialRide, initialEnds, dir, dirIndex, initialDir]);
+  const startPt = initialEnds?.start && initialEnds.start !== true ? initialEnds.start : null;
+  const endPt = initialEnds?.end && initialEnds.end !== true ? initialEnds.end : null;
+  const foot = useFootRoutes([startPt && endStops?.start ? [startPt, endStops.start] : null, endPt && endStops?.end ? [endStops.end, endPt] : null]);
+  const footSig = foot.map((r) => (r ? r.m : '-')).join(',');
+  const pins = useMemo<MapPin[]>(() => {
+    if (!endStops || !initialEnds) return [];
+    const mk = (kind: MapPin['kind'], at: { lat: number; lon: number } | true | undefined, stop: { lat: number; lon: number } | null, name: string, path?: [number, number][]): MapPin[] => {
+      const pos = at === true ? stop : at ?? null;
+      if (!pos) return [];
+      return [{ kind, label: t(kind === 'from' ? 'mapStart' : 'mapEnd'), lat: pos.lat, lon: pos.lon, ...(stop ? { stop: { ...stop, name } } : {}), ...(at !== true && path ? { path } : {}) }];
+    };
+    return [
+      ...mk('from', initialEnds.start, endStops.start, dir?.stops[initialRide?.from ?? 0]?.name ?? '', foot[0]?.pts),
+      ...mk('to', initialEnds.end, endStops.end, dir?.stops[initialRide?.to ?? 0]?.name ?? '', foot[1]?.pts),
+    ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endStops, initialEnds, footSig, t]);
+  const layers = useMemo<MapLayer[]>(() => (dir ? [{ shapeId: dir.shapeId, stops: shownStops, color: lineColor(line), ...(pins.length ? { pins } : {}), ...(detours.length ? { detours } : {}), ...(rideShown ? { ride: { stops: shownStops.map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), ...rideShown } } : {}) }] : []), [dir, line, shownStops, detours, rideShown, pins]);
   // on desktop the route is drawn on the big map next to the sidebar, on mobile it is shown inline
   const { desktop, setMap } = shared;
   useEffect(() => {
@@ -343,7 +367,7 @@ export function LineView({ line, initialDir, initialRide, shared, onBack }: { li
                 const content = (
                   <>
                     <span className={`min-w-0 flex-1 ${edge || active || boardOff ? 'font-semibold' : ''}`}>
-                      {localStopName(s.name, lang)} {s.via ? <ViaTag /> : <PrecisionWarning stop={s} />}
+                      {stopLabel(s, lang)} {s.via ? <ViaTag /> : <PrecisionWarning stop={s} />}
                     </span>
                     {label ? (
                       (hasOffsets && i > 0) || s.via ? (

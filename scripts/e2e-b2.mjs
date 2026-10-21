@@ -79,7 +79,9 @@ const paths = (page) => page.evaluate(() => [...document.querySelectorAll('.leaf
   check('map: one finger pans (touch-action none)', touch === 'none', touch);
   const hs = await page.evaluate(() => [...document.querySelectorAll('button[aria-pressed]')].filter((b) => /^\d\d:\d\d/.test(b.textContent.trim())).map((b) => Math.round(b.getBoundingClientRect().height)));
   check('departure grid: all time buttons have one height', hs.length > 0 && new Set(hs).size === 1, [...new Set(hs)].join(','));
-  check('build stamp in the footer', /v\d+\.\d+\.\d+ · Build: \d{4}-\d\d-\d\d \d\d:\d\d/.test(await page.evaluate(() => document.querySelector('[data-testid="build-info"]')?.textContent ?? '')));
+  await page.evaluate(() => document.querySelector('[data-testid=open-settings]')?.click());
+  await sleep(300);
+  check('build stamp at the end of the settings page', /v\d+\.\d+\.\d+ · Build: \d{4}-\d\d-\d\d \d\d:\d\d/.test(await page.evaluate(() => document.querySelector('[data-testid="build-info"]')?.textContent ?? '')));
   await page.close();
 }
 
