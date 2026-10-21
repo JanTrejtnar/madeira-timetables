@@ -22,7 +22,7 @@ export function TripShortcuts({ shared }: { shared: Shared }) {
           <ul className="flex flex-col gap-1.5">
             {favorites.map((f, i) => (
               <li key={`${f.from.text}>${f.to.text}>${i}`} className="flex items-center rounded-xl border border-slate-200/70 bg-white pl-3 dark:border-slate-700/70 dark:bg-slate-900">
-                <button type="button" onClick={() => shared.useTrip(f)} className="min-h-11 min-w-0 flex-1 truncate text-left text-sm font-medium" data-testid="favorite-trip">
+                <button type="button" onClick={() => shared.useTrip(f)} className="min-h-11 min-w-0 flex-1 py-2 text-left text-sm font-medium wrap-break-word" data-testid="favorite-trip">
                   {label(f, lang)}
                 </button>
                 <button type="button" onClick={() => shared.toggleFavorite(f)} aria-label={`${t('removeFavorite')}: ${label(f, lang)}`} title={t('removeFavorite')} className="flex size-10 shrink-0 items-center justify-center text-slate-400 hover:text-red-600">
@@ -44,10 +44,10 @@ export function TripShortcuts({ shared }: { shared: Shared }) {
           </h2>
           <ul className="flex flex-wrap gap-1.5">
             {recent.map((r, i) => (
-              <li key={`${r.from.text}>${r.to.text}>${i}`}>
-                <button type="button" onClick={() => shared.useTrip(r)} className="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-slate-200/70 bg-white px-3 text-sm dark:border-slate-700/70 dark:bg-slate-900" data-testid="recent-trip">
+              <li key={`${r.from.text}>${r.to.text}>${i}`} className="max-w-full">
+                <button type="button" onClick={() => shared.useTrip(r)} className="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-2xl border border-slate-200/70 bg-white px-3 py-1.5 text-left text-sm dark:border-slate-700/70 dark:bg-slate-900" data-testid="recent-trip">
                   <Icon name="clock" className="size-3.5 shrink-0 text-slate-400" />
-                  <span className="truncate">{label(r, lang)}</span>
+                  <span className="min-w-0 wrap-break-word">{label(r, lang)}</span>
                 </button>
               </li>
             ))}

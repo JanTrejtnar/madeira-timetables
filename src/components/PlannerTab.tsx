@@ -15,7 +15,8 @@ import { DatePicker, TimePicker } from './Pickers';
 import { ConnectionCard, ConnectionDetail } from './Connection';
 import { walkTo } from '../lib/walk';
 import type { MapLayer, MapPin as PickedPin } from '../types';
-import { Card, Chip, EmptyState, EstTag, lineColor, SectionTitle, TypeFilter, type LineTypeFilter, type Shared } from './common';
+import { OPERATORS, operatorOf, type OperatorId } from '../lib/operators';
+import { Card, Chip, EmptyState, EstTag, lineColor, SectionTitle, type Shared } from './common';
 import { Icon } from './Icons';
 import { MapPicker, PICK_RADIUS_M } from './MapPicker';
 import { RouteMap } from './RouteMap';
@@ -207,13 +208,63 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
   );
 }
 
+/** "Advanced search": collapsed by default; the operators to travel with (none ticked = all) and direct connections only. */
+function AdvancedSearch({ ops, directOnly, onOps, onDirect }: { ops: OperatorId[]; directOnly: boolean; onOps: (v: OperatorId[]) => void; onDirect: (v: boolean) => void }) {
+  const { t } = useT();
+  const [open, setOpen] = useState(ops.length > 0 || directOnly);
+  const active = ops.length + (directOnly ? 1 : 0);
+  return (
+    <div className="border-t border-slate-100 pt-1 dark:border-slate-800" data-testid="advanced">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        data-testid="advanced-toggle"
+        className="flex min-h-10 w-full items-center gap-2 rounded-lg px-1 text-sm font-medium text-sky-700 dark:text-sky-300"
+      >
+        <Icon name="chevronDown" className={`size-4 transition-transform ${open ? 'rotate-180' : ''}`} strokeWidth={2.25} />
+        {t('advancedSearch')}
+        {active > 0 && <span className="rounded-full bg-sky-600 px-1.5 text-xs text-white">{active}</span>}
+      </button>
+      {open && (
+        <div className="flex flex-col gap-2 px-1 pb-1 pt-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('operatorsLabel')}</p>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('operatorsLabel')}>
+            {OPERATORS.map((o) => {
+              const on = ops.includes(o.id);
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  aria-pressed={on}
+                  data-testid={`op-${o.id}`}
+                  onClick={() => onOps(on ? ops.filter((x) => x !== o.id) : [...ops, o.id])}
+                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors ${on ? 'border-sky-600 bg-sky-50 text-sky-800 dark:bg-sky-400/15 dark:text-sky-200' : 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300'}`}
+                >
+                  <span className="size-2.5 rounded-full" style={{ background: o.color }} />
+                  {o.name}
+                </button>
+              );
+            })}
+          </div>
+          <label className="flex min-h-10 cursor-pointer items-center gap-3 text-sm font-medium">
+            <input type="checkbox" className="peer sr-only" checked={directOnly} onChange={(e) => onDirect(e.target.checked)} />
+            <span className="relative h-6 w-11 shrink-0 rounded-full bg-slate-300 transition-colors after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:transition-transform peer-checked:bg-sky-600 peer-checked:after:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-sky-500 dark:bg-slate-600" />
+            {t('directOnlyShort')}
+          </label>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** straight-line reach (about 12 minutes on foot over winding roads) within which a transfer hub counts as a start of the journey */
 const HUB_WALK_M = 650;
 
 export function PlannerTab({ shared }: { shared: Shared }) {
   const { t, lang } = useT();
   const { planner, setPlanner, applied, commit } = shared;
-  const { from, to, time, type, directOnly } = planner;
+  const { from, to, time, ops, directOnly } = planner;
   const patch = (p: Partial<PlannerForm>) => setPlanner((f) => ({ ...f, ...p }));
   const setFrom = (v: Picked) => {
     setLocNote(null);
@@ -221,10 +272,9 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   };
   const setTo = (v: Picked) => patch({ to: v });
   const setTime = (v: string) => patch({ time: v });
-  const setType = (v: LineTypeFilter) => patch({ type: v });
   // the connection opened in the detail page (null = the list of results)
   // a stored connection belongs to the search it was opened for: another search (or day, time, filter) starts at the list again
-  const searchSig = JSON.stringify([applied.from, applied.to, planner.date, planner.time, planner.type, planner.directOnly, shared.ctx.school]);
+  const searchSig = JSON.stringify([applied.from, applied.to, planner.date, planner.time, planner.ops, planner.directOnly, shared.ctx.school]);
   const { openConn, setOpenConn } = shared;
   const openKey = openConn?.startsWith(`${searchSig}`) ? openConn.slice(searchSig.length + 1) : null;
   const setOpenKey = (k: string | null) => setOpenConn(k === null ? null : `${searchSig}${k}`);
@@ -274,7 +324,9 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const [h, m] = time.split(':').map(Number);
   const departAt = (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
 
+  const searched = shared.plannerView === 'results';
   const result = useMemo(() => {
+    if (!searched) return null;
     // a picked place (beach, hotel, viewpoint ...) stands for the stops within walking distance of it; a stop or area for its own nodes
     const nodesOf = (p: Picked) => {
       if (isPoiKey(p.key) && p.pt) {
@@ -288,7 +340,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const A = na.ids;
     const B = nb.ids;
     if (!dFrom.text.trim() || !dTo.text.trim()) return null;
-    const only = type === 'all' ? trips : trips.filter((tr) => tr.line.type === type);
+    const only = ops.length ? trips.filter((tr) => ops.includes(operatorOf(tr.line))) : trips;
     // walking from a picked start point: a bus counts only when it leaves after departAt + the walk to its stop
     let walkIn: Map<number, number> | undefined;
     if (dFrom.pt) {
@@ -321,7 +373,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const missing = na.place && A.size === 0 ? dFrom.text : nb.place && B.size === 0 ? dTo.text : null;
     const far = na.widened ? dFrom.text : nb.widened ? dTo.text : null;
     return { A: A.size, B: B.size, missing, far, plan: directOnly ? { ...found, transfers: [] } : found };
-  }, [shared.net, trips, dFrom, dTo, departAt, type, directOnly]);
+  }, [shared.net, trips, dFrom, dTo, departAt, ops, directOnly, searched]);
 
   const empty = result && !result.plan.direct.length && !result.plan.transfers.length;
   const all = useMemo(
@@ -331,6 +383,15 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const anyEstimated = all.some(({ it }) => it.legs.some((l) => l.departEstimated || l.arriveEstimated));
   const selected = all.find((x) => x.key === openKey) ?? all[0];
   const opened = openKey !== null && selected?.key === openKey ? selected : null;
+  // the "(all stops)" qualifier is noise in a one-line summary
+  const allSuffix = t('allStopsOf', { name: '' }).trim();
+  const plain = (text: string) => localStopName(text.endsWith(allSuffix) ? text.slice(0, -allSuffix.length).trimEnd() : text, lang);
+  const startSearch = () => {
+    commit({ from, to });
+    shared.setPlannerView('results');
+    window.scrollTo(0, 0);
+    scroller()?.scrollTo(0, 0);
+  };
   const listScroll = useRef(0);
   const scroller = () => document.getElementById('scroller');
   const openConnection = (k: string) => {
@@ -457,6 +518,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {!searched && (
       <Card className="flex flex-col gap-3 p-3!">
         <div className="flex items-stretch gap-2">
           <div className="flex w-5 shrink-0 flex-col items-center pb-3.5 pt-4.25">
@@ -524,18 +586,58 @@ export function PlannerTab({ shared }: { shared: Shared }) {
             {dayInfo.reason === 'holiday' ? ` · ${t('reason_holiday')}: ${dayInfo.holiday?.name}` : dayInfo.reason === 'saturday-rule' ? ` · ${dayInfo.special}` : dayInfo.holiday ? ` · ${dayInfo.holiday.name}` : ''}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
-          <TypeFilter value={type} onChange={setType} />
-          <label className="flex min-h-9 cursor-pointer items-center gap-2 rounded-full px-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-            <input type="checkbox" checked={directOnly} onChange={(e) => patch({ directOnly: e.target.checked })} className="size-4 accent-sky-600" />
-            {t('directOnly')}
-          </label>
-        </div>
+        <AdvancedSearch ops={ops} directOnly={directOnly} onOps={(v) => patch({ ops: v })} onDirect={(v) => patch({ directOnly: v })} />
+        <button
+          type="button"
+          onClick={startSearch}
+          disabled={!from.text.trim() || !to.text.trim()}
+          data-testid="search-button"
+          className="h-12 w-full rounded-xl bg-sky-600 text-base font-semibold text-white transition-colors hover:bg-sky-700 active:bg-sky-800 disabled:opacity-40"
+        >
+          {t('searchButton')}
+        </button>
       </Card>
+      )}
 
-      <TripShortcuts shared={shared} />
+      {!searched && <TripShortcuts shared={shared} />}
 
-      {!result && <EmptyState icon="route" title={t('plannerEmptyTitle')} body={t('plannerHint')} />}
+      {searched && (
+        <div className="flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white p-2 pr-3 dark:border-slate-700/70 dark:bg-slate-900" data-testid="search-summary">
+          <button
+            type="button"
+            onClick={() => shared.setPlannerView('form')}
+            aria-label={t('editSearch')}
+            title={t('editSearch')}
+            data-testid="edit-search"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10"
+          >
+            <Icon name="back" className="size-5" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold wrap-break-word">
+              {plain(dFrom.text)} → {plain(dTo.text)}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {dateIso === todayIso ? t('dayToday') : dateIso === tomorrowIso ? t('dayTomorrow') : dateIso} · {time}
+              {ops.length > 0 && ` · ${ops.map((id) => OPERATORS.find((o) => o.id === id)?.name).join(', ')}`}
+              {directOnly && ` · ${t('directShort')}`}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => shared.toggleFavorite({ from: dFrom, to: dTo })}
+            aria-pressed={starred}
+            aria-label={starred ? t('removeFavorite') : t('addFavorite')}
+            title={starred ? t('removeFavorite') : t('addFavorite')}
+            data-testid="favorite-toggle"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:text-amber-500"
+          >
+            <Icon name="star" className={`size-5 ${starred ? 'fill-amber-400 text-amber-500' : ''}`} />
+          </button>
+        </div>
+      )}
+
+      {searched && !result && <EmptyState icon="route" title={t('plannerEmptyTitle')} body={t('plannerHint')} />}
       {result && (result.A === 0 || result.B === 0) && <EmptyState icon="alert" tone="warn" title={t('noStopNodesTitle')} body={result.missing ? t('placeNoStop', { place: result.missing, m: FAR_PLACE_M }) : t('noStopNodes')} />}
       {result?.far && result.A > 0 && result.B > 0 && (
         <p className="px-1 text-sm text-amber-700 dark:text-amber-300" data-testid="place-far">
@@ -543,11 +645,11 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         </p>
       )}
       {empty && result.A > 0 && result.B > 0 && <EmptyState icon="frown" title={t('noConnectionTitle')} body={t('noConnectionBody')} />}
-      {empty && result.A > 0 && result.B > 0 && (type !== 'all' || directOnly) && (
+      {empty && result.A > 0 && result.B > 0 && (ops.length > 0 || directOnly) && (
         <div className="flex justify-center">
           <Chip
             onClick={() => {
-              patch({ type: 'all', directOnly: false });
+              patch({ ops: [], directOnly: false });
             }}
           >
             {t('tryAllTypes')}

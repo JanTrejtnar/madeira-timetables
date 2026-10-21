@@ -87,6 +87,7 @@ async function planner(from, to, { pick = false, time = '09:00' } = {}) {
   await page.keyboard.type(time);
   await page.keyboard.press('Enter');
   await page.keyboard.press('Escape');
+  await page.click('[data-testid=search-button]');
   await sleep(900);
   return text();
 }
@@ -96,7 +97,7 @@ const typePressed = await (async () => {
   await clickButton('Plánovač');
   return page.evaluate(() => [...document.querySelectorAll('button[aria-pressed="true"]')].map((b) => b.innerText.trim()));
 })();
-check('planner: default type filter is Vše', typePressed.includes('Vše'), JSON.stringify(typePressed));
+check('planner: no filter is active by default (advanced search is collapsed)', typePressed.length === 0 || !typePressed.some((x) => /Rodoeste|SAM|CAM|Horários/.test(x)), JSON.stringify(typePressed));
 
 const t1 = await planner('pinga', 'mercedes');
 check('planner: urban connection found (type filter: all) (Pinga -> Mercedes)', /\d\d:\d\d/.test(t1) && /Pinga/.test(t1));

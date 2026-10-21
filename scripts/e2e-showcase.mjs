@@ -82,6 +82,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await clickOption(page, /všechny zastávky/);
   await typeIn(page, 'Kam', 'Cabo Gir');
   await clickOption(page, /Cabo Girão/);
+  await page.click('[data-testid=search-button]');
   await sleep(2500);
   const body = await page.evaluate(() => document.body.innerText);
   check('Funchal -> Cabo Girão (place): connections are found', (body.match(/\d\d:\d\d/g) ?? []).length >= 4, (body.match(/\d\d:\d\d/g) ?? []).length + ' times');
@@ -95,7 +96,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   // favourites
   await page.click('[data-testid=favorite-toggle]');
   await sleep(300);
-  check('star: the trip is saved under Oblíbené', (await page.evaluate(() => document.querySelectorAll('[data-testid=favorite-trip]').length)) === 1 && (await page.evaluate(() => JSON.parse(localStorage.getItem('favoriteTrips.v1') ?? '[]').length)) === 1);
+  check('star: the trip is saved under Oblíbené', (await page.evaluate(() => JSON.parse(localStorage.getItem('favoriteTrips.v1') ?? '[]').length)) === 1);
   // recent trips are stored after a moment
   await sleep(1500);
   check('the search is stored as a recent trip', (await page.evaluate(() => JSON.parse(localStorage.getItem('recentTrips.v1') ?? '[]').length)) === 1);
@@ -105,11 +106,11 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   check('after a reload the favourite and the recent trip are offered', (await page.evaluate(() => [document.querySelectorAll('[data-testid=favorite-trip]').length, document.querySelectorAll('[data-testid=recent-trip]').length])).join() === '1,1');
   await page.click('[data-testid=favorite-trip]');
   await sleep(2000);
-  const vals = await page.evaluate(() => [document.querySelector('input[aria-label="Odkud"]').value, document.querySelector('input[aria-label="Kam"]').value, (document.body.innerText.match(/\d\d:\d\d/g) ?? []).length]);
-  check('a tap on the favourite searches it again', /Funchal/.test(vals[0]) && /Cabo Girão/.test(vals[1]) && vals[2] >= 4, JSON.stringify(vals));
+  const vals = await page.evaluate(() => [document.querySelector('[data-testid=search-summary]')?.innerText ?? '', (document.body.innerText.match(/\d\d:\d\d/g) ?? []).length]);
+  check('a tap on the favourite opens the results of that search', /Funchal/.test(vals[0]) && /Cabo Girão/.test(vals[0]) && vals[1] >= 4, JSON.stringify(vals));
   await page.click('[data-testid=favorite-toggle]');
   await sleep(300);
-  check('star again removes the favourite', (await page.evaluate(() => document.querySelectorAll('[data-testid=favorite-trip]').length)) === 0);
+  check('star again removes the favourite', (await page.evaluate(() => JSON.parse(localStorage.getItem('favoriteTrips.v1') ?? '[]').length)) === 0);
   check('no page errors', errors.length === 0, errors.join('; '));
   await page.close();
 }
@@ -121,6 +122,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await clickOption(page, /všechny zastávky/);
   await typeIn(page, 'Kam', 'Cabo Gir');
   await clickOption(page, /Cabo Girão/);
+  await page.click('[data-testid=search-button]');
   await sleep(2500);
   const body = await page.evaluate(() => document.body.innerText);
   check('foot router unreachable: connections and the straight-line walk are still shown', /Chůze \d+ m · \d+ min/.test(body) && (body.match(/\d\d:\d\d/g) ?? []).length >= 4);
@@ -196,6 +198,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   }));
   await typeIn(page, 'Kam', 'Cabo Gir');
   await clickOption(page, /Cabo Girão/);
+  await page.click('[data-testid=search-button]');
   await sleep(2500);
   const body = await page.evaluate(() => document.body.innerText);
   check('no connection boards at a Lombada or runs "... -> Funchal"', !/Lombada/i.test(body) && !/Ponta Sol\s*[→>-]+\s*Funchal/i.test(body), (body.match(/Lombada.*/) ?? [''])[0]);
@@ -258,6 +261,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await clickOption(page, /všechny zastávky/);
   await typeIn(page, 'Kam', 'Cabo Gir');
   await clickOption(page, /Cabo Girão/);
+  await page.click('[data-testid=search-button]');
   await sleep(2000);
   const cards = await page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].map((c) => ({ date: c.querySelector('[data-testid=connection-date]')?.innerText, text: c.innerText.replace(/\s+/g, ' ') })));
   check('every result card shows its date', cards.length > 0 && cards.every((c) => /\d{1,2}\. ?\d{1,2}\./.test(c.date ?? '')), JSON.stringify(cards.slice(0, 2).map((c) => c.date)));
@@ -343,6 +347,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await clickOption(page, /všechny zastávky/);
   await typeIn(page, 'Kam', 'Cabo Gir');
   await clickOption(page, /Cabo Girão/);
+  await page.click('[data-testid=search-button]');
   await sleep(2000);
   const fare = () => page.evaluate(() => document.querySelector('[data-testid=connection] [data-testid=fare]')?.textContent.replace(/\s+/g, ' ').trim());
   const setCard = async (v) => {
@@ -361,6 +366,49 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   const f2 = await fare();
   check('yellow card: free', /zdarma/.test(f2 ?? ''), f2);
   await cs.ctx.close();
+}
+
+// ---- 11. search form and results are separate pages; advanced search; long recent trips do not widen the page
+{
+  const { page, errors } = await open({ width: 390, height: 844, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  check('the start page is only the form: no results, a Hledat button', (await page.$('[data-testid=search-button]')) !== null && (await page.$$('[data-testid=connection]')).length === 0);
+  check('advanced search is collapsed, the operators and the direct switch are inside', await (async () => {
+    const closed = (await page.$('[data-testid=op-rodoeste]')) === null;
+    await page.click('[data-testid=advanced-toggle]');
+    const ops = (await page.$$('[data-testid^=op-]')).length;
+    return closed && ops === 4 && (await page.$('[data-testid=advanced] input[type=checkbox]')) !== null;
+  })());
+  check('no "all timetables" line type filter any more', !/Všechny jízdní řády|Městské|Meziměstské/.test(await page.evaluate(() => document.body.innerText)));
+  await page.click('[data-testid=advanced-toggle]');
+  await typeIn(page, 'Odkud', 'Funchal');
+  await clickOption(page, /všechny zastávky/);
+  await typeIn(page, 'Kam', 'Curral das Freiras');
+  await clickOption(page, /všechny zastávky/);
+  check('picking the destination does not start the search', (await page.$$('[data-testid=connection]')).length === 0);
+  await page.click('[data-testid=search-button]');
+  await sleep(1500);
+  const all = (await page.$$('[data-testid=connection]')).length;
+  check('Hledat opens the results page with a summary of the search', all > 0 && (await page.$('input[aria-label="Odkud"]')) === null && /Funchal.*→.*Curral das Freiras/s.test(await page.evaluate(() => document.querySelector('[data-testid=search-summary]')?.innerText ?? '')), String(all));
+  await page.click('[data-testid=edit-search]');
+  await sleep(300);
+  check('the back arrow returns to the form with the values kept', (await page.evaluate(() => document.querySelector('input[aria-label="Kam"]')?.value)) === 'Curral das Freiras');
+  const overflow = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: innerWidth, pill: Math.max(0, ...[...document.querySelectorAll('[data-testid=recent-trip]')].map((b) => b.getBoundingClientRect().right)) }));
+  check('a long recent trip wraps and the page does not scroll sideways', overflow.sw <= overflow.iw && overflow.pill <= overflow.iw, JSON.stringify(overflow));
+  await page.click('[data-testid=advanced-toggle]');
+  await page.click('[data-testid=op-sam]');
+  await page.click('[data-testid=search-button]');
+  await sleep(1500);
+  const sam = (await page.$$('[data-testid=connection]')).length;
+  check('the operator filter narrows the results (SAM does not serve Curral das Freiras)', sam < all && /SAM/.test(await page.evaluate(() => document.querySelector('[data-testid=search-summary]').innerText)), `${sam} < ${all}`);
+  await page.click('[data-testid=edit-search]');
+  await sleep(300);
+  await page.click('[data-testid=op-sam]');
+  await page.evaluate(() => document.querySelector('[data-testid=advanced] input[type=checkbox]').click());
+  await page.click('[data-testid=search-button]');
+  await sleep(1500);
+  check('"Jen přímá spojení" leaves no connection with a transfer', !/přestup/.test(await page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].map((c) => c.innerText).join(' '))));
+  check('no page errors', errors.length === 0, errors.join('; '));
+  await page.close();
 }
 
 await browser.close();

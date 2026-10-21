@@ -90,6 +90,7 @@ async function run(label, viewport) {
   await page.keyboard.type('08:00');
   await page.keyboard.press('Enter');
   await page.keyboard.press('Escape');
+  await page.click('[data-testid=search-button]');
   await sleep(1500);
   const listWalk = await page.evaluate(() => document.querySelector('[data-testid=connection] [data-testid=walk-out]')?.innerText);
   check(`${label}: the result card ends with the walk "Chůze N m · N min"`, /Chůze \d+ m · \d+ min/.test(listWalk ?? ''), listWalk);
@@ -122,6 +123,8 @@ async function run(label, viewport) {
   }));
   const hm = (x) => (x ? Number(x.slice(0, 2)) * 60 + Number(x.slice(3)) : NaN);
   check(`${label}: walking from a picked start point shows the walk and no missed bus`, cards.length > 0 && cards.every((c) => c.walk > 0 && hm(c.dep) >= 8 * 60 + c.walk), JSON.stringify(cards.slice(0, 3)));
+  await page.click('[data-testid=edit-search]');
+  await sleep(300);
   await page.evaluate(() => { const i = document.querySelector('input[aria-label="Kam"]'); i.focus(); });
 
   // 7. any date + holiday detection
@@ -151,6 +154,8 @@ async function run(label, viewport) {
   await sleep(900);
   const before = { from: await value('Odkud'), to: await value('Kam'), url: await page.evaluate(() => location.search) };
   check(`${label}: the form is mirrored into the URL`, /from=/.test(before.url) && /to=/.test(before.url) && /date=2026-12-09/.test(before.url), before.url);
+  await page.click('[data-testid=search-button]');
+  await sleep(900);
   await page.evaluate(() => document.querySelector('[data-testid=connection]')?.click());
   await sleep(500);
   const opened = await page.evaluate(() => { const b = document.querySelector('[data-testid=open-leg]'); b?.click(); return !!b; });
@@ -169,14 +174,19 @@ async function run(label, viewport) {
   // Back from a line returns to the connection detail it was opened from; one more step back reaches the list
   await page.evaluate(() => document.querySelector('[data-testid=connection-back]')?.click());
   await sleep(300);
+  const times = (await text()).match(/\d\d:\d\d/g)?.length ?? 0;
+  await page.click('[data-testid=edit-search]');
+  await sleep(300);
   const after = { from: await value('Odkud'), to: await value('Kam'), url: await page.evaluate(() => location.search), date: await page.evaluate(() => document.querySelector('[data-testid=date-trigger]')?.dataset.value) };
   check(`${label}: Back restores Odkud / Kam / date`, after.from === before.from && after.to === before.to && after.date === '2026-12-09', JSON.stringify(after));
-  const times = (await text()).match(/\d\d:\d\d/g)?.length ?? 0;
   check(`${label}: and the previous results are shown again`, times >= 4, `${times} times`);
 
   // reload with the URL
   await page.reload({ waitUntil: 'networkidle0' });
   await sleep(600);
+  check(`${label}: a reload with a search in the URL opens the results`, (await page.$('[data-testid=search-summary]')) !== null && (await page.$('input[aria-label="Odkud"]')) === null);
+  await page.click('[data-testid=edit-search]');
+  await sleep(300);
   check(`${label}: reload restores the search from the URL`, (await value('Odkud')) === before.from && (await value('Kam')) === before.to, `${await value('Odkud')} -> ${await value('Kam')}`);
   check(`${label}: no page errors`, errors.length === 0, errors.join('; ').slice(0, 300));
   await page.close();

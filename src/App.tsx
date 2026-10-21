@@ -61,6 +61,10 @@ export function App() {
   // the planner's start / destination points of the leg that was opened (the hash only carries the ridden stretch)
   const [openConn, setOpenConn] = useState<string | null>(null);
   const [rideEnds, setRideEnds] = useState<RideEnds | undefined>();
+  const [plannerView, setPlannerViewState] = useState<'form' | 'results'>(() => {
+    const q = new URLSearchParams(location.search);
+    return q.get('from') && q.get('to') ? 'results' : 'form';
+  });
   const [now, setNow] = useState(() => nowInMadeira());
   // The school term is detected from today's date. A manual choice is only an override for the day it was made.
   const dayStamp = `${now.y}-${now.m}-${now.d}`;
@@ -182,6 +186,8 @@ export function App() {
             openConn,
             setOpenConn,
             fareCard,
+            plannerView,
+            setPlannerView: setPlannerViewState,
             desktop,
             setMap: setMapLayers,
             setMapFocus,
@@ -195,12 +201,14 @@ export function App() {
             setPlanner,
             useAsFrom: (name, key) => {
               setOpenConn(null);
+              setPlannerViewState('form');
               setPlanner((p) => ({ ...p, from: { text: name, key } }));
               setTab('route');
               if (location.hash) location.hash = '';
             },
             useStopAs: (kind, name, key) => {
               setOpenConn(null);
+              setPlannerViewState('form');
               setPlanner((p) => ({ ...p, [kind]: { text: name, key } }));
               setTab('route');
               if (location.hash) location.hash = '';
@@ -212,6 +220,7 @@ export function App() {
             clearRecent,
             useTrip: (trip) => {
               setOpenConn(null);
+              setPlannerViewState('results');
               setPlanner((p) => ({ ...p, from: trip.from, to: trip.to }));
               setApplied({ from: trip.from, to: trip.to });
               setTab('route');
@@ -219,7 +228,7 @@ export function App() {
             },
           }
         : null,
-    [data, net, ctx, openConn, fareCard, desktop, userPos, geo, locate, planner, applied, commit, recent, favorites, toggleFavorite, rememberTrip, clearRecent],
+    [data, net, ctx, openConn, fareCard, plannerView, desktop, userPos, geo, locate, planner, applied, commit, recent, favorites, toggleFavorite, rememberTrip, clearRecent],
   );
 
   const today = serviceDay(now);

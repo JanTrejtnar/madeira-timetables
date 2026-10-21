@@ -38,6 +38,8 @@ const paths = (page) => page.evaluate(() => [...document.querySelectorAll('.leaf
   const page = await browser.newPage();
   await page.setViewport({ width: 1400, height: 900 });
   await page.goto(`${base}?from=Funchal&fk=&to=Santana&time=08:00`, { waitUntil: 'networkidle0' });
+  await page.click('[data-testid=edit-search]');
+  await sleep(500);
   await sleep(1500);
   const urlBefore = await page.evaluate(() => location.search);
   const mapBefore = (await paths(page)).join('|');
@@ -91,6 +93,8 @@ for (const [name, vp] of [['desktop', { width: 1400, height: 900 }], ['phone', {
   await page.setViewport(vp);
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto(`${base}?from=Funchal&to=Santana&time=08:00&date=2026-12-07`, { waitUntil: 'networkidle0' });
+  await page.click('[data-testid=edit-search]');
+  await sleep(300);
   await sleep(800);
   check(`${name}: no native time / date inputs`, (await page.$('input[type=time], input[type=date]')) === null);
   await page.click('[data-testid=time-trigger]');

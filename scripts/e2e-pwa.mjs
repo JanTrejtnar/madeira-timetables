@@ -46,7 +46,7 @@ try {
   check('tab order: Plánovač, Mapa, Linky, Odjezdy', tabs.length > 0 && tabs.every((t) => /Plánovač/.test(t[0]) && /Mapa/.test(t[1]) && /Linky/.test(t[2]) && /Odjezdy/.test(t[3])), JSON.stringify(tabs));
   let body0 = await text(page);
   check('planner opens first; no "Preferovat" / "Pouze tento typ"', /Odkud|Nástupní/.test(await page.evaluate(() => document.body.innerHTML)) && !/Preferovat|Pouze tento typ/.test(body0));
-  check('"Pouze přímá spojení" checkbox + Vše/Meziměstské/Městské switch', /Pouze přímá spojení/.test(body0) && ['Vše', 'Meziměstské', 'Městské'].every((x) => body0.includes(x)));
+  check('planner start page: Hledat button and "Rozšířené vyhledávání"', /Hledat/.test(body0) && /Rozšířené vyhledávání/.test(body0));
   const typeIn = async (label, value) => {
     await page.evaluate((l, v) => { const i = document.querySelector(`input[aria-label="${l}"]`); i.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(i, v); i.dispatchEvent(new Event('input', { bubbles: true })); }, label, value);
     await sleep(500);
@@ -59,6 +59,7 @@ try {
   const firstTo = await page.evaluate(() => document.querySelector('ul li button')?.innerText.replace(/\s+/g, ' '));
   check('"funchal": the city group (the one municipality group) comes first', /^Funchal \(všechny zastávky\)/.test(firstTo ?? ''), firstTo);
   await page.evaluate(() => document.querySelector('ul li button')?.click());
+  await page.click('[data-testid=search-button]');
   await sleep(900);
   const bodyG = await text(page);
   check('Santana (all stops) -> Funchal lists connections', (bodyG.match(/\d\d:\d\d/g) ?? []).length >= 4, (bodyG.match(/\d\d:\d\d/g) ?? []).length + ' times');
@@ -98,7 +99,7 @@ try {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await sleep(2500);
   body = await text(page);
-  check('app + data load after reload while offline', !/Nepodařilo se načíst/.test(body) && (await page.$('input:not([type=checkbox])')) !== null);
+  check('app + data load after reload while offline', !/Nepodařilo se načíst/.test(body) && ((await page.$('input:not([type=checkbox])')) !== null || (await page.$('[data-testid=search-summary]')) !== null));
   await clickText(page, /^Linky$/);
   await sleep(300);
   await page.type('input:not([type=checkbox])', 'Pico do Areeiro');

@@ -28,6 +28,9 @@ export interface Shared {
   /** key of the connection opened in the planner's detail page (null = the list); kept here so it survives a trip to the line detail and back */
   openConn: string | null;
   setOpenConn: (key: string | null) => void;
+  /** the planner shows its search form or the page of results (a search was started) */
+  plannerView: 'form' | 'results';
+  setPlannerView: (v: 'form' | 'results') => void;
   /** card the traveller holds (settings); decides the price shown with a connection */
   fareCard: FareCard;
   /** true when the side-by-side layout with the big map is active */

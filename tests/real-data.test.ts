@@ -470,10 +470,10 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
     expect(nearestNode(net, 32.45, -16.5, 1000)).toBeNull();
   });
   it('planner form survives the URL round trip, ignores bad values', () => {
-    const f = { from: { text: 'Santana (všechny zastávky)', key: '@par:Santana' }, to: { text: 'Funchal', key: null }, time: '07:45', date: '2026-12-08', type: 'interurbano' as const, directOnly: true };
+    const f = { from: { text: 'Santana (všechny zastávky)', key: '@par:Santana' }, to: { text: 'Funchal', key: null }, time: '07:45', date: '2026-12-08', ops: ['rodoeste', 'sam'] as ('rodoeste' | 'sam')[], directOnly: true };
     const back = formFromQuery('?' + formToQuery(f), 600);
     expect(back).toEqual(f);
-    expect(formFromQuery('?date=2026-02-31&time=25:99&type=zzz', 600)).toMatchObject({ date: null, time: '10:00', type: 'all' });
+    expect(formFromQuery('?date=2026-02-31&time=25:99&ops=zzz', 600)).toMatchObject({ date: null, time: '10:00', ops: [] });
     expect(formToQuery(formFromQuery('', 600))).toBe('');
   });
   it('a chosen holiday date uses the Sunday timetable, the next day the weekday one', () => {
