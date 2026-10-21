@@ -74,14 +74,11 @@ async function run(label, viewport) {
   check(`${label}: tap finds the nearest stop and states the distance`, /Cabo Girão/i.test(res ?? '') && /\d+ m/.test(res ?? ''), res);
   const markers = await page.evaluate(() => document.querySelectorAll('[data-testid=map-picker-map] path, [data-testid=map-picker-map] .picked-pin').length);
   check(`${label}: tapped point (red pin), link and found stop are drawn`, markers >= 3, String(markers));
-  // far from any stop (zoom out is not needed: pan by tapping the sea corner is not guaranteed) -> use two taps at different spots
-  await page.mouse.click(box.x + 5, box.y + box.height - 5);
-  await sleep(400);
-  const res2 = await page.evaluate(() => document.querySelector('[data-testid=map-picker-result]')?.innerText);
-  check(`${label}: a tap far from any stop says so (or still finds one)`, /m/.test(res2 ?? ''), res2);
-  await page.keyboard.press('Escape');
+  check(`${label}: crosshair pin hangs in the middle of the map`, (await page.$('[data-testid=map-picker-crosshair]')) !== null);
+  // the map moves under the pin; "Vybrat tento bod" confirms the point and closes the picker
+  await page.click('[data-testid=map-picker-confirm]');
   await sleep(300);
-  check(`${label}: Escape / Hotovo closes the picker`, (await page.$('[data-testid=map-picker]')) === null);
+  check(`${label}: "Vybrat tento bod" fills the field and closes the picker`, (await page.$('[data-testid=map-picker]')) === null);
   check(`${label}: the field holds the stop found on the map`, /Girão|Girao/i.test((await value('Kam')) ?? '') || (await value('Kam')) !== '', await value('Kam'));
 
   // walking leg + persistent pin for the picked destination

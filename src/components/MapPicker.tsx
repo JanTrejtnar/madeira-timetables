@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { useT } from '../i18n';
-import { drawPin } from '../lib/mapPin';
+import { pinIcon } from '../lib/mapPin';
 import { nearestNode } from '../lib/network';
 import type { Picked } from '../lib/plannerForm';
 import type { Shared } from './common';
@@ -20,11 +20,20 @@ interface Props {
   onClose: () => void;
 }
 
-/** Full-screen map: tap anywhere and the nearest stop (within 1 km) is filled into the planner field. */
+type Found = { name: string; key: string; lat: number; lon: number; metres: number };
+
+/** SVG of the pin hanging in the middle of the map (same shape as the planner's A / B pins). */
+const pinHtml = (kind: 'from' | 'to') => (pinIcon(kind).options.html as string) ?? '';
+
+/**
+ * Full-screen map with a pin hanging in the middle: the traveller moves the map under it (more exact than a finger on a small
+ * screen), the nearest stop within 1 km is shown below and "Select this point" fills it into the planner field.
+ */
 export function MapPicker({ shared, title, kind, current, onPick, onClose }: Props) {
   const { t } = useT();
   const el = useRef<HTMLDivElement>(null);
-  const [res, setRes] = useState<{ name: string; metres: number } | 'none' | null>(null);
+  const [res, setRes] = useState<Found | 'none' | null>(null);
+  const centre = useRef<{ lat: number; lon: number } | null>(null);
   const pickRef = useRef(onPick);
   pickRef.current = onPick;
   const { net, userPos } = shared;
@@ -44,46 +53,49 @@ export function MapPicker({ shared, title, kind, current, onPick, onClose }: Pro
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
     const layer = L.layerGroup().addTo(map);
-    const label = t('pickedPoint');
-    const show = (lat: number, lon: number, stop: { lat: number; lon: number; name: string } | null) => {
-      layer.clearLayers();
-      drawPin(layer, { kind, lat, lon, stop: stop ?? undefined }, label);
-      if (stop) L.circleMarker([stop.lat, stop.lon], { radius: 9, color: '#0284c7', weight: 3, fillColor: '#0ea5e9', fillOpacity: 1 }).bindTooltip(stop.name, { permanent: true, direction: 'top', offset: [0, -8] }).addTo(layer);
-    };
     // start on the pin already set, else the stop in the field, else the user's position, else the island
     const startNode = current.key ? net.nodes.find((n) => n.key === current.key && n.lat !== undefined) : undefined;
-    if (current.pt) {
-      const hit = nearestNode(net, current.pt.lat, current.pt.lon, PICK_RADIUS_M);
-      map.setView([current.pt.lat, current.pt.lon], 16);
-      show(current.pt.lat, current.pt.lon, hit && hit.node.lat !== undefined && hit.node.lon !== undefined ? { lat: hit.node.lat, lon: hit.node.lon, name: hit.node.name } : null);
-    } else if (startNode?.lat !== undefined && startNode.lon !== undefined) {
-      map.setView([startNode.lat, startNode.lon], 15);
-      layer.clearLayers();
-      L.circleMarker([startNode.lat, startNode.lon], { radius: 9, color: '#0284c7', weight: 3, fillColor: '#0ea5e9', fillOpacity: 1 }).bindTooltip(startNode.name, { permanent: true, direction: 'top', offset: [0, -8] }).addTo(layer);
-    } else if (userPos) map.setView([userPos.lat, userPos.lon], 14);
+    if (current.pt) map.setView([current.pt.lat, current.pt.lon], 16);
+    else if (startNode?.lat !== undefined && startNode.lon !== undefined) map.setView([startNode.lat, startNode.lon], 16);
+    else if (userPos) map.setView([userPos.lat, userPos.lon], 15);
     else map.setView([32.75, -16.95], 10);
 
-    map.on('click', (e: L.LeafletMouseEvent) => {
-      const hit = nearestNode(net, e.latlng.lat, e.latlng.lng, PICK_RADIUS_M);
-      if (!hit || hit.node.lat === undefined || hit.node.lon === undefined) {
-        show(e.latlng.lat, e.latlng.lng, null);
-        setRes('none');
-        return;
-      }
-      show(e.latlng.lat, e.latlng.lng, { lat: hit.node.lat, lon: hit.node.lon, name: hit.node.name });
-      setRes({ name: hit.node.name, metres: Math.round(hit.metres) });
-      pickRef.current({ text: hit.node.name, key: hit.node.key, pt: { lat: +e.latlng.lat.toFixed(5), lon: +e.latlng.lng.toFixed(5) } });
-    });
+    const update = () => {
+      const c = map.getCenter();
+      centre.current = { lat: c.lat, lon: c.lng };
+      layer.clearLayers();
+      const hit = nearestNode(net, c.lat, c.lng, PICK_RADIUS_M);
+      if (!hit || hit.node.lat === undefined || hit.node.lon === undefined) return setRes('none');
+      const { lat, lon, name, key } = hit.node;
+      L.polyline([[c.lat, c.lng], [lat, lon]], { color: '#dc2626', weight: 2.5, opacity: 0.8, dashArray: '4 6', interactive: false }).addTo(layer);
+      L.circleMarker([lat, lon], { radius: 9, color: '#0f172a', weight: 3, fillColor: '#0ea5e9', fillOpacity: 1 }).bindTooltip(name, { permanent: true, direction: 'top', offset: [0, -8] }).addTo(layer);
+      setRes({ name, key, lat, lon, metres: Math.round(hit.metres) });
+    };
+    let raf = 0;
+    const onMove = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    };
+    map.on('move', onMove);
+    map.on('click', (e: L.LeafletMouseEvent) => map.panTo(e.latlng));
+    update();
     const ro = new ResizeObserver(() => map.invalidateSize());
     ro.observe(container);
     const late = setTimeout(() => map.invalidateSize(), 200);
     return () => {
+      cancelAnimationFrame(raf);
       clearTimeout(late);
       ro.disconnect();
       map.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [net]);
+
+  const confirm = () => {
+    if (!res || res === 'none' || !centre.current) return;
+    pickRef.current({ text: res.name, key: res.key, pt: { lat: +centre.current.lat.toFixed(5), lon: +centre.current.lon.toFixed(5) } });
+    onClose();
+  };
 
   return (
     <div role="dialog" aria-modal="true" aria-label={`${t('pickOnMap')}: ${title}`} className="fixed inset-0 z-1000 flex flex-col bg-white pt-safe dark:bg-slate-900" data-testid="map-picker">
@@ -92,11 +104,29 @@ export function MapPicker({ shared, title, kind, current, onPick, onClose }: Pro
         <h2 className="min-w-0 flex-1 truncate text-base font-semibold">
           {t('pickOnMap')} · {title}
         </h2>
-        <button onClick={onClose} className="h-10 rounded-xl bg-sky-600 px-4 text-sm font-semibold text-white active:bg-sky-700">
+        <button onClick={onClose} className="h-10 rounded-xl px-4 text-sm font-semibold text-slate-600 active:bg-slate-100 dark:text-slate-300 dark:active:bg-slate-800">
           {t('pickDone')}
         </button>
       </div>
-      <div ref={el} className="isolate min-h-0 flex-1 bg-slate-200 dark:bg-slate-800" data-testid="map-picker-map" />
+      <div className="relative min-h-0 flex-1">
+        <div ref={el} className="isolate absolute inset-0 bg-slate-200 dark:bg-slate-800" data-testid="map-picker-map" />
+        {/* the pin's tip is the exact centre of the map; a dot marks the spot under it */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10" data-testid="map-picker-crosshair" aria-hidden="true">
+          <span className="absolute -left-1 -top-1 size-2 rounded-full bg-slate-900/70 ring-2 ring-white/80" />
+          <span className="absolute -left-3.5 -top-9.5 drop-shadow-md" dangerouslySetInnerHTML={{ __html: pinHtml(kind) }} />
+        </div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center px-4">
+          <button
+            type="button"
+            onClick={confirm}
+            disabled={!res || res === 'none'}
+            data-testid="map-picker-confirm"
+            className="pointer-events-auto h-12 rounded-full bg-sky-600 px-6 text-base font-semibold text-white shadow-lg active:bg-sky-700 disabled:bg-slate-400 disabled:opacity-90"
+          >
+            {t('pickConfirm')}
+          </button>
+        </div>
+      </div>
       <p className="shrink-0 border-t border-slate-200/70 px-4 py-3 pb-safe text-sm dark:border-slate-700" data-testid="map-picker-result" aria-live="polite">
         {res === null ? (
           <span className="text-slate-500 dark:text-slate-400">{t('pickHint')}</span>

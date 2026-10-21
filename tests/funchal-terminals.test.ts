@@ -30,10 +30,11 @@ describe.skipIf(!existsSync(file))('Funchal terminals (real data)', () => {
   it('changes between a Rodoeste bus and a SAM bus in Funchal', () => {
     const trips = servicesFor(net, data.lines, { y: 2026, m: 10, d: 21 }, true, ['Funchal']);
     const r = plan(net, trips, resolveNodes(net, 'Ribeira Brava'), resolveNodes(net, 'Machico'), 8 * 60);
-    const across = r.transfers.filter((it) => net.nodes[it.legs[0].trip.nodes[it.legs[0].toPos]].terminal !== undefined);
+    // the transfer may be at a planner stop next to the terminal (line 7 now calls at Praça do Povo), so any walking change counts
+    const across = r.transfers.filter((it) => it.walk > 0);
     expect(across.length).toBeGreaterThan(0);
     for (const it of across) {
-      expect(it.walk).toBeGreaterThanOrEqual(2);
+      expect(it.walk).toBeGreaterThanOrEqual(1);
       // the wait covers the walk: the second bus leaves no earlier than the first arrives plus the walk
       expect(it.legs[1].depart).toBeGreaterThanOrEqual(it.legs[0].arrive + it.walk);
     }
@@ -42,7 +43,8 @@ describe.skipIf(!existsSync(file))('Funchal terminals (real data)', () => {
 
 describe.skipIf(!existsSync(file))('terminals of lines without a stop list (real data)', () => {
   const data: Dataset = JSON.parse(readFileSync(file, 'utf8'));
-  const stopNames = (num: string) => data.lines.find((l) => l.number === num)!.directions.map((d) => d.stops.map((s) => s.name));
+  // the planner may add intermediate stops (enrich:stops): the terminals are the first and the last
+  const stopNames = (num: string) => data.lines.find((l) => l.number === num)!.directions.map((d) => [d.stops[0].name, d.stops.at(-1)!.name]);
 
   it('puts the places found by resolve:terminals on their lines', () => {
     expect(stopNames('221')).toEqual([['Ribeira Brava', 'Furna'], ['Furna', 'Ribeira Brava']]);
@@ -55,6 +57,13 @@ describe.skipIf(!existsSync(file))('terminals of lines without a stop list (real
     for (const s of at('991')) expect(s.lat).toBeGreaterThan(33);
     const moinhos = at('554').find((s) => s.name === 'Moinhos')!;
     expect(moinhos.lon).toBeGreaterThan(-16.85);
+  });
+  it('gives lines whose planner pattern follows the drawn route their intermediate stops and running times', () => {
+    const d = data.lines.find((x) => x.number === '221')!.directions[0];
+    expect(d.enrichedFrom).toBe('siga-planner');
+    expect(d.stops.length).toBeGreaterThan(10);
+    expect(d.stopOffsets).toHaveLength(d.stops.length);
+    expect(d.stopOffsets!.every((o, i, a) => i === 0 || o >= a[i - 1])).toBe(true);
   });
   it('estimates times and routes for them', () => {
     const l = data.lines.find((x) => x.number === '260')!;

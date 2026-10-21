@@ -10,11 +10,18 @@ describe.skipIf(!existsSync(file))('terminal-only lines (real data)', () => {
   const net = buildNetwork(data.lines);
   const trips = servicesFor(net, data.lines, { y: 2026, m: 10, d: 21 }, true, ['Funchal']);
 
-  it('gives the scanned 155/555 its two terminals and the Via places', () => {
+  it('gives the scanned 155/555 its terminals, the planner stops in both directions, and the Via places', () => {
     const l = data.lines.find((x) => x.number === '555')!;
-    expect(l.directions.map((d) => d.stops.map((s) => s.name))).toEqual([['Ponta da Oliveira', 'Funchal'], ['Funchal', 'Ponta da Oliveira']]);
+    expect(l.directions.map((d) => [d.stops[0].name, d.stops.at(-1)!.name])).toEqual([['Ponta da Oliveira', 'Funchal'], ['Funchal', 'Ponta da Oliveira']]);
     expect(Object.keys(l.via ?? {}).sort()).toEqual(['a', 'b']);
-    expect(l.directions.every((d) => d.isEstimated && d.stopOffsets!.length === 2)).toBe(true);
+    expect(l.directions.every((d) => d.isEstimated && d.stopOffsets!.length === d.stops.length)).toBe(true);
+    for (const d of l.directions) {
+      expect(d.enrichedFrom).toBe('siga-planner');
+      expect(d.stops.length).toBeGreaterThan(20);
+    }
+    // Garajau is placed on the planner stops of both directions
+    expect(l.via!.a[0].name).toBe('Garajau');
+    expect(Object.keys(l.via!.a[0].after).sort()).toEqual(['0', '1']);
   });
   it('offers Garajau and Figueirinhas as stops', () => {
     expect(suggest(net, data.lines, 'garaj').some((s) => /garajau/i.test(s.name))).toBe(true);

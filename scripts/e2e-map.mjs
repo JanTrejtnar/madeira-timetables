@@ -29,7 +29,7 @@ for (const [label, vp] of [['phone', { width: 390, height: 844, isMobile: true, 
   };
   // map pane: on desktop the big map beside the list, on a phone the inline one
   const polyline = () => page.evaluate(() => {
-    const p = [...document.querySelectorAll('.leaflet-overlay-pane path')].filter((x) => +x.getAttribute('stroke-width') === 5);
+    const p = [...document.querySelectorAll('.leaflet-overlay-pane path')].filter((x) => +x.getAttribute('stroke-width') === 4);
     return p.length ? { n: p.length, len: p[0].getAttribute('d').length } : null;
   });
   const markers = () => page.$$('.leaflet-overlay-pane path.leaflet-interactive');

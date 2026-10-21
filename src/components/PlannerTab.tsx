@@ -3,7 +3,7 @@ import { useT } from '../i18n';
 import { localStopName } from '../lib/text';
 import { detoursFor } from '../lib/via';
 import { addDays, serviceDay } from '../lib/holidays';
-import { hubsNear, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
+import { hubsNear, nearestNode, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
 import { isoToYmd, ymdToIso, type Picked, type PlannerForm } from '../lib/plannerForm';
 import { plan, type Itinerary } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
@@ -13,10 +13,10 @@ import { walkTo } from '../lib/walk';
 import type { Line, MapLayer, MapPin as PickedPin } from '../types';
 import { Card, Chip, dirLabel, EmptyState, EstTag, LineBadge, lineColor, lineRailCls, MapPin, PrecisionWarning, SectionTitle, TypeFilter, type LineTypeFilter, type Shared } from './common';
 import { Icon } from './Icons';
-import { MapPicker } from './MapPicker';
+import { MapPicker, PICK_RADIUS_M } from './MapPicker';
 import { RouteMap } from './RouteMap';
 
-function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPickMap }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; onCommit: () => void; shared: Shared; onPickMap: () => void }) {
+function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPickMap, onLocate, locating }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; onCommit: () => void; shared: Shared; onPickMap: () => void; onLocate?: () => void; locating?: boolean }) {
   const { t, lang } = useT();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -85,6 +85,19 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
         spellCheck={false}
         className="h-11 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-base font-medium outline-none placeholder:font-normal placeholder:text-slate-400 focus:bg-slate-50 dark:focus:bg-slate-800/60"
       />
+      {onLocate && (
+        <button
+          type="button"
+          onClick={onLocate}
+          disabled={locating}
+          aria-label={t('useMyLocation')}
+          title={t('useMyLocation')}
+          data-testid="use-my-location"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-sky-600 dark:hover:bg-slate-800"
+        >
+          <Icon name="navigation" className={`size-5 ${locating ? 'animate-pulse' : ''}`} />
+        </button>
+      )}
       <button
         type="button"
         onClick={onPickMap}
@@ -283,16 +296,46 @@ function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt }: { it: I
 }
 
 export function PlannerTab({ shared }: { shared: Shared }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { planner, setPlanner, applied, commit } = shared;
   const { from, to, time, type, directOnly } = planner;
   const patch = (p: Partial<PlannerForm>) => setPlanner((f) => ({ ...f, ...p }));
-  const setFrom = (v: Picked) => patch({ from: v });
+  const setFrom = (v: Picked) => {
+    setLocNote(null);
+    patch({ from: v });
+  };
   const setTo = (v: Picked) => patch({ to: v });
   const setTime = (v: string) => patch({ time: v });
   const setType = (v: LineTypeFilter) => patch({ type: v });
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [pickFor, setPickFor] = useState<'from' | 'to' | null>(null);
+  // "My location": the position is asked for, then the nearest stop (within 1 km) becomes the start and the walk to it is shown under the field
+  const { userPos, geo, locate } = shared;
+  const [wantsLocation, setWantsLocation] = useState(false);
+  const [locNote, setLocNote] = useState<string | null>(null);
+  const seenFix = useRef(userPos?.seq);
+  const locateMe = () => {
+    setWantsLocation(true);
+    setLocNote(null);
+    locate();
+  };
+  useEffect(() => {
+    if (!wantsLocation) return;
+    if (geo === 'denied' || geo === 'error' || geo === 'unsupported') {
+      setWantsLocation(false);
+      setLocNote(t(geo === 'denied' ? 'geoDenied' : geo === 'error' ? 'geoError' : 'geoUnsupported'));
+      return;
+    }
+    if (!userPos || userPos.seq === seenFix.current) return;
+    seenFix.current = userPos.seq;
+    setWantsLocation(false);
+    const hit = nearestNode(shared.net, userPos.lat, userPos.lon, PICK_RADIUS_M);
+    if (!hit) return setLocNote(t('pickNone', { m: PICK_RADIUS_M }));
+    const name = localStopName(hit.node.name, lang);
+    const w = walkTo(userPos, hit.node);
+    setPlanner((f) => ({ ...f, from: { text: t('myLocationText', { name }), key: hit.node.key, pt: { lat: +userPos.lat.toFixed(5), lon: +userPos.lon.toFixed(5) } } }));
+    setLocNote(w ? t('nearestStopWalk', { name, m: w.m, n: w.min }) : null);
+  }, [wantsLocation, geo, userPos, shared.net, t, lang, setPlanner]);
 
   const { y: ny, m: nm, d: nd } = shared.ctx.now;
   const today = useMemo(() => ({ y: ny, m: nm, d: nd }), [ny, nm, nd]);
@@ -409,7 +452,12 @@ export function PlannerTab({ shared }: { shared: Shared }) {
             <Icon name="pin" className="size-4 text-sky-600" strokeWidth={2} />
           </div>
           <div className="flex min-w-0 flex-1 flex-col">
-            <Combobox label={t('from')} placeholder={t('fromPlaceholder')} value={from} onChange={setFrom} onCommit={() => commit({ from })} shared={shared} onPickMap={() => setPickFor('from')} />
+            <Combobox label={t('from')} placeholder={t('fromPlaceholder')} value={from} onChange={setFrom} onCommit={() => commit({ from })} shared={shared} onPickMap={() => setPickFor('from')} onLocate={locateMe} locating={shared.geo === 'busy'} />
+            {locNote && (
+              <p className="px-2 pb-1 text-xs text-slate-500 dark:text-slate-400" data-testid="location-note" aria-live="polite">
+                {locNote}
+              </p>
+            )}
             <div className="mx-2 h-px bg-slate-100 dark:bg-slate-800" />
             <Combobox label={t('to')} placeholder={t('toPlaceholder')} value={to} onChange={setTo} onCommit={() => commit({ to })} shared={shared} onPickMap={() => setPickFor('to')} />
           </div>

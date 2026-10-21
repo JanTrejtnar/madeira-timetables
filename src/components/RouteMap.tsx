@@ -105,6 +105,13 @@ interface Props {
   onStopClick?: (index: number) => void;
 }
 
+/** Dark casing (7 px) under the coloured line (4 px), so the route stands out on every kind of map. */
+function casedLine(group: L.FeatureGroup, pts: [number, number][], style: { color: string; lineCap: 'round'; lineJoin: 'round' }): void {
+  L.polyline(pts, { ...style, weight: 4, opacity: 1 }).addTo(group).bringToBack();
+  // sent to the back after the line: casing, line, then the stop markers on top (they stay clickable)
+  L.polyline(pts, { color: '#0f172a', weight: 7, opacity: 0.85, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(group).bringToBack();
+}
+
 export function RouteMap({ layers, focus = null, me = null, onLocate, locating = false, fill = false, onStopClick }: Props) {
   const { t, lang } = useT();
   const el = useRef<HTMLDivElement>(null);
@@ -150,7 +157,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
       layer.transfers?.forEach((x) => drawTransfer(group, x, t('mapTransfer', { name: localStopName(x.name, lang) }), t('mapTransferWalk')));
       layer.stops.forEach((s, si) => {
         if (s.lat === undefined || s.lon === undefined) return;
-        const marker = L.circleMarker([s.lat, s.lon], { radius: 5, color: layer.color, weight: 2.5, fillColor: '#fff', fillOpacity: 1 })
+        const marker = L.circleMarker([s.lat, s.lon], { radius: 5.5, color: '#0f172a', weight: 2.5, fillColor: '#fff', fillOpacity: 1 })
           .bindTooltip(localStopName(s.name, lang))
           // content is built when the popup opens, so it always shows the time of the currently selected trip
           .bindPopup(() => popupContent(s, lang, labels, li === 0 ? focusRef.current?.times[si] ?? null : null, si === 0), { autoPan: true, autoPanPadding: [12, 12] })
@@ -187,8 +194,8 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
             if (cut) {
               // the rest of the line is only a hint: faint, thin, and outside the group so the view fits the ride
               for (const rest of [cut.before, cut.after]) if (rest.length > 1) L.polyline(rest, { ...style, weight: 3, opacity: 0.25, interactive: false }).addTo(map).bringToBack();
-              L.polyline(cut.ride, { ...style, weight: 5, opacity: 0.9 }).addTo(group).bringToBack();
-            } else L.polyline(full, { ...style, weight: 5, opacity: 0.85 }).addTo(group).bringToBack();
+              casedLine(group, cut.ride, style);
+            } else casedLine(group, full, style);
             fit();
           })
           .catch(() => alive && setFailed(true));

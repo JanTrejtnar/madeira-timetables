@@ -15,6 +15,7 @@ import { cleanTexts } from './lib-text.mjs';
 import { addViaPlaces, attachViaRoutes } from './lib-via.mjs';
 import { attachRoutes } from './lib-routes.mjs';
 import { addTerminalStops, estimateTerminals } from './lib-terminals.mjs';
+import { enrichStops, enrichedKm } from './lib-enrich.mjs';
 import { applyOverrides, applyFunchalTerminals, terminalWalks } from './lib-overrides.mjs';
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
 
@@ -90,6 +91,12 @@ console.log('Funchal ends moved to the operator terminal:', funchalMoved, '- wal
 // OSRM road routes (data/routes.json, `npm run fetch:routes`) for directions without a SIGA polyline
 const routed = attachRoutes(data.lines, ROOT);
 const terminalTimes = estimateTerminals(data.lines, path.join(ROOT, 'data', 'shapes'));
+// intermediate stops of the terminal-only directions from the SIGA planner (data/siga-patterns.json, `npm run enrich:stops`)
+const enrichReport = [];
+const enriched = enrichStops(data.lines, ROOT, enrichReport);
+enrichedKm(data.lines, path.join(ROOT, 'data', 'shapes'));
+console.log('terminal-only directions given the planner stops:', enriched, 'of', enrichReport.length);
+if (process.env.ENRICH_REPORT) for (const r of enrichReport) console.log(`  ${r.ok ? 'OK  ' : 'MISS'} ${r.line} ${r.from} > ${r.to}: ${r.why}`);
 console.log('terminal-only directions given stops / routed and estimated:', terminalStops.done, '/', terminalTimes, '- terminals unknown for:', terminalStops.skipped.length);
 // "Via Aeroporto"-style notes: where the place lies in each direction (the app inserts it for the trips with the note); after the routes, whose polylines tell the stretch
 const viaPlaces = addViaPlaces(data.lines, osm, osmPlaces, JSON.parse(await readFile(path.join(ROOT, 'data', 'via-places.json'), 'utf8')), null, areas, path.join(ROOT, 'data', 'shapes'));

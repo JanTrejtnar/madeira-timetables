@@ -108,7 +108,8 @@ export function addViaPlaces(lines, osm, osmPlaces, manual, report = null, areas
           let pick = null;
           const fits = new Map(); // namesakes that lie on the way -> their best stretch; more than one place = ambiguous ("Centro Saúde"), not inserted
           for (const c of cands) {
-            if (pos.some((x) => hav([x.s.lat, x.s.lon], c.p) < SAME_STOP_KM)) { fits.clear(); alreadyStop = true; break; }
+            // planner stops carry other names than the printed Via note: a stop next to the place does not replace the named place
+            if (!d.enrichedFrom && pos.some((x) => hav([x.s.lat, x.s.lon], c.p) < SAME_STOP_KM)) { fits.clear(); alreadyStop = true; break; }
             // with a route polyline the stretch is the one of the road the place is nearest to
             const hit = route ? route.nearest(c.p) : null;
             for (let k = 0; k + 1 < pos.length; k++) {
