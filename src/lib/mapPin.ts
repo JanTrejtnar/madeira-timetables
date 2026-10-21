@@ -7,8 +7,9 @@ export function pinIcon(kind: MapPin['kind']): L.DivIcon {
   return L.divIcon({ className: 'picked-pin', html: svg, iconSize: [28, 38], iconAnchor: [14, 37], tooltipAnchor: [12, -24] });
 }
 
-/** Adds the pin and, when it has a stop, the thin dashed line to it. */
+/** Adds the pin and, when it has a stop, the walk to it: along the streets once the route is known, else a thin straight dashed line. */
 export function drawPin(into: L.LayerGroup, pin: MapPin, label: string): void {
-  if (pin.stop) L.polyline([[pin.lat, pin.lon], [pin.stop.lat, pin.stop.lon]], { color: '#dc2626', weight: 2.5, opacity: 0.8, dashArray: '4 6', interactive: false }).addTo(into);
+  const walk = pin.path ?? (pin.stop ? [[pin.lat, pin.lon], [pin.stop.lat, pin.stop.lon]] : null);
+  if (walk) L.polyline(walk as [number, number][], { color: '#dc2626', weight: pin.path ? 3.5 : 2.5, opacity: 0.85, dashArray: pin.path ? '1 7' : '4 6', lineCap: 'round', interactive: false }).addTo(into);
   L.marker([pin.lat, pin.lon], { icon: pinIcon(pin.kind), zIndexOffset: 900, keyboard: false }).bindTooltip(label).addTo(into);
 }

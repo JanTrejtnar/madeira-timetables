@@ -48,6 +48,8 @@ export interface Itinerary {
   legs: Leg[];
   depart: number;
   arrive: number;
+  /** arrival at the destination itself: the bus arrival plus the walk from the last stop (equal to `arrive` for a stop or an area) */
+  finish: number;
   /** minutes walking between the two stops of a transfer (0 = same stop) */
   walk: number;
 }
@@ -74,32 +76,47 @@ function earliestBoard(trip: Trip, from: Set<number>, notBefore: number, walkIn?
   return -1;
 }
 
-function firstAfter(trip: Trip, pos: number, to: Set<number>): number {
-  for (let j = pos + 1; j < trip.nodes.length; j++) if (trip.times[j] !== null && to.has(trip.nodes[j])) return j;
-  return -1;
+/** Minutes of walking from an alighting node to the picked destination point; nodes not listed are 0 minutes away. */
+export type WalkOut = ReadonlyMap<number, number>;
+
+/** The stop where the traveller reaches the destination first: smallest bus arrival + walk, so a far stop reached 5 minutes sooner does not beat a near one. */
+function firstAfter(trip: Trip, pos: number, to: Set<number>, walkOut?: WalkOut): number {
+  let best = -1;
+  let bestT = Infinity;
+  for (let j = pos + 1; j < trip.nodes.length; j++) {
+    const t = trip.times[j];
+    if (t === null || !to.has(trip.nodes[j])) continue;
+    const total = t + (walkOut?.get(trip.nodes[j]) ?? 0);
+    if (total < bestT) {
+      best = j;
+      bestT = total;
+    }
+    if (!walkOut) break;
+  }
+  return best;
 }
 
-export function direct(trips: Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn): Itinerary[] {
+export function direct(trips: Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn, walkOut?: WalkOut): Itinerary[] {
   const out: Itinerary[] = [];
   for (const trip of trips) {
     const i = earliestBoard(trip, from, departAt, walkIn);
     if (i < 0) continue;
-    const j = firstAfter(trip, i, to);
+    const j = firstAfter(trip, i, to, walkOut);
     if (j < 0) continue;
     const l = leg(trip, i, j);
     if (l.depart > departAt + HORIZON) continue;
-    out.push({ legs: [l], depart: l.depart, arrive: l.arrive, walk: 0 });
+    out.push({ legs: [l], depart: l.depart, arrive: l.arrive, finish: l.arrive + (walkOut?.get(trip.nodes[j]) ?? 0), walk: 0 });
   }
-  return out.sort((a, b) => a.depart - b.depart || a.arrive - b.arrive);
+  return out.sort((a, b) => a.depart - b.depart || a.finish - b.finish);
 }
 
-export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn, maxWait = MAX_WAIT): Itinerary[] {
+export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn, maxWait = MAX_WAIT, walkOut?: WalkOut): Itinerary[] {
   // second legs: for each node, the trips that call there and later reach `to`
   const second = new Map<number, { trip: Trip; m: number; j: number }[]>();
   for (const trip of trips) {
     for (let m = 0; m < trip.nodes.length - 1; m++) {
       if (trip.times[m] === null) continue;
-      const j = firstAfter(trip, m, to);
+      const j = firstAfter(trip, m, to, walkOut);
       if (j < 0) continue;
       const list = second.get(trip.nodes[m]) ?? [];
       list.push({ trip, m, j });
@@ -130,10 +147,11 @@ export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to:
           const ready = arriveK + buffer + walk;
           if (tm < ready || tm - ready > maxWait) continue;
           const arrive = c.trip.times[c.j] as number;
-          const score = arrive + (net.viaOnly.has(node) ? VIA_PENALTY : 0) - (net.nodes[node].transferHub ? HUB_BONUS : 0);
+          const finish = arrive + (walkOut?.get(c.trip.nodes[c.j]) ?? 0);
+          const score = finish + (net.viaOnly.has(node) ? VIA_PENALTY : 0) - (net.nodes[node].transferHub ? HUB_BONUS : 0);
           if (!best || score < bestScore || (score === bestScore && walk < best.walk)) {
             bestScore = score;
-            best = { legs: [leg(t1, i, k), leg(c.trip, c.m, c.j)], depart: l1depart, arrive, walk };
+            best = { legs: [leg(t1, i, k), leg(c.trip, c.m, c.j)], depart: l1depart, arrive, finish, walk };
           }
         }
       }
@@ -147,7 +165,7 @@ export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to:
     const prev = byTrip.get(key);
     if (!prev || it.depart > prev.depart) byTrip.set(key, it);
   }
-  return [...byTrip.values()].sort((a, b) => a.arrive - b.arrive || b.depart - a.depart);
+  return [...byTrip.values()].sort((a, b) => a.finish - b.finish || b.depart - a.depart);
 }
 
 export interface Plan {
@@ -155,15 +173,15 @@ export interface Plan {
   transfers: Itinerary[];
 }
 
-/** `walkIn`: walking time from a picked start point to each boarding node; a bus is offered only when it leaves at departAt + walk or later. */
-export function plan(net: Network, trips: Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn): Plan {
+/** `walkIn`: walking time from a picked start point to each boarding node; a bus is offered only when it leaves at departAt + walk or later. `walkOut`: walking time from each alighting node to a picked destination, which decides the stop and the order (by `finish`). */
+export function plan(net: Network, trips: Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn, walkOut?: WalkOut): Plan {
   if (!from.size || !to.size) return { direct: [], transfers: [] };
-  const d = direct(trips, from, to, departAt, walkIn);
-  const bestDirectArrive = d.length ? Math.min(...d.slice(0, 5).map((x) => x.arrive)) : Infinity;
+  const d = direct(trips, from, to, departAt, walkIn, walkOut);
+  const bestDirectArrive = d.length ? Math.min(...d.slice(0, 5).map((x) => x.finish)) : Infinity;
   const nearest = d[0];
   // transfers help when there is no direct trip, it leaves much later, or a transfer arrives clearly earlier
   const needTransfers = !nearest || nearest.depart - departAt > 60;
-  const search = (maxWait: number) => withTransfer(net, trips, from, to, departAt, walkIn, maxWait).filter((x) => needTransfers || x.arrive + TRANSFER_PENALTY < bestDirectArrive);
+  const search = (maxWait: number) => withTransfer(net, trips, from, to, departAt, walkIn, maxWait, walkOut).filter((x) => needTransfers || x.finish + TRANSFER_PENALTY < bestDirectArrive);
   let t = search(MAX_WAIT);
   // nothing else: a long wait beats no connection at all
   if (!d.length && !t.length) t = search(MAX_WAIT_FALLBACK);

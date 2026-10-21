@@ -18,6 +18,8 @@ import { addTerminalStops, estimateTerminals } from './lib-terminals.mjs';
 import { enrichStops, enrichedKm } from './lib-enrich.mjs';
 import { applyOverrides, applyFunchalTerminals, terminalWalks } from './lib-overrides.mjs';
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
+import { buildPois } from './lib-pois.mjs';
+import { buildOverview } from './lib-overview.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'public');
@@ -128,6 +130,17 @@ console.log('GTFS', gtfs.feedVersion, '- stops by code:', JSON.stringify(gtfsSta
 console.log('municipality of stops:', JSON.stringify(assignMunicipalities(data.lines, gtfs, areas)));
 await writeFile(path.join(OUT, 'data', 'schedules.json'), JSON.stringify(data));
 await cp(path.join(ROOT, 'data', 'shapes'), path.join(OUT, 'data', 'shapes'), { recursive: true });
+// places for the planner's autocomplete (towns, beaches, peaks, viewpoints, harbours, malls ...)
+const poiFile = path.join(ROOT, 'data', 'osm', 'pois.json');
+const osmPois = existsSync(poiFile) ? JSON.parse(await readFile(poiFile, 'utf8')).places : [];
+const curatedPois = JSON.parse(await readFile(path.join(ROOT, 'data', 'pois-curated.json'), 'utf8')).places;
+const pois = buildPois(osmPois, osmPlaces, curatedPois);
+await writeFile(path.join(OUT, 'data', 'pois.json'), JSON.stringify({ places: pois }));
+console.log('places for the autocomplete:', pois.length, '(OSM', osmPois.length + ', curated', curatedPois.length + ')');
+// the whole network on one map: simplified line geometries, one per line
+const overview = await buildOverview(data.lines, path.join(OUT, 'data', 'shapes'));
+await writeFile(path.join(OUT, 'data', 'overview.json'), JSON.stringify(overview));
+console.log('overview map:', overview.lines.length, 'lines,', overview.lines.reduce((n, l) => n + l.p.reduce((m, s) => m + s.length, 0), 0), 'points');
 // the drawn route must leave from / arrive at the pins of the first and last stop
 const snapped = await snapShapeEnds(data.lines, path.join(OUT, 'data', 'shapes'));
 console.log('route lines joined to the end stops:', snapped.joined, '(gap over', snapped.maxGapM, 'm left alone:', snapped.skipped.length + ')');

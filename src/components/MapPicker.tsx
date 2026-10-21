@@ -3,6 +3,7 @@ import L from 'leaflet';
 import { useT } from '../i18n';
 import { pinIcon } from '../lib/mapPin';
 import { nearestNode } from '../lib/network';
+import { fetchFoot } from '../lib/foot';
 import type { Picked } from '../lib/plannerForm';
 import type { Shared } from './common';
 import { Icon } from './Icons';
@@ -60,14 +61,27 @@ export function MapPicker({ shared, title, kind, current, onPick, onClose }: Pro
     else if (userPos) map.setView([userPos.lat, userPos.lon], 15);
     else map.setView([32.75, -16.95], 10);
 
+    let token = 0;
+    let footTimer: ReturnType<typeof setTimeout> | undefined;
     const update = () => {
       const c = map.getCenter();
+      const mine = ++token;
+      clearTimeout(footTimer);
       centre.current = { lat: c.lat, lon: c.lng };
       layer.clearLayers();
       const hit = nearestNode(net, c.lat, c.lng, PICK_RADIUS_M);
       if (!hit || hit.node.lat === undefined || hit.node.lon === undefined) return setRes('none');
       const { lat, lon, name, key } = hit.node;
-      L.polyline([[c.lat, c.lng], [lat, lon]], { color: '#dc2626', weight: 2.5, opacity: 0.8, dashArray: '4 6', interactive: false }).addTo(layer);
+      const straight = L.polyline([[c.lat, c.lng], [lat, lon]], { color: '#dc2626', weight: 2.5, opacity: 0.8, dashArray: '4 6', interactive: false }).addTo(layer);
+      // once the map rests, the walk along the streets replaces the straight line (and the distance becomes the real one)
+      footTimer = setTimeout(() => {
+        void fetchFoot({ lat: c.lat, lon: c.lng }, { lat, lon }).then((r) => {
+          if (!r || mine !== token) return;
+          straight.remove();
+          L.polyline(r.pts, { color: '#dc2626', weight: 3.5, opacity: 0.9, dashArray: '1 7', lineCap: 'round', interactive: false }).addTo(layer);
+          setRes((cur) => (cur && cur !== 'none' && cur.key === key ? { ...cur, metres: r.m } : cur));
+        });
+      }, 350);
       L.circleMarker([lat, lon], { radius: 9, color: '#0f172a', weight: 3, fillColor: '#0ea5e9', fillOpacity: 1 }).bindTooltip(name, { permanent: true, direction: 'top', offset: [0, -8] }).addTo(layer);
       setRes({ name, key, lat, lon, metres: Math.round(hit.metres) });
     };
@@ -84,6 +98,8 @@ export function MapPicker({ shared, title, kind, current, onPick, onClose }: Pro
     const late = setTimeout(() => map.invalidateSize(), 200);
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(footTimer);
+      token++;
       clearTimeout(late);
       ro.disconnect();
       map.remove();

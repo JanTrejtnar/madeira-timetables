@@ -1,0 +1,314 @@
+{
+ "note": "Famous destinations with hand-checked positions; they win over OpenStreetMap points of the same kind within 600 m. alt = names people type (English / Czech / German / Portuguese variants).",
+ "places": [
+  {
+   "name": "Cristo Rei (Garajau)",
+   "kind": "viewpoint",
+   "lat": 32.6389,
+   "lon": -16.847,
+   "alt": [
+    "Cristo Rei",
+    "Christ the King Garajau",
+    "Kristus Král",
+    "Cristo Rei Garajau"
+   ]
+  },
+  {
+   "name": "Pico do Arieiro",
+   "kind": "peak",
+   "lat": 32.7353,
+   "lon": -16.9281,
+   "alt": [
+    "Pico do Areeiro",
+    "Arieiro",
+    "Areeiro"
+   ]
+  },
+  {
+   "name": "Pico Ruivo",
+   "kind": "peak",
+   "lat": 32.7621,
+   "lon": -16.9439,
+   "alt": [
+    "Ruivo"
+   ]
+  },
+  {
+   "name": "Cabo Girão",
+   "kind": "viewpoint",
+   "lat": 32.6574,
+   "lon": -17.0047,
+   "alt": [
+    "Cabo Girao",
+    "Skywalk Cabo Girão",
+    "Girão"
+   ]
+  },
+  {
+   "name": "Ponta de São Lourenço",
+   "kind": "nature",
+   "lat": 32.7447,
+   "lon": -16.695,
+   "alt": [
+    "Ponta de Sao Lourenco",
+    "São Lourenço",
+    "Sao Lourenco"
+   ]
+  },
+  {
+   "name": "Piscinas Naturais do Porto Moniz",
+   "kind": "beach",
+   "lat": 32.8666,
+   "lon": -17.165,
+   "alt": [
+    "Porto Moniz natural pools",
+    "Porto Moniz Piscinas",
+    "Piscinas Porto Moniz"
+   ]
+  },
+  {
+   "name": "Fanal",
+   "kind": "nature",
+   "lat": 32.8,
+   "lon": -17.132,
+   "alt": [
+    "Floresta do Fanal",
+    "Fanal forest"
+   ]
+  },
+  {
+   "name": "Ribeiro Frio",
+   "kind": "nature",
+   "lat": 32.7236,
+   "lon": -16.892,
+   "alt": []
+  },
+  {
+   "name": "Balcões (Ribeiro Frio)",
+   "kind": "viewpoint",
+   "lat": 32.7288,
+   "lon": -16.8856,
+   "alt": [
+    "Balcoes",
+    "Miradouro dos Balcões"
+   ]
+  },
+  {
+   "name": "Jardim Botânico da Madeira",
+   "kind": "park",
+   "lat": 32.6652,
+   "lon": -16.896,
+   "alt": [
+    "Botanical Garden",
+    "Botanická zahrada",
+    "Jardim Botanico"
+   ]
+  },
+  {
+   "name": "Monte Palace Tropical Garden",
+   "kind": "park",
+   "lat": 32.6697,
+   "lon": -16.895,
+   "alt": [
+    "Jardim Tropical Monte Palace",
+    "Monte Palace"
+   ]
+  },
+  {
+   "name": "Largo da Fonte (Monte)",
+   "kind": "attraction",
+   "lat": 32.6717,
+   "lon": -16.8938,
+   "alt": [
+    "Monte",
+    "Nossa Senhora do Monte"
+   ]
+  },
+  {
+   "name": "Mercado dos Lavradores",
+   "kind": "market",
+   "lat": 32.6483,
+   "lon": -16.91,
+   "alt": [
+    "Farmers Market",
+    "Farmářská tržnice"
+   ]
+  },
+  {
+   "name": "Teleférico do Funchal (Zona Velha)",
+   "kind": "cable_car",
+   "lat": 32.6469,
+   "lon": -16.9044,
+   "alt": [
+    "Funchal cable car",
+    "Lanovka Funchal",
+    "Teleferico do Funchal"
+   ]
+  },
+  {
+   "name": "Zona Velha (Funchal)",
+   "kind": "attraction",
+   "lat": 32.6466,
+   "lon": -16.9068,
+   "alt": [
+    "Old Town Funchal",
+    "Staré město Funchal"
+   ]
+  },
+  {
+   "name": "Marina do Funchal",
+   "kind": "harbor",
+   "lat": 32.6426,
+   "lon": -16.9154,
+   "alt": [
+    "Funchal marina"
+   ]
+  },
+  {
+   "name": "Porto do Funchal (cruzeiros)",
+   "kind": "harbor",
+   "lat": 32.6428,
+   "lon": -16.9084,
+   "alt": [
+    "Funchal cruise terminal",
+    "Cruise port",
+    "Přístav Funchal"
+   ]
+  },
+  {
+   "name": "Aeroporto da Madeira",
+   "kind": "airport",
+   "lat": 32.6979,
+   "lon": -16.7745,
+   "alt": [
+    "Madeira airport",
+    "Letiště Madeira",
+    "Aeroporto Cristiano Ronaldo",
+    "Santa Cruz airport"
+   ]
+  },
+  {
+   "name": "Eira do Serrado",
+   "kind": "viewpoint",
+   "lat": 32.7083,
+   "lon": -16.9633,
+   "alt": [
+    "Miradouro da Eira do Serrado"
+   ]
+  },
+  {
+   "name": "Pico dos Barcelos",
+   "kind": "viewpoint",
+   "lat": 32.6573,
+   "lon": -16.9341,
+   "alt": [
+    "Miradouro Pico dos Barcelos"
+   ]
+  },
+  {
+   "name": "Praia Formosa",
+   "kind": "beach",
+   "lat": 32.6395,
+   "lon": -16.9456,
+   "alt": []
+  },
+  {
+   "name": "Praia do Seixal",
+   "kind": "beach",
+   "lat": 32.8272,
+   "lon": -17.1111,
+   "alt": [
+    "Seixal beach"
+   ]
+  },
+  {
+   "name": "Praia da Calheta",
+   "kind": "beach",
+   "lat": 32.721,
+   "lon": -17.1795,
+   "alt": [
+    "Calheta beach"
+   ]
+  },
+  {
+   "name": "Praia de Machico",
+   "kind": "beach",
+   "lat": 32.721,
+   "lon": -16.7656,
+   "alt": [
+    "Machico beach"
+   ]
+  },
+  {
+   "name": "Prainha (Caniçal)",
+   "kind": "beach",
+   "lat": 32.7414,
+   "lon": -16.7108,
+   "alt": [
+    "Prainha",
+    "Prainha beach"
+   ]
+  },
+  {
+   "name": "Casas de Colmo (Santana)",
+   "kind": "attraction",
+   "lat": 32.8061,
+   "lon": -16.8861,
+   "alt": [
+    "Santana houses",
+    "Santanské domky",
+    "Casas de Santana"
+   ]
+  },
+  {
+   "name": "Paul da Serra",
+   "kind": "nature",
+   "lat": 32.75,
+   "lon": -17.0833,
+   "alt": []
+  },
+  {
+   "name": "Rabaçal (25 Fontes, Risco)",
+   "kind": "nature",
+   "lat": 32.7567,
+   "lon": -17.1319,
+   "alt": [
+    "Rabacal",
+    "25 Fontes",
+    "Risco waterfall",
+    "Levada das 25 Fontes"
+   ]
+  },
+  {
+   "name": "Parque das Queimadas",
+   "kind": "nature",
+   "lat": 32.7937,
+   "lon": -16.9004,
+   "alt": [
+    "Queimadas",
+    "Caldeirão Verde"
+   ]
+  },
+  {
+   "name": "Câmara de Lobos (porto)",
+   "kind": "harbor",
+   "lat": 32.6489,
+   "lon": -16.9786,
+   "alt": [
+    "Camara de Lobos harbour",
+    "Přístav Câmara de Lobos"
+   ]
+  },
+  {
+   "name": "Praia Dourada (Porto Santo)",
+   "kind": "beach",
+   "lat": 33.0537,
+   "lon": -16.3489,
+   "alt": [
+    "Porto Santo beach",
+    "Pláž Porto Santo",
+    "Praia de Porto Santo"
+   ]
+  }
+ ]
+}

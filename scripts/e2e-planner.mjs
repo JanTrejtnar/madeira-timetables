@@ -117,6 +117,7 @@ async function run(label, viewport) {
 
   // 7. any date + holiday detection
   const dateSet = async (iso) => {
+    await page.keyboard.press('Escape'); // the open suggestion list of the focused field may lie over the date button
     await page.click('[data-testid=date-trigger]');
     for (let k = 0; k < 24 && !(await page.$(`[data-date="${iso}"]`)); k++) await page.click('button[aria-label="Další měsíc"]');
     await page.click(`[data-date="${iso}"]`);

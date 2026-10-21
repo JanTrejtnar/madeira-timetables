@@ -76,8 +76,9 @@ function drawTransfer(group: L.FeatureGroup, x: NonNullable<MapLayer['transfers'
   const mid: [number, number] = x.to ? [(x.at[0] + x.to[0]) / 2, (x.at[1] + x.to[1]) / 2] : x.at;
   if (x.to) {
     // dark underlay keeps the yellow readable on light map tiles
-    L.polyline([x.at, x.to], { color: '#0f172a', weight: 7, opacity: 0.55, interactive: false }).addTo(group);
-    L.polyline([x.at, x.to], { color: '#facc15', weight: 4, opacity: 1, dashArray: '2 8', lineCap: 'round', interactive: false }).bindTooltip(walkTitle).addTo(group);
+    const walk = x.path ?? [x.at, x.to];
+    L.polyline(walk, { color: '#0f172a', weight: 7, opacity: 0.55, interactive: false }).addTo(group);
+    L.polyline(walk, { color: '#facc15', weight: 4, opacity: 1, dashArray: '2 8', lineCap: 'round', interactive: false }).bindTooltip(walkTitle).addTo(group);
   }
   L.marker(mid, {
     icon: L.divIcon({ className: '', html: `<div class="transfer-pin" data-testid="transfer-pin">${iconSvg('transfer', 17)}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] }),

@@ -39,10 +39,11 @@ try {
   });
   check('build-time sources (OTP dump, planner patterns) are neither precached nor served', !cached.some((u) => /siga-otp-dump|siga-patterns/.test(u)) && !(await page.evaluate(async () => (await fetch('/data/sources/siga/siga-otp-dump.json')).headers.get('content-type')?.includes('json'))));
   check('schedules.json is in the SW cache', cached.some((u) => u.includes('data/schedules.json')), `${cached.length} cached files`);
+  check('places (pois.json) and the network map (overview.json) are precached for offline use', cached.some((u) => u.includes('data/pois.json')) && cached.some((u) => u.includes('data/overview.json')));
 
   // planner is the first tab and the default one; simplified filters
   const tabs = await page.evaluate(() => [...document.querySelectorAll('nav[aria-label=Tabs]')].map((n) => [...n.querySelectorAll('button')].map((b) => b.textContent.trim())));
-  check('tab order: Plánovač, Hledat, Odjezdy', tabs.length > 0 && tabs.every((t) => /Plánovač/.test(t[0]) && /Hledat/.test(t[1]) && /Odjezdy/.test(t[2])), JSON.stringify(tabs));
+  check('tab order: Plánovač, Mapa, Linky, Odjezdy', tabs.length > 0 && tabs.every((t) => /Plánovač/.test(t[0]) && /Mapa/.test(t[1]) && /Linky/.test(t[2]) && /Odjezdy/.test(t[3])), JSON.stringify(tabs));
   let body0 = await text(page);
   check('planner opens first; no "Preferovat" / "Pouze tento typ"', /Odkud|Nástupní/.test(await page.evaluate(() => document.body.innerHTML)) && !/Preferovat|Pouze tento typ/.test(body0));
   check('"Pouze přímá spojení" checkbox + Vše/Meziměstské/Městské switch', /Pouze přímá spojení/.test(body0) && ['Vše', 'Meziměstské', 'Městské'].every((x) => body0.includes(x)));
@@ -61,7 +62,7 @@ try {
   await sleep(900);
   const bodyG = await text(page);
   check('Santana (all stops) -> Funchal lists connections', (bodyG.match(/\d\d:\d\d/g) ?? []).length >= 4, (bodyG.match(/\d\d:\d\d/g) ?? []).length + ' times');
-  await clickText(page, /^Hledat$/);
+  await clickText(page, /^Linky$/);
   await sleep(300);
 
   // Pico do Areeiro search
@@ -98,7 +99,7 @@ try {
   await sleep(2500);
   body = await text(page);
   check('app + data load after reload while offline', !/Nepodařilo se načíst/.test(body) && (await page.$('input:not([type=checkbox])')) !== null);
-  await clickText(page, /^Hledat$/);
+  await clickText(page, /^Linky$/);
   await sleep(300);
   await page.type('input:not([type=checkbox])', 'Pico do Areeiro');
   await sleep(800);

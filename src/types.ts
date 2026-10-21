@@ -133,6 +133,8 @@ export interface MapPin {
   lat: number;
   lon: number;
   stop?: { lat: number; lon: number; name: string };
+  /** walking route along the streets from the pin to its stop (or back), [lat, lon]; without it a straight dashed line is drawn */
+  path?: [number, number][];
 }
 
 export interface MapLayer {
@@ -144,7 +146,7 @@ export interface MapLayer {
   /** planner leg: only the stretch from stop `from` to stop `to` of `stops` is drawn in full colour, the rest of the line faintly (`stops` = every stop of the trip, [lat, lon]) */
   ride?: { stops: ([number, number] | null)[]; from: number; to: number };
   /** places where the traveller changes buses: the alighting stop, and the boarding stop of the next bus when it is another one (walk between them) */
-  transfers?: { name: string; at: [number, number]; to?: [number, number] }[];
+  transfers?: { name: string; at: [number, number]; to?: [number, number]; /** walking route between the two platforms along the streets */ path?: [number, number][] }[];
   /** picked start / destination points drawn as red pins with a dashed line to their stop */
   pins?: MapPin[];
 }

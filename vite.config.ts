@@ -34,7 +34,7 @@ export default defineConfig({
       },
       workbox: {
         // schedules + stop lists are precached; route geometries and PDFs are cached when first opened
-        globPatterns: ['**/*.{js,css,html,svg,png}', 'data/schedules.json'],
+        globPatterns: ['**/*.{js,css,html,svg,png}', 'data/schedules.json', 'data/pois.json', 'data/overview.json'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           { urlPattern: /\/data\/shapes\/.*\.json$/, handler: 'CacheFirst', options: { cacheName: 'shapes', expiration: { maxEntries: 400 } } },

@@ -5,6 +5,7 @@ import { poiFor } from '../lib/aliases';
 import { searchLines, searchStops, type Index } from '../lib/search';
 import { Card, EmptyState, LineBadge, matchesType, SearchInput, SectionTitle, SkeletonCards, TypeFilter, type LineTypeFilter, type Shared } from './common';
 import { Icon } from './Icons';
+import { LineCatalog } from './LineCatalog';
 import { Nearby } from './Nearby';
 
 export function SearchTab({ shared, index }: { shared: Shared; index: Index }) {
@@ -33,7 +34,7 @@ export function SearchTab({ shared, index }: { shared: Shared; index: Index }) {
       <TypeFilter value={type} onChange={setType} className="self-start" />
       <Nearby shared={shared} />
 
-      {!q.trim() && <EmptyState icon="search" title={t('searchEmptyTitle')} body={t('searchHint')} />}
+      {!q.trim() && <LineCatalog shared={shared} />}
       {pending && q.trim() && <SkeletonCards n={3} />}
       {!pending && poiLine && (
         <Card className="flex flex-col gap-2 border-sky-200! bg-sky-50/60! dark:border-sky-400/30! dark:bg-sky-400/5!">

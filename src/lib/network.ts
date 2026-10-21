@@ -370,3 +370,34 @@ export function hubsNear(net: Network, lat: number, lon: number, maxM: number): 
   const p = { lat, lon };
   return net.nodes.filter((n) => n.transferHub && n.lat !== undefined && n.lon !== undefined && metres(n as Required<Node>, p) <= maxM);
 }
+
+/** Reach of a picked place or map point: stops within this distance count as "at" the place; if there are none, the wider radius is tried. */
+export const NEAR_PLACE_M = 900;
+export const FAR_PLACE_M = 2200;
+
+/**
+ * The stops to walk to from a place (a beach, a hotel, a point on the map): up to `limit` nearest stops (one per name, both sides of the road
+ * together) within NEAR_PLACE_M, else the nearest few within FAR_PLACE_M. `widened` tells the wider radius was needed.
+ */
+export function nodesNearPoint(net: Network, lat: number, lon: number, limit = 8): { nodes: { node: Node; metres: number }[]; widened: boolean } {
+  const p = { lat, lon };
+  const all: { node: Node; metres: number }[] = [];
+  for (const n of net.nodes) {
+    if (n.lat === undefined || n.lon === undefined || Math.abs(n.lat - lat) * 110540 > FAR_PLACE_M) continue;
+    const d = metres(n as Required<Node>, p);
+    if (d <= FAR_PLACE_M) all.push({ node: n, metres: d });
+  }
+  all.sort((a, b) => a.metres - b.metres);
+  const seen = new Set<string>();
+  const unique = all.filter(({ node }) => (seen.has(node.key) ? false : (seen.add(node.key), true)));
+  const near = unique.filter((x) => x.metres <= NEAR_PLACE_M);
+  if (near.length) return { nodes: near.slice(0, limit), widened: false };
+  return { nodes: unique.slice(0, Math.min(limit, 4)), widened: unique.length > 0 };
+}
+
+/** Every node of the stops named like the given ones (both sides of the road): a picked stop stands for all of them. */
+export function nodeIdsOfKeys(net: Network, keys: Iterable<string>): Set<number> {
+  const out = new Set<number>();
+  for (const k of keys) for (const id of net.keyToNodes.get(k) ?? []) out.add(id);
+  return out;
+}

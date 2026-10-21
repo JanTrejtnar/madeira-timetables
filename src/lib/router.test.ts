@@ -71,4 +71,24 @@ describe('mergePlans', () => {
     expect(merged.direct[0]).toBe(a.direct[0]);
     expect(merged.direct.length).toBe(b.direct.length);
   });
+
+  it('ranks by arrival at the destination, bus plus walk: a near stop beats an earlier far one', () => {
+    const to = new Set([...nodes('bravo'), ...nodes('charlie')]);
+    const [bravo] = nodes('bravo');
+    const [charlie] = nodes('charlie');
+    const near = plan(net, trips, nodes('alpha'), to, 7 * 60 + 50, undefined, new Map([[bravo, 2], [charlie, 25]]));
+    expect(near.direct[0].legs[0].toPos).toBe(1);
+    expect(near.direct[0]).toMatchObject({ arrive: 8 * 60 + 10, finish: 8 * 60 + 12 });
+    const far = plan(net, trips, nodes('alpha'), to, 7 * 60 + 50, undefined, new Map([[bravo, 30], [charlie, 1]]));
+    expect(far.direct[0].legs[0].toPos).toBe(2);
+    expect(far.direct[0].finish).toBe(8 * 60 + 21);
+    // without a destination point the first stop reached is used, as before
+    expect(plan(net, trips, nodes('alpha'), to, 7 * 60 + 50).direct[0].legs[0].toPos).toBe(1);
+  });
+  it('a transfer is judged by its finish too', () => {
+    const [echo] = nodes('echo');
+    const [delta] = nodes('delta');
+    const r = plan(net, trips, nodes('alpha'), new Set([echo, delta]), 7 * 60 + 50, undefined, new Map([[echo, 0], [delta, 40]]));
+    expect(r.transfers[0].legs.at(-1)!.trip.nodes[r.transfers[0].legs.at(-1)!.toPos]).toBe(echo);
+  });
 });

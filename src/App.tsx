@@ -11,12 +11,14 @@ import { SearchTab } from './components/SearchTab';
 import { EmptyState, SkeletonCards, type Shared } from './components/common';
 import { Icon, type IconName } from './components/Icons';
 import { RouteMap } from './components/RouteMap';
+import { NetworkMap } from './components/NetworkMap';
+import { addRecent, loadFavorites, loadRecent, saveFavorites, saveRecent, toggleFavorite as toggleFav, type SavedTrip } from './lib/trips-store';
 import { useMedia } from './lib/hooks';
 import type { UserPos } from './lib/nearby';
 import { formFromQuery, formToQuery, settled, type PlannerForm } from './lib/plannerForm';
 import type { MapFocus, MapLayer } from './types';
 
-type Tab = 'search' | 'route' | 'departures';
+type Tab = 'search' | 'route' | 'map' | 'departures';
 
 const store = {
   get: (k: string) => {
@@ -88,6 +90,27 @@ export function App() {
     const url = `${location.pathname}${q ? `?${q}` : ''}${location.hash}`;
     if (url !== `${location.pathname}${location.search}${location.hash}`) history.replaceState(history.state, '', url);
   }, [planner, applied]);
+  // recent searches and starred connections (localStorage)
+  const [recent, setRecent] = useState<SavedTrip[]>(loadRecent);
+  const [favorites, setFavorites] = useState<SavedTrip[]>(loadFavorites);
+  const rememberTrip = useCallback((trip: Pick<SavedTrip, 'from' | 'to'>) => {
+    setRecent((list) => {
+      const next = addRecent(list, trip);
+      saveRecent(next);
+      return next;
+    });
+  }, []);
+  const toggleFavorite = useCallback((trip: Pick<SavedTrip, 'from' | 'to'>) => {
+    setFavorites((list) => {
+      const next = toggleFav(list, trip);
+      saveFavorites(next);
+      return next;
+    });
+  }, []);
+  const clearRecent = useCallback(() => {
+    setRecent([]);
+    saveRecent([]);
+  }, []);
   const [online, setOnline] = useState(() => navigator.onLine !== false);
   useEffect(() => {
     const on = () => setOnline(true);
@@ -156,9 +179,25 @@ export function App() {
               setTab('route');
               if (location.hash) location.hash = '';
             },
+            useStopAs: (kind, name, key) => {
+              setPlanner((p) => ({ ...p, [kind]: { text: name, key } }));
+              setTab('route');
+              if (location.hash) location.hash = '';
+            },
+            recent,
+            favorites,
+            toggleFavorite,
+            rememberTrip,
+            clearRecent,
+            useTrip: (trip) => {
+              setPlanner((p) => ({ ...p, from: trip.from, to: trip.to }));
+              setApplied({ from: trip.from, to: trip.to });
+              setTab('route');
+              if (location.hash) location.hash = '';
+            },
           }
         : null,
-    [data, net, ctx, desktop, userPos, geo, locate, planner, applied, commit],
+    [data, net, ctx, desktop, userPos, geo, locate, planner, applied, commit, recent, favorites, toggleFavorite, rememberTrip, clearRecent],
   );
 
   const today = serviceDay(now);
@@ -178,7 +217,8 @@ export function App() {
   };
   const tabs: { key: Tab; icon: IconName; label: string }[] = [
     { key: 'route', icon: 'route', label: t('tabRoute') },
-    { key: 'search', icon: 'search', label: t('tabSearch') },
+    { key: 'map', icon: 'map', label: t('tabMap') },
+    { key: 'search', icon: 'bus', label: t('tabSearch') },
     { key: 'departures', icon: 'clock', label: t('tabDepartures') },
   ];
 
@@ -242,7 +282,7 @@ export function App() {
                 </button>
               )}
             </div>
-            <nav className="mt-3 hidden grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 lg:grid" aria-label="Tabs">
+            <nav className="mt-3 hidden grid-cols-4 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 lg:grid" aria-label="Tabs">
               {tabs.map((x) => (
                 <button
                   key={x.key}
@@ -277,6 +317,12 @@ export function App() {
                   <LineView line={line} initialDir={route.dir} shared={shared} onBack={() => (history.length > 1 ? history.back() : (location.hash = ''))} />
                 ) : (
                   <>
+                    {tab === 'map' && !desktop && (
+                      <div className="-mx-4 -mt-4 h-[calc(100dvh-17.5rem)] min-h-96" data-testid="map-tab">
+                        <NetworkMap shared={shared} fill />
+                      </div>
+                    )}
+                    {tab === 'map' && desktop && <EmptyState icon="map" title={t('mapTabTitle')} body={t('mapTabBody')} />}
                     {tab === 'search' && <SearchTab shared={shared} index={index} />}
                     {tab === 'route' && <PlannerTab shared={shared} />}
                     {tab === 'departures' && <DeparturesTab shared={shared} />}
@@ -294,18 +340,16 @@ export function App() {
 
         {desktop && (
           <div className="relative h-dvh bg-slate-200 dark:bg-slate-800">
-            <RouteMap layers={mapLayers ?? []} focus={mapFocus} onStopClick={onMapStop} me={userPos} onLocate={locate} locating={geo === 'busy'} fill />
-            {!mapLayers && (
-              <div className="pointer-events-none absolute left-16 top-4 z-10 flex max-w-xs items-center gap-3 rounded-2xl border border-slate-200/70 bg-white/90 px-4 py-3 text-sm text-slate-600 shadow-lg backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-900/90 dark:text-slate-300">
-                <Icon name="map" className="size-5 shrink-0 text-sky-600" />
-                {t('mapIdle')}
-              </div>
+            {mapLayers || !shared ? (
+              <RouteMap layers={mapLayers ?? []} focus={mapFocus} onStopClick={onMapStop} me={userPos} onLocate={locate} locating={geo === 'busy'} fill />
+            ) : (
+              <NetworkMap shared={shared} fill />
             )}
           </div>
         )}
 
         <nav
-          className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-slate-200/70 bg-white/90 pb-safe backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 lg:hidden"
+          className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-slate-200/70 bg-white/90 pb-safe backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 lg:hidden"
           aria-label="Tabs"
         >
           {tabs.map((x) => {

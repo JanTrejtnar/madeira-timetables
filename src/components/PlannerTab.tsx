@@ -1,27 +1,63 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { useT } from '../i18n';
+import { useT, type Key } from '../i18n';
 import { localStopName } from '../lib/text';
 import { detoursFor } from '../lib/via';
 import { addDays, serviceDay } from '../lib/holidays';
-import { hubsNear, nearestNode, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
+import { FAR_PLACE_M, NEAR_PLACE_M, hubsNear, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
+import { norm } from '../lib/search';
+import { KIND_META, isPoiKey, loadPlaces, poiKey, searchPlaces, type Place, type PlaceIndex } from '../lib/places';
+import { cachedFoot, useFootRoutes, type FootPair } from '../lib/foot';
+import { sameTrip } from '../lib/trips-store';
 import { isoToYmd, ymdToIso, type Picked, type PlannerForm } from '../lib/plannerForm';
 import { plan, type Itinerary } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
 import { fmtMinutes } from '../lib/time';
 import { DatePicker, TimePicker } from './Pickers';
-import { walkTo } from '../lib/walk';
+import { WALK_M_PER_MIN, walkTo } from '../lib/walk';
 import type { Line, MapLayer, MapPin as PickedPin } from '../types';
 import { Card, Chip, dirLabel, EmptyState, EstTag, LineBadge, lineColor, lineRailCls, MapPin, PrecisionWarning, SectionTitle, TypeFilter, type LineTypeFilter, type Shared } from './common';
 import { Icon } from './Icons';
 import { MapPicker, PICK_RADIUS_M } from './MapPicker';
 import { RouteMap } from './RouteMap';
+import { TripShortcuts } from './TripShortcuts';
+
+/** A row of the suggestion list: a stop (or an "all stops of" area) or a place of interest. */
+type Item = { kind: 'stop'; s: Suggestion } | { kind: 'place'; place: Place };
+
+/** Stops, areas and places for what was typed: areas first, then stops and places by how well they match, important kinds first. */
+function useSuggestions(query: string, open: boolean, shared: Shared): Item[] {
+  const [ix, setIx] = useState<PlaceIndex | null>(null);
+  useEffect(() => {
+    let alive = true;
+    loadPlaces().then((i) => alive && setIx(i), () => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return useMemo(() => {
+    if (!open) return [];
+    const q = norm(query);
+    const found = suggest(shared.net, shared.lines, query);
+    const groups = found.filter((s) => s.group);
+    const stops = found.filter((s) => !s.group);
+    // a town or village that is also a stop or an area of the same name is offered once, as the stop (its lines are known)
+    const names = new Set(found.map((s) => norm(s.name.split(',')[0])));
+    const places = (ix ? searchPlaces(ix, query, 10) : []).filter((h) => !((h.place.kind === 'town' || h.place.kind === 'village') && names.has(norm(h.place.name))));
+    const rows: { item: Item; score: number; rank: number }[] = [
+      ...stops.map((s) => ({ item: { kind: 'stop', s } as Item, score: norm(s.name) === q ? 0 : norm(s.name).startsWith(q) ? 1 : 2, rank: KIND_META.stop.rank })),
+      ...places.map((h) => ({ item: { kind: 'place', place: h.place } as Item, score: h.score, rank: KIND_META[h.place.kind].rank })),
+    ];
+    rows.sort((a, b) => a.score - b.score || a.rank - b.rank);
+    return [...groups.map((s) => ({ kind: 'stop', s }) as Item), ...rows.slice(0, Math.max(5, 10 - groups.length)).map((r) => r.item)];
+  }, [open, query, ix, shared.net, shared.lines]);
+}
 
 function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPickMap, onLocate, locating }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; onCommit: () => void; shared: Shared; onPickMap: () => void; onLocate?: () => void; locating?: boolean }) {
   const { t, lang } = useT();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const debounced = useDebounced(value.text, 120);
-  const items = useMemo(() => (open ? suggest(shared.net, shared.lines, debounced) : []), [open, debounced, shared.net, shared.lines]);
+  const items = useSuggestions(debounced, open, shared);
   const box = useRef<HTMLDivElement>(null);
   const listId = useId();
   useEffect(() => {
@@ -36,8 +72,9 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
   }, [active, listId]);
 
   const labelOf = (s: Suggestion) => (s.group ? t('allStopsOf', { name: s.name }) : localStopName(s.name, lang));
-  const pick = (s: Suggestion) => {
-    onChange({ text: labelOf(s), key: s.key });
+  const pick = (it: Item) => {
+    if (it.kind === 'stop') onChange({ text: labelOf(it.s), key: it.s.key });
+    else onChange({ text: it.place.name, key: poiKey(it.place), pt: { lat: +it.place.lat.toFixed(5), lon: +it.place.lon.toFixed(5) } });
     setOpen(false);
   };
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -108,23 +145,32 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
         <Icon name="map" className="size-5" />
       </button>
       {open && items.length > 0 && (
-        <ul id={listId} role="listbox" className="absolute -left-9 -right-12 top-full z-30 mt-2 max-h-72 overflow-auto rounded-2xl border border-slate-200/70 bg-white py-1 shadow-xl dark:border-slate-700 dark:bg-slate-900">
-          {items.map((s, i) => (
-            <li key={s.key} id={`${listId}-${i}`} role="option" aria-selected={i === active}>
-              <button
-                tabIndex={-1}
-                className={`flex min-h-11 w-full items-center gap-3 px-4 text-left hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-800 dark:active:bg-slate-800 ${s.group ? 'font-semibold' : ''} ${
-                  i === active ? 'bg-sky-100 dark:bg-sky-400/20' : s.group ? 'bg-sky-50/70 dark:bg-sky-400/10' : ''
-                }`}
-                onMouseMove={() => i !== active && setActive(i)}
-                onClick={() => pick(s)}
-              >
-                <Icon name="pin" className={`size-4 shrink-0 ${s.group ? 'text-sky-600' : 'text-slate-400'}`} />
-                <span className="min-w-0 flex-1 truncate">{labelOf(s)}</span>
-                <span className="shrink-0 text-xs text-slate-400">{s.lines}×</span>
-              </button>
-            </li>
-          ))}
+        <ul id={listId} role="listbox" className="absolute -left-9 -right-12 top-full z-30 mt-2 max-h-80 overflow-auto rounded-2xl border border-slate-200/70 bg-white py-1 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+          {items.map((it, i) => {
+            const group = it.kind === 'stop' && it.s.group;
+            const meta = it.kind === 'place' ? KIND_META[it.place.kind] : group ? KIND_META.town : KIND_META.stop;
+            const category = it.kind === 'place' ? t(`kind_${it.place.kind}` as Key) : group ? t('kind_group') : t('kind_stop');
+            const name = it.kind === 'place' ? it.place.name : labelOf(it.s);
+            return (
+              <li key={it.kind === 'place' ? `p:${poiKey(it.place)}:${it.place.lat}` : it.s.key} id={`${listId}-${i}`} role="option" aria-selected={i === active} data-kind={it.kind === 'place' ? it.place.kind : group ? 'group' : 'stop'}>
+                <button
+                  tabIndex={-1}
+                  className={`flex min-h-11 w-full items-center gap-3 px-4 text-left hover:bg-slate-50 active:bg-slate-100 dark:hover:bg-slate-800 dark:active:bg-slate-800 ${group ? 'font-semibold' : ''} ${
+                    i === active ? 'bg-sky-100 dark:bg-sky-400/20' : group ? 'bg-sky-50/70 dark:bg-sky-400/10' : ''
+                  }`}
+                  onMouseMove={() => i !== active && setActive(i)}
+                  onClick={() => pick(it)}
+                >
+                  <Icon name={meta.icon} className={`size-4 shrink-0 ${meta.tone}`} />
+                  <span className="min-w-0 flex-1 truncate">{name}</span>
+                  <span className="shrink-0 text-xs text-slate-400">
+                    {category}
+                    {it.kind === 'stop' && !group ? ` · ${it.s.lines}×` : ''}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
@@ -211,8 +257,16 @@ function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt }: { it: I
   const dur = it.arrive - it.depart;
   const last = it.legs.length - 1;
   // walking from the point picked on the map to the first stop / from the last stop to the picked destination
-  const walkIn = walkTo(fromPt, tripStops(it.legs[0].trip)[it.legs[0].fromPos]);
-  const walkOut = walkTo(toPt, tripStops(it.legs[last].trip)[it.legs[last].toPos]);
+  const inStop = tripStops(it.legs[0].trip)[it.legs[0].fromPos];
+  const outStop = tripStops(it.legs[last].trip)[it.legs[last].toPos];
+  // the walk along the streets once it was fetched (the selected itinerary fetches it), else the straight line corrected for winding roads
+  const real = (pt: Picked['pt'], stop: typeof inStop, back: boolean) => {
+    if (!pt || stop.lat === undefined || stop.lon === undefined) return null;
+    const route = back ? cachedFoot({ lat: stop.lat, lon: stop.lon }, pt) : cachedFoot(pt, { lat: stop.lat, lon: stop.lon });
+    return route ? { m: route.m, min: Math.max(1, Math.round(route.m / WALK_M_PER_MIN)) } : null;
+  };
+  const walkIn = real(fromPt, inStop, false) ?? walkTo(fromPt, inStop);
+  const walkOut = real(toPt, outStop, true) ?? walkTo(toPt, outStop);
   return (
     <Card className={`p-0! transition-shadow ${selected && shared.desktop ? 'ring-2 ring-sky-500/70' : ''}`}>
       <button onClick={onSelect} className="flex w-full items-center justify-between gap-3 rounded-t-2xl px-4 py-3 text-left">
@@ -355,8 +409,18 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const departAt = (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
 
   const result = useMemo(() => {
-    const A = resolveNodes(shared.net, dFrom.text, dFrom.key);
-    const B = resolveNodes(shared.net, dTo.text, dTo.key);
+    // a picked place (beach, hotel, viewpoint ...) stands for the stops within walking distance of it; a stop or area for its own nodes
+    const nodesOf = (p: Picked) => {
+      if (isPoiKey(p.key) && p.pt) {
+        const r = nodesNearPoint(shared.net, p.pt.lat, p.pt.lon);
+        return { ids: nodeIdsOfKeys(shared.net, r.nodes.map((x) => x.node.key)), widened: r.widened, place: true };
+      }
+      return { ids: resolveNodes(shared.net, p.text, p.key), widened: false, place: false };
+    };
+    const na = nodesOf(dFrom);
+    const nb = nodesOf(dTo);
+    const A = na.ids;
+    const B = nb.ids;
     if (!dFrom.text.trim() || !dTo.text.trim()) return null;
     const only = type === 'all' ? trips : trips.filter((tr) => tr.line.type === type);
     // walking from a picked start point: a bus counts only when it leaves after departAt + the walk to its stop
@@ -370,8 +434,19 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         if (w) walkIn.set(id, w.min);
       }
     }
-    const found = plan(shared.net, only, A, B, departAt, walkIn);
-    return { A: A.size, B: B.size, plan: directOnly ? { ...found, transfers: [] } : found };
+    // walking to a picked destination point: the stop where one arrives first counts, bus arrival + walk
+    let walkOut: Map<number, number> | undefined;
+    if (dTo.pt) {
+      walkOut = new Map();
+      for (const id of B) {
+        const w = walkTo(dTo.pt, shared.net.nodes[id]);
+        if (w) walkOut.set(id, w.min);
+      }
+    }
+    const found = plan(shared.net, only, A, B, departAt, walkIn, walkOut);
+    const missing = na.place && A.size === 0 ? dFrom.text : nb.place && B.size === 0 ? dTo.text : null;
+    const far = na.widened ? dFrom.text : nb.widened ? dTo.text : null;
+    return { A: A.size, B: B.size, missing, far, plan: directOnly ? { ...found, transfers: [] } : found };
   }, [shared.net, trips, dFrom, dTo, departAt, type, directOnly]);
 
   const empty = result && !result.plan.direct.length && !result.plan.transfers.length;
@@ -382,15 +457,34 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const anyEstimated = all.some(({ it }) => it.legs.some((l) => l.departEstimated || l.arriveEstimated));
   const selected = all.find((x) => x.key === selectedKey) ?? all[0];
 
+  // walking along the streets for the selected itinerary: from the picked point to the first stop, from the last stop to the picked point, between the platforms of a transfer
+  const footPairs: FootPair[] = (() => {
+    if (!selected) return [];
+    const legs = selected.it.legs;
+    const ll = (s: { lat?: number; lon?: number }) => (s.lat !== undefined && s.lon !== undefined ? { lat: s.lat, lon: s.lon } : null);
+    const first = ll(tripStops(legs[0].trip)[legs[0].fromPos]);
+    const lastLeg = legs[legs.length - 1];
+    const lastStop = ll(tripStops(lastLeg.trip)[lastLeg.toPos]);
+    const pairs: FootPair[] = [dFrom.pt && first ? [dFrom.pt, first] : null, dTo.pt && lastStop ? [lastStop, dTo.pt] : null];
+    legs.slice(0, -1).forEach((l, i) => {
+      const a = ll(tripStops(l.trip)[l.toPos]);
+      const b = ll(tripStops(legs[i + 1].trip)[legs[i + 1].fromPos]);
+      pairs.push(a && b && Math.hypot((b.lat - a.lat) * 110540, (b.lon - a.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180)) > 5 ? [a, b] : null);
+    });
+    return pairs;
+  })();
+  const foot = useFootRoutes(footPairs);
+  const footSig = foot.map((r) => (r ? r.m : '-')).join(',');
+
   // the selected itinerary is drawn on the map (desktop side map, small map on the phone when a point was picked)
   const rawLayers = useMemo<MapLayer[] | null>(() => {
     if (!selected) return null;
     const legs = selected.it.legs;
-    const pinFor = (kind: PickedPin['kind'], pt: Picked['pt'], stop: { lat?: number; lon?: number; name: string }): PickedPin | null =>
-      pt ? { kind, lat: pt.lat, lon: pt.lon, stop: stop.lat !== undefined && stop.lon !== undefined ? { lat: stop.lat, lon: stop.lon, name: stop.name } : undefined } : null;
+    const pinFor = (kind: PickedPin['kind'], pt: Picked['pt'], stop: { lat?: number; lon?: number; name: string }, path?: [number, number][]): PickedPin | null =>
+      pt ? { kind, lat: pt.lat, lon: pt.lon, stop: stop.lat !== undefined && stop.lon !== undefined ? { lat: stop.lat, lon: stop.lon, name: stop.name } : undefined, ...(path ? { path } : {}) } : null;
     const first = tripStops(legs[0].trip)[legs[0].fromPos];
     const lastLeg = legs[legs.length - 1];
-    const pins = [pinFor('from', dFrom.pt, first), pinFor('to', dTo.pt, tripStops(lastLeg.trip)[lastLeg.toPos])].filter((p): p is PickedPin => p !== null);
+    const pins = [pinFor('from', dFrom.pt, first, foot[0]?.pts), pinFor('to', dTo.pt, tripStops(lastLeg.trip)[lastLeg.toPos], foot[1]?.pts)].filter((p): p is PickedPin => p !== null);
     // every change of bus: the alighting stop, and the walk to the platform of the next bus when that is another stop
     const transfers = legs.slice(0, -1).flatMap((l, i) => {
       const a = tripStops(l.trip)[l.toPos];
@@ -398,7 +492,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       if (a.lat === undefined || a.lon === undefined) return [];
       const at: [number, number] = [a.lat, a.lon];
       const apart = b.lat !== undefined && b.lon !== undefined && Math.hypot((b.lat - a.lat) * 110540, (b.lon - a.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180)) > 5;
-      return [{ name: a.name, at, ...(apart ? { to: [b.lat, b.lon] as [number, number] } : {}) }];
+      return [{ name: a.name, at, ...(apart ? { to: [b.lat, b.lon] as [number, number] } : {}), ...(apart && foot[2 + i] ? { path: foot[2 + i]!.pts } : {}) }];
     });
     return legs.map((l, i) => ({
       shapeId: l.trip.dir.shapeId,
@@ -409,7 +503,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       ...(i === 0 && pins.length ? { pins } : {}),
       ...(i === 0 && transfers.length ? { transfers } : {}),
     }));
-  }, [selected, dFrom.pt, dTo.pt]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, dFrom.pt, dTo.pt, footSig]);
   const layers = rawLayers;
   const { desktop, setMap } = shared;
   useEffect(() => {
@@ -417,6 +512,16 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     setMap(layers);
     return () => setMap(null);
   }, [desktop, setMap, layers]);
+
+  // a search that found stops at both ends goes to the recent trips (after a moment, so a passing pick is not stored)
+  const { rememberTrip } = shared;
+  const searchable = !!result && result.A > 0 && result.B > 0;
+  useEffect(() => {
+    if (!searchable) return;
+    const id = setTimeout(() => rememberTrip({ from: dFrom, to: dTo }), 1200);
+    return () => clearTimeout(id);
+  }, [searchable, dFrom, dTo, rememberTrip]);
+  const starred = !!dFrom.text.trim() && !!dTo.text.trim() && shared.favorites.some((f) => sameTrip(f, { from: dFrom, to: dTo }));
 
   const setDeparture = (plusMin: number) => {
     const target = shared.ctx.now.minutes + plusMin;
@@ -452,26 +557,40 @@ export function PlannerTab({ shared }: { shared: Shared }) {
             <Icon name="pin" className="size-4 text-sky-600" strokeWidth={2} />
           </div>
           <div className="flex min-w-0 flex-1 flex-col">
-            <Combobox label={t('from')} placeholder={t('fromPlaceholder')} value={from} onChange={setFrom} onCommit={() => commit({ from })} shared={shared} onPickMap={() => setPickFor('from')} onLocate={locateMe} locating={shared.geo === 'busy'} />
+            <Combobox label={t('from')} placeholder={t('fromPlaceholderPlace')} value={from} onChange={setFrom} onCommit={() => commit({ from })} shared={shared} onPickMap={() => setPickFor('from')} onLocate={locateMe} locating={shared.geo === 'busy'} />
             {locNote && (
               <p className="px-2 pb-1 text-xs text-slate-500 dark:text-slate-400" data-testid="location-note" aria-live="polite">
                 {locNote}
               </p>
             )}
             <div className="mx-2 h-px bg-slate-100 dark:bg-slate-800" />
-            <Combobox label={t('to')} placeholder={t('toPlaceholder')} value={to} onChange={setTo} onCommit={() => commit({ to })} shared={shared} onPickMap={() => setPickFor('to')} />
+            <Combobox label={t('to')} placeholder={t('toPlaceholderPlace')} value={to} onChange={setTo} onCommit={() => commit({ to })} shared={shared} onPickMap={() => setPickFor('to')} />
           </div>
-          <button
-            onClick={() => {
-              patch({ from: to, to: from });
-              commit({ from: to, to: from });
-            }}
-            aria-label={t('swap')}
-            title={t('swap')}
-            className="size-10 shrink-0 self-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-sky-600 active:rotate-180 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            <Icon name="swap" className="mx-auto size-5" />
-          </button>
+          <div className="flex shrink-0 flex-col items-center justify-center gap-1.5">
+            <button
+              onClick={() => {
+                patch({ from: to, to: from });
+                commit({ from: to, to: from });
+              }}
+              aria-label={t('swap')}
+              title={t('swap')}
+              className="size-10 shrink-0 rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-sky-600 active:rotate-180 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+              <Icon name="swap" className="mx-auto size-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => shared.toggleFavorite({ from: dFrom, to: dTo })}
+              disabled={!dFrom.text.trim() || !dTo.text.trim()}
+              aria-pressed={starred}
+              aria-label={starred ? t('removeFavorite') : t('addFavorite')}
+              title={starred ? t('removeFavorite') : t('addFavorite')}
+              data-testid="favorite-toggle"
+              className="size-10 shrink-0 rounded-full border border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-amber-500 disabled:opacity-40 dark:border-slate-700 dark:hover:bg-slate-800"
+            >
+              <Icon name="star" className={`mx-auto size-5 ${starred ? 'fill-amber-400 text-amber-500' : ''}`} />
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
@@ -518,8 +637,15 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         </div>
       </Card>
 
+      <TripShortcuts shared={shared} />
+
       {!result && <EmptyState icon="route" title={t('plannerEmptyTitle')} body={t('plannerHint')} />}
-      {result && (result.A === 0 || result.B === 0) && <EmptyState icon="alert" tone="warn" title={t('noStopNodesTitle')} body={t('noStopNodes')} />}
+      {result && (result.A === 0 || result.B === 0) && <EmptyState icon="alert" tone="warn" title={t('noStopNodesTitle')} body={result.missing ? t('placeNoStop', { place: result.missing, m: FAR_PLACE_M }) : t('noStopNodes')} />}
+      {result?.far && result.A > 0 && result.B > 0 && (
+        <p className="px-1 text-sm text-amber-700 dark:text-amber-300" data-testid="place-far">
+          {t('placeFar', { place: result.far, m: NEAR_PLACE_M })}
+        </p>
+      )}
       {empty && result.A > 0 && result.B > 0 && <EmptyState icon="frown" title={t('noConnectionTitle')} body={t('noConnectionBody')} />}
       {empty && result.A > 0 && result.B > 0 && (type !== 'all' || directOnly) && (
         <div className="flex justify-center">

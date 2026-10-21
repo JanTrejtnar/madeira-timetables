@@ -6,6 +6,7 @@ import type { Upcoming } from '../lib/departures';
 import type { MapFocus } from '../types';
 import type { UserPos } from '../lib/nearby';
 import type { PlannerForm } from '../lib/plannerForm';
+import type { SavedTrip } from '../lib/trips-store';
 import type { Ctx } from '../lib/departures';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
 import type { Direction, Line, MapLayer, Stop } from '../types';
@@ -30,6 +31,19 @@ export interface Shared {
   locate: () => void;
   /** opens the planner with this stop as the starting point */
   useAsFrom: (name: string, key: string) => void;
+  /** opens the planner with this stop as the start or the destination (the stop panel of the network map) */
+  useStopAs: (kind: 'from' | 'to', name: string, key: string) => void;
+  /** recent searches, newest first (localStorage) */
+  recent: SavedTrip[];
+  /** starred connections, newest first (localStorage) */
+  favorites: SavedTrip[];
+  /** stars / un-stars a connection */
+  toggleFavorite: (trip: Pick<SavedTrip, 'from' | 'to'>) => void;
+  /** remembers a connection that was searched */
+  rememberTrip: (trip: Pick<SavedTrip, 'from' | 'to'>) => void;
+  clearRecent: () => void;
+  /** fills the planner with a saved connection and searches it */
+  useTrip: (trip: Pick<SavedTrip, 'from' | 'to'>) => void;
   /** state of the planner form (kept across navigation, mirrored into the URL query) */
   planner: PlannerForm;
   /** the picked from / to the results are computed for: changes on a pick or Enter, not while typing */
