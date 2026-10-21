@@ -201,7 +201,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   check('no connection boards at a Lombada or runs "... -> Funchal"', !/Lombada/i.test(body) && !/Ponta Sol\s*[→>-]+\s*Funchal/i.test(body), (body.match(/Lombada.*/) ?? [''])[0]);
   const pins = await page.evaluate(() => [...document.querySelectorAll('.picked-pin')].map((p) => p.textContent.trim()).sort().join(','));
   check('the map shows both the start (A) and the destination (B) marker', pins === 'A,B', pins);
-  check('the map base is the dark CARTO style', await page.evaluate(() => [...document.querySelectorAll('img.leaflet-tile')].some((i) => /cartocdn\.com\/dark_all/.test(i.src))));
+  check('the map base is the darkened OpenStreetMap (no API key)', await page.evaluate(() => [...document.querySelectorAll('img.leaflet-tile')].some((i) => /tile\.openstreetmap\.org/.test(i.src) && !!i.closest('.leaflet-layer.dark-tiles'))));
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /^\s*\d+\s/.test(b.innerText) && b.className.includes('rounded-xl') && b.querySelector('svg'))?.click());
   await sleep(900);
   const ride = await page.evaluate(() => {
