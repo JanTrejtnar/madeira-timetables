@@ -58,7 +58,7 @@ check('line 007: estimated times marked with ~', /~\s?\d\d:\d\d/.test(await text
 await openLine(byNum('20', 'sam').id);
 check('SAM line 20: a stop with printed times is selectable', await clickButton('Rib. Machico'));
 const t20 = await text();
-check('SAM line 20: printed (not estimated) times at the stop', timeCount(t20) > 3 && !/~\s?\d\d:\d\d/.test(t20));
+check('SAM line 20: mostly printed times at the stop (only Via trips are estimated)', timeCount(t20) > 3 && (t20.match(/~\s?\d\d:\d\d/g) ?? []).length * 4 < timeCount(t20));
 
 // 3) planner
 async function planner(from, to, { pick = false, time = '09:00' } = {}) {

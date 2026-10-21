@@ -11,6 +11,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BASE = process.env.OSRM_URL ?? 'https://router.project-osrm.org';
 const force = process.argv.includes('--force');
 const only = process.argv.includes('--line') ? process.argv[process.argv.indexOf('--line') + 1] : null;
+/** a road route longer than this many times the straight stop-to-stop distance (mountain serpentines reach ~2.4), or one that lost this share of its waypoints, is a detour or loop (one-way streets): the existing route is kept */
+const MAX_DETOUR = 2.6;
+const MAX_DROPPED = 0.25;
+const rad = Math.PI / 180;
+const straightKm = (pts) => pts.slice(1).reduce((s, x, k) => s + Math.hypot((x.p[1] - pts[k].p[1]) * 111.32 * Math.cos(x.p[0] * rad), (x.p[0] - pts[k].p[0]) * 110.54), 0);
 const CHUNK = 40; // waypoints per request (the demo server allows 100)
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -74,6 +79,7 @@ mkdirSync(path.join(ROOT, 'data', 'shapes'), { recursive: true });
 let done = 0;
 let skipped = 0;
 const failed = [];
+const suspect = [];
 for (const l of data.lines) {
   if (only && l.number !== only) continue;
   for (let i = 0; i < l.directions.length; i++) {
@@ -89,6 +95,13 @@ for (const l of data.lines) {
     try {
       const r = await route(pts);
       const shapeId = routeShapeId(l.id, i);
+      const detour = r.km / Math.max(straightKm(pts), 0.1);
+      const shapeFile = path.join(ROOT, 'data', 'shapes', `${shapeId}.json`);
+      if ((detour > MAX_DETOUR || r.dropped > pts.length * MAX_DROPPED) && existsSync(shapeFile)) {
+        suspect.push(`${l.number}#${i}`);
+        console.warn(`${l.number} ${d.from} -> ${d.to}: ${r.km.toFixed(1)} km is ${detour.toFixed(1)}x the straight distance (${r.dropped} waypoints dropped): kept the existing route`);
+        continue;
+      }
       writeFileSync(path.join(ROOT, 'data', 'shapes', `${shapeId}.json`), JSON.stringify(r.line));
       store.routes[key] = { shapeId, sig, line: l.number, from: d.from, to: d.to, waypoints: pts.length - r.dropped, dropped: r.dropped, km: +r.km.toFixed(1) };
       done++;
@@ -101,5 +114,5 @@ for (const l of data.lines) {
 }
 store.fetched = new Date().toISOString().slice(0, 10);
 writeFileSync(file, JSON.stringify(store, null, 1));
-console.log(`routes generated: ${done}, directions with fewer than 2 positioned stops: ${skipped}, failed: ${failed.length}`);
+console.log(`routes generated: ${done}, directions with fewer than 2 positioned stops: ${skipped}, failed: ${failed.length}, kept as suspect: ${suspect.length}`);
 if (failed.length) process.exitCode = 1;

@@ -75,8 +75,12 @@ export function pickPattern(l, d, poly, byLine, table) {
   scan(own, false);
   if (!ok.length) scan(others, true);
   if (!ok.length) return { why };
-  // forward patterns first; the main variant (most trips) before the overlap with a route that may be drawn wrongly
-  ok.sort((x, y) => +x.reversed - +y.reversed || y.p.trips - x.p.trips || y.share - x.share || x.da + x.db - (y.da + y.db));
+  // the main variant (most daily trips) wins over one-off school or combined runs; a forward pattern is preferred over a flipped one
+  // only while it runs at least half as often as the busiest candidate
+  ok.sort((x, y) => y.p.trips - x.p.trips || +x.reversed - +y.reversed || y.share - x.share || x.da + x.db - (y.da + y.db));
+  const top = ok[0].p.trips;
+  const pick = ok.find((c) => !c.reversed && c.p.trips * 2 >= top) ?? ok[0];
+  ok.unshift(ok.splice(ok.indexOf(pick), 1)[0]);
   return { best: ok[0].p, share: ok[0].share, reversed: ok[0].reversed };
 }
 

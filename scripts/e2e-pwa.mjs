@@ -37,6 +37,7 @@ try {
     for (const k of await caches.keys()) for (const r of await (await caches.open(k)).keys()) out.push(r.url);
     return out;
   });
+  check('build-time sources (OTP dump, planner patterns) are neither precached nor served', !cached.some((u) => /siga-otp-dump|siga-patterns/.test(u)) && !(await page.evaluate(async () => (await fetch('/data/sources/siga/siga-otp-dump.json')).headers.get('content-type')?.includes('json'))));
   check('schedules.json is in the SW cache', cached.some((u) => u.includes('data/schedules.json')), `${cached.length} cached files`);
 
   // planner is the first tab and the default one; simplified filters
@@ -55,7 +56,7 @@ try {
   await page.evaluate(() => document.querySelector('ul li button')?.click());
   await typeIn('Kam', 'funchal');
   const firstTo = await page.evaluate(() => document.querySelector('ul li button')?.innerText.replace(/\s+/g, ' '));
-  check('"funchal": no municipality group, the stop Funchal comes first', !/všechny zastávky/.test(firstTo ?? '') && /^Funchal/.test(firstTo ?? ''), firstTo);
+  check('"funchal": the city group (the one municipality group) comes first', /^Funchal \(všechny zastávky\)/.test(firstTo ?? ''), firstTo);
   await page.evaluate(() => document.querySelector('ul li button')?.click());
   await sleep(900);
   const bodyG = await text(page);
