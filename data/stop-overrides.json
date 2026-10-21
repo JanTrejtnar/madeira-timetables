@@ -10,6 +10,20 @@
       "locationPrecision": "exact"
     },
     {
+      "name": "Lombada",
+      "label": "Lombada, village by Ponta do Sol (lines 4, 8, 142, 146) - OSM stop Lombada (Ponta Do Sol); the name match had picked Lombada in Funchal / São Martinho 13 km east, which put an eastbound bus into the Funchal group",
+      "lines": [
+        "4",
+        "8",
+        "142",
+        "146"
+      ],
+      "lat": 32.684537,
+      "lon": -17.088352,
+      "osmNode": 2299780418,
+      "locationPrecision": "exact"
+    },
+    {
       "name": "Faial",
       "label": "Faial, village by Santana (lines 208, 53, 825) - not the Funchal quarter",
       "lines": [

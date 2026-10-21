@@ -3,7 +3,7 @@ import { useT, type Key } from '../i18n';
 import { localStopName } from '../lib/text';
 import { detoursFor } from '../lib/via';
 import { addDays, serviceDay } from '../lib/holidays';
-import { FAR_PLACE_M, NEAR_PLACE_M, hubsNear, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
+import { CITY_PREFIX, PARISH_PREFIX, FAR_PLACE_M, NEAR_PLACE_M, hubsNear, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
 import { norm } from '../lib/search';
 import { KIND_META, isPoiKey, loadPlaces, poiKey, searchPlaces, type Place, type PlaceIndex } from '../lib/places';
 import { cachedFoot, useFootRoutes, type FootPair } from '../lib/foot';
@@ -71,6 +71,10 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
     if (active >= 0) box.current?.querySelector(`[id="${listId}-${active}"]`)?.scrollIntoView({ block: 'nearest' });
   }, [active, listId]);
 
+  // "(all stops)" is a qualifier, not part of the name: smaller and lighter, beside the field and in the list
+  const suffix = t('allStopsOf', { name: '' }).trim();
+  const isGroupValue = !!value.key && (value.key.startsWith(PARISH_PREFIX) || value.key.startsWith(CITY_PREFIX)) && value.text.endsWith(suffix);
+  const shownText = isGroupValue ? value.text.slice(0, -suffix.length).trimEnd() : value.text;
   const labelOf = (s: Suggestion) => (s.group ? t('allStopsOf', { name: s.name }) : localStopName(s.name, lang));
   const pick = (it: Item) => {
     if (it.kind === 'stop') onChange({ text: labelOf(it.s), key: it.s.key });
@@ -103,7 +107,7 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
   return (
     <div ref={box} className="relative flex items-center">
       <input
-        value={value.text}
+        value={shownText}
         onChange={(e) => {
           onChange({ text: e.target.value, key: null });
           setOpen(true);
@@ -122,6 +126,11 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
         spellCheck={false}
         className="h-11 min-w-0 flex-1 rounded-lg bg-transparent px-2 text-base font-medium outline-none placeholder:font-normal placeholder:text-slate-400 focus:bg-slate-50 dark:focus:bg-slate-800/60"
       />
+      {isGroupValue && (
+        <span className="max-w-[42%] shrink-0 truncate pr-1 text-xs text-slate-400" data-testid="group-suffix">
+          {suffix}
+        </span>
+      )}
       {onLocate && (
         <button
           type="button"
@@ -150,7 +159,7 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
             const group = it.kind === 'stop' && it.s.group;
             const meta = it.kind === 'place' ? KIND_META[it.place.kind] : group ? KIND_META.town : KIND_META.stop;
             const category = it.kind === 'place' ? t(`kind_${it.place.kind}` as Key) : group ? t('kind_group') : t('kind_stop');
-            const name = it.kind === 'place' ? it.place.name : labelOf(it.s);
+            const name = it.kind === 'place' ? it.place.name : group ? it.s.name : localStopName(it.s.name, lang);
             return (
               <li key={it.kind === 'place' ? `p:${poiKey(it.place)}:${it.place.lat}` : it.s.key} id={`${listId}-${i}`} role="option" aria-selected={i === active} data-kind={it.kind === 'place' ? it.place.kind : group ? 'group' : 'stop'}>
                 <button
@@ -162,7 +171,10 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
                   onClick={() => pick(it)}
                 >
                   <Icon name={meta.icon} className={`size-4 shrink-0 ${meta.tone}`} />
-                  <span className="min-w-0 flex-1 truncate">{name}</span>
+                  <span className="min-w-0 flex-1 truncate">
+                    {name}
+                    {group && <>{' '}<span className="text-xs font-normal text-slate-400">{suffix}</span></>}
+                  </span>
                   <span className="shrink-0 text-xs text-slate-400">
                     {category}
                     {it.kind === 'stop' && !group ? ` · ${it.s.lines}×` : ''}
@@ -252,6 +264,13 @@ function WalkNote({ label, testId }: { label: string; testId: string }) {
   );
 }
 
+/** Positions of a leg in the direction's own stop list (the trip may carry extra "Via" places) */
+function srcRide(l: Itinerary['legs'][number]): { from: number; to: number } {
+  const stops = tripStops(l.trip);
+  const src = (pos: number) => stops.slice(0, pos).filter((s) => !s.via).length;
+  return { from: src(l.fromPos), to: src(l.toPos) };
+}
+
 function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt }: { it: Itinerary; shared: Shared; selected: boolean; onSelect: () => void; fromPt?: Picked['pt']; toPt?: Picked['pt'] }) {
   const { t, lang } = useT();
   const dur = it.arrive - it.depart;
@@ -305,7 +324,7 @@ function ItineraryCard({ it, shared, selected, onSelect, fromPt, toPt }: { it: I
               <Row below={{ line }}>
                 <button
                   className="my-1 flex w-full items-center gap-2.5 rounded-xl bg-slate-50 px-2.5 py-2 text-left transition-colors hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800"
-                  onClick={() => shared.openLine(line.id, l.trip.dirIndex)}
+                  onClick={() => shared.openLine(line.id, l.trip.dirIndex, srcRide(l))}
                 >
                   <LineBadge line={line} />
                   <span className="min-w-0 flex-1">
@@ -443,7 +462,15 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         if (w) walkOut.set(id, w.min);
       }
     }
-    const found = plan(shared.net, only, A, B, departAt, walkIn, walkOut);
+    let found = plan(shared.net, only, A, B, departAt, walkIn, walkOut);
+    // "Funchal" as a whole town: leave from its terminals (Rodoeste, SAM, CAM, the cable car ...); a wayside stop is offered only when nothing leaves from a terminal
+    if (!dFrom.pt && dFrom.key?.startsWith(CITY_PREFIX)) {
+      const terminals = new Set([...A].filter((id) => shared.net.nodes[id].terminal || shared.net.nodes[id].transferHub));
+      if (terminals.size && terminals.size < A.size) {
+        const fromTerminals = plan(shared.net, only, terminals, B, departAt, walkIn, walkOut);
+        if (fromTerminals.direct.length || fromTerminals.transfers.length) found = fromTerminals;
+      }
+    }
     const missing = na.place && A.size === 0 ? dFrom.text : nb.place && B.size === 0 ? dTo.text : null;
     const far = na.widened ? dFrom.text : nb.widened ? dTo.text : null;
     return { A: A.size, B: B.size, missing, far, plan: directOnly ? { ...found, transfers: [] } : found };
@@ -480,8 +507,12 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const rawLayers = useMemo<MapLayer[] | null>(() => {
     if (!selected) return null;
     const legs = selected.it.legs;
-    const pinFor = (kind: PickedPin['kind'], pt: Picked['pt'], stop: { lat?: number; lon?: number; name: string }, path?: [number, number][]): PickedPin | null =>
-      pt ? { kind, lat: pt.lat, lon: pt.lon, stop: stop.lat !== undefined && stop.lon !== undefined ? { lat: stop.lat, lon: stop.lon, name: stop.name } : undefined, ...(path ? { path } : {}) } : null;
+    // A / B always mark the start and the destination: the picked point, else the boarding / alighting stop itself (no walk to draw then)
+    const pinFor = (kind: PickedPin['kind'], pt: Picked['pt'], stop: { lat?: number; lon?: number; name: string }, path?: [number, number][]): PickedPin | null => {
+      const at = pt ?? (stop.lat !== undefined && stop.lon !== undefined ? { lat: stop.lat, lon: stop.lon } : null);
+      if (!at) return null;
+      return { kind, label: t(kind === 'from' ? 'mapStart' : 'mapEnd'), lat: at.lat, lon: at.lon, stop: stop.lat !== undefined && stop.lon !== undefined ? { lat: stop.lat, lon: stop.lon, name: stop.name } : undefined, ...(pt && path ? { path } : {}) };
+    };
     const first = tripStops(legs[0].trip)[legs[0].fromPos];
     const lastLeg = legs[legs.length - 1];
     const pins = [pinFor('from', dFrom.pt, first, foot[0]?.pts), pinFor('to', dTo.pt, tripStops(lastLeg.trip)[lastLeg.toPos], foot[1]?.pts)].filter((p): p is PickedPin => p !== null);
@@ -504,7 +535,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       ...(i === 0 && transfers.length ? { transfers } : {}),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, dFrom.pt, dTo.pt, footSig]);
+  }, [selected, dFrom.pt, dTo.pt, footSig, t]);
   const layers = rawLayers;
   const { desktop, setMap } = shared;
   useEffect(() => {

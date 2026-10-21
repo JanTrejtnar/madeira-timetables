@@ -15,10 +15,10 @@ export interface Operator {
 }
 
 export const OPERATORS: Operator[] = [
-  { id: 'hf', name: 'Horários do Funchal', color: '#059669', cls: { bar: 'bg-emerald-600', badge: 'bg-emerald-700', soft: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-400/10 dark:text-emerald-300' } },
-  { id: 'rodoeste', name: 'Rodoeste', color: '#ea580c', cls: { bar: 'bg-orange-600', badge: 'bg-orange-700', soft: 'bg-orange-50 text-orange-800 dark:bg-orange-400/10 dark:text-orange-300' } },
-  { id: 'sam', name: 'SAM', color: '#dc2626', cls: { bar: 'bg-red-600', badge: 'bg-red-700', soft: 'bg-red-50 text-red-800 dark:bg-red-400/10 dark:text-red-300' } },
-  { id: 'cam', name: 'CAM / EACL', color: '#7c3aed', cls: { bar: 'bg-violet-600', badge: 'bg-violet-700', soft: 'bg-violet-50 text-violet-800 dark:bg-violet-400/10 dark:text-violet-300' } },
+  { id: 'hf', name: 'Horários do Funchal', color: '#10b981', cls: { bar: 'bg-emerald-600', badge: 'bg-emerald-700', soft: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-400/10 dark:text-emerald-300' } },
+  { id: 'rodoeste', name: 'Rodoeste', color: '#fb923c', cls: { bar: 'bg-orange-600', badge: 'bg-orange-700', soft: 'bg-orange-50 text-orange-800 dark:bg-orange-400/10 dark:text-orange-300' } },
+  { id: 'sam', name: 'SAM', color: '#f87171', cls: { bar: 'bg-red-600', badge: 'bg-red-700', soft: 'bg-red-50 text-red-800 dark:bg-red-400/10 dark:text-red-300' } },
+  { id: 'cam', name: 'CAM / EACL', color: '#a78bfa', cls: { bar: 'bg-violet-600', badge: 'bg-violet-700', soft: 'bg-violet-50 text-violet-800 dark:bg-violet-400/10 dark:text-violet-300' } },
 ];
 
 export const operatorById = (id: OperatorId): Operator => OPERATORS.find((o) => o.id === id)!;

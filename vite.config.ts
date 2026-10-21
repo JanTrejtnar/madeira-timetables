@@ -39,7 +39,7 @@ export default defineConfig({
         runtimeCaching: [
           { urlPattern: /\/data\/shapes\/.*\.json$/, handler: 'CacheFirst', options: { cacheName: 'shapes', expiration: { maxEntries: 400 } } },
           { urlPattern: /\/pdf\/.*\.(pdf|jpg)$/, handler: 'CacheFirst', options: { cacheName: 'pdfs', expiration: { maxEntries: 200 } } },
-          { urlPattern: /^https:\/\/tile\.openstreetmap\.org\//, handler: 'CacheFirst', options: { cacheName: 'osm-tiles', expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 } } },
+          { urlPattern: /^https:\/\/([a-d]\.basemaps\.cartocdn\.com|tile\.openstreetmap\.org)\//, handler: 'CacheFirst', options: { cacheName: 'map-tiles', expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 } } },
         ],
       },
     }),

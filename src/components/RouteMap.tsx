@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import { darkTiles } from '../lib/tiles';
 import { loadShape } from '../data';
 import { useT, type Lang } from '../i18n';
 import { localStopName } from '../lib/text';
@@ -144,17 +145,14 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
     setFailed(false);
     markers.current = new Map();
     const map = L.map(container, { scrollWheelZoom: fill, dragging: true, touchZoom: true, zoomControl: true });
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
+    darkTiles().addTo(map);
     mapRef.current = map;
     const group = L.featureGroup().addTo(map);
     const labels: PopupLabels = { google: t('mapGoogle'), mapy: t('mapMapyCz'), arrival: t('arrivalWord'), departure: t('departureWord'), approx: t('coordsApprox'), estimated: t('estimatedLocation'), settlement: t('settlementWarning') };
     let alive = true;
 
     layers.forEach((layer, li) => {
-      layer.pins?.forEach((p) => drawPin(group, p, t('pickedPoint')));
+      layer.pins?.forEach((p) => drawPin(group, p, t('pickedPoint'), t('mapWalk')));
       layer.transfers?.forEach((x) => drawTransfer(group, x, t('mapTransfer', { name: localStopName(x.name, lang) }), t('mapTransferWalk')));
       layer.stops.forEach((s, si) => {
         if (s.lat === undefined || s.lon === undefined) return;

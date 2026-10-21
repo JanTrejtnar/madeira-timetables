@@ -130,6 +130,8 @@ export interface Dataset {
 /** A point the user picked on the map (planner "Pick on map") and the stop it was assigned to. */
 export interface MapPin {
   kind: 'from' | 'to';
+  /** tooltip text ("Start", "Destination" ...); default: the picked-point wording */
+  label?: string;
   lat: number;
   lon: number;
   stop?: { lat: number; lon: number; name: string };

@@ -44,9 +44,9 @@ function initialLang(): Lang {
   return nav === 'pt' || nav === 'en' ? nav : 'cs';
 }
 
-function parseHash(): { id: number; dir?: number } | null {
-  const m = location.hash.match(/^#\/line\/(\d+)(?:\/(\d+))?/);
-  return m ? { id: +m[1], dir: m[2] !== undefined ? +m[2] : undefined } : null;
+function parseHash(): { id: number; dir?: number; ride?: { from: number; to: number } } | null {
+  const m = location.hash.match(/^#\/line\/(\d+)(?:\/(\d+))?(?:\/(\d+)-(\d+))?/);
+  return m ? { id: +m[1], dir: m[2] !== undefined ? +m[2] : undefined, ...(m[3] !== undefined && +m[3] < +m[4] ? { ride: { from: +m[3], to: +m[4] } } : {}) } : null;
 }
 
 export function App() {
@@ -160,8 +160,8 @@ export function App() {
             ctx,
             lines: data.lines,
             net,
-            openLine: (id, dir) => {
-              location.hash = `#/line/${id}${dir !== undefined ? `/${dir}` : ''}`;
+            openLine: (id, dir, ride) => {
+              location.hash = `#/line/${id}${dir !== undefined ? `/${dir}` : ''}${dir !== undefined && ride ? `/${ride.from}-${ride.to}` : ''}`;
             },
             desktop,
             setMap: setMapLayers,
@@ -314,7 +314,7 @@ export function App() {
             {data && index && shared && (
               <>
                 {route && line ? (
-                  <LineView line={line} initialDir={route.dir} shared={shared} onBack={() => (history.length > 1 ? history.back() : (location.hash = ''))} />
+                  <LineView line={line} initialDir={route.dir} initialRide={route.ride} shared={shared} onBack={() => (history.length > 1 ? history.back() : (location.hash = ''))} />
                 ) : (
                   <>
                     {tab === 'map' && !desktop && (

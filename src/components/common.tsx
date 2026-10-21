@@ -16,7 +16,8 @@ export interface Shared {
   ctx: Ctx;
   lines: Line[];
   net: Network;
-  openLine: (id: number, dirIndex?: number) => void;
+  /** `ride`: stop indices (of the direction's stop list) where the traveller gets on and off; the line card shows that stretch */
+  openLine: (id: number, dirIndex?: number, ride?: { from: number; to: number }) => void;
   /** true when the side-by-side layout with the big map is active */
   desktop: boolean;
   /** shows routes on the big desktop map (null clears it) */
@@ -54,7 +55,7 @@ export interface Shared {
 }
 
 /** Colour of a line on maps and timelines: green = urbano, sky blue = interurbano. */
-export const lineColor = (line: Line) => (line.type === 'urbano' ? '#059669' : '#0284c7');
+export const lineColor = (line: Line) => (line.type === 'urbano' ? '#10b981' : '#38bdf8');
 export const lineRailCls = (line: Line) => (line.type === 'urbano' ? 'bg-emerald-600' : 'bg-sky-600 dark:bg-sky-400');
 
 export function LineBadge({ line, large = false }: { line: Line; large?: boolean }) {

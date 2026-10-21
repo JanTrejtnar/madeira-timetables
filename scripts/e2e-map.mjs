@@ -20,7 +20,7 @@ for (const [label, vp] of [['phone', { width: 390, height: 844, isMobile: true, 
   const page = await browser.newPage();
   await page.setViewport(vp);
   page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => m.type() === 'error' && !/tile\.openstreetmap|ERR_|Failed to load resource/.test(m.text()) && errors.push(m.text()));
+  page.on('console', (m) => m.type() === 'error' && !/tile\.openstreetmap|cartocdn|ERR_|Failed to load resource/.test(m.text()) && errors.push(m.text()));
   const open = async (id, dir = 0) => {
     await page.goto(`${base}#/line/${id}/${dir}`, { waitUntil: 'networkidle0' });
     await page.reload({ waitUntil: 'networkidle0' });

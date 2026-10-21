@@ -92,6 +92,9 @@ const dict = {
 		pickedPoint: "Vybraný bod na mapě",
 		mapTransfer: "Přestup: {name}",
 		mapTransferWalk: "Pěšky na druhou zastávku",
+		mapStart: "Start",
+		mapEnd: "Cíl",
+		mapWalk: "Pěšky",
 		estimatedLegend:
 			"~ = odhad z délky trasy a průměrné rychlosti, tento čas není v jízdním řádu.",
 		noTransfer: "bez přestupu",
@@ -153,7 +156,7 @@ const dict = {
 		tabRoute: "Plánovač",
 		tabDepartures: "Odjezdy",
 		searchPlaceholder:
-			"Linka, zastávka nebo cíl (např. Monte, Machico, 340)",
+			"Linka, zastávka nebo cíl",
 		searchHint: "Zadejte číslo linky, název zastávky nebo cíl.",
 		lines: "Linky",
 		stops: "Zastávky",
@@ -328,6 +331,9 @@ const dict = {
 		pickedPoint: "Point picked on the map",
 		mapTransfer: "Transfer: {name}",
 		mapTransferWalk: "Walk to the other stop",
+		mapStart: "Start",
+		mapEnd: "Destination",
+		mapWalk: "On foot",
 		estimatedLegend:
 			"~ = estimate from route length and average speed; this time is not in the timetable.",
 		noTransfer: "no transfer",
@@ -389,7 +395,7 @@ const dict = {
 		tabRoute: "Planner",
 		tabDepartures: "Departures",
 		searchPlaceholder:
-			"Line, stop or destination (e.g. Monte, Machico, 340)",
+			"Line, stop or destination",
 		searchHint: "Enter a line number, a stop name or a destination.",
 		lines: "Lines",
 		stops: "Stops",
@@ -563,6 +569,9 @@ const dict = {
 		pickedPoint: "Ponto escolhido no mapa",
 		mapTransfer: "Transbordo: {name}",
 		mapTransferWalk: "A pé até à outra paragem",
+		mapStart: "Partida",
+		mapEnd: "Destino",
+		mapWalk: "A pé",
 		estimatedLegend:
 			"~ = estimativa pelo comprimento do percurso e velocidade média; esta hora não consta do horário.",
 		noTransfer: "sem transbordo",
@@ -624,7 +633,7 @@ const dict = {
 		tabRoute: "Planeador",
 		tabDepartures: "Partidas",
 		searchPlaceholder:
-			"Carreira, paragem ou destino (ex.: Monte, Machico, 340)",
+			"Carreira, paragem ou destino",
 		searchHint:
 			"Introduza o número da carreira, o nome da paragem ou o destino.",
 		lines: "Carreiras",

@@ -22,14 +22,14 @@ async function open(viewport, { blockFoot = false } = {}) {
   const errors = [];
   const footRequests = [];
   page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => m.type() === 'error' && !/tile\.openstreetmap|Failed to load resource|routed-foot/.test(m.text()) && errors.push(m.text()));
+  page.on('console', (m) => m.type() === 'error' && !/tile\.openstreetmap|cartocdn|Failed to load resource|routed-foot/.test(m.text()) && errors.push(m.text()));
   await page.setRequestInterception(true);
   page.on('request', (r) => {
     if (r.url().includes('routed-foot')) {
       footRequests.push(r.url());
       if (blockFoot) return r.abort();
     }
-    if (/tile\.openstreetmap\.org/.test(r.url())) return r.abort();
+    if (/tile\.openstreetmap\.org|cartocdn\.com/.test(r.url())) return r.abort();
     r.continue();
   });
   await page.goto(base, { waitUntil: 'networkidle0' });
@@ -124,7 +124,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await sleep(2500);
   const body = await page.evaluate(() => document.body.innerText);
   check('foot router unreachable: connections and the straight-line walk are still shown', /Chůze k cíli: \d+ m/.test(body) && (body.match(/\d\d:\d\d/g) ?? []).length >= 4);
-  const dashed = await page.evaluate(() => [...document.querySelectorAll('.leaflet-overlay-pane path')].some((p) => p.getAttribute('stroke-dasharray') === '4 6'));
+  const dashed = await page.evaluate(() => [...document.querySelectorAll('.leaflet-overlay-pane path')].some((p) => p.getAttribute('stroke-dasharray') === '5 7'));
   check('...and the walk is drawn as the straight dashed line', dashed);
   check('no page errors', errors.length === 0, errors.join('; '));
   await page.close();
@@ -180,6 +180,53 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await page.evaluate(() => [...document.querySelectorAll('[data-testid=operator-rodoeste] .divide-y button')].find((b) => /^221/.test(b.innerText.trim()))?.click());
   await sleep(600);
   check('a line opens its timetable', /#\/line\//.test(await page.evaluate(() => location.hash)));
+  check('no page errors', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+
+// ---- 7. Funchal -> Cabo Girão: right direction and start, A / B pins, the ridden stretch in the line card, dark map, small qualifiers
+{
+  const { page, errors } = await open({ width: 1280, height: 900 });
+  await typeIn(page, 'Odkud', 'Funchal');
+  await clickOption(page, /všechny zastávky/);
+  check('"(všechny zastávky)" is a small light qualifier beside the field, the field holds the name', await page.evaluate(() => {
+    const i = document.querySelector('input[aria-label="Odkud"]');
+    const s = document.querySelector('[data-testid=group-suffix]');
+    return i.value === 'Funchal' && !!s && /všechny zastávky/.test(s.textContent) && getComputedStyle(s).fontSize === '12px';
+  }));
+  await typeIn(page, 'Kam', 'Cabo Gir');
+  await clickOption(page, /Cabo Girão/);
+  await sleep(2500);
+  const body = await page.evaluate(() => document.body.innerText);
+  check('no connection boards at a Lombada or runs "... -> Funchal"', !/Lombada/i.test(body) && !/Ponta Sol\s*[→>-]+\s*Funchal/i.test(body), (body.match(/Lombada.*/) ?? [''])[0]);
+  const pins = await page.evaluate(() => [...document.querySelectorAll('.picked-pin')].map((p) => p.textContent.trim()).sort().join(','));
+  check('the map shows both the start (A) and the destination (B) marker', pins === 'A,B', pins);
+  check('the map base is the dark CARTO style', await page.evaluate(() => [...document.querySelectorAll('img.leaflet-tile')].some((i) => /cartocdn\.com\/dark_all/.test(i.src))));
+  await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /^\s*\d+\s/.test(b.innerText) && b.className.includes('rounded-xl') && b.querySelector('svg'))?.click());
+  await sleep(900);
+  const ride = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('li[data-ride]')];
+    return { n: rows.length, off: rows.filter((r) => r.dataset.ride === 'off').length, ends: rows.filter((r) => r.dataset.ride === 'end').length, faded: rows.filter((r) => r.dataset.ride === 'off').every((r) => r.className.includes('opacity-40')), hash: location.hash };
+  });
+  check('the line card opens in the ridden direction with boarding and getting-off stops marked and the rest dimmed', ride.n > 3 && ride.ends === 2 && ride.off > 0 && ride.faded && /^#\/line\/\d+\/\d+\/\d+-\d+$/.test(ride.hash), JSON.stringify(ride));
+  check('no page errors', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+
+// ---- 8. Linky: operators first, nearby stops below; the network map draws on canvas
+{
+  const { page, errors } = await open({ width: 390, height: 844, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  await clickTab(page, 'Linky');
+  await sleep(500);
+  const order = await page.evaluate(() => {
+    const cat = document.querySelector('[data-testid=line-catalog]')?.getBoundingClientRect().top;
+    const loc = [...document.querySelectorAll('button')].find((b) => /okolí|poloh|mém/i.test(b.textContent) && b.closest('section') !== document.querySelector('[data-testid=line-catalog]'))?.getBoundingClientRect().top;
+    return { cat, loc };
+  });
+  check('"Linky podle dopravce" comes before the nearby stops', order.cat !== undefined && order.loc !== undefined && order.cat < order.loc, JSON.stringify(order));
+  await clickTab(page, 'Mapa');
+  await sleep(1500);
+  check('the network map draws lines on a canvas, not thousands of SVG paths', await page.evaluate(() => !!document.querySelector('[data-testid=network-map] canvas') && document.querySelectorAll('[data-testid=network-map] svg path').length < 20));
   check('no page errors', errors.length === 0, errors.join('; '));
   await page.close();
 }

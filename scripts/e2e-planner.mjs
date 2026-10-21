@@ -15,7 +15,7 @@ async function run(label, viewport) {
   await page.setViewport(viewport);
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => m.type() === 'error' && !/tile\.openstreetmap|Failed to load resource/.test(m.text()) && errors.push(m.text()));
+  page.on('console', (m) => m.type() === 'error' && !/tile\.openstreetmap|cartocdn|Failed to load resource/.test(m.text()) && errors.push(m.text()));
   const text = () => page.evaluate(() => document.body.innerText);
   const value = (l) => page.evaluate((x) => document.querySelector(`input[aria-label="${x}"]`)?.value, l);
   const typeIn = async (l, v) => {

@@ -47,7 +47,7 @@ function ViaTag() {
   return <span className="ml-1 rounded-full bg-sky-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-sky-800 dark:bg-sky-400/15 dark:text-sky-200">{t('viaStop')}</span>;
 }
 
-export function LineView({ line, initialDir, shared, onBack }: { line: Line; initialDir?: number; shared: Shared; onBack: () => void }) {
+export function LineView({ line, initialDir, initialRide, shared, onBack }: { line: Line; initialDir?: number; initialRide?: { from: number; to: number }; shared: Shared; onBack: () => void }) {
   const { t, lang } = useT();
   const tn = (s: string) => translateNote(s, lang);
   const [dirIndex, setDirIndex] = useState(initialDir ?? 0);
@@ -134,11 +134,23 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
     const v = shown?.viaTimes[i];
     return v ? `~${v}` : null;
   };
+  // the stretch the traveller rides (from the planner): shown stops before boarding and after getting off are dimmed
+  const rideShown = useMemo(() => {
+    if (!initialRide || !shown || dirIndex !== (initialDir ?? 0)) return null;
+    const from = shown.srcIdx.indexOf(initialRide.from);
+    const to = shown.srcIdx.indexOf(initialRide.to);
+    return from >= 0 && to > from ? { from, to } : null;
+  }, [initialRide, initialDir, dirIndex, shown]);
+  useEffect(() => {
+    if (!rideShown) return;
+    const id = setTimeout(() => rowRefs.current.get(rideShown.from)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
+    return () => clearTimeout(id);
+  }, [rideShown?.from, line.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const hasMap = !!dir && (dir.stops.some((s) => s.lat !== undefined) || dir.shapeId !== null);
   const noteKey = sel?.notes?.join('') ?? '';
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const detours = useMemo(() => detoursFor(line, dirIndex, sel?.notes), [line, dirIndex, noteKey]);
-  const layers = useMemo<MapLayer[]>(() => (dir ? [{ shapeId: dir.shapeId, stops: shownStops, color: lineColor(line), ...(detours.length ? { detours } : {}) }] : []), [dir, line, shownStops, detours]);
+  const layers = useMemo<MapLayer[]>(() => (dir ? [{ shapeId: dir.shapeId, stops: shownStops, color: lineColor(line), ...(detours.length ? { detours } : {}), ...(rideShown ? { ride: { stops: shownStops.map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), ...rideShown } } : {}) }] : []), [dir, line, shownStops, detours, rideShown]);
   // on desktop the route is drawn on the big map next to the sidebar, on mobile it is shown inline
   const { desktop, setMap } = shared;
   useEffect(() => {
@@ -325,9 +337,12 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                 const src = (shown ? shown.srcIdx[i] : i);
                 const active = hasTrips ? src === stopIdx : i === focusIdx;
                 const label = shownLabel(i);
+                // Google Maps style: outside the ridden stretch the stop fades
+                const faded = !!rideShown && (i < rideShown.from || i > rideShown.to);
+                const boardOff = !!rideShown && (i === rideShown.from || i === rideShown.to);
                 const content = (
                   <>
-                    <span className={`min-w-0 flex-1 ${edge || active ? 'font-semibold' : ''}`}>
+                    <span className={`min-w-0 flex-1 ${edge || active || boardOff ? 'font-semibold' : ''}`}>
                       {localStopName(s.name, lang)} {s.via ? <ViaTag /> : <PrecisionWarning stop={s} />}
                     </span>
                     {label ? (
@@ -349,7 +364,7 @@ export function LineView({ line, initialDir, shared, onBack }: { line: Line; ini
                 const hasCoords = s.lat !== undefined && s.lon !== undefined;
                 const last = i === shownStops.length - 1;
                 return (
-                  <li key={i} ref={(el) => { if (el) rowRefs.current.set(i, el); else rowRefs.current.delete(i); }} className="grid grid-cols-[2.75rem_minmax(0,1fr)]">
+                  <li key={i} ref={(el) => { if (el) rowRefs.current.set(i, el); else rowRefs.current.delete(i); }} className={`grid grid-cols-[2.75rem_minmax(0,1fr)] ${faded ? 'opacity-40' : ''}`} data-ride={rideShown ? (faded ? 'off' : boardOff ? 'end' : 'on') : undefined}>
                     <div className="relative">
                       {i > 0 && <span className={`absolute left-1/2 top-0 h-5.5 w-1 -translate-x-1/2 ${railCls}`} />}
                       {!last && <span className={`absolute bottom-0 left-1/2 top-5.5 w-1 -translate-x-1/2 ${railCls}`} />}

@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
+import { darkTiles } from '../lib/tiles';
 import { useT } from '../i18n';
 import { departuresFrom } from '../lib/nearby';
 import { decodeSegment, loadOverview, type Overview } from '../lib/overview';
 import { dirKey } from '../lib/network';
 import { OPERATORS, operatorById, operatorOf, type OperatorId } from '../lib/operators';
+import { simplify } from '../lib/simplify';
 import { localStopName } from '../lib/text';
 import type { Line } from '../types';
 import { EstTag, LineBadge, type Shared } from './common';
@@ -14,7 +16,10 @@ type Selection = { kind: 'stop'; nodeId: number } | { kind: 'line'; id: number }
 
 const touch = typeof window !== 'undefined' && (L.Browser.mobile || navigator.maxTouchPoints > 0);
 /** zoom from which stops with at least this many lines are drawn: the hubs first, every stop when zoomed in close */
-const TIER_ZOOM = [0, 12, 14];
+const TIER_ZOOM = [0, 13, 14];
+/** zoom from which the full-resolution geometry of the lines is drawn; below it a copy simplified to about 30 m */
+const DETAIL_ZOOM = 13;
+const LITE_TOLERANCE = 0.0003;
 const tierOf = (lineCount: number, hub: boolean) => (hub || lineCount >= 6 ? 0 : lineCount >= 2 ? 1 : 2);
 /** Madeira with a margin; Porto Santo is a pan away */
 const ISLAND: L.LatLngBoundsLiteral = [[32.60, -17.27], [32.88, -16.65]];
@@ -54,7 +59,8 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
 
   const lineLayers = useRef(new Map<number, L.Polyline[]>());
   const operatorGroups = useRef(new Map<OperatorId, L.LayerGroup>());
-  const stopMarkers = useRef(new Map<number, L.CircleMarker>());
+  const stopApi = useRef<{ light: (id: number | null) => void } | null>(null);
+  const selStop = useRef<number | null>(null);
   /** one canvas for lines and stops: they share its hit testing, so both stay clickable */
   const renderer = useRef<L.Canvas | null>(null);
   const baseWeight = useRef(new WeakMap<L.Polyline, number>());
@@ -63,11 +69,8 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   useEffect(() => {
     const container = el.current;
     if (!container) return;
-    const map = L.map(container, { zoomControl: true, preferCanvas: true, scrollWheelZoom: fill });
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
+    const map = L.map(container, { zoomControl: true, preferCanvas: true, scrollWheelZoom: fill, zoomAnimation: true, wheelDebounceTime: 60 });
+    darkTiles().addTo(map);
     map.fitBounds(ISLAND, { animate: false });
     let moved = false;
     map.once('movestart', () => (moved = true));
@@ -92,11 +95,10 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
       renderer.current = null;
       lineLayers.current = new Map();
       operatorGroups.current = new Map();
-      stopMarkers.current = new Map();
     };
   }, [fill]);
 
-  // lines: one canvas, the busiest on top
+  // lines: one canvas, the busiest on top; a coarse copy of every polyline is drawn until the map is zoomed in close
   useEffect(() => {
     const map = mapRef.current;
     const canvas = renderer.current;
@@ -104,6 +106,8 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
     const groups = new Map<OperatorId, L.LayerGroup>(OPERATORS.map((o) => [o.id, L.layerGroup().addTo(map)]));
     operatorGroups.current = groups;
     const layers = new Map<number, L.Polyline[]>();
+    const geo = new Map<L.Polyline, { full: [number, number][]; lite: [number, number][] }>();
+    const detailed = () => map.getZoom() >= DETAIL_ZOOM;
     for (const o of [...overview.lines].sort((a, b) => a.t - b.t)) {
       const line = lineById.get(o.i);
       if (!line) continue;
@@ -112,58 +116,104 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
       const weight = 2 + Math.min(3, o.t / 25);
       const polys: L.Polyline[] = [];
       for (const seg of o.p) {
-        const pts = decodeSegment(seg);
-        L.polyline(pts, { renderer: canvas, color: '#ffffff', weight: weight + 2.5, opacity: 0.8, interactive: false }).addTo(group);
-        const pl = L.polyline(pts, { renderer: canvas, color: operatorById(op).color, weight, opacity: 0.9, lineCap: 'round', lineJoin: 'round' })
+        const full = decodeSegment(seg);
+        const lite = simplify(full, LITE_TOLERANCE);
+        const pl = L.polyline(detailed() ? full : lite, { renderer: canvas, color: operatorById(op).color, weight, opacity: 0.9, lineCap: 'round', lineJoin: 'round', smoothFactor: 1.5 })
           .bindTooltip(`${line.number} · ${line.name}`, { sticky: true })
           .on('click', (e) => {
             L.DomEvent.stopPropagation(e);
             selRef.current({ kind: 'line', id: line.id });
           })
           .addTo(group);
+        geo.set(pl, { full, lite });
         baseWeight.current.set(pl, weight);
         polys.push(pl);
       }
       layers.set(line.id, polys);
     }
     lineLayers.current = layers;
+    let wasDetailed = detailed();
+    const swap = () => {
+      if (detailed() === wasDetailed) return;
+      wasDetailed = detailed();
+      for (const [pl, g] of geo) pl.setLatLngs(wasDetailed ? g.full : g.lite);
+    };
+    map.on('zoomend', swap);
     return () => {
+      map.off('zoomend', swap);
       for (const g of groups.values()) g.remove();
     };
   }, [overview, lineById, fill]);
 
-  // stops: hubs from far away, every stop when zoomed in
+  // stops: hubs from far away, more as the map zooms in; only those in view, created on first need
   useEffect(() => {
     const map = mapRef.current;
     const canvas = renderer.current;
     if (!map || !canvas) return;
-    const tiers: L.CircleMarker[][] = [[], [], []];
-    const markers = new Map<number, L.CircleMarker>();
+    const ids: number[][] = [[], [], []];
+    const tierById = new Map<number, number>();
     for (const n of net.nodes) {
       if (n.lat === undefined || n.lon === undefined || !linesAt.get(n.id)?.size) continue;
       const tier = tierOf(linesAt.get(n.id)!.size, !!n.transferHub);
-      const m = L.circleMarker([n.lat, n.lon], { renderer: canvas, radius: tier === 0 ? 6 : tier === 1 ? 4.5 : 3.5, color: '#0f172a', weight: tier === 0 ? 2.5 : 2, fillColor: '#ffffff', fillOpacity: 1, bubblingMouseEvents: false })
-        .bindTooltip(localStopName(n.name, lang))
-        .on('click', (e) => {
-          L.DomEvent.stopPropagation(e);
-          selRef.current({ kind: 'stop', nodeId: n.id });
-        });
-      tiers[tier].push(m);
-      markers.set(n.id, m);
+      ids[tier].push(n.id);
+      tierById.set(n.id, tier);
     }
-    stopMarkers.current = markers;
+    const base = (id: number) => {
+      const tier = tierById.get(id) ?? 2;
+      return { radius: tier === 0 ? 6 : tier === 1 ? 4.5 : 3.5, color: '#0f172a', weight: tier === 0 ? 2.5 : 2, fillColor: '#ffffff', fillOpacity: 1 };
+    };
+    const made = new Map<number, L.CircleMarker>();
+    const make = (id: number): L.CircleMarker => {
+      let m = made.get(id);
+      if (!m) {
+        const n = net.nodes[id];
+        m = L.circleMarker([n.lat as number, n.lon as number], { renderer: canvas, ...base(id), bubblingMouseEvents: false })
+          .bindTooltip(localStopName(n.name, lang))
+          .on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            selRef.current({ kind: 'stop', nodeId: id });
+          });
+        made.set(id, m);
+      }
+      return m;
+    };
     const group = L.layerGroup().addTo(map);
+    const shown = new Set<number>();
+    let lit: number | null = null;
     const refresh = () => {
       const z = map.getZoom();
-      group.clearLayers();
-      tiers.forEach((list, i) => {
-        if (z >= TIER_ZOOM[i]) for (const m of list) group.addLayer(m);
+      const view = map.getBounds().pad(0.25);
+      const want = new Set<number>();
+      ids.forEach((list, i) => {
+        if (z < TIER_ZOOM[i]) return;
+        for (const id of list) {
+          const n = net.nodes[id];
+          if (view.contains([n.lat as number, n.lon as number])) want.add(id);
+        }
       });
+      if (selStop.current !== null && tierById.has(selStop.current)) want.add(selStop.current);
+      for (const id of shown) if (!want.has(id)) (group.removeLayer(made.get(id)!), shown.delete(id));
+      for (const id of want) if (!shown.has(id)) (group.addLayer(make(id)), shown.add(id));
     };
+    /** the tapped stop is large and yellow, the one tapped before goes back to its size */
+    const light = (id: number | null) => {
+      refresh();
+      if (lit !== null && lit !== id) made.get(lit)?.setStyle(base(lit));
+      lit = id;
+      if (id === null) return;
+      const m = made.get(id);
+      if (!m) return;
+      m.setStyle({ radius: 9, fillColor: '#facc15' });
+      m.bringToFront();
+      map.panTo(m.getLatLng(), { animate: true });
+    };
+    stopApi.current = { light };
     refresh();
-    map.on('zoomend', refresh);
+    if (selStop.current !== null) light(selStop.current);
+    map.on('moveend', refresh);
     return () => {
-      map.off('zoomend', refresh);
+      map.off('moveend', refresh);
+      stopApi.current = null;
       group.remove();
     };
   }, [net, linesAt, fill, lang, overview]);
@@ -186,15 +236,8 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
     for (const [id, polys] of lineLayers.current) for (const p of polys) p.setStyle({ opacity: lineId === null || id === lineId ? 0.9 : 0.25, weight: (baseWeight.current.get(p) ?? 3) + (id === lineId ? 3 : 0) });
     if (lineId !== null) lineLayers.current.get(lineId)?.forEach((p) => p.bringToFront());
     const stopId = sel?.kind === 'stop' ? sel.nodeId : null;
-    for (const [id, m] of stopMarkers.current) if (id === stopId) m.setStyle({ radius: 9, fillColor: '#facc15' });
-    else m.setStyle({ radius: m.options.radius === 9 ? 5 : m.options.radius, fillColor: '#ffffff' });
-    if (stopId !== null) {
-      const m = stopMarkers.current.get(stopId);
-      if (m) {
-        m.bringToFront();
-        map.panTo(m.getLatLng(), { animate: true });
-      }
-    }
+    selStop.current = stopId;
+    stopApi.current?.light(stopId);
   }, [sel, overview]);
 
   // the user's position

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNetwork, resolveNodes, servicesFor } from './network';
-import { MIN_TRANSFER_ESTIMATED, mergePlans, plan } from './router';
+import { MIN_TRANSFER_ESTIMATED, mergePlans, plan, routeGuard } from './router';
 import type { Direction, Line } from '../types';
 
 const mk = (id: number, number: string, stops: [string, number, number][], deps: string[], offsets: number[]): Line => {
@@ -90,5 +90,23 @@ describe('mergePlans', () => {
     const [delta] = nodes('delta');
     const r = plan(net, trips, nodes('alpha'), new Set([echo, delta]), 7 * 60 + 50, undefined, new Map([[echo, 0], [delta, 40]]));
     expect(r.transfers[0].legs.at(-1)!.trip.nodes[r.transfers[0].legs.at(-1)!.toPos]).toBe(echo);
+  });
+
+  it('never offers a bus that heads for the starting area or away from the destination', () => {
+    // "Home -> Funchal" run: it calls at Mid (as the traveller's area) and ends in the start area, the destination lies the other way
+    const east = mk(7, '7', [['Far West', 32.65, -17.2], ['Cabo', 32.65, -17.0], ['Mid', 32.65, -16.95], ['Funchal', 32.65, -16.9]], ['08:00'], [0, 20, 30, 40]);
+    const w = buildNetwork([east]);
+    const t = servicesFor(w, [east], monday, true, ['Funchal']);
+    const ids = (q: string) => resolveNodes(w, q);
+    // Funchal -> Cabo with the bus running Far West -> Funchal: Cabo comes before Funchal, no ride exists the right way
+    expect(plan(w, t, ids('funchal'), ids('cabo'), 0).direct).toHaveLength(0);
+    // from a wayside stop of the start area on a run that ends in that area: heads home
+    const area = new Set([...ids('mid'), ...ids('funchal')]);
+    expect(routeGuard(w, area, ids('cabo')).intoOrigin(t[0])).toBe(true);
+    expect(routeGuard(w, ids('far west'), ids('cabo')).intoOrigin(t[0])).toBe(false);
+    // a ride that gets closer is fine, one that moves away from the destination is not
+    const g = routeGuard(w, ids('far west'), ids('mid'));
+    expect(g.closer?.(ids('far west').values().next().value!, ids('cabo').values().next().value!)).toBe(true);
+    expect(g.closer?.(ids('cabo').values().next().value!, ids('far west').values().next().value!)).toBe(false);
   });
 });

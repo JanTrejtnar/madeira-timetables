@@ -73,9 +73,19 @@ body {
   .leaflet-container {
     background: #1e293b;
   }
-  .leaflet-tile-pane {
-    filter: brightness(0.82) contrast(0.95) saturate(0.85);
-  }
+}
+
+.walk-pin {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 14px;
+  line-height: 1;
+  border: 2px solid #fb7185;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.55);
 }
 
 .transfer-pin {

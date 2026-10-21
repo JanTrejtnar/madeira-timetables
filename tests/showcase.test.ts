@@ -1,8 +1,10 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { decodeSegment } from '../src/lib/overview';
+import { simplify } from '../src/lib/simplify';
 import { parseFoot, straightM } from '../src/lib/foot';
-import { buildNetwork, nodesNearPoint, suggest } from '../src/lib/network';
+import { buildNetwork, CITY_PREFIX, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops } from '../src/lib/network';
+import { plan } from '../src/lib/router';
 import { OPERATORS, operatorOf } from '../src/lib/operators';
 import { buildPlaceIndex, searchPlaces, type PlaceRow } from '../src/lib/places';
 import { addRecent, parseTrips, RECENT_MAX, sameTrip, toggleFavorite, type SavedTrip } from '../src/lib/trips-store';
@@ -137,5 +139,68 @@ describe('recent and favourite trips', () => {
 describe('overview geometry', () => {
   it('decodes the delta encoded segments', () => {
     expect(decodeSegment([3265000, -1690000, 10, -20, 5, 5])).toEqual([[32.65, -16.9], [32.6501, -16.9002], [32.65015, -16.90015]]);
+  });
+});
+
+describe('route simplification', () => {
+  it('drops points within the tolerance and keeps the end points and real corners', () => {
+    const line: [number, number][] = [[0, 0], [0.0001, 0.5], [0, 1], [0.5, 1.0001], [1, 1]];
+    const s = simplify(line, 0.001);
+    expect(s[0]).toEqual([0, 0]);
+    expect(s.at(-1)).toEqual([1, 1]);
+    expect(s).toContainEqual([0, 1]);
+    expect(s).not.toContainEqual([0.0001, 0.5]);
+    expect(simplify([[1, 2], [3, 4]], 1)).toEqual([[1, 2], [3, 4]]);
+  });
+});
+
+describe.skipIf(!existsSync(file))('stop positions (real data)', () => {
+  const data: Dataset = JSON.parse(readFileSync(file, 'utf8'));
+  const m = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => Math.hypot((a.lon - b.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180), (a.lat - b.lat) * 110540);
+
+  it('no stop that was placed by name jumps far away from both its neighbours on the route (homonyms: Lombada in Funchal vs. Ponta do Sol)', () => {
+    const bad: string[] = [];
+    for (const l of data.lines) {
+      l.directions.forEach((d, di) => {
+        d.stops.forEach((s, i) => {
+          if (s.lat === undefined || s.lon === undefined || s.locationPrecision !== 'name_match') return;
+          const at = (x: typeof s | undefined) => (x && x.lat !== undefined && x.lon !== undefined ? { lat: x.lat, lon: x.lon } : null);
+          const p = d.stops.slice(0, i).reverse().map(at).find(Boolean);
+          const q = d.stops.slice(i + 1).map(at).find(Boolean);
+          if (!p || !q) return;
+          const here = { lat: s.lat, lon: s.lon };
+          const a = m(p, here);
+          const b = m(here, q);
+          const c = m(p, q);
+          // both neighbours far away although they are near each other (c ~ 0 = a repeated stop, not a detour)
+          if (a > 3000 && b > 3000 && c > 50 && c < 0.5 * Math.min(a, b)) bad.push(`${l.number}/${di} ${s.name}`);
+        });
+      });
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+describe.skipIf(!existsSync(file))('Funchal -> Cabo Girão (real data)', () => {
+  const data: Dataset = JSON.parse(readFileSync(file, 'utf8'));
+  const net = buildNetwork(data.lines, data.terminalWalks);
+  const from = resolveNodes(net, 'Funchal', `${CITY_PREFIX}Funchal`);
+  const r = nodesNearPoint(net, ...(cabo as [number, number]));
+  const to = nodeIdsOfKeys(net, r.nodes.map((x) => x.node.key));
+
+  it('the Funchal group holds no stop west of the city (no homonym of another village)', () => {
+    const west = [...from].map((i) => net.nodes[i]).filter((n) => (n.lon ?? 0) < -17.0);
+    expect(west.map((n) => n.name)).toEqual([]);
+  });
+  it.each([8, 14, 19])('leaving at %i:00 no bus runs towards Funchal and none boards at a Lombada', (h) => {
+    const trips = servicesFor(net, data.lines, { y: 2026, m: 10, d: 21 }, false, ['Funchal']);
+    const p = plan(net, trips, from, to, h * 60);
+    const all = [...p.direct, ...p.transfers];
+    expect(all.length).toBeGreaterThan(0);
+    for (const it of all) {
+      const first = it.legs[0];
+      expect(first.trip.dir.to ?? '').not.toMatch(/^Funchal/);
+      expect(tripStops(first.trip)[first.fromPos].name).not.toMatch(/lombada/i);
+    }
   });
 });
