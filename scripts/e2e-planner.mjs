@@ -5,7 +5,7 @@ import puppeteer from 'puppeteer-core';
 
 const base = process.argv[2] ?? 'http://localhost:5173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
-const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox'] });
+const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
 const results = [];
 const check = (name, ok, extra = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${extra ? ' – ' + extra : ''}`); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -101,7 +101,8 @@ async function run(label, viewport) {
   check(`${label}: the red pin stays on the map with the itinerary`, pins >= 1, String(pins));
   check(`${label}: the picked point is kept in the URL`, /[?&]tp=3\d\.\d+(,|%2C)-1\d\.\d+/.test(await page.evaluate(() => location.search)));
   await page.reload({ waitUntil: 'networkidle0' });
-  await sleep(1200);
+  await page.waitForSelector("[data-testid=connection]", { timeout: 8000 }).catch(() => {});
+  await sleep(800);
   await page.evaluate(() => document.querySelector('[data-testid=connection]')?.click());
   await sleep(800);
   check(`${label}: pin and walk survive a reload`, (await page.$('[data-testid=walk-out]')) !== null && (await page.$$('.picked-pin')).length >= 1);
@@ -112,7 +113,8 @@ async function run(label, viewport) {
   u.searchParams.set('fp', '32.6600,-16.9300');
   u.searchParams.set('time', '08:00');
   await page.goto(u.href, { waitUntil: 'networkidle0' });
-  await sleep(1500);
+  await page.waitForSelector("[data-testid=connection]", { timeout: 8000 }).catch(() => {});
+  await sleep(500);
   const cards = await page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].map((card) => {
     const w = card.querySelector('[data-testid=walk-in]');
     const dep = /(\d\d:\d\d)/.exec(card.innerText.replace(w?.innerText ?? '', '').replace(card.querySelector('[data-testid=connection-date]')?.innerText ?? '', ''));

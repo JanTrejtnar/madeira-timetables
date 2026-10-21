@@ -7,6 +7,7 @@ import { addDays, type Ymd } from '../lib/holidays';
 import { tripStops } from '../lib/network';
 import { cachedFoot } from '../lib/foot';
 import { fmtMinutes } from '../lib/time';
+import { connectionFare, formatEuro, type FareCard } from '../lib/fare';
 import { WALK_M_PER_MIN, walkTo } from '../lib/walk';
 import type { Picked } from '../lib/plannerForm';
 import type { Itinerary, Leg } from '../lib/router';
@@ -93,6 +94,7 @@ export function ConnectionCard({ it, shared, date, base, selected, onOpen, fromP
         <span className="shrink-0 text-slate-500 tabular-nums dark:text-slate-400">
           {duration(it.arrive - it.depart, t)}
           {it.legs.length > 1 && <span className="ml-1.5 text-xs">· {t('oneTransfer')}</span>}
+          <Fare it={it} card={shared.fareCard} />
         </span>
       </span>
       <span className="flex items-stretch gap-1 py-2.5 pl-4 pr-2">
@@ -121,6 +123,17 @@ export function ConnectionCard({ it, shared, date, base, selected, onOpen, fromP
         <Icon name="chevron" className="size-5 shrink-0 self-center text-sky-600" />
       </span>
     </button>
+  );
+}
+
+/** Price of the connection for the card from the settings; small and grey so it stays in the background. */
+function Fare({ it, card }: { it: Itinerary; card: FareCard }) {
+  const { t, lang } = useT();
+  const price = connectionFare(card, it.legs.map((l) => l.depart));
+  return (
+    <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500" data-testid="fare" title={t('fareNote')}>
+      · {price === 0 ? t('fareFree') : formatEuro(price, lang)}
+    </span>
   );
 }
 
@@ -276,6 +289,7 @@ export function ConnectionDetail({ it, shared, date, base, onBack, fromPt, toPt,
           <span className="shrink-0 text-slate-500 tabular-nums dark:text-slate-400">
             {duration(it.arrive - it.depart, t)}
             <span className="ml-1.5 text-xs">· {it.legs.length === 1 ? t('noTransfer') : t('oneTransfer')}</span>
+            <Fare it={it} card={shared.fareCard} />
           </span>
         </div>
         <div className="px-3 py-3">

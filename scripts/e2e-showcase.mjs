@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 
 const base = process.argv[2] ?? 'http://localhost:5173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
-const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox'] });
+const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
 let failed = 0;
 let total = 0;
 const check = (name, ok, extra = '') => {
@@ -318,6 +318,49 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   check('the network map legend is a small plain legend (no filter buttons)', await page.evaluate(() => !!document.querySelector('[data-testid=network-legend]') && document.querySelectorAll('[data-testid=network-legend] button').length === 0));
   check('no page errors', errors.length === 0, errors.join('; '));
   await page.close();
+}
+
+// ---- 10. default language by the browser, fare card in settings, price in results
+{
+  const fresh = async (locale) => {
+    const ctx = await browser.createBrowserContext();
+    const page = await ctx.newPage();
+    await page.evaluateOnNewDocument((l) => Object.defineProperty(navigator, 'languages', { get: () => [l] }), locale);
+    await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
+    await page.goto(base, { waitUntil: 'networkidle0' });
+    return { page, ctx };
+  };
+  const en = await fresh('en-US');
+  check('a non-Czech browser starts in English', (await en.page.evaluate(() => document.documentElement.lang)) === 'en');
+  await en.ctx.close();
+  const de = await fresh('de-DE');
+  check('an unknown browser language falls back to English', (await de.page.evaluate(() => document.documentElement.lang)) === 'en');
+  await de.ctx.close();
+  const cs = await fresh('cs-CZ');
+  const page = cs.page;
+  check('a Czech browser starts in Czech', (await page.evaluate(() => document.documentElement.lang)) === 'cs');
+  await typeIn(page, 'Odkud', 'Funchal');
+  await clickOption(page, /všechny zastávky/);
+  await typeIn(page, 'Kam', 'Cabo Gir');
+  await clickOption(page, /Cabo Girão/);
+  await sleep(2000);
+  const fare = () => page.evaluate(() => document.querySelector('[data-testid=connection] [data-testid=fare]')?.textContent.replace(/\s+/g, ' ').trim());
+  const setCard = async (v) => {
+    await page.click('[data-testid=open-settings]');
+    await sleep(300);
+    await page.evaluate((c) => document.querySelector(`[data-testid=fare-card] input[value=${c}]`).click(), v);
+    await clickTab(page, 'Plánovač');
+    await sleep(600);
+  };
+  const f0 = await fare();
+  check('without a card the price is 2,65 € per bus', /2,65|5,30/.test(f0 ?? ''), f0);
+  await setCard('blue');
+  const f1 = await fare();
+  check('blue card: 2,05 € per journey', /2,05|4,10/.test(f1 ?? ''), f1);
+  await setCard('yellow');
+  const f2 = await fare();
+  check('yellow card: free', /zdarma/.test(f2 ?? ''), f2);
+  await cs.ctx.close();
 }
 
 await browser.close();

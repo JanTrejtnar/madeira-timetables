@@ -3,6 +3,7 @@ import { useDataset } from './data';
 import { LANGS, LangContext, makeT, type Lang } from './i18n';
 import { LangMenu } from './components/LangMenu';
 import { SettingsTab } from './components/SettingsTab';
+import { isFareCard, type FareCard } from './lib/fare';
 import { isSchoolPeriod, serviceDay } from './lib/holidays';
 import { nowInMadeira } from './lib/time';
 import { DeparturesTab } from './components/DeparturesTab';
@@ -42,8 +43,9 @@ const store = {
 function initialLang(): Lang {
   const saved = store.get('lang');
   if (saved && (LANGS as string[]).includes(saved)) return saved as Lang;
-  const nav = navigator.language.slice(0, 2);
-  return nav === 'pt' || nav === 'en' ? nav : 'cs';
+  // English unless the browser is set to Czech (or Portuguese)
+  const nav = (navigator.languages?.[0] ?? navigator.language ?? '').slice(0, 2).toLowerCase();
+  return nav === 'cs' || nav === 'pt' ? nav : 'en';
 }
 
 function parseHash(): { id: number; dir?: number; ride?: { from: number; to: number } } | null {
@@ -68,6 +70,14 @@ export function App() {
     return stamp === `${t.y}-${t.m}-${t.d}` && (v === '1' || v === '0') ? v === '1' : null;
   });
   const [overrideDay, setOverrideDay] = useState(dayStamp);
+  const [fareCard, setFareCardState] = useState<FareCard>(() => {
+    const v = store.get('fareCard');
+    return isFareCard(v) ? v : 'none';
+  });
+  const setFareCard = useCallback((c: FareCard) => {
+    setFareCardState(c);
+    store.set('fareCard', c);
+  }, []);
   const { data, index, error } = useDataset();
   const desktop = useMedia('(min-width: 1024px)');
   const [mapLayers, setMapLayers] = useState<MapLayer[] | null>(null);
@@ -171,6 +181,7 @@ export function App() {
             },
             openConn,
             setOpenConn,
+            fareCard,
             desktop,
             setMap: setMapLayers,
             setMapFocus,
@@ -208,7 +219,7 @@ export function App() {
             },
           }
         : null,
-    [data, net, ctx, openConn, desktop, userPos, geo, locate, planner, applied, commit, recent, favorites, toggleFavorite, rememberTrip, clearRecent],
+    [data, net, ctx, openConn, fareCard, desktop, userPos, geo, locate, planner, applied, commit, recent, favorites, toggleFavorite, rememberTrip, clearRecent],
   );
 
   const today = serviceDay(now);
@@ -325,6 +336,8 @@ export function App() {
                           setSchoolOverride(null);
                           store.set('school', '');
                         }}
+                        fareCard={fareCard}
+                        onFareCard={setFareCard}
                         generatedAt={data.generatedAt}
                       />
                     )}

@@ -1,7 +1,7 @@
 // "My location" next to the From field: a faked GPS fix near Câmara de Lobos fills the nearest stop and states the walk (dev server on :5173).
 import puppeteer from 'puppeteer-core';
 const base = process.argv[2] ?? 'http://localhost:5173/';
-const browser = await puppeteer.launch({ executablePath: process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true, args: ['--no-sandbox'] });
+const browser = await puppeteer.launch({ executablePath: process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
 const ctx = browser.defaultBrowserContext();
 await ctx.overridePermissions(new URL(base).origin, ['geolocation']);
 const page = await browser.newPage();

@@ -4,7 +4,7 @@ import puppeteer from 'puppeteer-core';
 
 const base = process.argv[2] ?? 'http://localhost:5173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
-const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox'] });
+const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
 const page = await browser.newPage();
 await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
 const errors = [];

@@ -4,7 +4,7 @@ import puppeteer from 'puppeteer-core';
 
 const base = process.argv[2] ?? 'http://localhost:4173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
-const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox'] });
+const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
 const results = [];
 const check = (name, ok, extra = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${extra ? ' – ' + extra : ''}`); };
 const text = (page) => page.evaluate(() => document.body.innerText);

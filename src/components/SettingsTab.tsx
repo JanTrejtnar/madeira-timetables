@@ -1,8 +1,9 @@
-import { useT } from '../i18n';
+import { useT, type Key } from '../i18n';
+import { FARE_CARDS, type FareCard } from '../lib/fare';
 import { Card, SectionTitle } from './common';
 
 /** Rarely needed switches. The data and build stamp sit at the very end of the page. */
-export function SettingsTab({ school, autoSchool, onSchool, onSchoolReset, generatedAt }: { school: boolean; autoSchool: boolean; onSchool: (v: boolean) => void; onSchoolReset: () => void; generatedAt: string | null }) {
+export function SettingsTab({ school, autoSchool, onSchool, onSchoolReset, fareCard, onFareCard, generatedAt }: { school: boolean; autoSchool: boolean; onSchool: (v: boolean) => void; onSchoolReset: () => void; fareCard: FareCard; onFareCard: (c: FareCard) => void; generatedAt: string | null }) {
   const { t } = useT();
   return (
     <div className="flex flex-col gap-4" data-testid="settings">
@@ -23,6 +24,22 @@ export function SettingsTab({ school, autoSchool, onSchool, onSchoolReset, gener
               {t('schoolReset')}
             </button>
           )}
+        </Card>
+      </section>
+      <section>
+        <SectionTitle>{t('settingsFare')}</SectionTitle>
+        <Card className="flex flex-col gap-1" >
+          <div role="radiogroup" aria-label={t('settingsFare')} className="flex flex-col gap-1" data-testid="fare-card">
+            {FARE_CARDS.map((c) => (
+              <label key={c} className="flex min-h-11 cursor-pointer items-center gap-3">
+                <input type="radio" name="fareCard" className="size-4 accent-sky-600" checked={fareCard === c} onChange={() => onFareCard(c)} value={c} />
+                <span>
+                  <span className="font-medium">{t(`fare${c[0].toUpperCase()}${c.slice(1)}` as Key)}</span>
+                  <span className="block text-sm text-slate-500 dark:text-slate-400">{t(`fare${c[0].toUpperCase()}${c.slice(1)}Hint` as Key)}</span>
+                </span>
+              </label>
+            ))}
+          </div>
         </Card>
       </section>
       {generatedAt && (

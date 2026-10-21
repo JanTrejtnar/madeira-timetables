@@ -7,6 +7,7 @@ import type { MapFocus } from '../types';
 import type { UserPos } from '../lib/nearby';
 import type { PlannerForm } from '../lib/plannerForm';
 import type { SavedTrip } from '../lib/trips-store';
+import type { FareCard } from '../lib/fare';
 import type { Ctx } from '../lib/departures';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
 import type { Direction, Line, MapLayer, Stop } from '../types';
@@ -27,6 +28,8 @@ export interface Shared {
   /** key of the connection opened in the planner's detail page (null = the list); kept here so it survives a trip to the line detail and back */
   openConn: string | null;
   setOpenConn: (key: string | null) => void;
+  /** card the traveller holds (settings); decides the price shown with a connection */
+  fareCard: FareCard;
   /** true when the side-by-side layout with the big map is active */
   desktop: boolean;
   /** shows routes on the big desktop map (null clears it) */
