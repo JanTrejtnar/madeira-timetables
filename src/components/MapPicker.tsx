@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { darkTiles } from '../lib/tiles';
+import { osmTiles } from '../lib/tiles';
 import { useT } from '../i18n';
 import { pinIcon } from '../lib/mapPin';
 import { nearestNode } from '../lib/network';
@@ -50,7 +50,7 @@ export function MapPicker({ shared, title, kind, current, onPick, onClose }: Pro
     const container = el.current;
     if (!container) return;
     const map = L.map(container, { zoomControl: true });
-    darkTiles().addTo(map);
+    osmTiles().addTo(map);
     const layer = L.layerGroup().addTo(map);
     // start on the pin already set, else the stop in the field, else the user's position, else the island
     const startNode = current.key ? net.nodes.find((n) => n.key === current.key && n.lat !== undefined) : undefined;

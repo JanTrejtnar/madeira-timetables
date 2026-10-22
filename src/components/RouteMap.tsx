@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { darkTiles } from '../lib/tiles';
+import { osmTiles } from '../lib/tiles';
 import { loadShape } from '../data';
 import { useT, type Lang } from '../i18n';
 import { localStopName } from '../lib/text';
@@ -10,6 +10,7 @@ import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
 import { drawPin } from '../lib/mapPin';
 import type { UserPos } from '../lib/nearby';
 import type { MapFocus, MapLayer, Stop } from '../types';
+import { cutSpurs } from '../lib/spur';
 import { iconSvg } from './Icons';
 
 interface PopupLabels {
@@ -150,7 +151,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
     setFailed(false);
     markers.current = new Map();
     const map = L.map(container, { scrollWheelZoom: fill, dragging: true, touchZoom: true, zoomControl: true });
-    darkTiles().addTo(map);
+    osmTiles().addTo(map);
     mapRef.current = map;
     const group = L.featureGroup().addTo(map);
     const labels: PopupLabels = { google: t('mapGoogle'), mapy: t('mapMapyCz'), arrival: t('arrivalWord'), departure: t('departureWord'), approx: t('coordsApprox'), estimated: t('estimatedLocation'), settlement: t('settlementWarning') };
@@ -192,7 +193,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
         loadShape(layer.shapeId as number)
           .then((pts) => {
             if (!alive) return;
-            const full = spliceDetours(pts, layer.detours);
+            const full = cutSpurs(spliceDetours(pts, layer.detours), layer.trip?.stops);
             const style = { color: layer.color, lineCap: 'round', lineJoin: 'round' } as const;
             const cut = layer.ride ? rideSplit(full, layer.ride.stops, layer.ride.from, layer.ride.to) : null;
             if (cut) {

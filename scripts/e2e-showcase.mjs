@@ -200,7 +200,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   check('no connection boards at a Lombada or runs "... -> Funchal"', !/Lombada/i.test(body) && !/Ponta Sol\s*[→>-]+\s*Funchal/i.test(body), (body.match(/Lombada.*/) ?? [''])[0]);
   const pins = await page.evaluate(() => [...document.querySelectorAll('.picked-pin')].map((p) => p.textContent.trim()).sort().join(','));
   check('the map shows both the start (A) and the destination (B) marker', pins === 'A,B', pins);
-  check('the map base is the darkened OpenStreetMap (no API key)', await page.evaluate(() => [...document.querySelectorAll('img.leaflet-tile')].some((i) => /tile\.openstreetmap\.org/.test(i.src) && !!i.closest('.leaflet-layer.dark-tiles'))));
+  check('the map base is the darkened OpenStreetMap (no API key)', await page.evaluate(() => [...document.querySelectorAll('img.leaflet-tile')].some((i) => /tile\.openstreetmap\.org/.test(i.src) && !!i.closest('.leaflet-layer.osm-tiles'))));
   await page.evaluate(() => document.querySelector('[data-testid=connection]')?.click());
   await sleep(500);
   await page.evaluate(() => document.querySelector('[data-testid=open-leg]')?.click());

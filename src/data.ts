@@ -26,7 +26,8 @@ export function useDataset() {
 export const assetUrl = url;
 
 export async function loadShape(shapeId: number): Promise<[number, number][]> {
-  const r = await fetch(url(`data/shapes/${shapeId}.json`));
+  // the build stamp in the URL: a regenerated route is never served from the cache of an older build (the file names stay the same)
+  const r = await fetch(url(`data/shapes/${shapeId}.json?v=${encodeURIComponent(__BUILD_TIME__)}`));
   if (!r.ok) throw new Error(String(r.status));
   return r.json();
 }

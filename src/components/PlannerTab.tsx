@@ -496,6 +496,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       color: legs.length > 1 ? LEG_COLORS[i % LEG_COLORS.length] : lineColor(l.trip.line),
       ...(legs.length > 1 ? { legend: { badge: badgeText(l.trip.line), text: `${localStopName(tripStops(l.trip)[l.fromPos].name, lang)} → ${localStopName(tripStops(l.trip)[l.toPos].name, lang)}` } } : {}),
       detours: detoursFor(l.trip.line, l.trip.dirIndex, l.trip.notes),
+      trip: { stops: tripStops(l.trip).flatMap((s, k) => (s.lat !== undefined && s.lon !== undefined ? [{ at: [s.lat, s.lon] as [number, number], calls: l.trip.times[k] !== null }] : [])) },
       ride: { stops: tripStops(l.trip).map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), from: l.fromPos, to: l.toPos },
       ...(i === 0 && pins.length ? { pins } : {}),
       ...(i === 0 && transfers.length ? { transfers } : {}),
@@ -615,7 +616,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       {!searched && <TripShortcuts shared={shared} />}
 
       {searched && (
-        <div className="sticky top-(--header-h,0px) z-30 -mx-4 -mt-4 bg-slate-50/95 px-4 pb-1.5 pt-2.5 backdrop-blur dark:bg-slate-950/95 lg:top-0">
+        <div className="sticky top-(--header-h,0px) z-30 -mx-4 -mt-4 bg-slate-50/95 px-4 pb-3 pt-2.5 backdrop-blur dark:bg-slate-950/95 lg:-top-4">
         <div className="flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white p-2 pr-3 dark:border-slate-700/70 dark:bg-slate-900" data-testid="search-summary">
           <button
             type="button"

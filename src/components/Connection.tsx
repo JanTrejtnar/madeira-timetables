@@ -297,7 +297,7 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
   const iconBtn = 'inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-full px-2 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10';
   return (
     <div className="flex flex-col gap-3" data-testid="connection-detail">
-      <div className="sticky top-(--header-h,0px) z-30 -mx-4 -mt-4 flex items-center gap-1 bg-slate-50/95 px-4 pb-1.5 pt-2.5 backdrop-blur dark:bg-slate-950/95 lg:top-0">
+      <div className="sticky top-(--header-h,0px) z-30 -mx-4 -mt-4 flex items-center gap-1 bg-slate-50/95 px-4 pb-3 pt-2.5 backdrop-blur dark:bg-slate-950/95 lg:-top-4">
         <button type="button" onClick={onBack} data-testid="connection-back" className="-ml-2 inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10">
           <Icon name="back" className="size-4" />
           {t('connectionBack')}

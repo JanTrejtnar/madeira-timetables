@@ -5,7 +5,7 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ROUTE_RADIUS_M, routeShapeId, signature, waypointsOf } from './lib-routes.mjs';
+import { ROUTE_RADIUS_M, END_RADIUS_M, hav, routeShapeId, signature, waypointsOf } from './lib-routes.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BASE = process.env.OSRM_URL ?? 'https://router.project-osrm.org';
@@ -16,13 +16,16 @@ const MAX_DETOUR = 2.6;
 const MAX_DROPPED = 0.25;
 const rad = Math.PI / 180;
 const straightKm = (pts) => pts.slice(1).reduce((s, x, k) => s + Math.hypot((x.p[1] - pts[k].p[1]) * 111.32 * Math.cos(x.p[0] * rad), (x.p[0] - pts[k].p[0]) * 110.54), 0);
+/** an end of the route further than this from its stop is joined to it with a straight piece */
+const END_JOIN_M = 15;
 const CHUNK = 40; // waypoints per request (the demo server allows 100)
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function osrm(pts) {
   const coords = pts.map((x) => `${x.p[1]},${x.p[0]}`).join(';');
   // radiuses: a waypoint snaps to a road only within ROUTE_RADIUS_M (otherwise NoSegment and the waypoint is dropped by route())
-  const radiuses = pts.map(() => ROUTE_RADIUS_M).join(';');
+  // the two ends of the whole route (the first and the last stop) may lie further from a road (a car park, a lay-by): wider search there
+  const radiuses = pts.map((x) => (x.end ? END_RADIUS_M : ROUTE_RADIUS_M)).join(';');
   const url = `${BASE}/route/v1/driving/${coords}?overview=full&geometries=geojson&continue_straight=false&radiuses=${radiuses}`;
   let last;
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -48,6 +51,8 @@ async function osrm(pts) {
 /** Route through all waypoints, in overlapping chunks; a waypoint without a road within the radius is dropped and the route is asked again. */
 async function route(pts) {
   let use = pts;
+  const mark = () => use.forEach((x, k) => { x.end = k === 0 || k === use.length - 1; });
+  mark();
   for (let round = 0; round < 40; round++) {
     const out = [];
     let km = 0;
@@ -65,8 +70,15 @@ async function route(pts) {
       }
       await sleep(400);
     }
-    if (!bad) return { line: out, km, dropped: pts.length - use.length };
+    if (!bad) {
+      // the road did not come within reach of an end stop: the line is joined to the stop's position (a straight piece) so that it ends on the pin
+      const gap = (a, b) => hav(a, b) * 1000;
+      if (gap(out[0], use[0].p) > END_JOIN_M) out.unshift(use[0].p);
+      if (gap(out.at(-1), use.at(-1).p) > END_JOIN_M) out.push(use.at(-1).p);
+      return { line: out, km, dropped: pts.length - use.length };
+    }
     use = use.filter((x) => x !== bad);
+    mark();
     if (use.length < 2) throw new Error('fewer than 2 waypoints near a road');
   }
   throw new Error('too many waypoints without a road');

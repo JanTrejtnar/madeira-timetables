@@ -373,6 +373,36 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   await page.close();
 }
 
+// ---- desktop: the first card and the detail are not hidden under the sticky bars
+{
+  const { page, errors } = await open({ width: 1280, height: 800, deviceScaleFactor: 1 }, `${base}?from=Funchal&to=Falca&tk=falca&date=2026-10-23&time=05:00`);
+  await sleep(1500);
+  const gap = (bar, below) => page.evaluate((a, b) => { const x = document.querySelector(a)?.getBoundingClientRect(); const y = document.querySelector(b)?.getBoundingClientRect(); return x && y ? Math.round(y.top - x.bottom) : null; }, bar, below);
+  const g1 = await gap('[data-testid=search-summary]', '[data-testid=connection]');
+  check('desktop: the first result card starts clearly below the search bar', g1 !== null && g1 >= 6, String(g1));
+  await page.evaluate(() => document.querySelector('[data-testid=connection]')?.click());
+  await sleep(800);
+  const g2 = await page.evaluate(() => { const bar = document.querySelector('[data-testid=connection-back]')?.closest('div')?.getBoundingClientRect(); const card = document.querySelector('[data-testid=connection-detail] > div:nth-child(2)')?.getBoundingClientRect(); return bar && card ? Math.round(card.top - bar.bottom) : null; });
+  check('desktop: the top of the connection detail is not cut by its bar', g2 !== null && g2 >= 6, String(g2));
+  check('no page errors (desktop)', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+{
+  // light theme: the tiles are not filtered; dark theme: only the tile layer is
+  const { page } = await open({ width: 1280, height: 800, deviceScaleFactor: 1 }, `${base}?from=Funchal&to=Falca&tk=falca&date=2026-10-23&time=05:00`);
+  const filt = (sel) => page.evaluate((q) => { const e = document.querySelector(q); return e ? getComputedStyle(e).filter : null; }, sel);
+  await page.evaluate(() => localStorage.setItem('theme', 'light'));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await sleep(1200);
+  check('light theme: the map tile layer has no CSS filter', (await filt('.leaflet-layer.osm-tiles')) === 'none', await filt('.leaflet-layer.osm-tiles'));
+  await page.evaluate(() => localStorage.setItem('theme', 'dark'));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await sleep(1200);
+  check('dark theme: the tile layer is inverted', /invert/.test((await filt('.leaflet-layer.osm-tiles')) ?? ''));
+  check('dark theme: the map container and the line pane are not filtered', (await filt('.leaflet-container')) === 'none' && (await filt('.leaflet-overlay-pane')) === 'none');
+  await page.close();
+}
+
 await browser.close();
 console.log(`${total - failed}/${total} passed`);
 process.exit(failed ? 1 : 0);

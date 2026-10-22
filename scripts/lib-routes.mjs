@@ -27,7 +27,7 @@ export function waypointsOf(dir) {
 
 const R = 6371.0088;
 const rad = Math.PI / 180;
-function hav(a, b) {
+export function hav(a, b) {
   const dLat = (b[0] - a[0]) * rad;
   const dLon = (b[1] - a[1]) * rad;
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLon / 2) ** 2;
@@ -64,6 +64,9 @@ export function dropOutliers(pts) {
 
 /** a waypoint must lie within this many metres of a road (OSRM `radiuses`), else it is left out: no detour into a dead end for a stop beside the road */
 export const ROUTE_RADIUS_M = 45;
+
+/** the first and the last waypoint of a route snap to a road within this many metres (not part of the signature: existing routes stay) */
+export const END_RADIUS_M = 200;
 
 /** stable signature of the waypoints and the snapping rule: a route is reused only while both are unchanged */
 export const signature = (pts) => `r${ROUTE_RADIUS_M}|` + pts.map((x) => x.p.join(',')).join(';');

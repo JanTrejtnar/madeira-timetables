@@ -154,7 +154,8 @@ button:disabled,
   cursor: not-allowed;
 }
 
-/* OSM tiles turned into a dark, low-contrast base: invert, then put the hues back */
-.leaflet-layer.dark-tiles {
+/* Dark theme only: the OSM tile layer (not the map container, so lines and markers keep their colours) is inverted, then the hues are put back.
+   The light theme shows the standard OpenStreetMap tiles untouched. */
+.dark .leaflet-layer.osm-tiles {
   filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.85) saturate(0.6);
 }
