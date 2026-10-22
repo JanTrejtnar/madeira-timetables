@@ -106,6 +106,7 @@ export const EXTRA: Record<string, [cs: string, en: string]> = {
   'Só se efctuam viagens durante o período escolar': ['Jede pouze během školního období', 'Runs during the school period only'],
   'Entre a Ponta da Oliveira e a Vargem': ['Mezi Ponta da Oliveira a Vargem', 'Between Ponta da Oliveira and Vargem'],
   'Expresso (Pela via rápida)': ['Expres (po rychlostní silnici)', 'Express (via the expressway)'],
+  'No Período Não Escolar circula pela Estrada Regional até ao FUNCHAL.': ['Mimo školní období jede po Estrada Regional až do Funchalu.', 'Outside the school period it runs along the Estrada Regional all the way to Funchal.'],
   'Praia Formosa → Centro (paragem 6) Av. do Mar: 15/30 min.': ['Praia Formosa → centrum (zastávka 6) Av. do Mar: 15/30 min.', 'Praia Formosa → city centre (stop 6) Av. do Mar: 15/30 min.'],
   'Viagens de ligação direta ao Parque Temático da Madeira.': ['Spoje s přímým spojením do Parque Temático da Madeira.', 'Trips with a direct connection to the Madeira Theme Park.'],
   'O horário indica, nos pontos intermédios dos percursos, as horas aproximadas de passagem': [

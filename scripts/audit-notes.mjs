@@ -2,12 +2,13 @@
 // (ending in a dash, preposition, conjunction or a stub word) or too short to carry content.
 // Notes already completed in data/note-fixes.json are checked after the fix is applied.
 import { readFileSync } from 'node:fs';
+import { loadNoteFixes, recodeNotes } from './lib-note-fixes.mjs';
 
 const schedules = JSON.parse(readFileSync('data/schedules.json', 'utf8'));
-const fixes = JSON.parse(readFileSync("data/note-fixes.json", "utf8")).fixes ?? {};
+const { fixes, recode } = loadNoteFixes();
 const TAIL = /(?:^|\s)(?:paragem|até|a|à|ao|as|às|com|da|das|de|do|dos|e|em|na|nas|no|nos|o|os|ou|para|pela|pelo|por|só|sem|via|to|and|the|of|at|from|or|in|on|-|–|\/|,|\()$/i;
 // reviewed by hand: the source cannot be read any better
-const ACCEPTED = new Set(['704:J']); // sam_156.pdf has a garbled font, the legend of J is not recoverable
+const ACCEPTED = new Set();
 const apply = process.argv.includes('--raw') ? false : true;
 
 function problems(text) {
@@ -28,6 +29,7 @@ const add = (num, item) => {
 const cleaned = (t) => String(t).replace(/\s*\/\s*$/, '');
 let total = 0;
 for (const l of schedules.lines) {
+  if (apply) recodeNotes(l, recode[l.number]);
   const notes = { ...(l.notes || {}), ...(apply ? fixes[l.number] || {} : {}) };
   for (const [key, text] of Object.entries(notes)) {
     total++;
@@ -38,7 +40,7 @@ for (const l of schedules.lines) {
   const known = new Set(Object.keys({ ...(l.notes || {}), ...(apply ? fixes[l.number] || {} : {}) }));
   const used = new Set();
   for (const d of l.directions || []) for (const day of Object.values(d.departures || {})) for (const dep of day) for (const c of dep.notes || []) used.add(c);
-  for (const c of used) if (/^[A-Za-z*]$/.test(c) && !known.has(c)) add(l.number, { key: c, text: '(missing)', why: ['code used by departures but not in the legend'] });
+  for (const c of used) if (/^[A-Za-z*]{1,3}$/.test(c) && !known.has(c)) add(l.number, { key: c, text: '(missing)', why: ['code used by departures but not in the legend'] });
 }
 console.log(`${total} notes checked ${apply ? '(with data/note-fixes.json applied)' : '(raw parser output)'}`);
 for (const [num, list] of byLine) {

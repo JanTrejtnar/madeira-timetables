@@ -20,6 +20,7 @@ import { applyOverrides, applyFunchalTerminals, terminalWalks } from './lib-over
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
 import { buildPois } from './lib-pois.mjs';
 import { buildOverview } from './lib-overview.mjs';
+import { loadNoteFixes, recodeNotes } from './lib-note-fixes.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'public');
@@ -34,11 +35,12 @@ await mkdir(path.join(OUT, 'pdf'), { recursive: true });
 const reclassified = [];
 let local = 0;
 // legend texts the parser cut off (data/note-fixes.json)
-const noteFixes = JSON.parse(await readFile(path.join(ROOT, 'data', 'note-fixes.json'), 'utf8')).fixes ?? {};
+const { fixes: noteFixes, recode: noteRecode } = loadNoteFixes(path.join(ROOT, 'data', 'note-fixes.json'));
 let estimated = 0;
 const rejected = [];
 for (const l of data.lines) {
   Object.assign((l.notes ??= {}), noteFixes[l.number] ?? {});
+  recodeNotes(l, noteRecode[l.number]);
   // a trailing "/" is the separator in front of the English half of a bilingual legend entry
   for (const [k, v] of Object.entries(l.notes)) l.notes[k] = String(v).replace(/\s*\/\s*$/, '');
   delete l.warnings; // parser diagnostics are not needed in the app
