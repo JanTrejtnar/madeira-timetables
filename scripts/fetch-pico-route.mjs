@@ -8,8 +8,10 @@ if (!start) throw new Error('GTFS stop 4A not found; run npm run fetch:gtfs');
 // the road beside the stop (Av. do Mar): the second waypoint keeps the line from circling the one-way streets around the platform
 const quay = [32.64765, -16.9031];
 // the turning circle and car park below the summit: the terminus (data/stop-overrides.json), where the line must end exactly
-const END = [32.72982, -16.92729];
-const W = [[start.lat, start.lon], quay, [32.6539, -16.9119], [32.6767, -16.9029], [32.6855, -16.9010], [32.7127, -16.8878], END];
+const PARK = [32.72982, -16.92729];
+// the terminus at the turning point by the viewpoint / radar on the summit
+const END = [32.7357, -16.9287];
+const W = [[start.lat, start.lon], quay, [32.6539, -16.9119], [32.6767, -16.9029], [32.6855, -16.9010], [32.7127, -16.8878], PARK, END];
 const url = `https://router.project-osrm.org/route/v1/driving/${W.map(([a, b]) => `${b},${a}`).join(';')}?overview=full&geometries=geojson`;
 const j = await (await fetch(url)).json();
 if (j.code !== 'Ok') throw new Error(JSON.stringify(j).slice(0, 200));

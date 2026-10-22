@@ -150,7 +150,7 @@ const DAY_OF = { UE: 'weekday', S: 'saturday', D: 'sunday' };
 /**
  * A timetable that prints no departures for a direction (201 Funchal > Ponte dos Frades: "-----") gets the trips of the planner pattern
  * its stops came from (data/sources/siga/siga-otp-dump.json): the departure from the first stop, per weekday / Saturday / Sunday.
- * Printed times are never replaced, only directions without any are filled. Returns the number of directions filled.
+ * Printed times are never replaced: the planner trips only fill a direction without any, or (line 201) add the ones the PDF lacks. Returns the number of directions filled.
  */
 export function addPlannerDepartures(lines, root) {
   const file = path.join(root, 'data', 'sources', 'siga', 'siga-otp-dump.json');
@@ -159,21 +159,26 @@ export function addPlannerDepartures(lines, root) {
   let n = 0;
   for (const l of lines) {
     for (const d of l.directions) {
-      if (d.enrichedFrom !== 'siga-planner' || Object.values(d.departures).some((v) => v?.length)) continue;
+      // a direction without printed times is filled; on the lines listed in PINNED (201) the planner trips are added to the printed ones
+      if (d.enrichedFrom !== 'siga-planner' || (!PINNED[l.number] && Object.values(d.departures).some((v) => v?.length))) continue;
       patterns ??= JSON.parse(readFileSync(file, 'utf8')).routes.flatMap((r) => r.patterns ?? []);
       // the pattern whose stop codes are the ones given to the direction (terminals aside)
       const mid = d.stops.slice(1, -1).map((s) => s.code).join(',');
       const p = patterns.find((x) => x.stops.slice(1, -1).map((s) => s.code).join(',') === mid);
       if (!p) continue;
+      let added = 0;
       for (const tr of p.trips ?? []) {
         const day = DAY_OF[tr.gtfsId.split('_').pop()];
         const s = tr.stoptimes?.[0]?.scheduledDeparture;
         if (!day || s === undefined) continue;
         const t = `${String(Math.floor(s / 3600) % 24).padStart(2, '0')}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}`;
-        (d.departures[day] ??= []).push({ t });
+        const list = (d.departures[day] ??= []);
+        if (list.some((x) => x.t === t)) continue;
+        list.push({ t });
+        added++;
       }
       for (const v of Object.values(d.departures)) v.sort((x, y) => x.t.localeCompare(y.t));
-      if (Object.keys(d.departures).length) {
+      if (added) {
         d.departuresFrom = 'siga-planner';
         n++;
       }

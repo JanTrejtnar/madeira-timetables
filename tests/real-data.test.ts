@@ -200,12 +200,16 @@ describe.skipIf(!existsSync(file))('coverage', () => {
       expect(d.stops.every((s) => s.lat !== undefined)).toBe(true);
       expect(d.stops.some((s) => s.isEstimatedLocation)).toBe(true);
     }
+    // the second to last stop is the hand-checked lower car park, the terminus keeps its position by the summit; the route passes the car park and ends on the summit
     const summit = up.stops.at(-1)!;
-    // the terminus is the hand-checked turning circle and car park below the summit (data/stop-overrides.json), and the drawn route ends on it
-    expect(summit.lat).toBeCloseTo(32.72982, 5);
-    expect(summit.lon).toBeCloseTo(-16.92729, 5);
+    const park = up.stops.at(-2)!;
+    expect(park.lat).toBeCloseTo(32.72982, 5);
+    expect(park.lon).toBeCloseTo(-16.92729, 5);
+    expect(summit.lat).toBeCloseTo(32.7357, 4);
+    expect(summit.lon).toBeCloseTo(-16.9287, 4);
     const shape: [number, number][] = JSON.parse(readFileSync(`public/data/shapes/${up.shapeId}.json`, 'utf8'));
-    expect(shape.at(-1)).toEqual([32.72982, -16.92729]);
+    expect(shape.at(-1)).toEqual([32.7357, -16.9287]);
+    expect(Math.min(...shape.map((p) => Math.hypot((p[0] - 32.72982) * 110540, (p[1] + 16.92729) * 93000)))).toBeLessThan(60);
     // interpolated stops lie between their neighbours along the route (latitude rises towards the summit)
     const lats = up.stops.map((s) => s.lat!);
     expect([...lats].sort((x, y) => x - y)).toEqual(lats);
@@ -229,8 +233,10 @@ describe.skipIf(!existsSync(file))('coverage', () => {
     expect(toFrades.departures.weekday!.map((x) => x.t)).toEqual(['12:30', '14:50']);
     expect(toFrades.departures.saturday!.map((x) => x.t)).toEqual(['10:05']);
     // printed times stay as printed
-    expect(l.directions[3].departuresFrom).toBeUndefined();
-    expect(l.directions[3].departures.weekday!.map((x) => x.t)).toEqual(['15:20']);
+    // ... and the return run is the union of the printed 15:20 and the planner's trips (no false gap in the timetable)
+    expect(l.directions[3].departuresFrom).toBe('siga-planner');
+    expect(l.directions[3].departures.weekday!.map((x) => x.t)).toEqual(['13:10', '15:20', '15:30', '21:00']);
+    expect(l.directions[3].departures.sunday!.map((x) => x.t)).toEqual(['15:00']);
   });
   it('nearby stops: Pico do Areeiro summit is found from a position next to it', () => {
     const net = buildNetwork(data.lines);

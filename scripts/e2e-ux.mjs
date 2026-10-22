@@ -490,6 +490,24 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   await page.close();
 }
 
+
+// ---- 11. desktop "Linky" tab: operator list without a map; a line detail opens the split view with the route on the map
+{
+  const { page, errors } = await open({ width: 1400, height: 900, deviceScaleFactor: 1 });
+  const split = () => page.evaluate(() => ({ split: document.querySelector('[data-testid=layout]')?.dataset.split, maps: document.querySelectorAll('.leaflet-container').length, paths: document.querySelectorAll('.leaflet-overlay-pane path').length }));
+  await page.click('nav[aria-label=Tabs] button:nth-child(3)');
+  await sleep(500);
+  const a = await split();
+  check('desktop "Linky": the operator list has no map', a.split === 'false' && a.maps === 0, JSON.stringify(a));
+  await page.click('[data-testid=operator-rodoeste] button');
+  await page.click('[data-testid=operator-rodoeste] .divide-y button');
+  await sleep(1500);
+  const b = await split();
+  check('desktop line detail: split view with the route drawn on the map', b.split === 'true' && b.maps === 1 && b.paths > 0, JSON.stringify(b));
+  check('no page errors', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+
 await browser.close();
 console.log(`${total - failed}/${total} passed`);
 process.exit(failed ? 1 : 0);
