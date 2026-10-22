@@ -33,9 +33,12 @@ await mkdir(path.join(OUT, 'pdf'), { recursive: true });
 
 const reclassified = [];
 let local = 0;
+// legend texts the parser cut off (data/note-fixes.json)
+const noteFixes = JSON.parse(await readFile(path.join(ROOT, 'data', 'note-fixes.json'), 'utf8')).fixes ?? {};
 let estimated = 0;
 const rejected = [];
 for (const l of data.lines) {
+  Object.assign((l.notes ??= {}), noteFixes[l.number] ?? {});
   delete l.warnings; // parser diagnostics are not needed in the app
   const why = classifyLine(l, path.join(ROOT, 'data', 'shapes'));
   if (why) reclassified.push(`${l.number}: ${why}`);

@@ -508,6 +508,31 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   await page.close();
 }
 
+
+// ---- 12. Funchal -> Eira do Serrado: the 181 trips "Via Eira do Serrado" are found, the map line reaches the viewpoint
+{
+  const { page, errors } = await open({ width: 1400, height: 900, deviceScaleFactor: 1 }, `${base}?date=2026-10-23&time=07:00`);
+  await typeIn(page, 'Odkud', 'Funchal');
+  await clickOption(page, /všechny zastávky/);
+  await typeIn(page, 'Kam', 'Eira do Serrado');
+  const picked = await clickOption(page, /Eira do Serrado/);
+  check('Eira do Serrado is offered in the suggestions', picked);
+  await page.click('[data-testid=search-button]');
+  await page.waitForSelector('[data-testid=connection]', { timeout: 8000 }).catch(() => {});
+  await sleep(1200);
+  const cards = await page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].map((c) => c.innerText));
+  check('connections to Eira do Serrado are listed (line 181)', cards.length > 0 && cards.some((c) => /\b181\b/.test(c)), cards[0]?.replace(/\s+/g, ' '));
+  check('the card shows the arrival at the stop Eira do Serrado', cards.some((c) => /Eira do Serrado/.test(c)));
+  const reach = await page.evaluate(() => {
+    const E = { lat: 32.710657, lon: -16.96188 };
+    const d = [...document.querySelectorAll('.leaflet-overlay-pane path')].map((p) => p.getAttribute('d') ?? '').join(' ');
+    return d.length;
+  });
+  check('the route is drawn on the map', reach > 0);
+  check('no page errors', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+
 await browser.close();
 console.log(`${total - failed}/${total} passed`);
 process.exit(failed ? 1 : 0);

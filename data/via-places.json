@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-placed destinations of \"Via X\" timetable notes that OpenStreetMap cannot resolve by name (key = normalised name). A key may hold several namesakes: the one that lies on the route of the line is used. Shown on the map and in the stop list for the trips carrying the note. Positions are place/stop centres from OpenStreetMap (Nominatim), not surveyed bus stops.",
+  "_comment": "Hand-placed destinations of \"Via X\" timetable notes that OpenStreetMap cannot resolve by name (key = normalised name). A key may hold several namesakes: the one that lies on the route of the line is used. Shown on the map and in the stop list for the trips carrying the note. Positions are place/stop centres from OpenStreetMap (Nominatim), not surveyed bus stops. `between` (optional): names of the two consecutive stops the place lies between, instead of the nearest stretch of the route polyline (for a spur the polyline does not follow).",
   "places": {
     "aeroporto": {
       "name": "Aeroporto",
@@ -245,6 +245,17 @@
         "label": "Silveira, São Vicente (OSM locality)",
         "muni": "São Vicente"
       }
-    ]
+    ],
+    "eira do serrado": {
+      "name": "Eira do Serrado",
+      "lat": 32.710657,
+      "lon": -16.96188,
+      "muni": "Câmara de Lobos",
+      "between": [
+        "Ribeira da Lapa",
+        "Túnel"
+      ],
+      "label": "Eira do Serrado, the viewpoint stop (SIGA / Horários do Funchal stop CF23, OSM node): the trips of line 181 that carry the note leave the road to the tunnel at the Ribeira da Lapa stops, climb to the turning circle at the hotel and come back (`between`: the two stops of the stretch it follows, in either order)"
+    }
   }
 }

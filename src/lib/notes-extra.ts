@@ -11,6 +11,12 @@ export const EXTRA: Record<string, [cs: string, en: string]> = {
     'Provozovatel může spoj zrušit, pokud to nedovolí počasí nebo je silnice uzavřena.',
     'The operator may cancel the service when weather or a closed road prevents it.',
   ],
+  'Em dias não letivos, só via Fajã dos Cardos': ['Ve dny mimo školní výuku jen přes Fajã dos Cardos', 'On non-school days only via Fajã dos Cardos'],
+  'Transbordo de/para Terra Chã de Cima e Seara Velha de Baixo': ['Přestup z/do Terra Chã de Cima a Seara Velha de Baixo', 'Transfer from/to Terra Chã de Cima and Seara Velha de Baixo'],
+  'Serviço à chamada para Eira do Serrado: quem sai de Eira do Serrado marca o serviço pelo telefone 291 705 563 ou 965 059 005 até às 24h00 do dia anterior; quem vai para Eira do Serrado avisa o motorista à entrada no autocarro.': [
+    'Jízda na zavolání do Eira do Serrado: kdo odjíždí z Eira do Serrado, objedná spoj telefonicky na 291 705 563 nebo 965 059 005 do 24:00 předchozího dne; kdo tam jede, řekne řidiči při nástupu.',
+    'On request to Eira do Serrado: if you start at Eira do Serrado, book by phone on 291 705 563 or 965 059 005 before 24:00 the day before; if you are going there, tell the driver when boarding.',
+  ],
   'termina viagem no Estreito de Câmara de Lobos': ['jízda končí v Estreito de Câmara de Lobos', 'trip ends at Estreito de Câmara de Lobos'],
   'Transbordo junto à entrada para a Estrada da Terra Chã.': ['Přestup u odbočky na Estrada da Terra Chã.', 'Change bus at the junction to Estrada da Terra Chã.'],
   'Transbordo junto à entrada para a Seara Velha de Baixo.': ['Přestup u odbočky na Seara Velha de Baixo.', 'Change bus at the junction to Seara Velha de Baixo.'],

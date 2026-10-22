@@ -21,7 +21,7 @@ const MAX_DETOUR_MANUAL_KM = 3; // hand-placed positions are place centres, not 
 const SAME_STOP_KM = 0.2; // closer than this to a listed stop: the stop is already in the list
 
 /**
- * Place names of a "Via X" note: one per segment, split at commas and "e" ("Via Ilha e St. António", "Via Cº Chão, Silveira,
+ * Place names of a "Via X" note: one per segment, split at commas and "e" ("Via Ilha e St. António", "Via Fajã dos Cardos - Eira do Serrado", "Via Cº Chão, Silveira,
  * A. Marques e Ilha"). null for anything that is not a plain list of places ("Via Rápida", street lists, school-day rules).
  * Only a sentence that starts with "Via" counts ("Até Lº Galego. Via Ach. C. Gordo" -> Ach. C. Gordo).
  */
@@ -31,7 +31,7 @@ export function viaNames(text) {
   const rest = m[1].trim().replace(/\.$/, '');
   if (/[/();:0-9]/.test(rest) || /[a-zà-ÿ]{5,}\.\s/i.test(rest)) return null; // a longer sentence follows
   if (/r[aá]pida|expresso|escola|zona industrial/i.test(rest)) return null;
-  const names = rest.split(/,|\s+e\s+/i).map((x) => x.trim()).filter(Boolean);
+  const names = rest.split(/,|\s+e\s+|\s+-\s+/i).map((x) => x.trim()).filter(Boolean);
   return names.length && names.every((n) => n.length >= 3 && n.length <= 40) ? names : null;
 }
 
@@ -86,7 +86,7 @@ export function addViaPlaces(lines, osm, osmPlaces, manual, report = null, areas
       for (const name of names) {
         const key = keyOf(name);
         const mans = [].concat(manual.places?.[key] ?? []);
-        const cands = mans.length ? mans.map((m) => ({ p: [m.lat, m.lon], how: 'manual', max: m.maxDetourKm ?? MAX_DETOUR_MANUAL_KM, muni: m.muni })) : namedPlaces(index, name).map((c) => ({ ...c, max: MAX_DETOUR_KM }));
+        const cands = mans.length ? mans.map((m) => ({ p: [m.lat, m.lon], how: 'manual', max: m.maxDetourKm ?? MAX_DETOUR_MANUAL_KM, muni: m.muni, between: m.between })) : namedPlaces(index, name).map((c) => ({ ...c, max: MAX_DETOUR_KM }));
         if (!cands.length) {
           report?.push({ line: l.number, code, text, name, status: 'no-position' });
           continue;
@@ -110,6 +110,12 @@ export function addViaPlaces(lines, osm, osmPlaces, manual, report = null, areas
           for (const c of cands) {
             // planner stops carry other names than the printed Via note: a stop next to the place does not replace the named place
             if (!d.enrichedFrom && pos.some((x) => hav([x.s.lat, x.s.lon], c.p) < SAME_STOP_KM)) { fits.clear(); alreadyStop = true; break; }
+            // a hand-placed spur names its stretch: the two consecutive stops (either order) it lies between
+            if (c.between) {
+              const k = pos.findIndex((x, j) => j + 1 < pos.length && pos[j + 1].i === x.i + 1 && [[x.s, pos[j + 1].s], [pos[j + 1].s, x.s]].some(([p, q]) => keyOf(p.name).includes(keyOf(c.between[0])) && keyOf(q.name).includes(keyOf(c.between[1]))));
+              if (k >= 0) fits.set(c, { c, detour: 0, idx: pos[k].i, atIdx: route?.stopAt[pos[k + 1].i] ?? undefined });
+              continue;
+            }
             // with a route polyline the stretch is the one of the road the place is nearest to
             const hit = route ? route.nearest(c.p) : null;
             for (let k = 0; k + 1 < pos.length; k++) {
@@ -126,7 +132,7 @@ export function addViaPlaces(lines, osm, osmPlaces, manual, report = null, areas
           else if (own.length === 1) pick = fits.get(own[0]);
           if (!pick) return;
           after[di] = pick.idx;
-          if (route) at[di] = route.nearest(pick.c.p);
+          if (route) at[di] = pick.atIdx ?? route.nearest(pick.c.p); // a named stretch: after everything the road passes on the way to its end stop
           best = pick.c;
         });
         if (!best) {

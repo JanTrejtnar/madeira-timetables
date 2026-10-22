@@ -1,0 +1,12 @@
+{
+  "_comment": "Legend texts that the PDF parser cuts off (a note that wraps onto a second line, or a footnote it does not read). Applied to the line's notes before anything else: { lineNumber: { code: text } }.",
+  "fixes": {
+    "181": {
+      "b": "Via Fajã dos Cardos - Eira do Serrado",
+      "e": "Via Fajã Escura - Fajã dos Cardos - Eira do Serrado",
+      "*": "Serviço à chamada para Eira do Serrado: quem sai de Eira do Serrado marca o serviço pelo telefone 291 705 563 ou 965 059 005 até às 24h00 do dia anterior; quem vai para Eira do Serrado avisa o motorista à entrada no autocarro.",
+      "g": "Em dias não letivos, só via Fajã dos Cardos",
+      "h": "Transbordo de/para Terra Chã de Cima e Seara Velha de Baixo"
+    }
+  }
+}
