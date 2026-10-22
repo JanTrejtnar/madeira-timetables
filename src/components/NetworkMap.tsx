@@ -21,8 +21,10 @@ const TIER_ZOOM = [0, 13, 14];
 const DETAIL_ZOOM = 13;
 const LITE_TOLERANCE = 0.0003;
 const tierOf = (lineCount: number, hub: boolean) => (hub || lineCount >= 6 ? 0 : lineCount >= 2 ? 1 : 2);
-/** Madeira with a margin; Porto Santo is a pan away */
+/** Madeira with a margin */
 const ISLAND: L.LatLngBoundsLiteral = [[32.60, -17.27], [32.88, -16.65]];
+/** Porto Santo, 40 km to the north-east */
+const PORTO_SANTO: L.LatLngBoundsLiteral = [[33.00, -16.42], [33.13, -16.27]];
 
 /** The whole network when no route is shown: lines in the colour of their operator, stops as tappable points, a panel for the tapped one. */
 export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: boolean }) {
@@ -34,6 +36,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   const [failed, setFailed] = useState(false);
   const [sel, setSel] = useState<Selection>(null);
   const [full, setFull] = useState(false);
+  const [island, setIsland] = useState<'madeira' | 'portoSanto'>('madeira');
   useEffect(() => {
     if (!full) return;
     const key = (e: KeyboardEvent) => e.key === 'Escape' && setFull(false);
@@ -88,6 +91,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
     const syncView = () => container.setAttribute('data-view', `${map.getZoom()}|${map.getCenter().lat.toFixed(5)}|${map.getCenter().lng.toFixed(5)}`);
     syncView();
     map.on('moveend', syncView);
+    map.on('moveend', () => setIsland(map.getCenter().lat > 32.95 ? 'portoSanto' : 'madeira'));
     map.on('click', () => selRef.current(null));
     renderer.current = L.canvas({ padding: 0.4 });
     mapRef.current = map;
@@ -266,6 +270,20 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
             <span className="h-0.5 w-3 rounded-full" style={{ background: o.color }} />
             {o.name}
           </span>
+        ))}
+      </div>
+      <div role="group" aria-label={t('mapIslands')} data-testid="island-switch" className="absolute left-14 top-3 z-500 flex overflow-hidden rounded-xl bg-white text-xs font-semibold shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+        {(['madeira', 'portoSanto'] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            data-testid={`island-${id}`}
+            aria-pressed={island === id}
+            onClick={() => mapRef.current?.flyToBounds(id === 'madeira' ? ISLAND : PORTO_SANTO, { duration: 0.8 })}
+            className={`min-h-10 px-3 ${island === id ? 'bg-sky-600 text-white' : 'text-sky-700 dark:text-sky-300'}`}
+          >
+            {id === 'madeira' ? 'Madeira' : 'Porto Santo'}
+          </button>
         ))}
       </div>
       <button

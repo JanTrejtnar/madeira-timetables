@@ -15,7 +15,7 @@ import { cleanTexts } from './lib-text.mjs';
 import { addViaPlaces, attachViaRoutes } from './lib-via.mjs';
 import { attachRoutes } from './lib-routes.mjs';
 import { addTerminalStops, estimateTerminals } from './lib-terminals.mjs';
-import { enrichStops, enrichedKm, addPlannerDepartures } from './lib-enrich.mjs';
+import { enrichStops, enrichedKm, addPlannerDepartures, pinPatternStops } from './lib-enrich.mjs';
 import { applyOverrides, applyFunchalTerminals, terminalWalks } from './lib-overrides.mjs';
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
 import { buildPois } from './lib-pois.mjs';
@@ -92,6 +92,8 @@ const osmStats = applyOsm(data.lines, osm, areas, path.join(ROOT, 'data', 'shape
 const interpolated = interpolateStops(data.lines, path.join(ROOT, 'data', 'shapes'));
 // timetables without a stop list: the two terminals (data/terminals.json) become the stops, so routes and estimates below apply
 const terminalStops = addTerminalStops(data.lines, ROOT);
+const pinned = pinPatternStops(data.lines, ROOT);
+console.log('directions given the stops of a pinned planner route:', pinned);
 // the Funchal end of each line sits at the terminal of its operator (data/stop-overrides.json funchalTerminals), before the routes are drawn from it
 const stopOverrides = JSON.parse(await readFile(path.join(ROOT, 'data', 'stop-overrides.json'), 'utf8'));
 const funchalMoved = applyFunchalTerminals(data.lines, stopOverrides);

@@ -186,3 +186,32 @@ export function addPlannerDepartures(lines, root) {
   }
   return n;
 }
+
+/**
+ * Lines whose directions the terminal match cannot place (994 Porto Santo: the PDF prints "Centro", "Calheta" and "Aeroporto" with no
+ * destination) get the full stop list of a named planner route: [direction's printed start, route id of data/siga-patterns.json].
+ * Runs before the routes are drawn. Returns the number of directions filled.
+ */
+const PINNED_ROUTES = {
+  994: { CENTRO: 'Calheta0I', CALHETA: 'Calheta0V', AEROPORTO: 'CalhetaAI' },
+};
+export function pinPatternStops(lines, root) {
+  const file = path.join(root, 'data', 'siga-patterns.json');
+  if (!existsSync(file)) return 0;
+  const { stops: table, lines: byLine } = JSON.parse(readFileSync(file, 'utf8'));
+  let n = 0;
+  for (const l of lines) {
+    const pins = PINNED_ROUTES[l.number];
+    if (!pins) continue;
+    for (const d of l.directions) {
+      const p = (byLine[l.number] ?? []).find((x) => x.route === pins[String(d.from).toUpperCase()]);
+      if (!p || d.stops.length) continue;
+      d.stops = p.stops.map((c) => ({ code: c, name: table[c][0].replace(/^Calheta término$/, 'Calheta (Porto Santo)'), lat: table[c][1], lon: table[c][2], locationPrecision: 'exact' }));
+      d.stopOffsets = p.offsets;
+      d.isEstimated = true;
+      d.enrichedFrom = 'siga-planner';
+      n++;
+    }
+  }
+  return n;
+}

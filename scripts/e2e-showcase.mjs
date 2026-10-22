@@ -145,6 +145,17 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   check('desktop: the idle map shows the whole network on a canvas', hasMap);
   const legend = await page.evaluate(() => [...document.querySelectorAll('[data-testid=network-legend] > span')].map((b) => b.innerText.trim()));
   check('the legend names the four operators', legend.join('|') === 'Horários do Funchal|Rodoeste|SAM|CAM / EACL', legend.join('|'));
+  // island switch: Porto Santo flies to the island (its lines are drawn there), Madeira flies back
+  const viewOf = async () => (await page.evaluate(() => document.querySelector('[data-testid=network-map] .leaflet-container').getAttribute('data-view'))).split('|').map(Number);
+  await page.click('[data-testid=island-portoSanto]');
+  await sleep(1800);
+  const ps = await viewOf();
+  check('island switch: Porto Santo centres the map on the island', Math.abs(ps[1] - 33.06) < 0.1 && Math.abs(ps[2] + 16.34) < 0.1 && ps[0] >= 11, ps.join('|'));
+  check('island switch: Porto Santo button is pressed', await page.evaluate(() => document.querySelector('[data-testid=island-portoSanto]').getAttribute('aria-pressed') === 'true'));
+  await page.click('[data-testid=island-madeira]');
+  await sleep(1800);
+  const md = await viewOf();
+  check('island switch: Madeira returns to the main island', Math.abs(md[1] - 32.74) < 0.15 && Math.abs(md[2] + 16.96) < 0.3, md.join('|'));
   // tap Machico (a terminal of many lines): its pixel from the Web Mercator maths at the initial view
   const line701 = data.lines.find((l) => l.number === '701');
   const machico = line701.directions.flatMap((d) => d.stops).find((s) => /^Machico/.test(s.name) && s.lat !== undefined);
