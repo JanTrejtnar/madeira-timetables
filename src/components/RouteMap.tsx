@@ -107,11 +107,11 @@ interface Props {
   onStopClick?: (index: number) => void;
 }
 
-/** Dark casing (7 px) under the coloured line (4 px), so the route stands out on every kind of map. */
-function casedLine(group: L.FeatureGroup, pts: [number, number][], style: { color: string; lineCap: 'round'; lineJoin: 'round' }): void {
-  L.polyline(pts, { ...style, weight: 4, opacity: 1 }).addTo(group).bringToBack();
+/** Dark casing under the coloured line, so the route stands out on every kind of map (a whole line: 4 + 7 px, the ridden stretch: 6 + 9 px). */
+function casedLine(group: L.FeatureGroup, pts: [number, number][], style: { color: string; lineCap: 'round'; lineJoin: 'round' }, weight = 4): void {
+  L.polyline(pts, { ...style, weight, opacity: 1 }).addTo(group).bringToBack();
   // sent to the back after the line: casing, line, then the stop markers on top (they stay clickable)
-  L.polyline(pts, { color: '#0f172a', weight: 7, opacity: 0.85, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(group).bringToBack();
+  L.polyline(pts, { color: '#0f172a', weight: weight + 3, opacity: 0.85, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(group).bringToBack();
 }
 
 export function RouteMap({ layers, focus = null, me = null, onLocate, locating = false, fill = false, onStopClick }: Props) {
@@ -196,9 +196,9 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
             const style = { color: layer.color, lineCap: 'round', lineJoin: 'round' } as const;
             const cut = layer.ride ? rideSplit(full, layer.ride.stops, layer.ride.from, layer.ride.to) : null;
             if (cut) {
-              // the rest of the line is only a hint: faint, thin, and outside the group so the view fits the ride
-              for (const rest of [cut.before, cut.after]) if (rest.length > 1) L.polyline(rest, { ...style, weight: 3, opacity: 0.25, interactive: false }).addTo(map).bringToBack();
-              casedLine(group, cut.ride, style);
+              // the rest of the line is only a hint, but still readable on the dark base: thin, 60 % opaque, and outside the group so the view fits the ride
+              for (const rest of [cut.before, cut.after]) if (rest.length > 1) L.polyline(rest, { ...style, weight: 3, opacity: 0.6, interactive: false }).addTo(map).bringToBack();
+              casedLine(group, cut.ride, style, 6);
             } else casedLine(group, full, style);
             fit();
           })

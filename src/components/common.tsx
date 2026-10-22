@@ -19,12 +19,18 @@ export interface RideEnds {
   end?: { lat: number; lon: number } | true;
 }
 
+/** The departure a traveller searched for (time at the boarding stop, service date): the line detail selects that trip instead of the next one by the clock. */
+export interface RideWhen {
+  dep: string;
+  date?: string;
+}
+
 export interface Shared {
   ctx: Ctx;
   lines: Line[];
   net: Network;
   /** `ride`: stop indices (of the direction's stop list) where the traveller gets on and off; the line card shows that stretch */
-  openLine: (id: number, dirIndex?: number, ride?: { from: number; to: number }, ends?: RideEnds) => void;
+  openLine: (id: number, dirIndex?: number, ride?: { from: number; to: number }, ends?: RideEnds, when?: RideWhen) => void;
   /** key of the connection opened in the planner's detail page (null = the list); kept here so it survives a trip to the line detail and back */
   openConn: string | null;
   setOpenConn: (key: string | null) => void;

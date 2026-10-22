@@ -6,7 +6,7 @@ import { fmtMinutes, toMinutes } from '../lib/time';
 import { onRequestPlaces, withVia, detoursFor } from '../lib/via';
 import { serviceDay } from '../lib/holidays';
 import type { DayKey, Direction, Line, MapFocus, MapLayer, MapPin } from '../types';
-import { Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, pdfHref, PrecisionWarning, SectionTitle, type RideEnds, type Shared } from './common';
+import { Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, pdfHref, PrecisionWarning, SectionTitle, type RideEnds, type RideWhen, type Shared } from './common';
 import { Icon } from './Icons';
 import { RouteMap } from './RouteMap';
 import { useFootRoutes } from '../lib/foot';
@@ -48,7 +48,7 @@ function ViaTag() {
   return <span className="ml-1 rounded-full bg-sky-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-sky-800 dark:bg-sky-400/15 dark:text-sky-200">{t('viaStop')}</span>;
 }
 
-export function LineView({ line, initialDir, initialRide, initialEnds, shared, onBack }: { line: Line; initialDir?: number; initialRide?: { from: number; to: number }; initialEnds?: RideEnds; shared: Shared; onBack: () => void }) {
+export function LineView({ line, initialDir, initialRide, initialWhen, initialEnds, shared, onBack }: { line: Line; initialDir?: number; initialRide?: { from: number; to: number }; initialWhen?: RideWhen; initialEnds?: RideEnds; shared: Shared; onBack: () => void }) {
   const { t, lang } = useT();
   const tn = (s: string) => translateNote(s, lang);
   const [dirIndex, setDirIndex] = useState(initialDir ?? 0);
@@ -74,7 +74,13 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
     document.getElementById('scroller')?.scrollTo(0, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [line.id, initialDir]);
+  /** set by the effect that selects a searched trip: the next change of day / direction is its own and must not clear the selection */
+  const holdSel = useRef({ day: false, dir: false });
   useEffect(() => {
+    if (holdSel.current.dir) {
+      holdSel.current.dir = false;
+      return;
+    }
     setStopIdx(bestStop(line.directions[dirIndex]));
     setLinksIdx(null);
     setSelKey(null);
@@ -89,8 +95,32 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
     if (alt) setDay(alt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dirIndex, line.id, day]);
-  useEffect(() => setSelKey(null), [day]);
+  useEffect(() => {
+    if (holdSel.current.day) holdSel.current.day = false;
+    else setSelKey(null);
+  }, [day]);
   useEffect(() => setLinksIdx(null), [day]);
+  // coming from a planned connection: the searched trip (boarding time, service date) is selected, never "the next one by the clock"
+  useEffect(() => {
+    if (!initialWhen || !initialRide) return;
+    const d = line.directions[initialDir ?? 0];
+    if (!d?.trips?.length) return;
+    const at = toMinutes(initialWhen.dep) % 1440;
+    const same = d.trips.map((x, i) => ({ x, i })).filter(({ x }) => x.times[initialRide.from] && toMinutes(x.times[initialRide.from] as string) % 1440 === at);
+    if (!same.length) return;
+    const date = initialWhen.date?.split('-').map(Number);
+    const type = date ? serviceDay({ y: date[0], m: date[1], d: date[2] }, shared.ctx.municipalities).type : null;
+    const wanted = type === 'weekday' ? keysFor('weekday', shared.ctx.school) : type ? [type] : [];
+    const hit = same.find(({ x }) => x.days.some((k) => wanted.includes(k))) ?? same[0];
+    const dayKey = hit.x.days.find((k) => wanted.includes(k)) ?? hit.x.days[0];
+    if (dayKey !== day) holdSel.current.day = true;
+    if ((initialDir ?? 0) !== dirIndex) holdSel.current.dir = true;
+    setDirIndex(initialDir ?? 0);
+    setDay(dayKey);
+    setStopIdx(initialRide.from);
+    setSelKey(`t${hit.i}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [line.id, initialDir, initialWhen?.dep, initialWhen?.date]);
 
   const dir = line.directions[dirIndex] ?? line.directions[0];
   const hasTrips = !!dir?.trips?.length;

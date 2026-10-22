@@ -12,7 +12,7 @@ import { connectionFare, formatEuro, type FareCard } from '../lib/fare';
 import { WALK_M_PER_MIN, walkTo } from '../lib/walk';
 import type { Picked } from '../lib/plannerForm';
 import type { Itinerary, Leg } from '../lib/router';
-import { badgeText, LEG_COLORS, LineBadge, MapPin, PrecisionWarning, dirLabel, lineRailCls, pdfHref, type RideEnds, type Shared } from './common';
+import { badgeText, LEG_COLORS, LineBadge, MapPin, PrecisionWarning, dirLabel, lineRailCls, pdfHref, type RideEnds, type RideWhen, type Shared } from './common';
 import { Icon } from './Icons';
 
 type TFn = ReturnType<typeof useT>['t'];
@@ -22,6 +22,13 @@ export function srcRide(l: Leg): { from: number; to: number } {
   const stops = tripStops(l.trip);
   const src = (pos: number) => stops.slice(0, pos).filter((s) => !s.via).length;
   return { from: src(l.fromPos), to: src(l.toPos) };
+}
+
+/** boarding time and service date of a leg, passed to the line detail so that it shows this very trip */
+function rideWhen(l: Leg, base: Ymd): RideWhen {
+  const d = dateOf(base, l.depart);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return { dep: fmtMinutes(((l.depart % 1440) + 1440) % 1440), date: `${d.y}-${pad(d.m)}-${pad(d.d)}` };
 }
 
 function Time({ min, est, t, className = '' }: { min: number; est: boolean; t: TFn; className?: string }) {
@@ -181,7 +188,7 @@ function StopRow({ stop, lang }: { stop: Parameters<typeof MapPin>[0]['stop']; l
   );
 }
 
-function Rides({ it, shared, fromPt, toPt, walkIn, walkOut }: { it: Itinerary; shared: Shared; fromPt: Picked['pt']; toPt: Picked['pt']; walkIn: ReturnType<typeof endWalks>['walkIn']; walkOut: ReturnType<typeof endWalks>['walkOut'] }) {
+function Rides({ it, shared, base, fromPt, toPt, walkIn, walkOut }: { it: Itinerary; shared: Shared; base: Ymd; fromPt: Picked['pt']; toPt: Picked['pt']; walkIn: ReturnType<typeof endWalks>['walkIn']; walkOut: ReturnType<typeof endWalks>['walkOut'] }) {
   const { t, lang } = useT();
   const last = it.legs.length - 1;
   const [open, setOpen] = useState<ReadonlySet<number>>(new Set());
@@ -215,7 +222,7 @@ function Rides({ it, shared, fromPt, toPt, walkIn, walkOut }: { it: Itinerary; s
                   type="button"
                   data-testid="open-leg"
                   className="flex w-full items-center gap-2.5 rounded-xl bg-slate-50 px-2.5 py-2 text-left transition-colors hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800"
-                  onClick={() => shared.openLine(line.id, l.trip.dirIndex, srcRide(l), rideEnds(it, i, fromPt, toPt))}
+                  onClick={() => shared.openLine(line.id, l.trip.dirIndex, srcRide(l), rideEnds(it, i, fromPt, toPt), rideWhen(l, base))}
                 >
                   <LineBadge line={line} />
                   <span className="min-w-0 flex-1">
@@ -320,7 +327,7 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
           </span>
         </div>
         <div className="px-3 py-3">
-          <Rides it={it} shared={shared} fromPt={fromPt} toPt={toPt} walkIn={walkIn} walkOut={walkOut} />
+          <Rides it={it} shared={shared} base={base} fromPt={fromPt} toPt={toPt} walkIn={walkIn} walkOut={walkOut} />
         </div>
       </div>
       {noPos.map((name) => (

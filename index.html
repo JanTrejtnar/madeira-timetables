@@ -10,6 +10,15 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Madeira Buses" />
     <title>Madeira Buses</title>
+    <script>
+      // colour scheme before the first paint (the app keeps it in sync afterwards)
+      try {
+        var p = localStorage.getItem('theme');
+        var d = p === 'dark' || (p !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', d);
+        document.documentElement.style.colorScheme = d ? 'dark' : 'light';
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

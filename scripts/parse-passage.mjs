@@ -67,8 +67,18 @@ export async function parsePassage(file, warn) {
   return merged.directions.length ? merged : null;
 }
 
-function parsePassagePage(items, warn) {
+/** "09:50 a)": a time and its footnote mark painted as one piece become two items (the time and the mark), as for the other cells */
+function splitMarkedTimes(items) {
+  return items.flatMap((i) => {
+    const m = i.str.trim().match(/^(\d{1,2}[h.:]\d{2})\s+([a-z]\))$/);
+    if (!m) return [i];
+    const k = m[1].length / i.str.trim().length;
+    return [{ ...i, str: m[1], w: i.w * k }, { ...i, str: m[2], x: i.x + i.w * k, w: i.w * (1 - k) }];
+  });
+}
 
+function parsePassagePage(allItems, warn) {
+  const items = splitMarkedTimes(allItems);
   const obsY = Math.min(...items.filter((i) => /OBSERVA/i.test(i.str)).map((i) => i.y), Infinity);
   const lps = items.filter((i) => i.str.trim() === 'Locais Passagem').sort((a, b) => a.x - b.x);
   const notes = {};

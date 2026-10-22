@@ -1,9 +1,10 @@
 import { useT, type Key } from '../i18n';
 import { FARE_CARDS, type FareCard } from '../lib/fare';
+import { THEMES, type ThemePref } from '../lib/theme';
 import { Card, SectionTitle } from './common';
 
 /** Rarely needed switches. The data and build stamp sit at the very end of the page. */
-export function SettingsTab({ school, autoSchool, onSchool, onSchoolReset, fareCard, onFareCard, generatedAt }: { school: boolean; autoSchool: boolean; onSchool: (v: boolean) => void; onSchoolReset: () => void; fareCard: FareCard; onFareCard: (c: FareCard) => void; generatedAt: string | null }) {
+export function SettingsTab({ school, autoSchool, onSchool, onSchoolReset, fareCard, onFareCard, theme, onTheme, generatedAt }: { school: boolean; autoSchool: boolean; onSchool: (v: boolean) => void; onSchoolReset: () => void; fareCard: FareCard; onFareCard: (c: FareCard) => void; theme: ThemePref; onTheme: (v: ThemePref) => void; generatedAt: string | null }) {
   const { t } = useT();
   return (
     <div className="flex flex-col gap-4" data-testid="settings">
@@ -24,6 +25,20 @@ export function SettingsTab({ school, autoSchool, onSchool, onSchoolReset, fareC
               {t('schoolReset')}
             </button>
           )}
+        </Card>
+      </section>
+      <section>
+        <SectionTitle>{t('settingsTheme')}</SectionTitle>
+        <Card className="flex flex-col gap-2">
+          <div role="radiogroup" aria-label={t('settingsTheme')} className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800" data-testid="theme-switch">
+            {THEMES.map((v) => (
+              <label key={v} className={`flex min-h-10 cursor-pointer items-center justify-center rounded-lg text-sm font-medium transition-colors has-focus-visible:ring-2 has-focus-visible:ring-sky-500 ${theme === v ? 'bg-white text-sky-700 shadow-sm dark:bg-slate-600 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                <input type="radio" name="theme" className="sr-only" checked={theme === v} onChange={() => onTheme(v)} value={v} />
+                {t(`theme_${v}` as Key)}
+              </label>
+            ))}
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('themeHint')}</p>
         </Card>
       </section>
       <section>

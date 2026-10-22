@@ -7,6 +7,7 @@ import { isFareCard, type FareCard } from './lib/fare';
 import { isSchoolPeriod } from './lib/holidays';
 import { nowInMadeira } from './lib/time';
 import { DeparturesTab } from './components/DeparturesTab';
+import type { RideWhen } from './components/common';
 import { LineView } from './components/LineView';
 import { PlannerTab } from './components/PlannerTab';
 import { buildNetwork } from './lib/network';
@@ -17,6 +18,7 @@ import { RouteMap } from './components/RouteMap';
 import { NetworkMap } from './components/NetworkMap';
 import { addRecent, loadFavorites, loadRecent, saveFavorites, saveRecent, toggleFavorite as toggleFav, type SavedTrip } from './lib/trips-store';
 import { useMedia } from './lib/hooks';
+import { applyTheme, isTheme, type ThemePref } from './lib/theme';
 import type { UserPos } from './lib/nearby';
 import { formFromQuery, formToQuery, settled, type PlannerForm } from './lib/plannerForm';
 import type { MapFocus, MapLayer } from './types';
@@ -48,9 +50,15 @@ function initialLang(): Lang {
   return nav === 'cs' || nav === 'pt' ? nav : 'en';
 }
 
-function parseHash(): { id: number; dir?: number; ride?: { from: number; to: number } } | null {
-  const m = location.hash.match(/^#\/line\/(\d+)(?:\/(\d+))?(?:\/(\d+)-(\d+))?/);
-  return m ? { id: +m[1], dir: m[2] !== undefined ? +m[2] : undefined, ...(m[3] !== undefined && +m[3] < +m[4] ? { ride: { from: +m[3], to: +m[4] } } : {}) } : null;
+function parseHash(): { id: number; dir?: number; ride?: { from: number; to: number }; when?: RideWhen } | null {
+  const m = location.hash.match(/^#\/line\/(\d+)(?:\/(\d+))?(?:\/(\d+)-(\d+))?(?:\?(.*))?/);
+  if (!m) return null;
+  // ?dep=07:35&date=2026-10-23: the departure the traveller searched for, selected in the line detail instead of "the next one"
+  const q = new URLSearchParams(m[5] ?? '');
+  const dep = q.get('dep');
+  const date = q.get('date');
+  const when = dep && /^\d{1,2}:\d{2}$/.test(dep) && m[3] !== undefined ? { dep, ...(date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? { date } : {}) } : undefined;
+  return { id: +m[1], dir: m[2] !== undefined ? +m[2] : undefined, ...(m[3] !== undefined && +m[3] < +m[4] ? { ride: { from: +m[3], to: +m[4] } } : {}), ...(when ? { when } : {}) };
 }
 
 export function App() {
@@ -78,6 +86,22 @@ export function App() {
     const v = store.get('fareCard');
     return isFareCard(v) ? v : 'none';
   });
+  const [theme, setThemeState] = useState<ThemePref>(() => {
+    const v = store.get('theme');
+    return isTheme(v) ? v : 'system';
+  });
+  const setTheme = useCallback((v: ThemePref) => {
+    setThemeState(v);
+    store.set('theme', v);
+  }, []);
+  useEffect(() => {
+    applyTheme(theme);
+    if (theme !== 'system') return;
+    const mq = matchMedia('(prefers-color-scheme: dark)');
+    const on = () => applyTheme('system');
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, [theme]);
   const setFareCard = useCallback((c: FareCard) => {
     setFareCardState(c);
     store.set('fareCard', c);
@@ -179,9 +203,9 @@ export function App() {
             ctx,
             lines: data.lines,
             net,
-            openLine: (id, dir, ride, ends) => {
+            openLine: (id, dir, ride, ends, when) => {
               setRideEnds(ends);
-              location.hash = `#/line/${id}${dir !== undefined ? `/${dir}` : ''}${dir !== undefined && ride ? `/${ride.from}-${ride.to}` : ''}`;
+              location.hash = `#/line/${id}${dir !== undefined ? `/${dir}` : ''}${dir !== undefined && ride ? `/${ride.from}-${ride.to}` : ''}${dir !== undefined && ride && when ? `?dep=${when.dep}${when.date ? `&date=${when.date}` : ''}` : ''}`;
             },
             openConn,
             setOpenConn,
@@ -333,7 +357,7 @@ export function App() {
             {data && index && shared && (
               <>
                 {route && line ? (
-                  <LineView line={line} initialDir={route.dir} initialRide={route.ride} initialEnds={route.ride ? rideEnds : undefined} shared={shared} onBack={() => (history.length > 1 ? history.back() : (location.hash = ''))} />
+                  <LineView line={line} initialDir={route.dir} initialRide={route.ride} initialWhen={route.when} initialEnds={route.ride ? rideEnds : undefined} shared={shared} onBack={() => (history.length > 1 ? history.back() : (location.hash = ''))} />
                 ) : (
                   <>
                     {tab === 'map' && !desktop && (
@@ -360,6 +384,8 @@ export function App() {
                         }}
                         fareCard={fareCard}
                         onFareCard={setFareCard}
+                        theme={theme}
+                        onTheme={setTheme}
                         generatedAt={data.generatedAt}
                       />
                     )}

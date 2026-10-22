@@ -308,6 +308,71 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   await page.close();
 }
 
+// ---- line 6 / 139: a planned trip is kept in the line detail, theme switch
+{
+  // Funchal -> Falca on Friday 23 Oct 2026 from 05:00: the 07:35 bus of line 139; its line detail opens on 07:35 (not on the device's next departure)
+  const { page, errors } = await open(PHONE, `${base}?from=Funchal&to=Falca&tk=falca&date=2026-10-23&time=05:00`);
+  await sleep(1500);
+  if (!(await page.$('[data-testid=connection]'))) { await page.click('[data-testid=search-button]'); await sleep(1500); }
+  const picked = await page.evaluate(() => {
+    const c = [...document.querySelectorAll('[data-testid=connection]')].find((x) => /07:35/.test(x.innerText) && /139/.test(x.innerText));
+    c?.click();
+    return !!c;
+  });
+  await sleep(600);
+  check('Funchal -> Falca (Fri): the 07:35 connection with line 139 is offered', picked);
+  const detail = await page.evaluate(() => document.querySelector('[data-testid=connection-detail]')?.innerText ?? '');
+  check('the detail shows the arrival in São Vicente at 09:50 (not 10:15)', /09:50/.test(detail) && /S.o Vicente/.test(detail), detail.replace(/\s+/g, ' ').slice(0, 300));
+  check('the detail shows the transfer to line 6', /\b6\b/.test(detail) && /11:20/.test(detail));
+  await page.evaluate(() => document.querySelector('[data-testid=open-leg]')?.click());
+  await sleep(900);
+  const hash = await page.evaluate(() => location.hash);
+  check('the line detail URL carries the searched departure and date', /\?dep=07:35&date=2026-10-23$/.test(hash), hash);
+  const first = await page.evaluate(() => (document.querySelector('ol > li')?.innerText ?? '').match(/\d\d:\d\d/)?.[0]);
+  check('the line detail of 139 opens on the 07:35 trip', first === '07:35', first);
+  // the same through a pasted URL
+  await page.goto(`${base}${hash}`, { waitUntil: 'networkidle0' });
+  await sleep(800);
+  const again = await page.evaluate(() => (document.querySelector('ol > li')?.innerText ?? '').match(/\d\d:\d\d/)?.[0]);
+  check('reloading that line URL keeps the 07:35 trip', again === '07:35', again);
+  check('no page errors (planned trip)', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+{
+  // theme: follows the system, the choice is kept in the browser
+  const { page, errors } = await open(PHONE);
+  const dark = () => page.evaluate(() => document.documentElement.classList.contains('dark'));
+  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
+  await page.reload({ waitUntil: 'networkidle0' });
+  check('system light: the page is light', !(await dark()));
+  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
+  await sleep(300);
+  check('system dark: the page follows without a reload', await dark());
+  await page.click('[data-testid=open-settings]');
+  await sleep(400);
+  const pick = (v) => page.evaluate((x) => { document.querySelector(`[data-testid=theme-switch] input[value=${x}]`)?.click(); }, v);
+  await pick('light');
+  await sleep(300);
+  check('settings: Světlý overrides a dark system', !(await dark()));
+  check('the choice is stored', (await page.evaluate(() => localStorage.getItem('theme'))) === 'light');
+  await page.reload({ waitUntil: 'networkidle0' });
+  check('the choice survives a reload (no flash of the dark scheme)', !(await dark()));
+  await page.click('[data-testid=open-settings]');
+  await sleep(300);
+  await pick('dark');
+  await sleep(300);
+  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
+  await sleep(300);
+  check('settings: Tmavý overrides a light system', await dark());
+  const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  check('dark body background', bg === 'rgb(2, 6, 23)', bg);
+  await pick('system');
+  await sleep(300);
+  check('settings: Systém follows the system again (light)', !(await dark()));
+  check('no page errors (theme)', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+
 await browser.close();
 console.log(`${total - failed}/${total} passed`);
 process.exit(failed ? 1 : 0);

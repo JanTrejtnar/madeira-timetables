@@ -496,15 +496,24 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
       expect(sv[0].depart).toBeGreaterThan(sv[0].arrive);
       for (let i = 1; i < mid.length; i++) expect(mid[i].stop.name === mid[i - 1].stop.name).toBe(false);
     });
+    it('line 139: a time printed with a footnote mark ("09:50 a)") is parsed (arrival row of São Vicente, then the 10:15 departure row)', () => {
+      const t = friday.find((x) => x.line.number === '139' && x.dirIndex === 2 && x.times[0] === mm(7, 35))!;
+      const i = tripStops(t).findIndex((s) => s.name === 'São Vicente');
+      expect([t.times[i], t.times[i + 1]]).toEqual([mm(9, 50), mm(10, 15)]);
+      const wait = midStops(t, 0, t.times.length - 1).find((m) => m.stop.name === 'São Vicente')!;
+      expect([wait.arrive, wait.depart]).toEqual([mm(9, 50), mm(10, 15)]);
+    });
     it('Falca has a position (data/stop-overrides.json)', () => {
       const falca = net3.nodes.find((n) => n.key === 'falca')!;
       expect(falca.lat).toBeCloseTo(32.79681, 5);
       expect(falca.lon).toBeCloseTo(-16.96904, 5);
     });
-    it('Funchal -> Falca on a Friday morning: line 139 at 07:35 to São Vicente (10:15), then line 6 (10:50 -> 11:20); the 07:35 trip of line 6 does not call at Falca', () => {
+    it('Funchal -> Falca on a Friday morning: line 139 at 07:35 arrives in São Vicente at 09:50 (not 10:15 when the bus leaves), then line 6 (10:50 -> 11:20); the 07:35 trip of line 6 does not call at Falca', () => {
       const viaSv = found.transfers.find((x) => x.legs.length === 2 && x.legs[0].trip.line.number === '139' && x.legs[0].depart === mm(7, 35));
       expect(viaSv).toBeTruthy();
-      expect(viaSv!.legs[0].arrive).toBe(mm(10, 15));
+      // the printed "09:50 a)" (a time with a footnote mark) is the arrival; the transfer counts from it, not from the bus leaving at 10:15
+      expect(viaSv!.legs[0].arrive).toBe(mm(9, 50));
+      expect(viaSv!.legs[0].trip.times[viaSv!.legs[0].toPos + 1]).toBe(mm(10, 15));
       expect(tripStops(viaSv!.legs[0].trip)[viaSv!.legs[0].toPos].name).toMatch(/São Vicente/);
       expect(viaSv!.legs[1].trip.line.number).toBe('6');
       expect(viaSv!.legs[1].depart).toBe(mm(10, 50));

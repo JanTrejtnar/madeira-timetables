@@ -105,10 +105,13 @@ const leg = (trip: Trip, i: number, j: number): Leg => ({
 /** Minutes of walking from the starting point to a boarding node (a picked map point); nodes not listed are 0 minutes away. */
 export type WalkIn = ReadonlyMap<number, number>;
 
+/** The same stop in the next row(s) of a trip is a waiting bus (arrival row, then departure row): the bus leaves with the last of them. */
+const departsLater = (trip: Trip, i: number): boolean => i + 1 < trip.nodes.length && trip.nodes[i + 1] === trip.nodes[i] && trip.times[i + 1] !== null;
+
 function earliestBoard(trip: Trip, from: Set<number>, notBefore: number, walkIn?: WalkIn): number {
   for (let i = 0; i < trip.nodes.length - 1; i++) {
     const t = trip.times[i];
-    if (t !== null && from.has(trip.nodes[i]) && t >= notBefore + (walkIn?.get(trip.nodes[i]) ?? 0)) return i;
+    if (t !== null && !departsLater(trip, i) && from.has(trip.nodes[i]) && t >= notBefore + (walkIn?.get(trip.nodes[i]) ?? 0)) return i;
   }
   return -1;
 }
@@ -155,7 +158,7 @@ export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to:
   const second = new Map<number, { trip: Trip; m: number; j: number }[]>();
   for (const trip of trips) {
     for (let m = 0; m < trip.nodes.length - 1; m++) {
-      if (trip.times[m] === null) continue;
+      if (trip.times[m] === null || departsLater(trip, m)) continue;
       const j = firstAfter(trip, m, to, walkOut);
       if (j < 0 || (closer && !closer(trip.nodes[m], trip.nodes[j]))) continue;
       const list = second.get(trip.nodes[m]) ?? [];
@@ -177,6 +180,11 @@ export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to:
     for (let k = i + 1; k < t1.nodes.length; k++) {
       const arriveK = t1.times[k];
       if (arriveK === null) continue;
+      // a waiting bus (the same stop in two rows): the traveller gets off with the arrival row, the transfer counts from that time;
+      // only the wait cap below counts from the bus leaving, since staying on board until then is just as good
+      if (k > i + 1 && t1.nodes[k - 1] === t1.nodes[k] && t1.times[k - 1] !== null) continue;
+      let busLeaves = arriveK;
+      for (let q = k + 1; q < t1.nodes.length && t1.nodes[q] === t1.nodes[k]; q++) busLeaves = t1.times[q] ?? busLeaves;
       if (shortHop(net, t1.nodes[i], t1.nodes[k], k - i, arriveK - l1depart)) continue;
       if (closer && !closer(t1.nodes[i], t1.nodes[k], HUB_DETOUR_M)) continue;
       for (const { node, walk } of net.near.get(t1.nodes[k]) ?? []) {
@@ -187,7 +195,7 @@ export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to:
           const tm = c.trip.times[c.m] as number;
           const buffer = t1.estimated || c.trip.estimated ? MIN_TRANSFER_ESTIMATED : MIN_TRANSFER;
           const ready = arriveK + buffer + walk;
-          if (tm < ready || tm - ready > maxWait) continue;
+          if (tm < ready || tm - Math.max(ready, busLeaves + buffer + walk) > maxWait) continue;
           const arrive = c.trip.times[c.j] as number;
           const finish = arrive + (walkOut?.get(c.trip.nodes[c.j]) ?? 0);
           const score = finish + (net.viaOnly.has(node) ? VIA_PENALTY : 0) - (net.nodes[node].transferHub ? HUB_BONUS : 0);

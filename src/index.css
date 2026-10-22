@@ -1,7 +1,13 @@
 @import 'tailwindcss';
 
+/* dark mode follows the `dark` class on <html> (set from the settings choice, by default from the system), not the media query alone */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+}
+:root.dark {
+  color-scheme: dark;
 }
 
 html,
@@ -10,12 +16,10 @@ body {
   color: #0f172a;
 }
 
-@media (prefers-color-scheme: dark) {
-  html,
-  body {
-    background: #020617;
-    color: #e2e8f0;
-  }
+html.dark,
+html.dark body {
+  background: #020617;
+  color: #e2e8f0;
 }
 
 body {
@@ -69,10 +73,8 @@ body {
   background: #e0f2fe;
 }
 
-@media (prefers-color-scheme: dark) {
-  .leaflet-container {
-    background: #1e293b;
-  }
+.dark .leaflet-container {
+  background: #1e293b;
 }
 
 .walk-pin {

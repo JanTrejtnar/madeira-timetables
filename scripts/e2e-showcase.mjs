@@ -211,7 +211,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
     const rows = [...document.querySelectorAll('li[data-ride]')];
     return { n: rows.length, off: rows.filter((r) => r.dataset.ride === 'off').length, ends: rows.filter((r) => r.dataset.ride === 'end').length, faded: rows.filter((r) => r.dataset.ride === 'off').every((r) => r.className.includes('opacity-40')), hash: location.hash };
   });
-  check('the line card opens in the ridden direction with boarding and getting-off stops marked and the rest dimmed', ride.n > 3 && ride.ends === 2 && ride.off > 0 && ride.faded && /^#\/line\/\d+\/\d+\/\d+-\d+$/.test(ride.hash), JSON.stringify(ride));
+  check('the line card opens in the ridden direction with boarding and getting-off stops marked and the rest dimmed', ride.n > 3 && ride.ends === 2 && ride.off > 0 && ride.faded && /^#\/line\/\d+\/\d+\/\d+-\d+(\?dep=\d\d:\d\d&date=\d{4}-\d\d-\d\d)?$/.test(ride.hash), JSON.stringify(ride));
   check('no page errors', errors.length === 0, errors.join('; '));
   await page.close();
 }
