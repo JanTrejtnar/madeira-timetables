@@ -15,7 +15,7 @@ import { cleanTexts } from './lib-text.mjs';
 import { addViaPlaces, attachViaRoutes } from './lib-via.mjs';
 import { attachRoutes } from './lib-routes.mjs';
 import { addTerminalStops, estimateTerminals } from './lib-terminals.mjs';
-import { enrichStops, enrichedKm } from './lib-enrich.mjs';
+import { enrichStops, enrichedKm, addPlannerDepartures } from './lib-enrich.mjs';
 import { applyOverrides, applyFunchalTerminals, terminalWalks } from './lib-overrides.mjs';
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
 import { buildPois } from './lib-pois.mjs';
@@ -97,6 +97,8 @@ const terminalTimes = estimateTerminals(data.lines, path.join(ROOT, 'data', 'sha
 const enrichReport = [];
 const enriched = enrichStops(data.lines, ROOT, enrichReport);
 enrichedKm(data.lines, path.join(ROOT, 'data', 'shapes'));
+const plannerTimes = addPlannerDepartures(data.lines, ROOT);
+console.log('directions without printed departures given the planner trips:', plannerTimes);
 console.log('terminal-only directions given the planner stops:', enriched, 'of', enrichReport.length);
 if (process.env.ENRICH_REPORT) for (const r of enrichReport) console.log(`  ${r.ok ? 'OK  ' : 'MISS'} ${r.line} ${r.from} > ${r.to}: ${r.why}`);
 console.log('terminal-only directions given stops / routed and estimated:', terminalStops.done, '/', terminalTimes, '- terminals unknown for:', terminalStops.skipped.length);

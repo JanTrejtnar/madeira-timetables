@@ -1,8 +1,9 @@
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useT, type Key } from '../i18n';
 import { localStopName } from '../lib/text';
 import { detoursFor } from '../lib/via';
-import { serviceDay } from '../lib/holidays';
+import { addDays, serviceDay } from '../lib/holidays';
+import { fmtMinutes } from '../lib/time';
 import { plainPlace } from '../lib/text';
 import { CITY_PREFIX, PARISH_PREFIX, FAR_PLACE_M, NEAR_PLACE_M, hubsNear, nearbyStopNodes, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
 import { norm } from '../lib/search';
@@ -13,7 +14,7 @@ import { isoToYmd, ymdToIso, type Picked, type PlannerForm } from '../lib/planne
 import { plan, type Itinerary } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
 import { DepartPicker } from './Pickers';
-import { ConnectionCard, ConnectionDetail, shortDate } from './Connection';
+import { ConnectionCard, ConnectionDetail, endWalks, shortDate } from './Connection';
 import { walkTo } from '../lib/walk';
 import type { MapLayer, MapPin as PickedPin } from '../types';
 import { OPERATORS, operatorOf, type OperatorId } from '../lib/operators';
@@ -265,6 +266,21 @@ const NEAR_STOP_MIN = 3;
 /** straight-line reach (about 12 minutes on foot over winding roads) within which a transfer hub counts as a start of the journey */
 const HUB_WALK_M = 650;
 
+/** "← Earlier connections" / "Later connections →" above and below the list; greyed out with a note once nothing more was found. */
+function StepButton({ onClick, spent, label, spentLabel, testid }: { onClick: () => void; spent: boolean; label: string; spentLabel: string; testid: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={spent}
+      data-testid={testid}
+      className="h-11 w-full rounded-xl border border-slate-200 bg-white text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-50 disabled:text-slate-400 disabled:hover:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-slate-800 dark:disabled:text-slate-500"
+    >
+      {spent ? spentLabel : label}
+    </button>
+  );
+}
+
 export function PlannerTab({ shared }: { shared: Shared }) {
   const { t, lang } = useT();
   const { planner, setPlanner, applied, commit } = shared;
@@ -332,7 +348,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const [h, m] = (time ?? '').split(':').map(Number);
   const departAt = time === null ? frozenNow : (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
 
-  const result = useMemo(() => {
+  // the search for a departure time (minutes from midnight of the chosen day, may pass 24:00): the results, and the "earlier / later" probes
+  const run = useCallback((at: number) => {
     if (!searched) return null;
     // a picked place (beach, hotel, viewpoint ...) stands for the stops within walking distance of it; a stop or area for its own nodes
     const nodesOf = (p: Picked) => {
@@ -381,14 +398,14 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         if (w) walkOut.set(id, w.min);
       }
     }
-    let found = plan(shared.net, only, A, B, departAt, walkIn, walkOut);
+    let found = plan(shared.net, only, A, B, at, walkIn, walkOut);
     // "Funchal" as a whole town: leave from its terminals (Rodoeste, SAM, CAM, the cable car ...); a wayside stop is offered only when nothing leaves from a terminal
     if (!dFrom.pt && dFrom.key?.startsWith(CITY_PREFIX)) {
       // a terminal: marked as one, a transfer hub, or the stop where a line starts (the Areeiro bus leaves from its own stop at the cable car)
       const starts = new Set(only.map((tr) => tr.nodes[0]));
       const terminals = new Set([...A].filter((id) => shared.net.nodes[id].terminal || shared.net.nodes[id].transferHub || starts.has(id)));
       if (terminals.size && terminals.size < A.size) {
-        const fromTerminals = plan(shared.net, only, terminals, B, departAt, walkIn, walkOut);
+        const fromTerminals = plan(shared.net, only, terminals, B, at, walkIn, walkOut);
         if (fromTerminals.direct.length || fromTerminals.transfers.length) found = fromTerminals;
       }
     }
@@ -400,7 +417,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const missing = na.place && A.size === 0 ? dFrom.text : nb.place && B.size === 0 ? dTo.text : null;
     const far = na.widened ? dFrom.text : nb.widened ? dTo.text : null;
     return { A: A.size, B: B.size, missing, far, ext: { from: na.at && na.base ? { pt: na.at, base: na.base } : undefined, to: nb.at && nb.base ? { pt: nb.at, base: nb.base } : undefined }, plan: directOnly ? { ...found, transfers: [] } : found };
-  }, [shared.net, trips, dFrom, dTo, departAt, ops, directOnly, type, searched]);
+  }, [shared.net, trips, dFrom, dTo, ops, directOnly, type, searched]);
+  const result = useMemo(() => run(departAt), [run, departAt]);
 
   // the point to walk from / to for a connection: a picked place or map point, or the picked stop when the bus boards / alights at another stop near it
   const fromPtOf = (it?: Itinerary) => dFrom.pt ?? (it && result?.ext.from && !result.ext.from.base.has(it.legs[0].trip.nodes[it.legs[0].fromPos]) ? result.ext.from.pt : undefined);
@@ -429,6 +447,47 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   };
   const listScroll = useRef(0);
   const scroller = () => document.getElementById('scroller');
+
+  // "earlier / later connections": the departure time of the search moves to just before the first / after the last connection shown;
+  // it goes into the URL (time, and date when it passes midnight), so a reload or a shared link keeps the window
+  const [spentAt, setSpentAt] = useState<{ sig: string; early?: true; late?: true }>({ sig: '' });
+  const spent = spentAt.sig === searchSig ? spentAt : { sig: searchSig };
+  const leadWalk = (it: Itinerary) => endWalks(it, fromPtOf(it), undefined).walkIn?.min ?? 0;
+  const moveTo = (abs: number) => {
+    const iso = ymdToIso(addDays(date, Math.floor(abs / 1440)));
+    patch({ time: fmtMinutes(abs), date: iso === todayIso ? null : iso });
+    window.scrollTo(0, 0);
+    scroller()?.scrollTo(0, 0);
+  };
+  const later = () => {
+    const it = all[all.length - 1]?.it;
+    if (!it) return;
+    const at = Math.max(0, it.depart + 1 - leadWalk(it));
+    const r = run(at);
+    if (r && [...r.plan.direct, ...r.plan.transfers].some((x) => x.depart > it.depart)) moveTo(at);
+    else setSpentAt({ ...spent, sig: searchSig, late: true });
+  };
+  const earlier = () => {
+    const it = all[0]?.it;
+    if (!it) return;
+    // widen the look-back until something earlier turns up
+    for (const back of [90, 240, 720, 1440]) {
+      const at = Math.max(0, it.depart - leadWalk(it) - back);
+      const r = run(at);
+      if (r && [...r.plan.direct, ...r.plan.transfers].some((x) => x.depart < it.depart)) return moveTo(at);
+      if (at === 0) break;
+    }
+    setSpentAt({ ...spent, sig: searchSig, early: true });
+  };
+  // a shared link names a connection (`?c=line.departure`): open its detail once the results are in
+  const { pendingConn, clearPendingConn } = shared;
+  useEffect(() => {
+    if (!pendingConn || !searched) return;
+    const hit = all.find(({ it }) => it.legs[0].trip.line.id === pendingConn.lineId && fmtMinutes(it.legs[0].depart) === pendingConn.dep);
+    if (hit) setOpenKey(hit.key);
+    clearPendingConn();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingConn, searched, all]);
   const openConnection = (k: string) => {
     listScroll.current = Math.max(window.scrollY, scroller()?.scrollTop ?? 0);
     setOpenKey(k);
@@ -676,9 +735,11 @@ export function PlannerTab({ shared }: { shared: Shared }) {
 
       {all.length > 0 && (
         <div className="flex flex-col gap-3">
+          <StepButton onClick={earlier} spent={!!spent.early} label={t('earlierConnections')} spentLabel={t('noEarlier')} testid="earlier-connections" />
           {all.map(({ key: k, it }) => (
             <ConnectionCard key={k} it={it} shared={shared} base={date} selected={selected?.key === k} onOpen={() => openConnection(k)} fromPt={fromPtOf(it)} toPt={toPtOf(it)} />
           ))}
+          <StepButton onClick={later} spent={!!spent.late} label={t('laterConnections')} spentLabel={t('noLater')} testid="later-connections" />
         </div>
       )}
       {estimatedNote}

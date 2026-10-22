@@ -132,9 +132,13 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await page.close();
 }
 
-// ---- 3. network map: all lines at the start, tap a stop -> panel
+// ---- 3. network map (Mapa tab): all lines, tap a stop -> panel
 {
   const { page, errors } = await open({ width: 1280, height: 900 });
+  // desktop: the start page has no map; the island map is the "Mapa" tab
+  check('desktop start page shows no map', (await page.$('[data-testid=network-map]')) === null);
+  await page.click('nav[aria-label=Tabs] button:nth-child(2)');
+  await sleep(1200);
   const hasMap = await page.evaluate(() => !!document.querySelector('[data-testid=network-map] canvas') && !document.querySelector('[data-testid=planner-map]'));
   check('desktop: the idle map shows the whole network on a canvas', hasMap);
   const legend = await page.evaluate(() => [...document.querySelectorAll('[data-testid=network-legend] > span')].map((b) => b.innerText.trim()));

@@ -57,6 +57,8 @@ export interface Direction {
   terminalsOnly?: boolean;
   /** the intermediate stops and running times come from the SIGA journey planner (data/siga-patterns.json), not from the timetable */
   enrichedFrom?: 'siga-planner';
+  /** the timetable prints no departures for this direction: they are the trips of the SIGA journey planner */
+  departuresFrom?: 'siga-planner';
   /** Estimated minutes from the first stop and km along the route, one per stop (only when isEstimated). */
   stopOffsets?: number[];
   stopKm?: number[];

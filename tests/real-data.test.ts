@@ -201,14 +201,40 @@ describe.skipIf(!existsSync(file))('coverage', () => {
       expect(d.stops.some((s) => s.isEstimatedLocation)).toBe(true);
     }
     const summit = up.stops.at(-1)!;
-    expect(summit.lat).toBeCloseTo(32.7357, 2);
+    // the terminus is the hand-checked turning circle and car park below the summit (data/stop-overrides.json), and the drawn route ends on it
+    expect(summit.lat).toBeCloseTo(32.72982, 5);
+    expect(summit.lon).toBeCloseTo(-16.92729, 5);
+    const shape: [number, number][] = JSON.parse(readFileSync(`public/data/shapes/${up.shapeId}.json`, 'utf8'));
+    expect(shape.at(-1)).toEqual([32.72982, -16.92729]);
     // interpolated stops lie between their neighbours along the route (latitude rises towards the summit)
     const lats = up.stops.map((s) => s.lat!);
     expect([...lats].sort((x, y) => x - y)).toEqual(lats);
   });
+  it('line 201: every variant has stops, a route and departures (Vargem / Cam. Ribeiro Real, Ponte dos Frades)', () => {
+    const l = data.lines.find((x) => x.number === '201')!;
+    expect(l.directions).toHaveLength(4);
+    for (const d of l.directions) {
+      expect(d.stops.length).toBeGreaterThan(30);
+      expect(d.stops.every((s) => s.lat !== undefined)).toBe(true);
+      expect(d.shapeId).not.toBeNull();
+      expect(Object.values(d.departures).flat().length).toBeGreaterThan(0);
+    }
+    const [toVargem, fromVargem, toFrades] = l.directions;
+    // the Vargem runs end at / leave from the Caminho Ribeiro Real loop, not at Ponte dos Frades
+    expect(toVargem.stops.at(-1)!.lat).toBeCloseTo(32.659, 2);
+    expect(fromVargem.stops[0].lon).toBeCloseTo(-16.971, 2);
+    expect(toVargem.stops.length).toBeGreaterThan(toFrades.stops.length);
+    // the PDF prints no departures Funchal > Ponte dos Frades: they come from the SIGA planner and say so
+    expect(toFrades.departuresFrom).toBe('siga-planner');
+    expect(toFrades.departures.weekday!.map((x) => x.t)).toEqual(['12:30', '14:50']);
+    expect(toFrades.departures.saturday!.map((x) => x.t)).toEqual(['10:05']);
+    // printed times stay as printed
+    expect(l.directions[3].departuresFrom).toBeUndefined();
+    expect(l.directions[3].departures.weekday!.map((x) => x.t)).toEqual(['15:20']);
+  });
   it('nearby stops: Pico do Areeiro summit is found from a position next to it', () => {
     const net = buildNetwork(data.lines);
-    const r = nearbyStops(net, { lat: 32.7358, lon: -16.9283, acc: 10, seq: 1 });
+    const r = nearbyStops(net, { lat: 32.7299, lon: -16.9272, acc: 10, seq: 1 });
     expect(r.stops[0].name).toMatch(/Areeiro/);
     expect(r.stops[0].dist).toBeLessThan(100);
     const deps = departuresFrom(net, data.lines, r.stops.find((x) => /Parque/.test(x.name)) ?? r.stops[0], { now: { y: 2026, m: 10, d: 20, minutes: 12 * 60 }, school: true, municipalities: ['Funchal'] as const });

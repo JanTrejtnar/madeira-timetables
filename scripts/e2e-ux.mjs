@@ -403,6 +403,93 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   await page.close();
 }
 
+
+// ---- 9. desktop: the start page has no map (a centred column); the split view with the map starts with the search results
+{
+  const DESK = { width: 1400, height: 900, deviceScaleFactor: 1 };
+  const { page, errors } = await open(DESK);
+  const state = () => page.evaluate(() => ({ split: document.querySelector('[data-testid=layout]')?.dataset.split, maps: document.querySelectorAll('.leaflet-container').length, aside: Math.round(document.querySelector('aside').getBoundingClientRect().width), left: Math.round(document.querySelector('aside').getBoundingClientRect().left) }));
+  const s0 = await state();
+  check('desktop start page: no map, one centred column', s0.split === 'false' && s0.maps === 0 && s0.aside <= 700 && s0.left > 200, JSON.stringify(s0));
+  await page.click('nav[aria-label=Tabs] button:nth-child(3)');
+  check('desktop line search tab: no map either', (await state()).maps === 0);
+  await page.click('nav[aria-label=Tabs] button:nth-child(2)');
+  await sleep(800);
+  check('desktop "Mapa" tab shows the island map beside the panel', (await state()).maps === 1 && (await state()).split === 'true');
+  await page.click('nav[aria-label=Tabs] button:nth-child(1)');
+  await typeIn(page, 'Odkud', 'Funchal');
+  await clickOption(page, /všechny zastávky/);
+  await typeIn(page, 'Kam', 'Curral');
+  await clickOption(page, /Curral das Freiras/);
+  await page.click('[data-testid=search-button]');
+  await page.waitForSelector('[data-testid=connection]', { timeout: 8000 });
+  await sleep(800);
+  const s1 = await state();
+  check('desktop results: panel on the left, map on the right', s1.split === 'true' && s1.maps === 1 && s1.aside < 500, JSON.stringify(s1));
+  await page.click('[data-testid=edit-search]');
+  await sleep(300);
+  check('back to the form: the map is hidden again', (await state()).split === 'false' && (await state()).maps === 0);
+  check('no page errors', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+
+// ---- 10. "earlier / later connections" move the search time (URL), share button
+{
+  const q = '?from=Funchal&to=Curral%20das%20Freiras&date=2026-10-23&time=12:00';
+  const { page, errors } = await open({ width: 1400, height: 900, deviceScaleFactor: 1 }, base + q);
+  await page.waitForSelector('[data-testid=connection]', { timeout: 8000 });
+  const deps = () => page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].map((c) => (c.innerText.match(/\d{1,2}:\d{2}/) ?? [''])[0]));
+  const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const qs = () => new URLSearchParams(location.search);
+  const urlTime = () => page.evaluate(() => new URLSearchParams(location.search).get('time'));
+  const first0 = (await deps())[0];
+  check('buttons for earlier and later connections are there', !!(await page.$('[data-testid=earlier-connections]')) && !!(await page.$('[data-testid=later-connections]')));
+  const all0 = await deps();
+  await page.click('[data-testid=later-connections]');
+  await sleep(700);
+  const t1 = await urlTime();
+  const all1 = await deps();
+  check('"later" moves the URL time past the last connection shown and lists later ones', toMin(t1) > toMin(all0.at(-1)) - 1 && toMin(all1[0]) > toMin(all0.at(-1)), `${all0.join(' ')} -> ${t1} ${all1.join(' ')}`);
+  await page.click('[data-testid=earlier-connections]');
+  await sleep(700);
+  const all2 = await deps();
+  const t2 = await urlTime();
+  check('"earlier" lists connections before the first shown and updates the URL', toMin(all2[0]) < toMin(all1[0]) && toMin(t2) < toMin(t1), `${all1.join(' ')} -> ${t2} ${all2.join(' ')}`);
+  await page.reload({ waitUntil: 'networkidle0' });
+  await page.waitForSelector('[data-testid=connection]', { timeout: 8000 });
+  check('a reload keeps the moved time window', (await urlTime()) === t2 && (await deps()).join() === all2.join());
+  // share
+  await page.evaluate(() => { Object.defineProperty(navigator, 'share', { value: undefined, configurable: true }); window.__copied = null; Object.defineProperty(navigator, 'clipboard', { value: { writeText: async (v) => { window.__copied = v; } }, configurable: true }); });
+  await page.click('[data-testid=connection]');
+  await page.waitForSelector('[data-testid=connection-detail]');
+  await page.click('[data-testid=share-connection]');
+  await sleep(400);
+  const copied = await page.evaluate(() => window.__copied);
+  const toast = await page.evaluate(() => document.querySelector('[data-testid=toast]')?.innerText ?? '');
+  check('share without navigator.share copies the link and shows the toast', !!copied && /Odkaz na spojení zkopírován/.test(toast), toast);
+  const u = new URL(copied ?? 'http://x/');
+  check('the link has start, destination, date, time and the connection', ['from', 'to', 'date', 'time', 'c'].every((k) => u.searchParams.get(k)), u.search);
+  const page2 = await browser.newPage();
+  await page2.setViewport({ width: 1400, height: 900 });
+  await page2.setRequestInterception(true);
+  page2.on('request', (r) => (/tile\.openstreetmap\.org|cartocdn\.com/.test(r.url()) ? r.abort() : r.continue()));
+  await page2.goto(copied, { waitUntil: 'networkidle0' });
+  await page2.waitForSelector('[data-testid=connection-detail]', { timeout: 8000 }).catch(() => {});
+  const same = await page2.evaluate(() => document.querySelector('[data-testid=connection-date]')?.closest('div.overflow-hidden')?.innerText ?? '');
+  const orig = await page.evaluate(() => document.querySelector('[data-testid=connection-date]')?.closest('div.overflow-hidden')?.innerText ?? '');
+  check('the recipient of the link sees the same connection', same.length > 0 && same === orig, same.slice(0, 80));
+  check('the link parameter c is dropped from the address bar after it was used', !new URL(page2.url()).searchParams.get('c'));
+  await page2.close();
+  // navigator.share is preferred where it exists
+  await page.evaluate(() => { window.__shared = null; Object.defineProperty(navigator, 'share', { value: async (d) => { window.__shared = d; }, configurable: true }); });
+  await page.click('[data-testid=share-connection]');
+  await sleep(300);
+  const sh = await page.evaluate(() => window.__shared);
+  check('navigator.share gets title, text and the link', !!sh && !!sh.url && !!sh.text, JSON.stringify(sh));
+  check('no page errors', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+
 await browser.close();
 console.log(`${total - failed}/${total} passed`);
 process.exit(failed ? 1 : 0);

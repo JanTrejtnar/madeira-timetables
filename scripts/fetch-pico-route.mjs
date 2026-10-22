@@ -7,13 +7,17 @@ const start = gtfs.stops.find((x) => x.code === '4A');
 if (!start) throw new Error('GTFS stop 4A not found; run npm run fetch:gtfs');
 // the road beside the stop (Av. do Mar): the second waypoint keeps the line from circling the one-way streets around the platform
 const quay = [32.64765, -16.9031];
-const W = [[start.lat, start.lon], quay, [32.6539, -16.9119], [32.6767, -16.9029], [32.6855, -16.9010], [32.7127, -16.8878], [32.7357, -16.9287]];
+// the turning circle and car park below the summit: the terminus (data/stop-overrides.json), where the line must end exactly
+const END = [32.72982, -16.92729];
+const W = [[start.lat, start.lon], quay, [32.6539, -16.9119], [32.6767, -16.9029], [32.6855, -16.9010], [32.7127, -16.8878], END];
 const url = `https://router.project-osrm.org/route/v1/driving/${W.map(([a, b]) => `${b},${a}`).join(';')}?overview=full&geometries=geojson`;
 const j = await (await fetch(url)).json();
 if (j.code !== 'Ok') throw new Error(JSON.stringify(j).slice(0, 200));
 const poly = j.routes[0].geometry.coordinates.map(([lon, lat]) => [+lat.toFixed(5), +lon.toFixed(5)]);
 // OSRM snaps the waypoint to the road (some metres away): start the line exactly on the stop
 poly.unshift([+start.lat.toFixed(6), +start.lon.toFixed(6)]);
+// OSRM snaps the last waypoint to the road: the line ends exactly on the stop
+poly.push(END);
 writeFileSync(new URL('../data/shapes/9001.json', import.meta.url), JSON.stringify(poly));
 console.log(poly.length, 'points', (j.routes[0].distance / 1000).toFixed(1), 'km');
 // the way down uses the same road reversed (9002)

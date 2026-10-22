@@ -25,10 +25,10 @@ const paths = (page) => page.evaluate(() => [...document.querySelectorAll('.leaf
     await page.goto(`${base}?from=${encodeURIComponent(a)}&to=${encodeURIComponent(b)}&time=08:00`, { waitUntil: 'networkidle0' });
     await sleep(1500);
     const p = await paths(page);
-    if (p.some((x) => x.startsWith('3/0.25'))) { found = [a, b, p]; break; }
+    if (p.some((x) => x.startsWith('3/0.6'))) { found = [a, b, p]; break; }
   }
-  check('planner: the rest of a line outside the ride is drawn faint (opacity 0.25)', !!found, found ? `${found[0]} -> ${found[1]} ${found[2].filter((x) => /^[35]\//.test(x)).join(' ')}` : '');
-  check('planner: the ridden stretch is drawn at full weight', !!found && found[2].some((x) => x.startsWith('4/1/')));
+  check('planner: the rest of a line outside the ride is drawn faint (opacity 0.6)', !!found, found ? `${found[0]} -> ${found[1]} ${found[2].filter((x) => /^[35]\//.test(x)).join(' ')}` : '');
+  check('planner: the ridden stretch is drawn at full weight', !!found && found[2].some((x) => x.startsWith('6/1/')));
   check('planner: the transfer stop carries a transfer pin', (await page.$$('[data-testid=transfer-pin]')).length >= 1);
   await page.close();
 }

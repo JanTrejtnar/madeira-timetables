@@ -82,3 +82,24 @@ export function formToQuery(f: PlannerForm): string {
   if (f.type !== 'all') q.set('type', f.type);
   return q.toString();
 }
+
+const hhmmOf = (min: number) => `${String(Math.floor((min % 1440) / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+
+/**
+ * Link to one connection: the search (stops, day, filters) left at `leave` (minutes from midnight of `day`, may pass 24:00; the bus
+ * leaves `depart`, later than that when the traveller first walks to its stop), so the recipient's list starts with it, and `c` =
+ * line id and departure ("12.07:35") to open its detail.
+ */
+export function connectionLink(f: Pick<PlannerForm, 'from' | 'to' | 'ops' | 'directOnly' | 'type'>, day: Ymd, leave: number, depart: number, lineId: number, origin: string): string {
+  const abs = Math.max(0, leave);
+  const d = new Date(Date.UTC(day.y, day.m - 1, day.d + Math.floor(abs / 1440)));
+  const q = new URLSearchParams(formToQuery({ ...f, time: hhmmOf(abs), date: ymdToIso({ y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate() }) }));
+  q.set('c', `${lineId}.${hhmmOf(depart)}`);
+  return `${origin}?${q.toString()}`;
+}
+
+/** The connection a link opens: line id and departure time, as written by connectionLink. */
+export function parseConnectionParam(s: string | null): { lineId: number; dep: string } | null {
+  const m = /^(\d+)\.([01]\d|2[0-3]):([0-5]\d)$/.exec(s ?? '');
+  return m ? { lineId: +m[1], dep: `${m[2]}:${m[3]}` } : null;
+}

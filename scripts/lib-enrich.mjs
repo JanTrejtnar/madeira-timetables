@@ -8,6 +8,10 @@ import { stopDistances } from './lib-estimate.mjs';
 /** one end must lie at a terminal (or carry its name); the other may be a few stops away (the Funchal terminals of the planner differ from ours) */
 const NEAR_M = 1500;
 const FAR_M = 4500;
+const PINNED = {
+  // [a name of the direction's ends, first stop code, last stop code] (in the direction of travel)
+  201: [['vargem', '01705', '10011'], ['vargem', '10004', '01705'], ['frades', '01705', '13078'], ['frades', '13105', '01705']],
+};
 /** a stop of a planner pattern counts as lying on the drawn route within this distance */
 const ON_ROUTE_M = 400;
 const rad = Math.PI / 180;
@@ -29,7 +33,7 @@ const sameName = (x, y) => {
 
 /** Planner route numbers a line may be listed under: its own, the 2026 one, and the 200-series number of a one-digit Rodoeste line (3 <-> 203) and 154 -> 254. */
 const keysOf = (line) =>
-  [...new Set([line.number, line.newNumber, +line.number < 100 ? String(200 + +line.number) : null, /^2\d\d$/.test(line.number) ? String(+line.number - 200) : null].filter(Boolean))];
+  [...new Set([...(PINNED[line.number] ? ['236'] : []), line.number, line.newNumber, +line.number < 100 ? String(200 + +line.number) : null, /^2\d\d$/.test(line.number) ? String(+line.number - 200) : null].filter(Boolean))];
 
 /** Share of the pattern's stops that lie within ON_ROUTE_M of the polyline. */
 function onRoute(poly, codes, table) {
@@ -75,6 +79,14 @@ export function pickPattern(l, d, poly, byLine, table) {
   scan(own, false);
   if (!ok.length) scan(others, true);
   if (!ok.length) return { why };
+  // 201: Ponte dos Frades and the Cam. Ribeiro Real loop lie 200 m apart and the planner splits the line into five routes, so the busiest or the
+  // closest pattern is not the right one; the patterns that run between the printed terminals are pinned by their end stops
+  const pins = PINNED[l.number];
+  if (pins) {
+    const end = (c) => (c.reversed ? [c.p.stops.at(-1), c.p.stops[0]] : [c.p.stops[0], c.p.stops.at(-1)]);
+    const pinned = ok.filter((c) => pins.some(([n, f, t]) => fold(d.from + ' ' + d.to).includes(n) && end(c)[0] === f && end(c)[1] === t));
+    if (pinned.length) ok.splice(0, ok.length, ...pinned);
+  }
   // the main variant (most daily trips) wins over one-off school or combined runs; a forward pattern is preferred over a flipped one
   // only while it runs at least half as often as the busiest candidate
   ok.sort((x, y) => y.p.trips - x.p.trips || +x.reversed - +y.reversed || y.share - x.share || x.da + x.db - (y.da + y.db));
@@ -130,4 +142,42 @@ export function enrichedKm(lines, shapesDir) {
       if (!dist.some((x) => x.snapKm > 0.35)) d.stopKm = dist.map((x) => +x.km.toFixed(2));
     }
   }
+}
+
+/** Service code at the end of a planner trip id (`1:op2_201_0_1_1230_1259_0_UE`) -> day key. */
+const DAY_OF = { UE: 'weekday', S: 'saturday', D: 'sunday' };
+
+/**
+ * A timetable that prints no departures for a direction (201 Funchal > Ponte dos Frades: "-----") gets the trips of the planner pattern
+ * its stops came from (data/sources/siga/siga-otp-dump.json): the departure from the first stop, per weekday / Saturday / Sunday.
+ * Printed times are never replaced, only directions without any are filled. Returns the number of directions filled.
+ */
+export function addPlannerDepartures(lines, root) {
+  const file = path.join(root, 'data', 'sources', 'siga', 'siga-otp-dump.json');
+  if (!existsSync(file)) return 0;
+  let patterns = null;
+  let n = 0;
+  for (const l of lines) {
+    for (const d of l.directions) {
+      if (d.enrichedFrom !== 'siga-planner' || Object.values(d.departures).some((v) => v?.length)) continue;
+      patterns ??= JSON.parse(readFileSync(file, 'utf8')).routes.flatMap((r) => r.patterns ?? []);
+      // the pattern whose stop codes are the ones given to the direction (terminals aside)
+      const mid = d.stops.slice(1, -1).map((s) => s.code).join(',');
+      const p = patterns.find((x) => x.stops.slice(1, -1).map((s) => s.code).join(',') === mid);
+      if (!p) continue;
+      for (const tr of p.trips ?? []) {
+        const day = DAY_OF[tr.gtfsId.split('_').pop()];
+        const s = tr.stoptimes?.[0]?.scheduledDeparture;
+        if (!day || s === undefined) continue;
+        const t = `${String(Math.floor(s / 3600) % 24).padStart(2, '0')}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}`;
+        (d.departures[day] ??= []).push({ t });
+      }
+      for (const v of Object.values(d.departures)) v.sort((x, y) => x.t.localeCompare(y.t));
+      if (Object.keys(d.departures).length) {
+        d.departuresFrom = 'siga-planner';
+        n++;
+      }
+    }
+  }
+  return n;
 }

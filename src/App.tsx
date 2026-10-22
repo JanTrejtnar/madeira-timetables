@@ -20,7 +20,7 @@ import { addRecent, loadFavorites, loadRecent, saveFavorites, saveRecent, toggle
 import { useMedia } from './lib/hooks';
 import { applyTheme, isTheme, type ThemePref } from './lib/theme';
 import type { UserPos } from './lib/nearby';
-import { formFromQuery, formToQuery, settled, type PlannerForm } from './lib/plannerForm';
+import { formFromQuery, formToQuery, parseConnectionParam, settled, type PlannerForm } from './lib/plannerForm';
 import type { MapFocus, MapLayer } from './types';
 
 type Tab = 'search' | 'route' | 'map' | 'departures' | 'settings';
@@ -130,6 +130,8 @@ export function App() {
       return from === a.from && to === a.to ? a : { from, to };
     });
   }, [planner.from, planner.to]);
+  const [pendingConn, setPendingConn] = useState(() => parseConnectionParam(new URLSearchParams(location.search).get('c')));
+  const clearPendingConn = useCallback(() => setPendingConn(null), []);
   const commit = useCallback((v: Partial<Shared['applied']>) => setApplied((a) => ({ ...a, ...v })), []);
   useEffect(() => {
     const q = formToQuery({ ...planner, from: applied.from, to: applied.to });
@@ -226,6 +228,8 @@ export function App() {
             applied,
             commit,
             setPlanner,
+            pendingConn,
+            clearPendingConn,
             useAsFrom: (name, key) => {
               setOpenConn(null);
               setPlannerViewState('form');
@@ -255,7 +259,7 @@ export function App() {
             },
           }
         : null,
-    [data, net, ctx, openConn, fareCard, plannerView, desktop, userPos, geo, locate, planner, applied, commit, recent, favorites, toggleFavorite, rememberTrip, clearRecent],
+    [data, net, ctx, openConn, fareCard, plannerView, desktop, userPos, geo, locate, planner, applied, commit, pendingConn, clearPendingConn, recent, favorites, toggleFavorite, rememberTrip, clearRecent],
   );
 
   // height of the sticky header: pages put their own sticky bars right under it
@@ -271,6 +275,9 @@ export function App() {
   }, []);
 
   const line = route && data ? data.lines.find((l) => l.id === route.id) : undefined;
+  // desktop: the big map sits beside the panel only when there is something to show on it (a line, the "Map" tab, search results);
+  // before a search the start page is a single centred column
+  const splitView = desktop && (!!route || tab === 'map' || (tab === 'route' && plannerView === 'results'));
 
   // where the settings page was opened from: its icon takes the reader back there (the tab, a line detail, a planner connection)
   const cameFrom = useRef<{ tab: Tab; hash: string; openConn: string | null } | null>(null);
@@ -303,8 +310,8 @@ export function App() {
 
   return (
     <LangContext.Provider value={{ lang, t }}>
-      <div className="min-h-dvh lg:grid lg:h-dvh lg:grid-cols-[minmax(380px,440px)_1fr] lg:overflow-hidden">
-        <aside className="mx-auto flex w-full max-w-2xl flex-col lg:mx-0 lg:h-dvh lg:max-w-none lg:overflow-hidden lg:border-r lg:border-slate-200/70 lg:bg-slate-50 dark:lg:border-slate-800 dark:lg:bg-slate-950">
+      <div className={`min-h-dvh lg:grid lg:h-dvh lg:overflow-hidden ${splitView ? 'lg:grid-cols-[minmax(380px,440px)_1fr]' : 'lg:grid-cols-1'}`} data-testid="layout" data-split={splitView}>
+        <aside className={`mx-auto flex w-full max-w-2xl flex-col lg:h-dvh lg:overflow-hidden lg:bg-slate-50 dark:lg:bg-slate-950 ${splitView ? 'lg:mx-0 lg:max-w-none lg:border-r lg:border-slate-200/70 dark:lg:border-slate-800' : 'lg:border-x lg:border-slate-200/70 dark:lg:border-slate-800'}`}>
           <header ref={headerRef} className="sticky top-0 z-40 shrink-0 border-b border-slate-200/70 bg-white/90 px-4 pb-3 pt-safe backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 lg:static lg:bg-white lg:backdrop-blur-none dark:lg:bg-slate-900">
             <div className="flex items-center justify-between gap-2 pt-3">
               <h1 className="flex items-center gap-2.5 text-lg font-bold tracking-tight">
@@ -399,7 +406,7 @@ export function App() {
           </main>
         </aside>
 
-        {desktop && (
+        {splitView && (
           <div className="relative h-dvh bg-slate-200 dark:bg-slate-800">
             {mapLayers || !shared ? (
               <RouteMap layers={mapLayers ?? []} focus={mapFocus} onStopClick={onMapStop} me={userPos} onLocate={locate} locating={geo === 'busy'} fill />

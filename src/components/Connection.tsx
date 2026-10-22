@@ -1,6 +1,6 @@
 // Search results in the style of the IDOS app: a compact card per connection (date, duration, one pair of rows per bus), and a detail
 // page of the whole connection with the walks, the transfers and a fold-out of the intermediate stops; a bus opens its line.
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useT, type Lang } from '../i18n';
 import { stopLabel } from '../lib/text';
 import { addDays, type Ymd } from '../lib/holidays';
@@ -10,7 +10,8 @@ import { cachedFoot } from '../lib/foot';
 import { fmtMinutes } from '../lib/time';
 import { connectionFare, formatEuro, type FareCard } from '../lib/fare';
 import { WALK_M_PER_MIN, walkTo } from '../lib/walk';
-import type { Picked } from '../lib/plannerForm';
+import { connectionLink, type Picked } from '../lib/plannerForm';
+import { sameTrip } from '../lib/trips-store';
 import type { Itinerary, Leg } from '../lib/router';
 import { badgeText, LEG_COLORS, LineBadge, MapPin, PrecisionWarning, dirLabel, lineRailCls, pdfHref, type RideEnds, type RideWhen, type Shared } from './common';
 import { Icon } from './Icons';
@@ -294,6 +295,30 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
   // the first and the last stop of the connection, when the map has no position for them
   const endsOf = [it.legs[0].trip, it.legs[it.legs.length - 1].trip].map((trip, k) => tripStops(trip)[k === 0 ? it.legs[0].fromPos : it.legs[it.legs.length - 1].toPos]);
   const noPos = [...new Set(endsOf.filter((st) => st.lat === undefined || st.lon === undefined).map((st) => stopLabel(st, lang)))];
+  // starred search (the same star as in the result list header) and the share button: the system share sheet where there is one, else the link is copied
+  const trip = { from: shared.applied.from, to: shared.applied.to };
+  const starred = !!trip.from.text.trim() && !!trip.to.text.trim() && shared.favorites.some((f) => sameTrip(f, trip));
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 2600);
+    return () => clearTimeout(id);
+  }, [toast]);
+  const share = async () => {
+    const first = it.legs[0];
+    const { planner } = shared;
+    const url = connectionLink({ ...trip, ops: planner.ops, directOnly: planner.directOnly, type: planner.type }, base, first.depart - (walkIn?.min ?? 0), first.depart, first.trip.line.id, location.origin + location.pathname);
+    const text = t('shareText', { from: trip.from.text, to: trip.to.text, when: whenLabel(it, base, shared.ctx.now, t, lang) });
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: t('appName'), text, url });
+        return;
+      } catch (err) {
+        if ((err as DOMException)?.name === 'AbortError') return; // the traveller closed the share sheet
+      }
+    }
+    if (await copyText(url)) setToast(t('linkCopied'));
+  };
   const iconBtn = 'inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-full px-2 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10';
   return (
     <div className="flex flex-col gap-3" data-testid="connection-detail">
@@ -303,6 +328,21 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
           {t('connectionBack')}
         </button>
         <span className="ml-auto flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => shared.toggleFavorite(trip)}
+            disabled={!trip.from.text.trim() || !trip.to.text.trim()}
+            aria-pressed={starred}
+            aria-label={starred ? t('removeFavorite') : t('addFavorite')}
+            title={starred ? t('removeFavorite') : t('addFavorite')}
+            data-testid="detail-favorite"
+            className={`${iconBtn} text-slate-400! hover:text-amber-500! disabled:opacity-40`}
+          >
+            <Icon name="star" className={`size-5 ${starred ? 'fill-amber-400 text-amber-500' : ''}`} />
+          </button>
+          <button type="button" onClick={() => void share()} aria-label={t('shareConnection')} title={t('shareConnection')} data-testid="share-connection" className={iconBtn}>
+            <Icon name="share" className="size-5" />
+          </button>
           {map && (
             <button type="button" onClick={() => mapBox.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} aria-label={t('mapShort')} title={t('mapShort')} data-testid="scroll-to-map" className={iconBtn}>
               <Icon name="map" className="size-5" />
@@ -337,6 +377,33 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
       ))}
       {estimatedNote}
       {map && <div ref={mapBox} className="scroll-mt-[calc(var(--header-h,0px)+3.5rem)]">{map}</div>}
+      {toast && (
+        <div role="status" aria-live="polite" data-testid="toast" className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4 lg:bottom-8">
+          <span className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-lg dark:bg-slate-100 dark:text-slate-900">{toast}</span>
+        </div>
+      )}
     </div>
   );
+}
+
+/** Puts text on the clipboard (the async API needs a secure context; the fallback covers http and old browsers). */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    } finally {
+      ta.remove();
+    }
+  }
 }

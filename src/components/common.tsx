@@ -73,6 +73,9 @@ export interface Shared {
   /** applies the given values as they are (Enter on typed text, swap) */
   commit: (v: Partial<Shared['applied']>) => void;
   setPlanner: (f: PlannerForm | ((prev: PlannerForm) => PlannerForm)) => void;
+  /** the connection a shared link points at (`?c=`): the planner opens its detail once the results are in, then clears it */
+  pendingConn: { lineId: number; dep: string } | null;
+  clearPendingConn: () => void;
 }
 
 /** Colour of a line on maps and timelines: green = urbano, sky blue = interurbano. */

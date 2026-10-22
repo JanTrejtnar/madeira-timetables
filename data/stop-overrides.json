@@ -93,6 +93,36 @@
       "lat": 32.79681,
       "lon": -16.96904,
       "locationPrecision": "exact"
+    },
+    {
+      "name": "Pico do Areeiro",
+      "label": "Pico do Areeiro shuttle terminus (Horários do Funchal): turning circle and car park below the summit, hand-checked position",
+      "lines": [
+        "HF Areeiro"
+      ],
+      "lat": 32.72982,
+      "lon": -16.92729,
+      "locationPrecision": "exact"
+    },
+    {
+      "name": "Parque do Pico do Areeiro",
+      "label": "Pico do Areeiro shuttle terminus (Horários do Funchal): turning circle and car park below the summit, hand-checked position",
+      "lines": [
+        "HF Areeiro"
+      ],
+      "lat": 32.72982,
+      "lon": -16.92729,
+      "locationPrecision": "exact"
+    },
+    {
+      "name": "Parque Pico do Areeiro",
+      "label": "Pico do Areeiro shuttle terminus (Horários do Funchal): turning circle and car park below the summit, hand-checked position",
+      "lines": [
+        "HF Areeiro"
+      ],
+      "lat": 32.72982,
+      "lon": -16.92729,
+      "locationPrecision": "exact"
     }
   ],
   "funchalTerminals": {
