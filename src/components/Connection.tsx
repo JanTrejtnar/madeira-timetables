@@ -5,6 +5,7 @@ import { useT, type Lang } from '../i18n';
 import { stopLabel } from '../lib/text';
 import { addDays, type Ymd } from '../lib/holidays';
 import { tripStops } from '../lib/network';
+import { midStops } from '../lib/ride';
 import { cachedFoot } from '../lib/foot';
 import { fmtMinutes } from '../lib/time';
 import { connectionFare, formatEuro, type FareCard } from '../lib/fare';
@@ -201,7 +202,7 @@ function Rides({ it, shared, fromPt, toPt, walkIn, walkOut }: { it: Itinerary; s
         // with a transfer every bus has its own colour, the same as on the map
         const color = it.legs.length > 1 ? LEG_COLORS[i % LEG_COLORS.length] : undefined;
         const rail = { cls: color ? '' : lineRailCls(line), color };
-        const mid = stops.slice(l.fromPos + 1, l.toPos);
+        const mid = midStops(l.trip, l.fromPos, l.toPos);
         const expanded = open.has(i);
         return (
           <div key={i}>
@@ -231,15 +232,19 @@ function Rides({ it, shared, fromPt, toPt, walkIn, walkOut }: { it: Itinerary; s
                 )}
                 {expanded && (
                   <ul className="mb-1 flex flex-col text-sm text-slate-600 dark:text-slate-300" data-testid="mid-stops">
-                    {mid.map((s, k) => {
-                      const tm = l.trip.times[l.fromPos + 1 + k];
-                      return (
-                        <li key={k} className="flex min-h-7 items-baseline gap-2 border-l-2 border-slate-200 pl-3 dark:border-slate-700">
-                          <span className="w-12 shrink-0 text-slate-400 tabular-nums">{tm === null || tm === undefined ? '' : `${l.trip.estimated ? '~' : ''}${fmtMinutes(tm)}`}</span>
-                          <span className="min-w-0 wrap-break-word">{stopLabel(s, lang)}</span>
-                        </li>
-                      );
-                    })}
+                    {mid.map((m, k) => (
+                      <li key={k} className="flex min-h-7 items-baseline gap-2 border-l-2 border-slate-200 pl-3 dark:border-slate-700">
+                        <span className="w-12 shrink-0 text-slate-400 tabular-nums">{`${l.trip.estimated ? '~' : ''}${fmtMinutes(m.arrive)}`}</span>
+                        <span className="min-w-0 wrap-break-word">
+                          {stopLabel(m.stop, lang)}
+                          {m.depart !== undefined && (
+                            <span className="ml-1.5 text-xs text-slate-500 dark:text-slate-400" data-testid="mid-wait">
+                              {t('stopWait', { n: m.depart - m.arrive })} · {t('stopDeparture')} {fmtMinutes(m.depart)}
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
@@ -279,6 +284,9 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
   const { t, lang } = useT();
   const { walkIn, walkOut } = endWalks(it, fromPt, toPt);
   const mapBox = useRef<HTMLDivElement>(null);
+  // the first and the last stop of the connection, when the map has no position for them
+  const endsOf = [it.legs[0].trip, it.legs[it.legs.length - 1].trip].map((trip, k) => tripStops(trip)[k === 0 ? it.legs[0].fromPos : it.legs[it.legs.length - 1].toPos]);
+  const noPos = [...new Set(endsOf.filter((st) => st.lat === undefined || st.lon === undefined).map((st) => stopLabel(st, lang)))];
   const iconBtn = 'inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-full px-2 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10';
   return (
     <div className="flex flex-col gap-3" data-testid="connection-detail">
@@ -315,6 +323,11 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
           <Rides it={it} shared={shared} fromPt={fromPt} toPt={toPt} walkIn={walkIn} walkOut={walkOut} />
         </div>
       </div>
+      {noPos.map((name) => (
+        <p key={name} className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200" data-testid="approx-place">
+          {t('approxPlace', { name })}
+        </p>
+      ))}
       {estimatedNote}
       {map && <div ref={mapBox} className="scroll-mt-[calc(var(--header-h,0px)+3.5rem)]">{map}</div>}
     </div>

@@ -83,6 +83,16 @@
       "lon": -17.03291,
       "osmNode": 147902557,
       "locationPrecision": "exact"
+    },
+    {
+      "name": "Falca",
+      "label": "Falca (line 6 Funchal - Arco de São Jorge, between Boaventura and Fajã do Penedo); position supplied by the project owner, the stop had no coordinates (no SIGA / GTFS / OSM match)",
+      "lines": [
+        "6"
+      ],
+      "lat": 32.79681,
+      "lon": -16.96904,
+      "locationPrecision": "exact"
     }
   ],
   "funchalTerminals": {

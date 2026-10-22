@@ -490,7 +490,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     });
     return legs.map((l, i) => ({
       shapeId: l.trip.dir.shapeId,
-      stops: tripStops(l.trip).slice(l.fromPos, l.toPos + 1),
+      // a dash in the timetable (no time) = the trip does not call there: not drawn
+      stops: tripStops(l.trip).slice(l.fromPos, l.toPos + 1).filter((_, k) => l.trip.times[l.fromPos + k] !== null),
       // with a transfer every bus gets its own colour and a place in the legend
       color: legs.length > 1 ? LEG_COLORS[i % LEG_COLORS.length] : lineColor(l.trip.line),
       ...(legs.length > 1 ? { legend: { badge: badgeText(l.trip.line), text: `${localStopName(tripStops(l.trip)[l.fromPos].name, lang)} → ${localStopName(tripStops(l.trip)[l.toPos].name, lang)}` } } : {}),

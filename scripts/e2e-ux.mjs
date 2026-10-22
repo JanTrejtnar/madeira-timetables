@@ -278,6 +278,36 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   await page.close();
 }
 
+// line 6: a dash means the trip does not call there; a tap on a stop never changes the chosen trip
+{
+  const { page, errors } = await open(PHONE, `${base}#/line/2004`);
+  await sleep(800);
+  const clickTime = (txt) => page.evaluate((t) => { const b = [...document.querySelectorAll('button[aria-pressed]')].find((x) => x.innerText.trim() === t); b?.click(); return !!b; }, txt);
+  const rows = () => page.evaluate(() => [...document.querySelectorAll('ol > li')].map((li) => li.innerText.replace(/\s+/g, ' ').trim()));
+  // the identity of the chosen trip = its time at the first listed stop (Funchal)
+  const tripStart = async () => ((await rows())[0] ?? '').match(/\d\d:\d\d/)?.[0];
+  const tapRow = (re) => page.evaluate((src) => { const b = [...document.querySelectorAll('ol > li button')].find((x) => new RegExp(src).test(x.innerText)); b?.click(); }, re.source);
+  // automatic choice (the next departure): a tap on another stop must not change it
+  const auto = await tripStart();
+  await tapRow(/Estreito/);
+  await sleep(400);
+  check('line 6: tapping a stop keeps the automatically chosen trip', !!auto && (await tripStart()) === auto, `${auto} -> ${await tripStart()}`);
+  await tapRow(/^Funchal/);
+  await sleep(400);
+  check('line 6: the 07:35 time is in the grid', await clickTime('07:35'));
+  await sleep(300);
+  const names = (await rows()).join(' | ');
+  check('line 6, 07:35: stops with a dash (Lameiros, Ginjas, Terra Chã, Falca) are not listed', !/Lameiros|Ginjas|Terra Ch|Falca/.test(names), names.slice(0, 200));
+  check('line 6, 07:35: São Vicente has an arrival and a departure tag', (await page.$$('[data-testid=stop-twin]')).length >= 2);
+  for (const [label, re] of [['São Vicente', /S.o Vicente/], ['Rosário', /Rosário/], ['Boaventura', /Boaventura/]]) {
+    await tapRow(re);
+    await sleep(500);
+    check(`tapping ${label} keeps the 07:35 trip`, (await tripStart()) === '07:35', await tripStart());
+  }
+  check('no page errors', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+
 await browser.close();
 console.log(`${total - failed}/${total} passed`);
 process.exit(failed ? 1 : 0);

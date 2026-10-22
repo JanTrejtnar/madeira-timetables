@@ -8,6 +8,7 @@ import { formFromQuery, formToQuery } from '../src/lib/plannerForm';
 import { serviceDay } from '../src/lib/holidays';
 import { variantLabel } from '../src/lib/notes';
 import { direct, plan } from '../src/lib/router';
+import { midStops } from '../src/lib/ride';
 import { poiFor } from '../src/lib/aliases';
 import { departuresFrom, nearbyStops } from '../src/lib/nearby';
 import { decodeEntitiesInJson } from '../src/lib/text';
@@ -468,6 +469,54 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
     expect(hit?.node.key).toBe('cabo girao');
     expect(hit!.metres).toBeLessThan(150);
     expect(nearestNode(net, 32.45, -16.5, 1000)).toBeNull();
+  });
+  describe('dashes in the timetable, waiting rows and Falca (line 6 / 139)', () => {
+    const net3 = buildNetwork(data.lines, data.terminalWalks);
+    const friday = servicesFor(net3, data.lines, { y: 2026, m: 10, d: 23 }, true, ['Funchal']);
+    const found = plan(net3, friday, resolveNodes(net3, 'Funchal', null), new Set(nodeIdsOfKeys(net3, ['falca'])), 5 * 60);
+    const mm = (h: number, m: number) => h * 60 + m;
+
+    it('a dash (no time) is a stop the trip does not call at: not listed between boarding and alighting', () => {
+      const long = friday.find((t) => t.line.number === '6' && t.dirIndex === 0 && t.times[0] !== null && t.times[12] === null && t.times[15] !== null && t.times[16] !== null)!;
+      expect(long).toBeTruthy();
+      const names = (trip: Trip) => midStops(trip, 0, trip.times.length - 1).map((m) => m.stop.name);
+      const stops = tripStops(long);
+      // the printed dashes of that trip (Lameiros, Ginjas, Terra Chã ...)
+      const dashed = stops.filter((_, i) => long.times[i] === null).map((s) => s.name);
+      expect(dashed).toEqual(expect.arrayContaining(['Lameiros', 'Ginjas', 'Terra Chã']));
+      for (const n of dashed) expect(names(long)).not.toContain(n);
+      // every listed stop has a time
+      expect(midStops(long, 0, long.times.length - 1).every((m) => Number.isFinite(m.arrive))).toBe(true);
+    });
+    it('the same stop twice in a row is one stop with a waiting time (arrival / departure row), not a doubled stop', () => {
+      const long = friday.find((t) => t.line.number === '6' && t.dirIndex === 0 && t.times[0] !== null && t.times[12] === null && t.times[15] !== null && t.times[16] !== null)!;
+      const mid = midStops(long, 0, long.times.length - 1);
+      const sv = mid.filter((m) => m.stop.name === 'São Vicente');
+      expect(sv.length).toBe(1);
+      expect(sv[0].depart).toBeGreaterThan(sv[0].arrive);
+      for (let i = 1; i < mid.length; i++) expect(mid[i].stop.name === mid[i - 1].stop.name).toBe(false);
+    });
+    it('Falca has a position (data/stop-overrides.json)', () => {
+      const falca = net3.nodes.find((n) => n.key === 'falca')!;
+      expect(falca.lat).toBeCloseTo(32.79681, 5);
+      expect(falca.lon).toBeCloseTo(-16.96904, 5);
+    });
+    it('Funchal -> Falca on a Friday morning: line 139 at 07:35 to São Vicente (10:15), then line 6 (10:50 -> 11:20); the 07:35 trip of line 6 does not call at Falca', () => {
+      const viaSv = found.transfers.find((x) => x.legs.length === 2 && x.legs[0].trip.line.number === '139' && x.legs[0].depart === mm(7, 35));
+      expect(viaSv).toBeTruthy();
+      expect(viaSv!.legs[0].arrive).toBe(mm(10, 15));
+      expect(tripStops(viaSv!.legs[0].trip)[viaSv!.legs[0].toPos].name).toMatch(/São Vicente/);
+      expect(viaSv!.legs[1].trip.line.number).toBe('6');
+      expect(viaSv!.legs[1].depart).toBe(mm(10, 50));
+      expect(viaSv!.legs[1].arrive).toBe(mm(11, 20));
+      const end = tripStops(viaSv!.legs[1].trip)[viaSv!.legs[1].toPos];
+      expect(end.name).toBe('Falca');
+      expect(end.lat).toBeCloseTo(32.79681, 5);
+      // the 07:35 trip of line 6 has a dash at Falca: never offered as a way there
+      expect([...found.direct, ...found.transfers].some((x) => x.legs.some((l) => l.trip.line.number === '6' && l.trip.times[0] === mm(7, 35)))).toBe(false);
+      // no leg of any result boards or alights at a stop without a time
+      for (const x of [...found.direct, ...found.transfers]) for (const l of x.legs) expect(l.trip.times[l.fromPos] !== null && l.trip.times[l.toPos] !== null).toBe(true);
+    });
   });
   it('Igreja Santo Amaro -> Cristo Rei (Garajau): a city bus to the centre, a walk to the Teleférico terminal, then the 55x intercity bus', () => {
     const net2 = buildNetwork(data.lines, data.terminalWalks);

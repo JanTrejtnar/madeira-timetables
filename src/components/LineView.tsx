@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT, type Key } from '../i18n';
 import { stopLabel } from '../lib/text';
 import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } from '../lib/departures';
-import { fmtMinutes } from '../lib/time';
+import { fmtMinutes, toMinutes } from '../lib/time';
 import { onRequestPlaces, withVia, detoursFor } from '../lib/via';
 import { serviceDay } from '../lib/holidays';
 import type { DayKey, Direction, Line, MapFocus, MapLayer, MapPin } from '../types';
@@ -90,8 +90,7 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dirIndex, line.id, day]);
   useEffect(() => setSelKey(null), [day]);
-  // another trip: the open stop details may belong to a "via" row that is no longer there
-  useEffect(() => setLinksIdx(null), [selKey]);
+  useEffect(() => setLinksIdx(null), [day]);
 
   const dir = line.directions[dirIndex] ?? line.directions[0];
   const hasTrips = !!dir?.trips?.length;
@@ -110,8 +109,19 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
   const nextIdx = isToday ? times.findIndex((x) => x.minutes >= shared.ctx.now.minutes) : -1;
   // exactly one time is always active: the tapped one, else the next upcoming departure, else the first of the day
   const found = selKey === null ? -1 : times.findIndex((x, i) => keyOf(x, i) === selKey);
-  const selIdx = found >= 0 ? found : nextIdx >= 0 ? nextIdx : 0;
-  const sel: Timed | undefined = times[selIdx];
+  // a chosen trip stays chosen even when the listed stop has no time for it (a dash in the timetable): it is looked up by its own key
+  const pinned = useMemo<Timed | undefined>(() => {
+    if (selKey === null || found >= 0 || !dir?.trips || !selKey.startsWith('t')) return undefined;
+    const trip = dir.trips[Number(selKey.slice(1))];
+    const t = trip?.times.find(Boolean);
+    return trip && t ? { t, minutes: toMinutes(t), trip, ...(trip.notes ? { notes: trip.notes } : {}) } : undefined;
+  }, [selKey, found, dir]);
+  const selIdx = found >= 0 ? found : pinned ? -1 : nextIdx >= 0 ? nextIdx : 0;
+  const sel: Timed | undefined = pinned ?? times[selIdx];
+  // a tap on a stop only moves the listed stop: the trip in use is pinned so that it cannot fall back to "the next departure"
+  const pinTrip = () => {
+    if (selKey === null && sel) setSelKey(keyOf(sel, selIdx));
+  };
   // the passing time of the selected trip at every stop: printed times, or terminal departure + estimated offset
   const stopTimes = useMemo<(string | null)[]>(() => {
     if (!dir || !sel) return [];
@@ -127,7 +137,14 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
   };
 
   // "Via Aeroporto" notes: the place is a stop of the selected trip (list and map); same array as dir.stops when there is none
-  const shown = useMemo(() => (dir ? withVia(line, dirIndex, dir, sel?.notes, stopTimes) : null), [line, dirIndex, dir, sel, stopTimes]);
+  const shownAll = useMemo(() => (dir ? withVia(line, dirIndex, dir, sel?.notes, stopTimes) : null), [line, dirIndex, dir, sel, stopTimes]);
+  // a dash in the timetable means the trip does not call there: such a stop is neither listed nor drawn for this trip
+  const shown = useMemo(() => {
+    if (!shownAll || !sel?.trip) return shownAll;
+    const keep = shownAll.srcIdx.map((src) => src === null || !!stopTimes[src]);
+    if (keep.every(Boolean)) return shownAll;
+    return { stops: shownAll.stops.filter((_, i) => keep[i]), srcIdx: shownAll.srcIdx.filter((_, i) => keep[i]), viaTimes: shownAll.viaTimes.filter((_, i) => keep[i]) };
+  }, [shownAll, sel, stopTimes]);
   const shownStops = shown?.stops ?? dir?.stops ?? [];
   const shownLabel = (i: number) => {
     const src = (shown ? shown.srcIdx[i] : i);
@@ -196,6 +213,7 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
   }, [desktop, mapFocus, setMapFocus]);
   /** force: the reader asked for the map ("show on map"), so scroll to it even when it is far below the list */
   const tapStop = (i: number, force = false) => {
+    pinTrip();
     const src = (shown ? shown.srcIdx[i] : i);
     if (hasTrips && src !== null) setStopIdx(src);
     setFocusFromMap(false);
@@ -212,6 +230,7 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
 
   /** a stop marker was clicked on the map: open that stop in the list and scroll the list to it */
   const onMapStop = (i: number) => {
+    pinTrip();
     const src = (shown ? shown.srcIdx[i] : i);
     if (hasTrips && src !== null) setStopIdx(src);
     setFocusFromMap(true);
@@ -333,7 +352,10 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
                 return (
                   <button
                     key={i}
-                    onClick={() => setSelKey(keyOf(x, i))}
+                    onClick={() => {
+                      setSelKey(keyOf(x, i));
+                      setLinksIdx(null);
+                    }}
                     aria-pressed={active}
                     className={`min-h-11 rounded-lg px-1 py-1.5 text-center text-sm tabular-nums transition-colors ${
                       active
@@ -382,6 +404,8 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
                 const src = (shown ? shown.srcIdx[i] : i);
                 const active = hasTrips ? src === stopIdx : i === focusIdx;
                 const label = shownLabel(i);
+                // the same stop twice in a row = arrival and departure of one bus waiting there
+                const twin = shownStops[i + 1]?.name === s.name && !s.via ? 'arr' : i > 0 && shownStops[i - 1].name === s.name && !s.via ? 'dep' : null;
                 // Google Maps style: outside the ridden stretch the stop fades
                 const faded = !!rideShown && (i < rideShown.from || i > rideShown.to);
                 const boardOff = !!rideShown && (i === rideShown.from || i === rideShown.to);
@@ -389,6 +413,7 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
                   <>
                     <span className={`min-w-0 flex-1 ${edge || active || boardOff ? 'font-semibold' : ''}`}>
                       {stopLabel(s, lang)} {s.via ? <ViaTag /> : <PrecisionWarning stop={s} />}
+                      {twin && <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400" data-testid="stop-twin">({t(twin === 'arr' ? 'stopArrival' : 'stopDeparture')})</span>}
                     </span>
                     {label ? (
                       (hasOffsets && i > 0) || s.via ? (

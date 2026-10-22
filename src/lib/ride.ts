@@ -1,5 +1,8 @@
 // Google Maps style route drawing: of the polyline of a line only the stretch the traveller rides is drawn in full colour,
 // the rest (before boarding, after getting off) is faint or hidden.
+import { tripStops, type Trip } from './network';
+import type { Stop } from '../types';
+
 type Pt = [number, number];
 
 const sq = (p: readonly number[], q: readonly number[]) => (p[0] - q[0]) ** 2 + ((p[1] - q[1]) * 0.84) ** 2;
@@ -31,4 +34,21 @@ export function rideSplit(shape: readonly Pt[], stops: readonly (Pt | null)[], f
   const b = idx[to];
   if (a == null || b == null || b <= a) return null;
   return { before: shape.slice(0, a + 1) as Pt[], ride: shape.slice(a, b + 1) as Pt[], after: shape.slice(b) as Pt[] };
+}
+
+/**
+ * The stops between boarding (`from`) and alighting (`to`) that the trip really calls at: a dash in the timetable (no time) means the
+ * trip does not stop there. The same stop twice in a row is one stop where the bus waits (arrival and departure row of the timetable).
+ */
+export function midStops(trip: Trip, from: number, to: number): { stop: Stop; arrive: number; depart?: number }[] {
+  const stops = tripStops(trip);
+  const out: { stop: Stop; arrive: number; depart?: number }[] = [];
+  for (let p = from + 1; p < to; p++) {
+    const tm = trip.times[p];
+    if (tm === null || tm === undefined) continue;
+    const prev = out[out.length - 1];
+    if (prev && prev.depart === undefined && prev.stop.name === stops[p].name) prev.depart = tm;
+    else out.push({ stop: stops[p], arrive: tm });
+  }
+  return out;
 }
