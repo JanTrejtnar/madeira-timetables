@@ -4,20 +4,20 @@ import { localStopName } from '../lib/text';
 import { detoursFor } from '../lib/via';
 import { serviceDay } from '../lib/holidays';
 import { plainPlace } from '../lib/text';
-import { CITY_PREFIX, PARISH_PREFIX, FAR_PLACE_M, NEAR_PLACE_M, hubsNear, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
+import { CITY_PREFIX, PARISH_PREFIX, FAR_PLACE_M, NEAR_PLACE_M, hubsNear, nearbyStopNodes, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
 import { norm } from '../lib/search';
 import { KIND_META, isPoiKey, loadPlaces, poiKey, searchPlaces, type Place, type PlaceIndex } from '../lib/places';
 import { useFootRoutes, type FootPair } from '../lib/foot';
 import { sameTrip } from '../lib/trips-store';
 import { isoToYmd, ymdToIso, type Picked, type PlannerForm } from '../lib/plannerForm';
-import { plan } from '../lib/router';
+import { plan, type Itinerary } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
 import { DepartPicker } from './Pickers';
 import { ConnectionCard, ConnectionDetail, shortDate } from './Connection';
 import { walkTo } from '../lib/walk';
 import type { MapLayer, MapPin as PickedPin } from '../types';
 import { OPERATORS, operatorOf, type OperatorId } from '../lib/operators';
-import { Card, Chip, EmptyState, EstTag, LEG_COLORS, lineColor, TypeFilter, matchesType, type Shared } from './common';
+import { badgeText, Card, Chip, EmptyState, EstTag, LEG_COLORS, lineColor, TypeFilter, matchesType, type Shared } from './common';
 import { Icon } from './Icons';
 import type { LineTypeFilter } from './common';
 import { MapPicker, PICK_RADIUS_M } from './MapPicker';
@@ -259,6 +259,9 @@ function AdvancedSearch({ ops, directOnly, type, onOps, onDirect, onType }: { op
   );
 }
 
+/** a picked stop also stands for the stops this many minutes away on foot */
+const NEAR_STOP_MIN = 3;
+
 /** straight-line reach (about 12 minutes on foot over winding roads) within which a transfer hub counts as a start of the journey */
 const HUB_WALK_M = 650;
 
@@ -335,9 +338,20 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const nodesOf = (p: Picked) => {
       if (isPoiKey(p.key) && p.pt) {
         const r = nodesNearPoint(shared.net, p.pt.lat, p.pt.lon);
-        return { ids: nodeIdsOfKeys(shared.net, r.nodes.map((x) => x.node.key)), widened: r.widened, place: true };
+        return { ids: nodeIdsOfKeys(shared.net, r.nodes.map((x) => x.node.key)), widened: r.widened, place: true, base: undefined, extra: undefined, at: undefined };
       }
-      return { ids: resolveNodes(shared.net, p.text, p.key), widened: false, place: false };
+      const ids = resolveNodes(shared.net, p.text, p.key);
+      // a picked stop: the stops a few minutes' walk away count too (the other side of the road is often named differently and has the
+      // buses of the other direction); `base` = the picked stop itself, `extra` = those stops with the minutes to walk to them
+      const base = new Set(ids);
+      const extra = new Map<number, number>();
+      const isStop = !!p.key && !p.pt && !p.key.startsWith(PARISH_PREFIX) && !p.key.startsWith(CITY_PREFIX) && !isPoiKey(p.key);
+      const at = isStop ? [...base].map((id) => shared.net.nodes[id]).find((n) => n.lat !== undefined && n.lon !== undefined) : undefined;
+      if (at) {
+        for (const [id, min] of nearbyStopNodes(shared.net, base, NEAR_STOP_MIN)) extra.set(id, min);
+        for (const id of extra.keys()) ids.add(id);
+      }
+      return { ids, widened: false, place: false, base, extra, at: at ? { lat: at.lat as number, lon: at.lon as number } : undefined };
     };
     const na = nodesOf(dFrom);
     const nb = nodesOf(dTo);
@@ -347,6 +361,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const only = trips.filter((tr) => matchesType(tr.line, type) && (!ops.length || ops.includes(operatorOf(tr.line))));
     // walking from a picked start point: a bus counts only when it leaves after departAt + the walk to its stop
     let walkIn: Map<number, number> | undefined;
+    if (na.extra?.size) walkIn = new Map(na.extra);
     if (dFrom.pt) {
       // a terminal within walking reach is a boarding point too: leaving from there beats a one-stop city hop to it
       for (const hub of hubsNear(shared.net, dFrom.pt.lat, dFrom.pt.lon, HUB_WALK_M)) A.add(hub.id);
@@ -358,6 +373,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     }
     // walking to a picked destination point: the stop where one arrives first counts, bus arrival + walk
     let walkOut: Map<number, number> | undefined;
+    if (nb.extra?.size) walkOut = new Map(nb.extra);
     if (dTo.pt) {
       walkOut = new Map();
       for (const id of B) {
@@ -368,17 +384,30 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     let found = plan(shared.net, only, A, B, departAt, walkIn, walkOut);
     // "Funchal" as a whole town: leave from its terminals (Rodoeste, SAM, CAM, the cable car ...); a wayside stop is offered only when nothing leaves from a terminal
     if (!dFrom.pt && dFrom.key?.startsWith(CITY_PREFIX)) {
-      const terminals = new Set([...A].filter((id) => shared.net.nodes[id].terminal || shared.net.nodes[id].transferHub));
+      // a terminal: marked as one, a transfer hub, or the stop where a line starts (the Areeiro bus leaves from its own stop at the cable car)
+      const starts = new Set(only.map((tr) => tr.nodes[0]));
+      const terminals = new Set([...A].filter((id) => shared.net.nodes[id].terminal || shared.net.nodes[id].transferHub || starts.has(id)));
       if (terminals.size && terminals.size < A.size) {
         const fromTerminals = plan(shared.net, only, terminals, B, departAt, walkIn, walkOut);
         if (fromTerminals.direct.length || fromTerminals.transfers.length) found = fromTerminals;
       }
     }
+    // "Funchal" as a whole town: a connection that rides within the town to board the next bus at a stop of the town is just that bus
+    // (offered as it is, from its own start); the traveller chose any stop of the town as the start
+    if (!dFrom.pt && dFrom.key?.startsWith(CITY_PREFIX)) {
+      found = { ...found, transfers: found.transfers.filter((it) => !A.has(it.legs[1].trip.nodes[it.legs[1].fromPos])) };
+    }
     const missing = na.place && A.size === 0 ? dFrom.text : nb.place && B.size === 0 ? dTo.text : null;
     const far = na.widened ? dFrom.text : nb.widened ? dTo.text : null;
-    return { A: A.size, B: B.size, missing, far, plan: directOnly ? { ...found, transfers: [] } : found };
+    return { A: A.size, B: B.size, missing, far, ext: { from: na.at && na.base ? { pt: na.at, base: na.base } : undefined, to: nb.at && nb.base ? { pt: nb.at, base: nb.base } : undefined }, plan: directOnly ? { ...found, transfers: [] } : found };
   }, [shared.net, trips, dFrom, dTo, departAt, ops, directOnly, type, searched]);
 
+  // the point to walk from / to for a connection: a picked place or map point, or the picked stop when the bus boards / alights at another stop near it
+  const fromPtOf = (it?: Itinerary) => dFrom.pt ?? (it && result?.ext.from && !result.ext.from.base.has(it.legs[0].trip.nodes[it.legs[0].fromPos]) ? result.ext.from.pt : undefined);
+  const toPtOf = (it?: Itinerary) => {
+    const last = it?.legs[it.legs.length - 1];
+    return dTo.pt ?? (last && result?.ext.to && !result.ext.to.base.has(last.trip.nodes[last.toPos]) ? result.ext.to.pt : undefined);
+  };
   const empty = result && !result.plan.direct.length && !result.plan.transfers.length;
   const all = useMemo(
     () =>
@@ -422,7 +451,9 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const first = ll(tripStops(legs[0].trip)[legs[0].fromPos]);
     const lastLeg = legs[legs.length - 1];
     const lastStop = ll(tripStops(lastLeg.trip)[lastLeg.toPos]);
-    const pairs: FootPair[] = [dFrom.pt && first ? [dFrom.pt, first] : null, dTo.pt && lastStop ? [lastStop, dTo.pt] : null];
+    const sFrom = fromPtOf(selected.it);
+    const sTo = toPtOf(selected.it);
+    const pairs: FootPair[] = [sFrom && first ? [sFrom, first] : null, sTo && lastStop ? [lastStop, sTo] : null];
     legs.slice(0, -1).forEach((l, i) => {
       const a = ll(tripStops(l.trip)[l.toPos]);
       const b = ll(tripStops(legs[i + 1].trip)[legs[i + 1].fromPos]);
@@ -431,6 +462,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     return pairs;
   })();
   const foot = useFootRoutes(footPairs);
+  const selFrom = fromPtOf(selected?.it);
+  const selTo = toPtOf(selected?.it);
   const footSig = foot.map((r) => (r ? r.m : '-')).join(',');
 
   // the selected itinerary is drawn on the map (desktop side map, small map on the phone when a point was picked)
@@ -445,7 +478,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     };
     const first = tripStops(legs[0].trip)[legs[0].fromPos];
     const lastLeg = legs[legs.length - 1];
-    const pins = [pinFor('from', dFrom.pt, first, foot[0]?.pts), pinFor('to', dTo.pt, tripStops(lastLeg.trip)[lastLeg.toPos], foot[1]?.pts)].filter((p): p is PickedPin => p !== null);
+    const pins = [pinFor('from', selFrom, first, foot[0]?.pts), pinFor('to', selTo, tripStops(lastLeg.trip)[lastLeg.toPos], foot[1]?.pts)].filter((p): p is PickedPin => p !== null);
     // every change of bus: the alighting stop, and the walk to the platform of the next bus when that is another stop
     const transfers = legs.slice(0, -1).flatMap((l, i) => {
       const a = tripStops(l.trip)[l.toPos];
@@ -460,14 +493,14 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       stops: tripStops(l.trip).slice(l.fromPos, l.toPos + 1),
       // with a transfer every bus gets its own colour and a place in the legend
       color: legs.length > 1 ? LEG_COLORS[i % LEG_COLORS.length] : lineColor(l.trip.line),
-      ...(legs.length > 1 ? { legend: { badge: l.trip.line.number, text: `${localStopName(tripStops(l.trip)[l.fromPos].name, lang)} → ${localStopName(tripStops(l.trip)[l.toPos].name, lang)}` } } : {}),
+      ...(legs.length > 1 ? { legend: { badge: badgeText(l.trip.line), text: `${localStopName(tripStops(l.trip)[l.fromPos].name, lang)} → ${localStopName(tripStops(l.trip)[l.toPos].name, lang)}` } } : {}),
       detours: detoursFor(l.trip.line, l.trip.dirIndex, l.trip.notes),
       ride: { stops: tripStops(l.trip).map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), from: l.fromPos, to: l.toPos },
       ...(i === 0 && pins.length ? { pins } : {}),
       ...(i === 0 && transfers.length ? { transfers } : {}),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, dFrom.pt, dTo.pt, footSig, t, lang]);
+  }, [selected, selFrom, selTo, footSig, t, lang]);
   const layers = rawLayers;
   const { desktop, setMap } = shared;
   useEffect(() => {
@@ -500,8 +533,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         shared={shared}
         base={date}
         onBack={closeConnection}
-        fromPt={dFrom.pt}
-        toPt={dTo.pt}
+        fromPt={fromPtOf(opened.it)}
+        toPt={toPtOf(opened.it)}
         map={!desktop && layers ? <div data-testid="planner-map"><RouteMap layers={layers} /></div> : null}
         estimatedNote={estimatedNote}
       />
@@ -642,7 +675,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       {all.length > 0 && (
         <div className="flex flex-col gap-3">
           {all.map(({ key: k, it }) => (
-            <ConnectionCard key={k} it={it} shared={shared} base={date} selected={selected?.key === k} onOpen={() => openConnection(k)} fromPt={dFrom.pt} toPt={dTo.pt} />
+            <ConnectionCard key={k} it={it} shared={shared} base={date} selected={selected?.key === k} onOpen={() => openConnection(k)} fromPt={fromPtOf(it)} toPt={toPtOf(it)} />
           ))}
         </div>
       )}

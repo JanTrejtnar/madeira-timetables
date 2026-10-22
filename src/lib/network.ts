@@ -46,6 +46,8 @@ export interface Network {
 const HUB_LINES = 4;
 const CLUSTER_M = 250;
 const WALK_M = 200;
+/** reach of a walk to or from a transfer hub */
+const HUB_WALK_M = 400;
 const WALK_M_PER_MIN = 70;
 
 const metres = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => {
@@ -127,6 +129,18 @@ export function buildNetwork(lines: Line[], terminalWalks: readonly { a: string;
         near.get(located[i].id)!.push({ node: located[j].id, walk });
         near.get(located[j].id)!.push({ node: located[i].id, walk });
       }
+    }
+  }
+  // a transfer hub (Funchal terminal ...) is reachable on foot from the stops around it a bit further away than an ordinary pair of stops:
+  // a city bus to the centre, then a short walk to the terminal where the intercity bus starts
+  for (const h of located.filter((n) => n.transferHub)) {
+    for (const n of located) {
+      if (n.id === h.id) continue;
+      const d = metres(h as Required<Node>, n as Required<Node>);
+      if (d <= WALK_M || d > HUB_WALK_M) continue;
+      const walk = Math.max(1, Math.ceil(d / WALK_M_PER_MIN));
+      near.get(h.id)!.push({ node: n.id, walk });
+      near.get(n.id)!.push({ node: h.id, walk });
     }
   }
   // guaranteed links between the Funchal terminals: at least the stated walking time, and never less than the nodes' own distance
@@ -400,4 +414,11 @@ export function nodeIdsOfKeys(net: Network, keys: Iterable<string>): Set<number>
   const out = new Set<number>();
   for (const k of keys) for (const id of net.keyToNodes.get(k) ?? []) out.add(id);
   return out;
+}
+
+/** Stops (nodes) within `maxMin` minutes' walk of the given ones, with the minutes: the other side of the road is often named differently. */
+export function nearbyStopNodes(net: Network, base: ReadonlySet<number>, maxMin: number): Map<number, number> {
+  const extra = new Map<number, number>();
+  for (const id of base) for (const x of net.near.get(id) ?? []) if (x.walk <= maxMin && !base.has(x.node)) extra.set(x.node, Math.min(extra.get(x.node) ?? Infinity, x.walk));
+  return extra;
 }

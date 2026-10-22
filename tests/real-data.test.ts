@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { board } from '../src/lib/departures';
 import { buildIndex, findConnections, searchLines, searchStops } from '../src/lib/search';
-import { buildNetwork, nearestNode, resolveNodes, servicesFor, suggest, tripStops, type Trip } from '../src/lib/network';
+import { buildNetwork, nearbyStopNodes, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Trip } from '../src/lib/network';
 import { formFromQuery, formToQuery } from '../src/lib/plannerForm';
 import { serviceDay } from '../src/lib/holidays';
 import { variantLabel } from '../src/lib/notes';
@@ -468,6 +468,26 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
     expect(hit?.node.key).toBe('cabo girao');
     expect(hit!.metres).toBeLessThan(150);
     expect(nearestNode(net, 32.45, -16.5, 1000)).toBeNull();
+  });
+  it('Igreja Santo Amaro -> Cristo Rei (Garajau): a city bus to the centre, a walk to the Teleférico terminal, then the 55x intercity bus', () => {
+    const net2 = buildNetwork(data.lines, data.terminalWalks);
+    const day = { y: 2026, m: 10, d: 22 };
+    const all = servicesFor(net2, data.lines, day, true, ['Funchal']);
+    // the stop of the way into town has another name: the picked stop stands for the stops 3 minutes away
+    const base = resolveNodes(net2, 'Igreja Santo Amaro', null);
+    const extra = nearbyStopNodes(net2, base, 3);
+    expect([...extra.keys()].map((i) => net2.nodes[i].name)).toContain('Igreja STO Amaro, C8');
+    const A = new Set([...base, ...extra.keys()]);
+    const place = data.lines.length && JSON.parse(readFileSync('public/data/pois.json', 'utf8')).places.find((r: [string]) => r[0] === 'Cristo Rei (Garajau)');
+    const B = nodeIdsOfKeys(net2, nodesNearPoint(net2, place[2], place[3]).nodes.map((x) => x.node.key));
+    const found = plan(net2, all, A, B, 11 * 60 + 20, new Map(extra));
+    const it = [...found.direct, ...found.transfers];
+    expect(it.length).toBeGreaterThan(0);
+    expect(found.transfers.some((x) => x.legs.length === 2 && x.legs[1].trip.line.number.startsWith('55'))).toBe(true);
+    // without the link between the centre and the terminal there is no way to the 55x bus
+    const hub = net2.nodes.find((n) => n.terminal === 'teleferico')!;
+    const alf = net2.nodes.find((n) => n.name === 'AV Mar, Alfândega')!;
+    expect(net2.near.get(alf.id)!.some((x) => x.node === hub.id)).toBe(true);
   });
   it('planner form survives the URL round trip, ignores bad values', () => {
     const f = { from: { text: 'Santana (všechny zastávky)', key: '@par:Santana' }, to: { text: 'Funchal', key: null }, time: '07:45', date: '2026-12-08', ops: ['rodoeste', 'sam'] as ('rodoeste' | 'sam')[], directOnly: true, type: 'urbano' as const };

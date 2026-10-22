@@ -11,7 +11,7 @@ import { connectionFare, formatEuro, type FareCard } from '../lib/fare';
 import { WALK_M_PER_MIN, walkTo } from '../lib/walk';
 import type { Picked } from '../lib/plannerForm';
 import type { Itinerary, Leg } from '../lib/router';
-import { LEG_COLORS, LineBadge, MapPin, PrecisionWarning, dirLabel, lineRailCls, pdfHref, type RideEnds, type Shared } from './common';
+import { badgeText, LEG_COLORS, LineBadge, MapPin, PrecisionWarning, dirLabel, lineRailCls, pdfHref, type RideEnds, type Shared } from './common';
 import { Icon } from './Icons';
 
 type TFn = ReturnType<typeof useT>['t'];
@@ -112,13 +112,13 @@ export function ConnectionCard({ it, shared, base, selected, onOpen, fromPt, toP
             return (
               <span key={i} className="flex flex-col gap-2">
                 {prev && <span className="pl-12 text-xs text-slate-400">{t('waitMin', { n: l.depart - prev.arrive })}</span>}
-                <span className="grid grid-cols-[2.75rem_3.5rem_minmax(0,1fr)] items-baseline gap-x-1.5 gap-y-0.5">
+                <span className={`grid ${it.arrive >= 1440 ? 'grid-cols-[2.75rem_4.5rem_minmax(0,1fr)]' : 'grid-cols-[2.75rem_3.5rem_minmax(0,1fr)]'} items-baseline gap-x-1.5 gap-y-0.5`}>
                   <span className="row-span-2 self-center">
                     <LineBadge line={l.trip.line} />
                   </span>
                   <Time min={l.depart} est={l.departEstimated} t={t} className="font-semibold" />
                   <span className="truncate font-medium">{stopLabel(stops[l.fromPos], lang)}</span>
-                  <Time min={l.arrive} est={l.arriveEstimated} t={t} className="text-slate-600 dark:text-slate-300" />
+                  <Time min={l.arrive} est={l.arriveEstimated} t={t} className="font-semibold" />
                   <span className="truncate text-slate-600 dark:text-slate-300">{stopLabel(stops[l.toPos], lang)}</span>
                 </span>
               </span>
@@ -135,6 +135,7 @@ export function ConnectionCard({ it, shared, base, selected, onOpen, fromPt, toP
 /** Price of the connection for the card from the settings; small and grey so it stays in the background. */
 function Fare({ it, card }: { it: Itinerary; card: FareCard }) {
   const { t, lang } = useT();
+  if (card === 'yellow') return null;
   const price = connectionFare(card, it.legs.map((l) => l.depart));
   return (
     <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500" data-testid="fare" title={t('fareNote')}>
@@ -295,7 +296,7 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
           {it.legs.map((l, i) => (
             <a key={i} href={pdfHref(l.trip.line)} target="_blank" rel="noreferrer" aria-label={`${t('pdfShort')}: ${l.trip.line.number}`} title={`${t('pdfShort')}: ${l.trip.line.number}`} data-testid="open-pdf" className={iconBtn}>
               <Icon name="file" className="size-5" />
-              {it.legs.length > 1 && <span className="text-xs">{l.trip.line.number}</span>}
+              {it.legs.length > 1 && <span className="text-xs">{badgeText(l.trip.line)}</span>}
             </a>
           ))}
         </span>

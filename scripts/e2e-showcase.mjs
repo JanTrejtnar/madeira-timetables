@@ -360,7 +360,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   check('blue card: 2,05 € per journey', /2,05|4,10/.test(f1 ?? ''), f1);
   await setCard('yellow');
   const f2 = await fare();
-  check('yellow card: free', /zdarma/.test(f2 ?? ''), f2);
+  check('yellow card: no price shown at all', !f2, f2);
   await cs.ctx.close();
 }
 

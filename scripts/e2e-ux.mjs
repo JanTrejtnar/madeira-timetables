@@ -226,6 +226,58 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   await page.close();
 }
 
+// ---- 6. Funchal (all stops) -> Pico do Areeiro: only the Areeiro bus, short badge; yellow card shows no price; no "Dnes platí" in the header
+{
+  const { page, errors } = await open(PHONE);
+  await typeIn(page, 'Odkud', 'Funchal');
+  await clickOption(page, /všechny zastávky/);
+  await typeIn(page, 'Kam', 'Pico do Areeiro');
+  await clickOption(page, /Areeiro/);
+  await page.click('[data-testid=search-button]');
+  await page.waitForSelector('[data-testid=connection]', { timeout: 8000 }).catch(() => {});
+  const res = await page.evaluate(() => ({
+    badges: [...document.querySelectorAll('[data-testid=connection] span.font-bold[title]')].map((b) => b.innerText.trim()),
+    legs: [...document.querySelectorAll('[data-testid=connection]')].map((c) => c.querySelectorAll('span.font-bold[title]').length),
+    head: document.querySelector('header').innerText,
+  }));
+  check('Funchal -> Areeiro: every result is the single Areeiro bus (badge "PA", no city bus first)', res.badges.length > 0 && res.legs.every((n) => n === 1) && res.badges.every((b) => b === 'PA'), JSON.stringify(res));
+  check('header has no "Dnes platí"', !/Dnes platí/.test(res.head));
+  const fare = await page.evaluate(() => document.querySelectorAll('[data-testid=fare]').length);
+  check('with no card the price is shown', fare > 0);
+  await page.evaluate(() => localStorage.setItem('fareCard', 'yellow'));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await page.waitForSelector('[data-testid=connection]', { timeout: 8000 }).catch(() => {});
+  check('yellow card: no price and no "zdarma" in the results', (await page.evaluate(() => document.querySelectorAll('[data-testid=fare]').length)) === 0 && !/zdarma/.test(await page.evaluate(() => document.querySelector('main').innerText)));
+  check('no page errors', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+
+
+// ---- 8. map: a click on a stop marker does not reset the zoom
+{
+  const page = await browser.newPage();
+  await page.setViewport({ width: 1400, height: 900 });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.setRequestInterception(true);
+  page.on('request', (r) => (/tile\.openstreetmap\.org|cartocdn\.com/.test(r.url()) ? r.abort() : r.continue()));
+  await page.goto(`${base}#/line/90`, { waitUntil: 'networkidle0' });
+  await sleep(1800);
+  const width = () => page.evaluate(() => { const ps = [...document.querySelectorAll('.leaflet-overlay-pane path')].filter((p) => p.getAttribute('stroke-width') === '4'); const r = ps[0]?.getBoundingClientRect(); return r ? Math.round(r.width) : 0; });
+  await page.click('.leaflet-control-zoom-in');
+  await sleep(500);
+  await page.click('.leaflet-control-zoom-in');
+  await sleep(700);
+  const before = await width();
+  const marker = await page.evaluateHandle(() => { const ms = [...document.querySelectorAll('.leaflet-overlay-pane path.leaflet-interactive')].filter((p) => { const r = p.getBoundingClientRect(); return r.width < 20 && r.left > 500 && r.left < 1300 && r.top > 50 && r.top < 850; }); return ms[0]; });
+  await marker.asElement()?.click();
+  await sleep(1200);
+  const after = await width();
+  check('map: clicking a stop keeps the zoom', before > 0 && Math.abs(after - before) <= 2, `${before} -> ${after}`);
+  check('no page errors', errors.length === 0, errors.join('; '));
+  await page.close();
+}
+
 await browser.close();
 console.log(`${total - failed}/${total} passed`);
 process.exit(failed ? 1 : 0);

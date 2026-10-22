@@ -4,7 +4,7 @@ import { LANGS, LangContext, makeT, type Lang } from './i18n';
 import { LangMenu } from './components/LangMenu';
 import { SettingsTab } from './components/SettingsTab';
 import { isFareCard, type FareCard } from './lib/fare';
-import { isSchoolPeriod, serviceDay } from './lib/holidays';
+import { isSchoolPeriod } from './lib/holidays';
 import { nowInMadeira } from './lib/time';
 import { DeparturesTab } from './components/DeparturesTab';
 import { LineView } from './components/LineView';
@@ -231,13 +231,6 @@ export function App() {
     [data, net, ctx, openConn, fareCard, plannerView, desktop, userPos, geo, locate, planner, applied, commit, recent, favorites, toggleFavorite, rememberTrip, clearRecent],
   );
 
-  const today = serviceDay(now);
-  const todayLabel =
-    today.type === null
-      ? t('noService')
-      : t(`day_${today.type}`) +
-        (today.reason === 'holiday' ? ` · ${t('reason_holiday')}: ${today.holiday?.name}` : today.reason === 'saturday-rule' ? ` · ${today.special}` : '');
-
   // height of the sticky header: pages put their own sticky bars right under it
   const headerRef = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -307,11 +300,6 @@ export function App() {
                   <Icon name="settings" className="size-5" />
                 </button>
               </div>
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-              <span className="min-w-0">
-                {t('timetableToday')}: <b className="font-semibold text-slate-700 dark:text-slate-200">{todayLabel}</b>
-              </span>
             </div>
             <nav className="mt-3 hidden grid-cols-4 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 lg:grid" aria-label="Tabs">
               {tabs.map((x) => (

@@ -79,15 +79,24 @@ export const LEG_COLORS = ['#38bdf8', '#f472b6', '#a78bfa', '#fb923c'];
 /** Address of the original timetable PDF of a line (the copy in the app when there is one). */
 export const pdfHref = (line: Line) => (line.pdfLocal ? assetUrl(line.pdfLocal) : line.pdfUrl);
 
+/** What a line badge shows: the number, or for a long label ("HF Areeiro", "Via Rápida") two or three initials ("PA", "VR"). */
+export function badgeText(line: Line): string {
+  if (line.number.length <= 4) return line.number;
+  const initials = (text: string) => text.replace(/\(.*?\)/g, ' ').split(/\s+/).filter((w) => w && !/^(d[aeo]s?|via|e)$/i.test(w)).map((w) => w[0].toUpperCase()).join('').slice(0, 3);
+  const fromName = initials(line.name);
+  return fromName.length >= 2 ? fromName : initials(line.number);
+}
+
 export function LineBadge({ line, large = false }: { line: Line; large?: boolean }) {
   const urban = line.type === 'urbano';
   return (
     <span
+      title={line.number}
       className={`inline-flex shrink-0 items-center justify-center rounded-lg font-bold tabular-nums tracking-tight text-white ${
         large ? 'h-10 min-w-14 px-3 text-xl' : 'h-7 min-w-11 px-2 text-sm'
       } ${urban ? 'bg-emerald-700' : 'bg-sky-700 dark:bg-sky-600'}`}
     >
-      {line.number}
+      {badgeText(line)}
     </span>
   );
 }

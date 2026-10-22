@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { darkTiles } from '../lib/tiles';
 import { loadShape } from '../data';
@@ -139,9 +139,14 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
     };
   }, [full]);
 
+  // the map is rebuilt when what it draws changes, not whenever the parent hands over equal layers (a tap on a stop does that: the view jumped back to the whole route)
+  const layersRef = useRef(layers);
+  layersRef.current = layers;
+  const layersKey = useMemo(() => JSON.stringify(layers), [layers]);
   useEffect(() => {
     const container = el.current;
     if (!container) return;
+    const layers = layersRef.current;
     setFailed(false);
     markers.current = new Map();
     const map = L.map(container, { scrollWheelZoom: fill, dragging: true, touchZoom: true, zoomControl: true });
@@ -209,7 +214,8 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
       mapRef.current = null;
       markers.current = new Map();
     };
-  }, [layers, t, fill]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layersKey, t, fill]);
 
   // user position: pulsing dot plus accuracy circle; centres the map on every new fix
   const meSeq = me?.seq;
@@ -228,7 +234,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
       dot.remove();
       ring.remove();
     };
-  }, [me, layers, t, fill]);
+  }, [me, layersKey, t, fill]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !me || meSeq === undefined) return;
