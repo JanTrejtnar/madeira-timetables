@@ -36,6 +36,21 @@ describe.skipIf(!existsSync(file))('Porto Santo (lines 991-995, CAM)', () => {
     expect(names.has('Calheta (Porto Santo)')).toBe(true);
     expect(resolveNodes(net, 'Calheta (Porto Santo)').size).toBe(1);
   });
+  it('plans Vila Baleira -> Aeroporto directly: the "a" trips (Termino Aeroporto, 07:15 and 18:10 from Calheta) run on to the airport', () => {
+    const d994 = line('994').directions.find((d) => d.to === 'AEROPORTO')!;
+    expect(d994.stops.at(-1)!.name).toBe('Aeroporto do Porto Santo');
+    expect(d994.departures.weekday_school!.map((x) => x.t)).toEqual(['07:15', '18:10']);
+    const morning = plan(net, trips, resolveNodes(net, 'Vila Baleira'), resolveNodes(net, 'Aeroporto do Porto Santo'), 7 * 60).direct;
+    const evening = plan(net, trips, resolveNodes(net, 'Vila Baleira'), resolveNodes(net, 'Aeroporto do Porto Santo'), 18 * 60).direct;
+    for (const found of [morning, evening]) {
+      expect(found.length).toBeGreaterThan(0);
+      expect(found[0].legs.every((leg) => leg.trip.line.number === '994')).toBe(true);
+    }
+    expect(morning[0].depart).toBeGreaterThanOrEqual(7 * 60 + 15);
+    expect(morning[0].depart).toBeLessThan(8 * 60);
+    expect(evening[0].depart).toBeGreaterThanOrEqual(18 * 60 + 10);
+    expect(evening[0].depart).toBeLessThan(19 * 60);
+  });
   it('plans Vila Baleira -> Calheta (Porto Santo) and the airport -> Calheta directly on line 994', () => {
     for (const [a, b] of [['Vila Baleira', 'Calheta (Porto Santo)'], ['Calheta (Porto Santo)', 'Vila Baleira'], ['Aeroporto do Porto Santo', 'Calheta (Porto Santo)']]) {
       const d = direct(a, b);

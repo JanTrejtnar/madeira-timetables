@@ -215,3 +215,39 @@ export function pinPatternStops(lines, root) {
   }
   return n;
 }
+
+/**
+ * Trips of a direction that follow another planner route get a direction of their own: 994 "Calheta" trips noted "a" (Termino Aeroporto)
+ * continue from the centre to the airport (route CalhetaAV); the others end at the centre. Appended after the existing directions.
+ * Run after pinPatternStops. Returns the number of directions added.
+ */
+const SPLIT_BY_NOTE = {
+  994: { CALHETA: { note: 'a', route: 'CalhetaAV', to: 'AEROPORTO' } },
+};
+export function splitDirectionsByNote(lines, root) {
+  const file = path.join(root, 'data', 'siga-patterns.json');
+  if (!existsSync(file)) return 0;
+  const { stops: table, lines: byLine } = JSON.parse(readFileSync(file, 'utf8'));
+  let n = 0;
+  for (const l of lines) {
+    const rule = SPLIT_BY_NOTE[l.number];
+    if (!rule) continue;
+    for (const d of [...l.directions]) {
+      const r = rule[String(d.from).toUpperCase()];
+      const p = r && (byLine[l.number] ?? []).find((x) => x.route === r.route);
+      if (!p || !d.stops.length) continue;
+      const departures = {};
+      for (const [day, list] of Object.entries(d.departures)) {
+        const moved = list.filter((x) => x.notes?.includes(r.note));
+        if (!moved.length) continue;
+        departures[day] = moved;
+        d.departures[day] = list.filter((x) => !x.notes?.includes(r.note));
+      }
+      if (!Object.keys(departures).length) continue;
+      const stops = p.stops.map((c) => ({ code: c, name: table[c][0].replace(/^Calheta término$/, 'Calheta (Porto Santo)'), lat: table[c][1], lon: table[c][2], locationPrecision: 'exact' }));
+      l.directions.push({ ...d, to: r.to, stops, stopOffsets: p.offsets, shapeId: null, departures });
+      n++;
+    }
+  }
+  return n;
+}
