@@ -25,6 +25,18 @@ export function useDataset() {
 
 export const assetUrl = url;
 
+/** Route files are cached per build stamp; this removes the copies of older builds (the `shapes` cache would otherwise keep both). */
+export async function pruneShapeCache(): Promise<void> {
+  try {
+    if (typeof caches === 'undefined') return;
+    const cache = await caches.open('shapes');
+    const keep = `?v=${encodeURIComponent(__BUILD_TIME__)}`;
+    for (const req of await cache.keys()) if (!req.url.endsWith(keep)) await cache.delete(req);
+  } catch {
+    // no Cache Storage (private mode, tests): nothing to prune
+  }
+}
+
 export async function loadShape(shapeId: number): Promise<[number, number][]> {
   // the build stamp in the URL: a regenerated route is never served from the cache of an older build (the file names stay the same)
   const r = await fetch(url(`data/shapes/${shapeId}.json?v=${encodeURIComponent(__BUILD_TIME__)}`));

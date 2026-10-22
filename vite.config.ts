@@ -36,10 +36,14 @@ export default defineConfig({
         // schedules + stop lists are precached; route geometries and PDFs are cached when first opened
         globPatterns: ['**/*.{js,css,html,svg,png}', 'data/schedules.json', 'data/pois.json', 'data/overview.json'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // a new service worker drops the precache of older builds when it activates and takes over open tabs at once
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
-          { urlPattern: /\/data\/shapes\/.*\.json(\?.*)?$/, handler: 'CacheFirst', options: { cacheName: 'shapes', expiration: { maxEntries: 400 } } },
-          { urlPattern: /\/pdf\/.*\.(pdf|jpg)$/, handler: 'CacheFirst', options: { cacheName: 'pdfs', expiration: { maxEntries: 200 } } },
-          { urlPattern: /^https:\/\/tile\.openstreetmap\.org\//, handler: 'CacheFirst', options: { cacheName: 'map-tiles', expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 } } },
+          { urlPattern: /\/data\/shapes\/.*\.json(\?.*)?$/, handler: 'CacheFirst', options: { cacheName: 'shapes', expiration: { maxEntries: 150, maxAgeSeconds: 60 * 60 * 24 * 7, purgeOnQuotaError: true } } },
+          { urlPattern: /\/pdf\/.*\.(pdf|jpg)$/, handler: 'CacheFirst', options: { cacheName: 'pdfs', expiration: { maxEntries: 200, purgeOnQuotaError: true } } },
+          { urlPattern: /^https:\/\/tile\.openstreetmap\.org\//, handler: 'CacheFirst', options: { cacheName: 'map-tiles', expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30, purgeOnQuotaError: true } } },
         ],
       },
     }),

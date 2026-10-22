@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDataset } from './data';
+import { pruneShapeCache, useDataset } from './data';
 import { LANGS, LangContext, makeT, type Lang } from './i18n';
 import { LangMenu } from './components/LangMenu';
 import { SettingsTab } from './components/SettingsTab';
@@ -93,6 +93,9 @@ export function App() {
   const setTheme = useCallback((v: ThemePref) => {
     setThemeState(v);
     store.set('theme', v);
+  }, []);
+  useEffect(() => {
+    void pruneShapeCache();
   }, []);
   useEffect(() => {
     applyTheme(theme);

@@ -91,6 +91,31 @@ try {
   const fromVal = await page.evaluate(() => document.querySelector('input:not([type=checkbox])')?.value);
   check('"Set as From" fills the planner', /Areeiro/i.test(fromVal ?? ''), fromVal);
 
+  // cache size: open several lines, simulate an older build's route files, reload -> old copies are pruned, total stays small
+  await page.evaluate(async () => { const c = await caches.open('shapes'); await c.put('/data/shapes/1020040.json?v=1999-01-01 00:00', new Response('[]')); });
+  // route files as the app requests them (through the service worker), the same file twice
+  const ids = await page.evaluate(async () => (await (await fetch('data/routes.json')).json()).shapes?.slice?.(0, 12) ?? null).catch(() => null);
+  const shapeIds = ids ?? [1020040, 1020041, 9001, 9002];
+  await page.evaluate(async (list, v) => { for (const id of [...list, ...list]) await (await fetch(`data/shapes/${id}.json?v=${v}`)).arrayBuffer(); }, shapeIds, encodeURIComponent(await page.evaluate(async () => { for (const sc of document.querySelectorAll('script[src]')) { const m = (await (await fetch(sc.src)).text()).match(/\d{4}-\d\d-\d\d \d\d:\d\d/); if (m) return m[0]; } return ''; })));
+  await page.reload({ waitUntil: 'networkidle0' });
+  await sleep(1500);
+  const sizes2 = await page.evaluate(async () => {
+    const out = { total: 0, shapes: [], names: [] };
+    for (const k of await caches.keys()) {
+      out.names.push(k);
+      for (const r of await (await caches.open(k)).keys()) {
+        const b = await (await (await caches.open(k)).match(r)).clone().blob();
+        out.total += b.size;
+        if (k === 'shapes') out.shapes.push(r.url);
+      }
+    }
+    return out;
+  });
+  check('old-build route copy is pruned', !sizes2.shapes.some((u) => u.includes('1999-01-01')), `${sizes2.shapes.length} shapes`);
+  check('no route file cached twice', new Set(sizes2.shapes.map((u) => u.split('?')[0])).size === sizes2.shapes.length);
+  check('only the current precache exists (no outdated workbox-precache)', sizes2.names.filter((n) => /precache/.test(n)).length === 1, sizes2.names.join(', '));
+  check('Cache Storage total under 5 MB', sizes2.total < 5 * 1024 * 1024, (sizes2.total / 1048576).toFixed(2) + ' MB');
+
   // offline: reload without network, data must still load, banner shown
   await page.setOfflineMode(true);
   await page.evaluate(() => window.dispatchEvent(new Event('offline')));
