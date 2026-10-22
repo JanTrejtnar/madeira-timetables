@@ -2,10 +2,12 @@
 // the map", state kept (and in the URL) after opening a line and going back, any date, line detail order.
 // Usage: node scripts/e2e-planner.mjs [baseUrl]    Phone and desktop viewport.
 import puppeteer from 'puppeteer-core';
+import { freezeClock } from './lib-e2e-clock.mjs';
 
 const base = process.argv[2] ?? 'http://localhost:5173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
+freezeClock(browser);
 const results = [];
 const check = (name, ok, extra = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${extra ? ' – ' + extra : ''}`); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

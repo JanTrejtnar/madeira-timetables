@@ -1,10 +1,12 @@
 // End-to-end checks: map clipped to the ridden stretch, no map/URL change while typing, full-screen map, departure grid, build stamp.
 // Needs the dev server (npx vite --port 5173).   Usage: node scripts/e2e-b2.mjs [baseUrl]
 import puppeteer from 'puppeteer-core';
+import { freezeClock } from './lib-e2e-clock.mjs';
 
 const base = process.argv[2] ?? 'http://localhost:5173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
+freezeClock(browser);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let failed = 0;
 const check = (name, ok, extra = '') => {

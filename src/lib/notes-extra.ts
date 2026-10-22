@@ -1,6 +1,10 @@
 // More note translations (Czech, English) for lines added later: SIGA Rodoeste / CAM sheets and manual transcriptions.
 // Place and stop names stay as printed.
 export const EXTRA: Record<string, [cs: string, en: string]> = {
+  'Serviço à chamada: solicitar a viagem através do 291 705 563 ou 965 059 005, até 10 minutos antes do horário estabelecido para o início da viagem. Se o passageiro não estiver na paragem 633 - Junta de Freguesia de São Roque, pode solicitar o serviço, para tal basta indicar a paragem de embarque e o destino pretendido (dentro da carreira 93).': [
+    'Jízda na zavolání: objednejte spoj na 291 705 563 nebo 965 059 005 nejpozději 10 minut před stanoveným odjezdem. Pokud nejste na zastávce 633 – Junta de Freguesia de São Roque, stačí uvést zastávku nástupu a cíl (v rámci linky 93).',
+    'On request: book the trip on 291 705 563 or 965 059 005 up to 10 minutes before the scheduled departure. If you are not at stop 633 – Junta de Freguesia de São Roque, just give the boarding stop and your destination (within line 93).',
+  ],
   'No horário de Inverno esta viagem é realizada pelas 18h00': ['V zimním jízdním řádu (25. 10.–27. 3.) se tato jízda koná v 18:00.', 'In the winter timetable (25 Oct–27 Mar) this trip runs at 18:00.'],
   'Horário de Verão: 29/03/2026 a 24/10/2026 (última viagem 19h00). Horário de Inverno: 25/10/2026 a 27/03/2027 (última viagem 18h00).': [
     'Letní jízdní řád: 29. 3. 2026–24. 10. 2026 (poslední jízda v 19:00). Zimní: 25. 10. 2026–27. 3. 2027 (poslední jízda v 18:00).',

@@ -1,12 +1,14 @@
 // Opens every line with parsed times in the running dev server (phone viewport) and checks that the page renders without
 // errors, shows departure times and not the "could not parse" warning. Usage: node scripts/e2e-all-lines.mjs [baseUrl]
 import puppeteer from 'puppeteer-core';
+import { freezeClock } from './lib-e2e-clock.mjs';
 
 const base = process.argv[2] ?? 'http://localhost:5173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const data = await (await fetch(`${base}data/schedules.json`)).json();
 const lines = data.lines.filter((l) => l.hasParsedSchedule);
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
+freezeClock(browser);
 const page = await browser.newPage();
 await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
 const errors = [];

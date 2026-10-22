@@ -39,6 +39,8 @@ let estimated = 0;
 const rejected = [];
 for (const l of data.lines) {
   Object.assign((l.notes ??= {}), noteFixes[l.number] ?? {});
+  // a trailing "/" is the separator in front of the English half of a bilingual legend entry
+  for (const [k, v] of Object.entries(l.notes)) l.notes[k] = String(v).replace(/\s*\/\s*$/, '');
   delete l.warnings; // parser diagnostics are not needed in the app
   const why = classifyLine(l, path.join(ROOT, 'data', 'shapes'));
   if (why) reclassified.push(`${l.number}: ${why}`);

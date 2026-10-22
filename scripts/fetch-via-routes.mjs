@@ -83,10 +83,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
           if (!stopAt || stopAt.to === undefined || stopAt.to <= stopAt.from) continue;
           const r = await osrm([{ p: [a.lat, a.lon], r: STOP_RADIUS_M }, ...list.map((p) => ({ p: [p.lat, p.lon], r: PLACE_RADIUS_M })), { p: [b.lat, b.lon], r: STOP_RADIUS_M }]);
           await sleep(400);
-          // a detour is a few km longer than the road it replaces; much more means the router took another way round
+          // a detour is a few km longer than the road it replaces (5 km for every place it visits: out to a spur and back); much more means the router took another way round
           let own = 0;
           for (let i = stopAt.from + 1; i <= stopAt.to; i++) own += hav(poly[i - 1], poly[i]);
-          if (r && r.km > own * 2.5 + 4) { console.warn('skipped (route', r.km.toFixed(1), 'km vs', own.toFixed(1), 'km of the line)', line.number, code, di, after); continue; }
+          if (r && r.km > own * 2.5 + 5 * list.length) { console.warn('skipped (route', r.km.toFixed(1), 'km vs', own.toFixed(1), 'km of the line)', line.number, code, di, after); continue; }
           if (!r) { console.warn('no route', line.number, code, di, after); continue; }
           out[key] = { sig, a: poly[stopAt.from], b: poly[stopAt.to], km: +r.km.toFixed(2), pts: r.pts };
           fetched++;

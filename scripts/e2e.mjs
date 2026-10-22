@@ -1,10 +1,12 @@
 // End-to-end smoke test: drives the running dev server (npm run dev / dev:mobile) in headless Chrome at phone size.
 // Text based on purpose (the UI is restyled often).   Usage: node scripts/e2e.mjs [baseUrl]
 import puppeteer from 'puppeteer-core';
+import { freezeClock } from './lib-e2e-clock.mjs';
 
 const base = process.argv[2] ?? 'http://localhost:5173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
+freezeClock(browser);
 const page = await browser.newPage();
 await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
 const errors = [];

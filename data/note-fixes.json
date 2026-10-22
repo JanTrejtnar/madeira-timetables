@@ -1,5 +1,5 @@
 {
-  "_comment": "Legend texts that the PDF parser cuts off (a note that wraps onto a second line, or a footnote it does not read). Applied to the line's notes before anything else: { lineNumber: { code: text } }.",
+  "_comment": "Legend texts that the PDF parser cuts off (a note that wraps onto a second line, or a footnote it does not read). Applied to the line's notes before anything else: { lineNumber: { code: text } }. Found with scripts/audit-notes.mjs (run it after a re-parse).",
   "fixes": {
     "181": {
       "b": "Via Fajã dos Cardos - Eira do Serrado",
@@ -7,6 +7,25 @@
       "*": "Serviço à chamada para Eira do Serrado: quem sai de Eira do Serrado marca o serviço pelo telefone 291 705 563 ou 965 059 005 até às 24h00 do dia anterior; quem vai para Eira do Serrado avisa o motorista à entrada no autocarro.",
       "g": "Em dias não letivos, só via Fajã dos Cardos",
       "h": "Transbordo de/para Terra Chã de Cima e Seara Velha de Baixo"
+    },
+    "005": {
+      "a": "Termina na paragem Centro C Bom Jesus (921)"
+    },
+    "028": {
+      "a": "Inicia na paragem Galerias D João (177A)"
+    },
+    "115": {
+      "b": "Termina na paragem Tribunal, D (150A)"
+    },
+    "601": {
+      "b": "Em dias letivos via Palheiro Ferreiro. Em dias não letivos via Largo da Achada e Palheiro Ferreiro, com passagem no Camacha Shopping às 07h15."
+    },
+    "625": {
+      "E": "Expresso (Pela via rápida)",
+      "f": "Até/Do Rochão (Borracheiro) - Expresso"
+    },
+    "093": {
+      "*": "Serviço à chamada: solicitar a viagem através do 291 705 563 ou 965 059 005, até 10 minutos antes do horário estabelecido para o início da viagem. Se o passageiro não estiver na paragem 633 - Junta de Freguesia de São Roque, pode solicitar o serviço, para tal basta indicar a paragem de embarque e o destino pretendido (dentro da carreira 93)."
     }
   }
 }

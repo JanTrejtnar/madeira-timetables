@@ -25,8 +25,12 @@ describe.skipIf(!existsSync(file))('Funchal -> Eira do Serrado (line 181, trips 
       }
     }
     // the road through the place is routed as a spur from that stretch
-    expect(Object.keys(line.viaRoutes ?? {})).toEqual(expect.arrayContaining(['b|0|42', 'b|1|24', 'c|1|24']));
-    for (const key of ['b|0|42', 'c|1|24']) expect(line.viaRoutes![key].pts.some(([la, lo]) => Math.hypot((la - 32.710657) * 110540, (lo + 16.96188) * 93000) < 120)).toBe(true);
+    expect(Object.keys(line.viaRoutes ?? {})).toEqual(expect.arrayContaining(['b|0|42', 'b|1|24', 'c|1|24', 'e|1|24', 'e|0|45']));
+    for (const key of ['b|0|42', 'c|1|24', 'e|1|24']) expect(line.viaRoutes![key].pts.some(([la, lo]) => Math.hypot((la - 32.710657) * 110540, (lo + 16.96188) * 93000) < 120)).toBe(true);
+    // variant e (Curral -> Funchal over Fajã Escura and Eira) is routed too, through both places
+    const near = (key: string, la: number, lo: number) => line.viaRoutes![key].pts.some(([a, b]) => Math.hypot((a - la) * 110540, (b - lo) * 93000) < 150);
+    expect(near('e|1|24', 32.731757, -16.970856)).toBe(true);
+    expect(near('e|0|45', 32.731757, -16.970856)).toBe(true);
   });
   it('the viewpoint of the places list (picked as a place) stands for the Eira do Serrado stop, and a connection is found', () => {
     const near = nodesNearPoint(net, 32.7083, -16.9633);

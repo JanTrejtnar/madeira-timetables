@@ -3,10 +3,12 @@
 // and a different colour + legend per bus of a transfer on the map.
 // Usage: node scripts/e2e-ux.mjs [baseUrl]   (dev server `npx vite --port 5173` or the preview of a build)
 import puppeteer from 'puppeteer-core';
+import { freezeClock } from './lib-e2e-clock.mjs';
 
 const base = process.argv[2] ?? 'http://localhost:5173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
+freezeClock(browser);
 let failed = 0;
 let total = 0;
 const check = (name, ok, extra = '') => {

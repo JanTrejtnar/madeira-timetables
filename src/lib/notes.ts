@@ -99,9 +99,9 @@ const EXACT: Record<string, Tr> = {
   'Efetua de seguida o trajeto da carreira 020/ 020': ['Poté jede po trase linky 020', 'Then follows the route of line 020'],
   'Efetua de seguida o trajeto da carreira 021': ['Poté jede po trase linky 021', 'Then follows the route of line 021'],
   'Efetua o trajeto da carreira 001': ['Jede po trase linky 001', 'Follows the route of line 001'],
-  'Em dias letivos via Palheiro Ferreiro. Em dias não letivos via Largo da': [
-    'Ve školní dny přes Palheiro Ferreiro. Ve dny mimo školní výuku přes Largo da',
-    'On school days via Palheiro Ferreiro. On non-school days via Largo da',
+  'Em dias letivos via Palheiro Ferreiro. Em dias não letivos via Largo da Achada e Palheiro Ferreiro, com passagem no Camacha Shopping às 07h15.': [
+    'Ve školní dny přes Palheiro Ferreiro. Ve dny mimo školní výuku přes Largo da Achada a Palheiro Ferreiro, s průjezdem Camacha Shopping v 7:15.',
+    'On school days via Palheiro Ferreiro. On non-school days via Largo da Achada and Palheiro Ferreiro, passing Camacha Shopping at 07:15.',
   ],
   'Em dias não letivos, só via': ['Ve dny mimo školní výuku jen přes', 'On non-school days only via'],
   'Entre a Vargem e as Fontes': ['Mezi Vargem a Fontes', 'Between Vargem and Fontes'],
@@ -246,6 +246,7 @@ const RULES: [RegExp, Tr][] = [
   [/^CL-(\d{1,2}:\d{2})$/, ['Câmara de Lobos $1', 'Câmara de Lobos $1']],
   [/^até paragem (.+)$/i, ['Do zastávky $1', 'To stop $1']],
   [/^até\s*\/\s*(?:dos?|das?|de)\s+(.+)$/i, ['Do / z $1', 'To / from $1']],
+  [/^termina na paragem (.+)$/i, ['Končí na zastávce $1', 'Ends at stop $1']],
   [/^inicia na paragem (.+)$/i, ['Začíná na zastávce $1', 'Starts at stop $1']],
   [/^com passagem (?:pelo|pela|por) (.+)$/i, ['s průjezdem přes $1', 'passing through $1']],
   [/^at[eé] (.+)$/i, ['Do $1', 'To $1']],
