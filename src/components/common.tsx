@@ -73,6 +73,12 @@ export interface Shared {
 export const lineColor = (line: Line) => (line.type === 'urbano' ? '#10b981' : '#38bdf8');
 export const lineRailCls = (line: Line) => (line.type === 'urbano' ? 'bg-emerald-600' : 'bg-sky-600 dark:bg-sky-400');
 
+/** Colours of the buses of one connection with a transfer (rails of the detail, lines of the maps and their legend): easy to tell apart on a dark map. */
+export const LEG_COLORS = ['#38bdf8', '#f472b6', '#a78bfa', '#fb923c'];
+
+/** Address of the original timetable PDF of a line (the copy in the app when there is one). */
+export const pdfHref = (line: Line) => (line.pdfLocal ? assetUrl(line.pdfLocal) : line.pdfUrl);
+
 export function LineBadge({ line, large = false }: { line: Line; large?: boolean }) {
   const urban = line.type === 'urbano';
   return (
@@ -105,7 +111,7 @@ export function dirLabel(dir: Direction, fallback: string): string {
 
 export function PdfButton({ line, big = false }: { line: Line; big?: boolean }) {
   const { t } = useT();
-  const href = line.pdfLocal ? assetUrl(line.pdfLocal) : line.pdfUrl;
+  const href = pdfHref(line);
   return (
     <div className="flex flex-col gap-1.5">
       <a
@@ -351,12 +357,12 @@ export type LineTypeFilter = 'all' | 'interurbano' | 'urbano';
 export const matchesType = (line: Line, f: LineTypeFilter) => f === 'all' || line.type === f;
 
 /** Segmented switch: all / intercity (interurbano) / urban (urbano). */
-export function TypeFilter({ value, onChange, className = '' }: { value: LineTypeFilter; onChange: (v: LineTypeFilter) => void; className?: string }) {
+export function TypeFilter({ value, onChange, className = '', urbanLabel }: { value: LineTypeFilter; onChange: (v: LineTypeFilter) => void; className?: string; urbanLabel?: string }) {
   const { t } = useT();
   const items: [LineTypeFilter, string][] = [
     ['all', t('typeAll')],
     ['interurbano', t('typeInter')],
-    ['urbano', t('typeUrban')],
+    ['urbano', urbanLabel ?? t('typeUrban')],
   ];
   return (
     <div className={`inline-flex rounded-full bg-slate-100 p-0.5 dark:bg-slate-800 ${className}`} role="group" aria-label={t('lines')}>

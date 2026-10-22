@@ -31,3 +31,8 @@ export function stopLabel(stop: { name: string; terminal?: string }, lang: 'cs' 
   const terminal = stop.terminal ? TERMINALS[stop.terminal] : undefined;
   return terminal && stop.name.trim().toLowerCase() === 'funchal' ? `${name} (${terminal})` : name;
 }
+
+/** A saved or picked place without the "(all stops)" qualifier of a whole town or parish: just "Funchal". */
+export function plainPlace(text: string, allStopsSuffix: string, lang: 'cs' | 'en' | 'pt'): string {
+  return localStopName(allStopsSuffix && text.endsWith(allStopsSuffix) ? text.slice(0, -allStopsSuffix.length).trimEnd() : text, lang);
+}

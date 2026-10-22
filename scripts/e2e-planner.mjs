@@ -84,11 +84,9 @@ async function run(label, viewport) {
   // walking leg + persistent pin for the picked destination
   await typeIn('Odkud', 'Funchal');
   await page.keyboard.press('Enter');
-  await page.click('[data-testid=time-trigger]');
-  await page.focus('[data-testid=time-input]');
-  await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');
-  await page.keyboard.type('08:00');
-  await page.keyboard.press('Enter');
+  await page.click('[data-testid=depart-trigger]');
+  await page.select('[data-testid=depart-hour]', '8');
+  await page.select('[data-testid=depart-minute]', '0');
   await page.keyboard.press('Escape');
   await page.click('[data-testid=search-button]');
   await sleep(1500);
@@ -128,19 +126,21 @@ async function run(label, viewport) {
   await page.evaluate(() => { const i = document.querySelector('input[aria-label="Kam"]'); i.focus(); });
 
   // 7. any date + holiday detection
+  let info = '';
   const dateSet = async (iso) => {
-    await page.keyboard.press('Escape'); // the open suggestion list of the focused field may lie over the date button
-    await page.click('[data-testid=date-trigger]');
-    for (let k = 0; k < 24 && !(await page.$(`[data-date="${iso}"]`)); k++) await page.click('button[aria-label="Další měsíc"]');
-    await page.click(`[data-date="${iso}"]`);
+    await page.keyboard.press('Escape'); // the open suggestion list of the focused field may lie over the picker button
+    if (!(await page.$('[data-testid=depart-date]'))) await page.click('[data-testid=depart-trigger]');
+    await page.select('[data-testid=depart-date]', iso);
     await sleep(300);
+    info = await page.evaluate(() => document.querySelector('[data-testid=day-info]')?.innerText);
+    await page.keyboard.press('Escape');
+    await sleep(200);
   };
-  check(`${label}: date picker next to Dnes / Zítra`, (await page.$('[data-testid=date-trigger]')) !== null);
+  check(`${label}: one "Odjezd nyní" picker replaces the Dnes / Zítra switch and the date button`, (await page.$('[data-testid=depart-trigger]')) !== null && (await page.$('[data-testid=date-trigger]')) === null);
   await dateSet('2026-12-08');
-  const info = await page.evaluate(() => document.querySelector('[data-testid=day-info]')?.innerText);
   check(`${label}: 8 Dec 2026 is shown as a holiday (Sunday timetable)`, /Svátek|Neděle|Imaculada|Conceição/i.test(info ?? ''), info);
   await dateSet('2026-12-25');
-  const info2 = await page.evaluate(() => document.querySelector('[data-testid=day-info]')?.innerText);
+  const info2 = info;
   check(`${label}: 25 Dec: no service`, /bez provozu|Nejezdí|provoz/i.test(info2 ?? ''), info2);
   await dateSet('2026-12-09');
 
@@ -177,7 +177,7 @@ async function run(label, viewport) {
   const times = (await text()).match(/\d\d:\d\d/g)?.length ?? 0;
   await page.click('[data-testid=edit-search]');
   await sleep(300);
-  const after = { from: await value('Odkud'), to: await value('Kam'), url: await page.evaluate(() => location.search), date: await page.evaluate(() => document.querySelector('[data-testid=date-trigger]')?.dataset.value) };
+  const after = { from: await value('Odkud'), to: await value('Kam'), url: await page.evaluate(() => location.search), date: (await page.evaluate(() => document.querySelector('[data-testid=depart-trigger]')?.dataset.value))?.slice(0, 10) };
   check(`${label}: Back restores Odkud / Kam / date`, after.from === before.from && after.to === before.to && after.date === '2026-12-09', JSON.stringify(after));
   check(`${label}: and the previous results are shown again`, times >= 4, `${times} times`);
 

@@ -143,6 +143,8 @@ export interface MapLayer {
   shapeId: number | null;
   stops: Stop[];
   color: string;
+  /** a connection with a transfer: this bus in the map legend (line number and where it is ridden) */
+  legend?: { badge: string; text: string };
   /** road routes through "Via" places of the drawn trip, spliced into the shape */
   detours?: ViaRoute[];
   /** planner leg: only the stretch from stop `from` to stop `to` of `stops` is drawn in full colour, the rest of the line faintly (`stops` = every stop of the trip, [lat, lon]) */

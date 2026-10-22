@@ -1,8 +1,9 @@
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useT, type Key } from '../i18n';
 import { localStopName } from '../lib/text';
 import { detoursFor } from '../lib/via';
-import { addDays, serviceDay } from '../lib/holidays';
+import { serviceDay } from '../lib/holidays';
+import { plainPlace } from '../lib/text';
 import { CITY_PREFIX, PARISH_PREFIX, FAR_PLACE_M, NEAR_PLACE_M, hubsNear, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
 import { norm } from '../lib/search';
 import { KIND_META, isPoiKey, loadPlaces, poiKey, searchPlaces, type Place, type PlaceIndex } from '../lib/places';
@@ -11,13 +12,14 @@ import { sameTrip } from '../lib/trips-store';
 import { isoToYmd, ymdToIso, type Picked, type PlannerForm } from '../lib/plannerForm';
 import { plan } from '../lib/router';
 import { useDebounced } from '../lib/hooks';
-import { DatePicker, TimePicker } from './Pickers';
-import { ConnectionCard, ConnectionDetail } from './Connection';
+import { DepartPicker } from './Pickers';
+import { ConnectionCard, ConnectionDetail, shortDate } from './Connection';
 import { walkTo } from '../lib/walk';
 import type { MapLayer, MapPin as PickedPin } from '../types';
 import { OPERATORS, operatorOf, type OperatorId } from '../lib/operators';
-import { Card, Chip, EmptyState, EstTag, lineColor, SectionTitle, type Shared } from './common';
+import { Card, Chip, EmptyState, EstTag, LEG_COLORS, lineColor, TypeFilter, matchesType, type Shared } from './common';
 import { Icon } from './Icons';
+import type { LineTypeFilter } from './common';
 import { MapPicker, PICK_RADIUS_M } from './MapPicker';
 import { RouteMap } from './RouteMap';
 import { TripShortcuts } from './TripShortcuts';
@@ -73,7 +75,7 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
     if (active >= 0) box.current?.querySelector(`[id="${listId}-${active}"]`)?.scrollIntoView({ block: 'nearest' });
   }, [active, listId]);
 
-  // "(all stops)" is a qualifier, not part of the name: smaller and lighter, beside the field and in the list
+  // "(all stops)" is a qualifier, not part of the name: the field shows just "Funchal", the list keeps the qualifier in a lighter tone
   const suffix = t('allStopsOf', { name: '' }).trim();
   const isGroupValue = !!value.key && (value.key.startsWith(PARISH_PREFIX) || value.key.startsWith(CITY_PREFIX)) && value.text.endsWith(suffix);
   const shownText = isGroupValue ? value.text.slice(0, -suffix.length).trimEnd() : value.text;
@@ -129,11 +131,6 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
         spellCheck={false}
         className="h-11 min-w-[4.5rem] flex-1 rounded-lg bg-transparent px-2 text-base font-medium outline-none placeholder:font-normal placeholder:text-slate-400 focus:bg-slate-50 dark:focus:bg-slate-800/60"
       />
-      {isGroupValue && (
-        <span className="min-w-0 max-w-[40%] truncate pr-1 text-[11px] text-slate-400" data-testid="group-suffix">
-          {suffix}
-        </span>
-      )}
       {value.text && (
         <button
           type="button"
@@ -209,10 +206,10 @@ function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPic
 }
 
 /** "Advanced search": collapsed by default; the operators to travel with (none ticked = all) and direct connections only. */
-function AdvancedSearch({ ops, directOnly, onOps, onDirect }: { ops: OperatorId[]; directOnly: boolean; onOps: (v: OperatorId[]) => void; onDirect: (v: boolean) => void }) {
+function AdvancedSearch({ ops, directOnly, type, onOps, onDirect, onType }: { ops: OperatorId[]; directOnly: boolean; type: LineTypeFilter; onOps: (v: OperatorId[]) => void; onDirect: (v: boolean) => void; onType: (v: LineTypeFilter) => void }) {
   const { t } = useT();
-  const [open, setOpen] = useState(ops.length > 0 || directOnly);
-  const active = ops.length + (directOnly ? 1 : 0);
+  const [open, setOpen] = useState(ops.length > 0 || directOnly || type !== 'all');
+  const active = ops.length + (directOnly ? 1 : 0) + (type !== 'all' ? 1 : 0);
   return (
     <div className="border-t border-slate-100 pt-1 dark:border-slate-800" data-testid="advanced">
       <button
@@ -228,7 +225,11 @@ function AdvancedSearch({ ops, directOnly, onOps, onDirect }: { ops: OperatorId[
       </button>
       {open && (
         <div className="flex flex-col gap-2 px-1 pb-1 pt-1">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('operatorsLabel')}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('connectionType')}</p>
+          <div data-testid="type-filter">
+            <TypeFilter value={type} onChange={onType} urbanLabel={t('typeUrbanCity')} className="max-w-full" />
+          </div>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('operatorsLabel')}</p>
           <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('operatorsLabel')}>
             {OPERATORS.map((o) => {
               const on = ops.includes(o.id);
@@ -264,17 +265,16 @@ const HUB_WALK_M = 650;
 export function PlannerTab({ shared }: { shared: Shared }) {
   const { t, lang } = useT();
   const { planner, setPlanner, applied, commit } = shared;
-  const { from, to, time, ops, directOnly } = planner;
+  const { from, to, time, ops, directOnly, type } = planner;
   const patch = (p: Partial<PlannerForm>) => setPlanner((f) => ({ ...f, ...p }));
   const setFrom = (v: Picked) => {
     setLocNote(null);
     patch({ from: v });
   };
   const setTo = (v: Picked) => patch({ to: v });
-  const setTime = (v: string) => patch({ time: v });
   // the connection opened in the detail page (null = the list of results)
   // a stored connection belongs to the search it was opened for: another search (or day, time, filter) starts at the list again
-  const searchSig = JSON.stringify([applied.from, applied.to, planner.date, planner.time, planner.ops, planner.directOnly, shared.ctx.school]);
+  const searchSig = JSON.stringify([applied.from, applied.to, planner.date, planner.time, planner.ops, planner.directOnly, planner.type, shared.ctx.school]);
   const { openConn, setOpenConn } = shared;
   const openKey = openConn?.startsWith(`${searchSig}`) ? openConn.slice(searchSig.length + 1) : null;
   const setOpenKey = (k: string | null) => setOpenConn(k === null ? null : `${searchSig}${k}`);
@@ -310,7 +310,6 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const { y: ny, m: nm, d: nd } = shared.ctx.now;
   const today = useMemo(() => ({ y: ny, m: nm, d: nd }), [ny, nm, nd]);
   const todayIso = ymdToIso(today);
-  const tomorrowIso = ymdToIso(addDays(today, 1));
   // the chosen day (any date); null = today
   const date = useMemo(() => isoToYmd(planner.date) ?? today, [planner.date, today]);
   const dateIso = ymdToIso(date);
@@ -321,10 +320,15 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   // results and map follow the applied values: a picked suggestion / map point or Enter, never the keystrokes
   const dFrom = applied.from;
   const dTo = applied.to;
-  const [h, m] = time.split(':').map(Number);
-  const departAt = (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
-
   const searched = shared.plannerView === 'results';
+  // "leave now": the clock is read while the form is open and frozen once the results are shown, so the list does not shift under the reader
+  const [frozenNow, setFrozenNow] = useState(shared.ctx.now.minutes);
+  useEffect(() => {
+    if (!searched) setFrozenNow(shared.ctx.now.minutes);
+  }, [searched, shared.ctx.now.minutes]);
+  const [h, m] = (time ?? '').split(':').map(Number);
+  const departAt = time === null ? frozenNow : (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
+
   const result = useMemo(() => {
     if (!searched) return null;
     // a picked place (beach, hotel, viewpoint ...) stands for the stops within walking distance of it; a stop or area for its own nodes
@@ -340,7 +344,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const A = na.ids;
     const B = nb.ids;
     if (!dFrom.text.trim() || !dTo.text.trim()) return null;
-    const only = ops.length ? trips.filter((tr) => ops.includes(operatorOf(tr.line))) : trips;
+    const only = trips.filter((tr) => matchesType(tr.line, type) && (!ops.length || ops.includes(operatorOf(tr.line))));
     // walking from a picked start point: a bus counts only when it leaves after departAt + the walk to its stop
     let walkIn: Map<number, number> | undefined;
     if (dFrom.pt) {
@@ -373,19 +377,21 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const missing = na.place && A.size === 0 ? dFrom.text : nb.place && B.size === 0 ? dTo.text : null;
     const far = na.widened ? dFrom.text : nb.widened ? dTo.text : null;
     return { A: A.size, B: B.size, missing, far, plan: directOnly ? { ...found, transfers: [] } : found };
-  }, [shared.net, trips, dFrom, dTo, departAt, ops, directOnly, searched]);
+  }, [shared.net, trips, dFrom, dTo, departAt, ops, directOnly, type, searched]);
 
   const empty = result && !result.plan.direct.length && !result.plan.transfers.length;
   const all = useMemo(
-    () => (result ? [...result.plan.direct.map((it, i) => ({ key: `d${i}`, it })), ...result.plan.transfers.map((it, i) => ({ key: `t${i}`, it }))] : []),
+    () =>
+      result
+        ? [...result.plan.direct.map((it, i) => ({ key: `d${i}`, it })), ...result.plan.transfers.map((it, i) => ({ key: `t${i}`, it }))].sort((a, b) => a.it.depart - b.it.depart || a.it.finish - b.it.finish)
+        : [],
     [result],
   );
   const anyEstimated = all.some(({ it }) => it.legs.some((l) => l.departEstimated || l.arriveEstimated));
   const selected = all.find((x) => x.key === openKey) ?? all[0];
   const opened = openKey !== null && selected?.key === openKey ? selected : null;
   // the "(all stops)" qualifier is noise in a one-line summary
-  const allSuffix = t('allStopsOf', { name: '' }).trim();
-  const plain = (text: string) => localStopName(text.endsWith(allSuffix) ? text.slice(0, -allSuffix.length).trimEnd() : text, lang);
+  const plain = (text: string) => plainPlace(text, t('allStopsOf', { name: '' }).trim(), lang);
   const startSearch = () => {
     commit({ from, to });
     shared.setPlannerView('results');
@@ -452,14 +458,16 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     return legs.map((l, i) => ({
       shapeId: l.trip.dir.shapeId,
       stops: tripStops(l.trip).slice(l.fromPos, l.toPos + 1),
-      color: lineColor(l.trip.line),
+      // with a transfer every bus gets its own colour and a place in the legend
+      color: legs.length > 1 ? LEG_COLORS[i % LEG_COLORS.length] : lineColor(l.trip.line),
+      ...(legs.length > 1 ? { legend: { badge: l.trip.line.number, text: `${localStopName(tripStops(l.trip)[l.fromPos].name, lang)} → ${localStopName(tripStops(l.trip)[l.toPos].name, lang)}` } } : {}),
       detours: detoursFor(l.trip.line, l.trip.dirIndex, l.trip.notes),
       ride: { stops: tripStops(l.trip).map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), from: l.fromPos, to: l.toPos },
       ...(i === 0 && pins.length ? { pins } : {}),
       ...(i === 0 && transfers.length ? { transfers } : {}),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, dFrom.pt, dTo.pt, footSig, t]);
+  }, [selected, dFrom.pt, dTo.pt, footSig, t, lang]);
   const layers = rawLayers;
   const { desktop, setMap } = shared;
   useEffect(() => {
@@ -478,21 +486,6 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   }, [searchable, dFrom, dTo, rememberTrip]);
   const starred = !!dFrom.text.trim() && !!dTo.text.trim() && shared.favorites.some((f) => sameTrip(f, { from: dFrom, to: dTo }));
 
-  const renderList = (title: ReactNode, key: 'd' | 't') => {
-    const rows = all.filter((x) => x.key.startsWith(key));
-    if (!rows.length) return null;
-    return (
-      <section>
-        <SectionTitle>{title}</SectionTitle>
-        <div className="flex flex-col gap-3">
-          {rows.map(({ key: k, it }) => (
-            <ConnectionCard key={k} it={it} shared={shared} date={dateIso} base={date} selected={selected?.key === k} onOpen={() => openConnection(k)} fromPt={dFrom.pt} toPt={dTo.pt} />
-          ))}
-        </div>
-      </section>
-    );
-  };
-
   const estimatedNote = anyEstimated ? (
     <p className="flex items-start gap-2 px-1 text-xs text-slate-500">
       <EstTag>~</EstTag>
@@ -505,7 +498,6 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       <ConnectionDetail
         it={opened.it}
         shared={shared}
-        date={dateIso}
         base={date}
         onBack={closeConnection}
         fromPt={dFrom.pt}
@@ -563,30 +555,17 @@ export function PlannerTab({ shared }: { shared: Shared }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
-          <TimePicker value={time} onChange={setTime} />
-          <div className="ml-auto inline-flex rounded-full bg-slate-100 p-0.5 dark:bg-slate-800" role="group">
-            {([null, tomorrowIso] as const).map((o) => {
-              const on = dateIso === (o ?? todayIso);
-              return (
-                <button
-                  key={o ?? 'today'}
-                  aria-pressed={on}
-                  onClick={() => patch({ date: o })}
-                  className={`h-8 rounded-full px-3 text-sm font-medium transition-colors ${on ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
-                >
-                  {o === null ? t('dayToday') : t('dayTomorrow')}
-                </button>
-              );
-            })}
-          </div>
-          <DatePicker value={dateIso} today={today} municipalities={shared.ctx.municipalities} onChange={(iso) => patch({ date: iso === todayIso ? null : iso })} />
-          <p className="w-full px-1 text-xs text-slate-500 dark:text-slate-400" data-testid="day-info">
-            {dayInfo.type === null ? t('noService') : t(`day_${dayInfo.type}`)}
-            {dayInfo.reason === 'holiday' ? ` · ${t('reason_holiday')}: ${dayInfo.holiday?.name}` : dayInfo.reason === 'saturday-rule' ? ` · ${dayInfo.special}` : dayInfo.holiday ? ` · ${dayInfo.holiday.name}` : ''}
-          </p>
+        <div className="border-t border-slate-100 pt-3 dark:border-slate-800">
+          <DepartPicker
+            time={time}
+            date={planner.date}
+            today={today}
+            nowMinutes={shared.ctx.now.minutes}
+            note={`${dayInfo.type === null ? t('noService') : t(`day_${dayInfo.type}`)}${dayInfo.reason === 'holiday' ? ` · ${t('reason_holiday')}: ${dayInfo.holiday?.name}` : dayInfo.reason === 'saturday-rule' ? ` · ${dayInfo.special}` : dayInfo.holiday ? ` · ${dayInfo.holiday.name}` : ''}`}
+            onChange={(v) => patch(v)}
+          />
         </div>
-        <AdvancedSearch ops={ops} directOnly={directOnly} onOps={(v) => patch({ ops: v })} onDirect={(v) => patch({ directOnly: v })} />
+        <AdvancedSearch ops={ops} directOnly={directOnly} type={type} onOps={(v) => patch({ ops: v })} onDirect={(v) => patch({ directOnly: v })} onType={(v) => patch({ type: v })} />
         <button
           type="button"
           onClick={startSearch}
@@ -602,6 +581,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       {!searched && <TripShortcuts shared={shared} />}
 
       {searched && (
+        <div className="sticky top-(--header-h,0px) z-30 -mx-4 -mt-4 bg-slate-50/95 px-4 pb-1.5 pt-2.5 backdrop-blur dark:bg-slate-950/95 lg:top-0">
         <div className="flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white p-2 pr-3 dark:border-slate-700/70 dark:bg-slate-900" data-testid="search-summary">
           <button
             type="button"
@@ -618,7 +598,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
               {plain(dFrom.text)} → {plain(dTo.text)}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {dateIso === todayIso ? t('dayToday') : dateIso === tomorrowIso ? t('dayTomorrow') : dateIso} · {time}
+              {time === null ? t('departNow') : `${dateIso === todayIso ? t('whenToday') : shortDate(date, lang)} ${time}`}
+              {type !== 'all' && ` · ${type === 'urbano' ? t('typeUrbanCity') : t('typeInter')}`}
               {ops.length > 0 && ` · ${ops.map((id) => OPERATORS.find((o) => o.id === id)?.name).join(', ')}`}
               {directOnly && ` · ${t('directShort')}`}
             </p>
@@ -635,6 +616,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
             <Icon name="star" className={`size-5 ${starred ? 'fill-amber-400 text-amber-500' : ''}`} />
           </button>
         </div>
+        </div>
       )}
 
       {searched && !result && <EmptyState icon="route" title={t('plannerEmptyTitle')} body={t('plannerHint')} />}
@@ -645,11 +627,11 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         </p>
       )}
       {empty && result.A > 0 && result.B > 0 && <EmptyState icon="frown" title={t('noConnectionTitle')} body={t('noConnectionBody')} />}
-      {empty && result.A > 0 && result.B > 0 && (ops.length > 0 || directOnly) && (
+      {empty && result.A > 0 && result.B > 0 && (ops.length > 0 || directOnly || type !== 'all') && (
         <div className="flex justify-center">
           <Chip
             onClick={() => {
-              patch({ ops: [], directOnly: false });
+              patch({ ops: [], directOnly: false, type: 'all' });
             }}
           >
             {t('tryAllTypes')}
@@ -657,8 +639,13 @@ export function PlannerTab({ shared }: { shared: Shared }) {
         </div>
       )}
 
-      {renderList(t('directTitle'), 'd')}
-      {renderList(`${result?.plan.direct.length === 0 ? `${t('noDirect')} ` : ''}${t('transferTitle')}`, 't')}
+      {all.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {all.map(({ key: k, it }) => (
+            <ConnectionCard key={k} it={it} shared={shared} base={date} selected={selected?.key === k} onOpen={() => openConnection(k)} fromPt={dFrom.pt} toPt={dTo.pt} />
+          ))}
+        </div>
+      )}
       {estimatedNote}
       {pickFor && (
         <MapPicker

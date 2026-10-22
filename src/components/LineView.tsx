@@ -6,7 +6,7 @@ import { fmtMinutes } from '../lib/time';
 import { onRequestPlaces, withVia, detoursFor } from '../lib/via';
 import { serviceDay } from '../lib/holidays';
 import type { DayKey, Direction, Line, MapFocus, MapLayer, MapPin } from '../types';
-import { Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, PrecisionWarning, SectionTitle, type RideEnds, type Shared } from './common';
+import { Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, pdfHref, PrecisionWarning, SectionTitle, type RideEnds, type Shared } from './common';
 import { Icon } from './Icons';
 import { RouteMap } from './RouteMap';
 import { useFootRoutes } from '../lib/foot';
@@ -240,13 +240,34 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
 
   return (
     <div className="flex flex-col gap-5">
-      <button
-        onClick={onBack}
-        className="-ml-2 inline-flex h-10 items-center gap-1.5 self-start rounded-full px-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10"
-      >
-        <Icon name="back" className="size-4" />
-        {t('back')}
-      </button>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={onBack}
+          className="-ml-2 inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10"
+        >
+          <Icon name="back" className="size-4" />
+          {t('back')}
+        </button>
+        <span className="ml-auto flex items-center gap-0.5">
+          {hasMap && !desktop && (
+            <button
+              type="button"
+              onClick={() => mapBox.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              aria-label={t('mapShort')}
+              title={t('mapShort')}
+              data-testid="scroll-to-map"
+              className="inline-flex size-10 items-center justify-center rounded-full text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10"
+            >
+              <Icon name="map" className="size-5" />
+            </button>
+          )}
+          {line.hasParsedSchedule && (
+            <a href={pdfHref(line)} target="_blank" rel="noreferrer" aria-label={t('pdfShort')} title={t('pdfShort')} data-testid="open-pdf" className="inline-flex size-10 items-center justify-center rounded-full text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10">
+              <Icon name="file" className="size-5" />
+            </a>
+          )}
+        </span>
+      </div>
 
       <div className="flex items-start gap-3.5">
         <LineBadge line={line} large />
@@ -278,7 +299,7 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
         </Card>
       )}
 
-      {line.directions.length > 1 && (
+      {line.directions.length > 1 && !initialRide && (
         <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('direction')}>
           {line.directions.map((d, i) => (
             <Chip key={i} active={i === dirIndex} onClick={() => setDirIndex(i)}>
@@ -456,13 +477,6 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
         </section>
       )}
 
-      {hasMap && !desktop && (
-        <section ref={mapBox}>
-          <SectionTitle>{t('map')}</SectionTitle>
-          <RouteMap layers={layers} focus={mapFocus} onStopClick={onMapStop} />
-        </section>
-      )}
-
       {(Object.keys(line.notes).length > 0 || selNotes.length > 0) && (
         <section>
           <SectionTitle>{t('notes')}</SectionTitle>
@@ -525,6 +539,13 @@ export function LineView({ line, initialDir, initialRide, initialEnds, shared, o
       )}
 
       {line.hasParsedSchedule && <PdfButton line={line} />}
+
+      {hasMap && !desktop && (
+        <section ref={mapBox} className="scroll-mt-4">
+          <SectionTitle>{t('map')}</SectionTitle>
+          <RouteMap layers={layers} focus={mapFocus} onStopClick={onMapStop} />
+        </section>
+      )}
     </div>
   );
 }

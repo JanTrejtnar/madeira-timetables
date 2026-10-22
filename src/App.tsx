@@ -93,7 +93,7 @@ export function App() {
   const [userPos, setUserPos] = useState<UserPos | null>(null);
   const [geo, setGeo] = useState<Shared['geo']>('idle');
   // planner form: kept here so it survives opening a line and going back, and mirrored into the URL query
-  const [planner, setPlanner] = useState<PlannerForm>(() => formFromQuery(location.search, nowInMadeira().minutes));
+  const [planner, setPlanner] = useState<PlannerForm>(() => formFromQuery(location.search));
   // what the results and the map are computed for: follows a pick (suggestion, map point) at once, typed text only on Enter
   const [applied, setApplied] = useState<Shared['applied']>(() => ({ from: planner.from, to: planner.to }));
   useEffect(() => {
@@ -232,19 +232,46 @@ export function App() {
   );
 
   const today = serviceDay(now);
-  const dayName = new Intl.DateTimeFormat(lang, { weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(now.y, now.m - 1, now.d)));
-  const hhmm = `${String(Math.floor(now.minutes / 60)).padStart(2, '0')}:${String(now.minutes % 60).padStart(2, '0')}`;
   const todayLabel =
     today.type === null
       ? t('noService')
       : t(`day_${today.type}`) +
         (today.reason === 'holiday' ? ` · ${t('reason_holiday')}: ${today.holiday?.name}` : today.reason === 'saturday-rule' ? ` · ${today.special}` : '');
 
+  // height of the sticky header: pages put their own sticky bars right under it
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const set = () => document.documentElement.style.setProperty('--header-h', `${el.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const line = route && data ? data.lines.find((l) => l.id === route.id) : undefined;
 
+  // where the settings page was opened from: its icon takes the reader back there (the tab, a line detail, a planner connection)
+  const cameFrom = useRef<{ tab: Tab; hash: string; openConn: string | null } | null>(null);
   const selectTab = (k: Tab) => {
+    cameFrom.current = null;
     setOpenConn(null);
     setTab(k);
+    if (route) location.hash = '';
+  };
+  const toggleSettings = () => {
+    if (tab === 'settings' && !route) {
+      const back = cameFrom.current ?? { tab: 'route' as Tab, hash: '', openConn: null };
+      cameFrom.current = null;
+      setTab(back.tab);
+      setOpenConn(back.openConn);
+      if (back.hash) location.hash = back.hash;
+      return;
+    }
+    cameFrom.current = { tab, hash: route ? location.hash : '', openConn };
+    setOpenConn(null);
+    setTab('settings');
     if (route) location.hash = '';
   };
   const tabs: { key: Tab; icon: IconName; label: string }[] = [
@@ -258,7 +285,7 @@ export function App() {
     <LangContext.Provider value={{ lang, t }}>
       <div className="min-h-dvh lg:grid lg:h-dvh lg:grid-cols-[minmax(380px,440px)_1fr] lg:overflow-hidden">
         <aside className="mx-auto flex w-full max-w-2xl flex-col lg:mx-0 lg:h-dvh lg:max-w-none lg:overflow-hidden lg:border-r lg:border-slate-200/70 lg:bg-slate-50 dark:lg:border-slate-800 dark:lg:bg-slate-950">
-          <header className="sticky top-0 z-40 shrink-0 border-b border-slate-200/70 bg-white/90 px-4 pb-3 pt-safe backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 lg:static lg:bg-white lg:backdrop-blur-none dark:lg:bg-slate-900">
+          <header ref={headerRef} className="sticky top-0 z-40 shrink-0 border-b border-slate-200/70 bg-white/90 px-4 pb-3 pt-safe backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 lg:static lg:bg-white lg:backdrop-blur-none dark:lg:bg-slate-900">
             <div className="flex items-center justify-between gap-2 pt-3">
               <h1 className="flex items-center gap-2.5 text-lg font-bold tracking-tight">
                 <span className="flex size-8 items-center justify-center rounded-xl bg-sky-600 text-white">
@@ -270,7 +297,7 @@ export function App() {
                 <LangMenu lang={lang} onChange={setLang} />
                 <button
                   type="button"
-                  onClick={() => selectTab('settings')}
+                  onClick={toggleSettings}
                   aria-label={t('settings')}
                   title={t('settings')}
                   aria-current={tab === 'settings' && !route}
@@ -282,8 +309,6 @@ export function App() {
               </div>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{hhmm}</span>
-              <span className="capitalize">{dayName}</span>
               <span className="min-w-0">
                 {t('timetableToday')}: <b className="font-semibold text-slate-700 dark:text-slate-200">{todayLabel}</b>
               </span>

@@ -87,44 +87,31 @@ const paths = (page) => page.evaluate(() => [...document.querySelectorAll('.leaf
   await page.close();
 }
 
-// 4) own 24-hour time picker and calendar (desktop and phone)
+// 4) departure picker: "Odjezd nyní" with date / hour / minute drop-downs (desktop and phone)
 for (const [name, vp] of [['desktop', { width: 1400, height: 900 }], ['phone', { width: 390, height: 844, isMobile: true, hasTouch: true }]]) {
   const page = await browser.newPage();
   await page.setViewport(vp);
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto(`${base}?from=Funchal&to=Santana&time=08:00&date=2026-12-07`, { waitUntil: 'networkidle0' });
   await page.click('[data-testid=edit-search]');
-  await sleep(300);
-  await sleep(800);
+  await sleep(1100);
   check(`${name}: no native time / date inputs`, (await page.$('input[type=time], input[type=date]')) === null);
-  await page.click('[data-testid=time-trigger]');
-  check(`${name}: the time popover has 24 hours and 12 minute steps`, (await page.$$('[data-testid^="hour-"]')).length === 24 && (await page.$$('[data-testid^="minute-"]')).length === 12);
-  await page.click('[data-testid=hour-17]');
-  await page.click('[data-testid=minute-45]');
-  check(`${name}: hour and minute buttons set 17:45`, (await page.$eval('[data-testid=time-trigger]', (b) => b.dataset.value)) === '17:45');
-  await page.focus('[data-testid=time-input]');
-  await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');
-  await page.keyboard.type('2305');
-  await page.keyboard.press('Enter');
-  check(`${name}: typed 2305 becomes 23:05 (24-hour)`, (await page.$eval('[data-testid=time-trigger]', (b) => b.dataset.value)) === '23:05');
-  await page.focus('[data-testid=time-input]');
-  await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');
-  await page.keyboard.type('25:99');
-  await page.keyboard.press('Enter');
-  check(`${name}: 25:99 is refused`, (await page.$eval('[data-testid=time-trigger]', (b) => b.dataset.value)) === '23:05');
-  await page.keyboard.press('Escape');
-  check(`${name}: Escape closes the popover`, (await page.$('[data-testid=hour-3]')) === null);
-  await page.click('[data-testid=date-trigger]');
-  const dec8 = await page.$('[data-date="2026-12-08"]');
-  check(`${name}: 8 Dec is marked as a holiday in the calendar`, !!dec8 && (await dec8.evaluate((b) => b.dataset.holiday)) === '1');
-  const sunday = await page.$eval('[data-date="2026-12-06"]', (b) => getComputedStyle(b).color);
-  const monday = await page.$eval('[data-date="2026-12-09"]', (b) => getComputedStyle(b).color);
-  check(`${name}: Sunday is coloured differently from a weekday`, sunday !== monday, `${sunday} vs ${monday}`);
+  const val = () => page.$eval('[data-testid=depart-trigger]', (b) => b.dataset.value);
+  await page.click('[data-testid=depart-trigger]');
+  check(`${name}: the popover has 24 hours and 60 minutes`, (await page.$$('[data-testid=depart-hour] option')).length === 24 && (await page.$$('[data-testid=depart-minute] option')).length === 60);
+  await page.select('[data-testid=depart-hour]', '17');
+  await page.select('[data-testid=depart-minute]', '45');
+  check(`${name}: the drop-downs set 17:45`, (await val()) === '2026-12-07 17:45', await val());
+  check(`${name}: the date list has the 8 Dec 2026 holiday`, (await page.$('[data-testid=depart-date] option[value="2026-12-08"]')) !== null);
   const box = await page.$eval('[role=dialog]', (d) => { const r = d.getBoundingClientRect(); return { l: r.left, r: r.right, w: innerWidth }; });
-  check(`${name}: the calendar stays inside the screen`, box.l >= 0 && box.r <= box.w, JSON.stringify(box));
-  await page.click('[data-date="2026-12-10"]');
-  await sleep(300);
-  check(`${name}: picking a day sets the date and closes the calendar`, (await page.$eval('[data-testid=date-trigger]', (b) => b.dataset.value)) === '2026-12-10' && (await page.$('[role=dialog]')) === null);
+  check(`${name}: the popover stays inside the screen`, box.l >= 0 && box.r <= box.w, JSON.stringify(box));
+  await page.select('[data-testid=depart-date]', '2026-12-10');
+  check(`${name}: picking a day sets the date`, (await val()) === '2026-12-10 17:45', await val());
+  await page.keyboard.press('Escape');
+  check(`${name}: Escape closes the popover`, (await page.$('[data-testid=depart-hour]')) === null);
+  await page.click('[data-testid=depart-trigger]');
+  await page.click('[data-testid=depart-now]');
+  check(`${name}: "Nyní" returns to Odjezd nyní`, (await val()) === 'now' && /Odjezd nyní/.test(await page.$eval('[data-testid=depart-trigger]', (b) => b.innerText)));
   await page.close();
 }
 

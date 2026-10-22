@@ -191,11 +191,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   const { page, errors } = await open({ width: 1280, height: 900 });
   await typeIn(page, 'Odkud', 'Funchal');
   await clickOption(page, /všechny zastávky/);
-  check('"(všechny zastávky)" is a small light qualifier beside the field, the field holds the name', await page.evaluate(() => {
-    const i = document.querySelector('input[aria-label="Odkud"]');
-    const s = document.querySelector('[data-testid=group-suffix]');
-    return i.value === 'Funchal' && !!s && /všechny zastávky/.test(s.textContent) && getComputedStyle(s).fontSize === '11px';
-  }));
+  check('the field holds just "Funchal", without the "(všechny zastávky)" qualifier', await page.evaluate(() => document.querySelector('input[aria-label="Odkud"]').value === 'Funchal' && !document.querySelector('[data-testid=group-suffix]') && !/všechny zastávky/.test(document.querySelector('input[aria-label="Odkud"]').parentElement.innerText)));
   await typeIn(page, 'Kam', 'Cabo Gir');
   await clickOption(page, /Cabo Girão/);
   await page.click('[data-testid=search-button]');
@@ -264,7 +260,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await page.click('[data-testid=search-button]');
   await sleep(2000);
   const cards = await page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].map((c) => ({ date: c.querySelector('[data-testid=connection-date]')?.innerText, text: c.innerText.replace(/\s+/g, ' ') })));
-  check('every result card shows its date', cards.length > 0 && cards.every((c) => /\d{1,2}\. ?\d{1,2}\./.test(c.date ?? '')), JSON.stringify(cards.slice(0, 2).map((c) => c.date)));
+  check('every result card shows when it leaves (in N min / date at time)', cards.length > 0 && cards.every((c) => /(\d{1,2}\. ?\d{1,2}\.|dnes|za \d|právě teď)/i.test(c.date ?? '')), JSON.stringify(cards.slice(0, 2).map((c) => c.date)));
   check('results from Funchal name the terminal, e.g. "Funchal (Rodoeste)"', cards.some((c) => /Funchal \((Rodoeste|CAM|SAM|Teleférico)\)/.test(c.text)), cards[0]?.text);
   await page.evaluate(() => document.querySelector('[data-testid=connection]').click());
   await sleep(1200);
@@ -378,7 +374,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
     const ops = (await page.$$('[data-testid^=op-]')).length;
     return closed && ops === 4 && (await page.$('[data-testid=advanced] input[type=checkbox]')) !== null;
   })());
-  check('no "all timetables" line type filter any more', !/Všechny jízdní řády|Městské|Meziměstské/.test(await page.evaluate(() => document.body.innerText)));
+  check('no "all timetables" drop-down any more; the connection type lives in the advanced search', !/Všechny jízdní řády/.test(await page.evaluate(() => document.body.innerText)) && (await page.$('[data-testid=advanced] [data-testid=type-filter]')) !== null);
   await page.click('[data-testid=advanced-toggle]');
   await typeIn(page, 'Odkud', 'Funchal');
   await clickOption(page, /všechny zastávky/);
@@ -406,7 +402,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   await page.evaluate(() => document.querySelector('[data-testid=advanced] input[type=checkbox]').click());
   await page.click('[data-testid=search-button]');
   await sleep(1500);
-  check('"Jen přímá spojení" leaves no connection with a transfer', !/přestup/.test(await page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].map((c) => c.innerText).join(' '))));
+  check('"Jen přímá spojení" leaves no connection with a transfer', !/čekání/.test(await page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].map((c) => c.innerText).join(' '))));
   check('no page errors', errors.length === 0, errors.join('; '));
   await page.close();
 }

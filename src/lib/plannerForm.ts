@@ -2,6 +2,7 @@
 // mirrored into the URL query (?from=…&to=…&date=…&time=…) so a reload or a shared link restores the same search.
 import { OPERATORS, type OperatorId } from './operators';
 import type { Ymd } from './holidays';
+import type { LineTypeFilter } from '../components/common';
 
 export interface Picked {
   text: string;
@@ -22,13 +23,15 @@ function parsePt(s: string | null): Picked['pt'] {
 export interface PlannerForm {
   from: Picked;
   to: Picked;
-  /** "HH:MM" */
-  time: string;
+  /** "HH:MM"; null = leave now (follows the clock) */
+  time: string | null;
   /** "YYYY-MM-DD"; null = today (follows the clock) */
   date: string | null;
   /** operators to travel with; empty = all */
   ops: OperatorId[];
   directOnly: boolean;
+  /** all lines, intercity or urban only */
+  type: LineTypeFilter;
 }
 
 export const ymdToIso = (v: Ymd) => `${v.y}-${String(v.m).padStart(2, '0')}-${String(v.d).padStart(2, '0')}`;
@@ -43,24 +46,23 @@ export function isoToYmd(s: string | null | undefined): Ymd | null {
 const OP_IDS = OPERATORS.map((o) => o.id);
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-export function emptyForm(nowMinutes: number): PlannerForm {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return { from: { text: '', key: null }, to: { text: '', key: null }, time: `${p(Math.floor(nowMinutes / 60))}:${p(nowMinutes % 60)}`, date: null, ops: [], directOnly: false };
+export function emptyForm(): PlannerForm {
+  return { from: { text: '', key: null }, to: { text: '', key: null }, time: null, date: null, ops: [], directOnly: false, type: 'all' };
 }
 
-export function formFromQuery(search: string, nowMinutes: number): PlannerForm {
+export function formFromQuery(search: string): PlannerForm {
   const q = new URLSearchParams(search);
-  const base = emptyForm(nowMinutes);
-  const ops = (q.get('ops') ?? '').split(',').filter((x): x is OperatorId => (OP_IDS as string[]).includes(x));
+    const ops = (q.get('ops') ?? '').split(',').filter((x): x is OperatorId => (OP_IDS as string[]).includes(x));
   const time = q.get('time');
   const date = q.get('date');
   return {
     from: { text: q.get('from') ?? '', key: q.get('fk') || null, pt: parsePt(q.get('fp')) },
     to: { text: q.get('to') ?? '', key: q.get('tk') || null, pt: parsePt(q.get('tp')) },
-    time: time && TIME.test(time) ? time : base.time,
+    time: time && TIME.test(time) ? time : null,
     date: isoToYmd(date) ? date : null,
     ops,
     directOnly: q.get('direct') === '1',
+    type: q.get('type') === 'urbano' || q.get('type') === 'interurbano' ? (q.get('type') as LineTypeFilter) : 'all',
   };
 }
 
@@ -73,9 +75,10 @@ export function formToQuery(f: PlannerForm): string {
   if (f.to.text) q.set('to', f.to.text);
   if (f.to.key) q.set('tk', f.to.key);
   if (f.to.pt) q.set('tp', fmtPt(f.to.pt));
-  if (f.from.text || f.to.text) q.set('time', f.time);
+  if (f.time) q.set('time', f.time);
   if (f.date) q.set('date', f.date);
   if (f.ops.length) q.set('ops', f.ops.join(','));
   if (f.directOnly) q.set('direct', '1');
+  if (f.type !== 'all') q.set('type', f.type);
   return q.toString();
 }

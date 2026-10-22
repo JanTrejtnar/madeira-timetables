@@ -81,11 +81,9 @@ async function planner(from, to, { pick = false, time = '09:00' } = {}) {
     await sleep(300);
     await page.evaluate(() => document.querySelector('ul li button')?.click());
   } else await iTo.press('Enter'); // typing alone changes nothing: Enter applies the typed text
-  await page.click('[data-testid=time-trigger]');
-  await page.focus('[data-testid=time-input]');
-  await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');
-  await page.keyboard.type(time);
-  await page.keyboard.press('Enter');
+  await page.click('[data-testid=depart-trigger]');
+  await page.select('[data-testid=depart-hour]', String(Number(time.slice(0, 2))));
+  await page.select('[data-testid=depart-minute]', String(Number(time.slice(3, 5))));
   await page.keyboard.press('Escape');
   await page.click('[data-testid=search-button]');
   await sleep(900);

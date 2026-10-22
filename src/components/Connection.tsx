@@ -1,6 +1,6 @@
 // Search results in the style of the IDOS app: a compact card per connection (date, duration, one pair of rows per bus), and a detail
 // page of the whole connection with the walks, the transfers and a fold-out of the intermediate stops; a bus opens its line.
-import { useMemo, useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useT, type Lang } from '../i18n';
 import { stopLabel } from '../lib/text';
 import { addDays, type Ymd } from '../lib/holidays';
@@ -11,7 +11,7 @@ import { connectionFare, formatEuro, type FareCard } from '../lib/fare';
 import { WALK_M_PER_MIN, walkTo } from '../lib/walk';
 import type { Picked } from '../lib/plannerForm';
 import type { Itinerary, Leg } from '../lib/router';
-import { LineBadge, MapPin, PrecisionWarning, dirLabel, lineRailCls, type RideEnds, type Shared } from './common';
+import { LEG_COLORS, LineBadge, MapPin, PrecisionWarning, dirLabel, lineRailCls, pdfHref, type RideEnds, type Shared } from './common';
 import { Icon } from './Icons';
 
 type TFn = ReturnType<typeof useT>['t'];
@@ -61,25 +61,32 @@ export function rideEnds(it: Itinerary, i: number, fromPt: Picked['pt'], toPt: P
 
 const dateOf = (base: Ymd, min: number): Ymd => addDays(base, Math.floor(min / 1440));
 
-/** "Wed 21. 10." — the weekday and date of the departure (after midnight: of the next day). */
-function useDateLabel(base: Ymd, min: number, lang: Lang) {
-  return useMemo(() => {
-    const d = dateOf(base, min);
-    return new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(d.y, d.m - 1, d.d)));
-  }, [base, min, lang]);
+const MS_DAY = 86_400_000;
+
+/** "Wed 21. 10." */
+export const shortDate = (d: Ymd, lang: Lang) => new Intl.DateTimeFormat(lang, { weekday: 'short', day: 'numeric', month: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(d.y, d.m - 1, d.d)));
+
+/**
+ * When the connection leaves, for the head of a card: "in 2 h 14 min" while it is up to three hours ahead, otherwise the date
+ * ("today" for the current day) and the time: "today at 9:05", "Wed 21. 10. at 9:05" (also for a departure that has already run).
+ */
+export function whenLabel(it: Itinerary, base: Ymd, now: Shared['ctx']['now'], t: TFn, lang: Lang): string {
+  const dayDiff = Math.round((Date.UTC(base.y, base.m - 1, base.d) - Date.UTC(now.y, now.m - 1, now.d)) / MS_DAY);
+  const ahead = dayDiff * 1440 + it.depart - now.minutes;
+  if (ahead >= 0 && ahead <= 180) {
+    const h = Math.floor(ahead / 60);
+    const m = ahead % 60;
+    return ahead === 0 ? t('now') : h === 0 ? t('inMin', { n: m }) : m === 0 ? t('inH', { h }) : t('inHm', { h, m });
+  }
+  const day = dateOf(base, it.depart);
+  const date = dayDiff + Math.floor(it.depart / 1440) === 0 ? t('whenToday') : shortDate(day, lang);
+  const mins = ((it.depart % 1440) + 1440) % 1440;
+  return t('whenAt', { date, time: `${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')}` });
 }
 
-/** Dates and countdown line of a connection: "Wed 21. 10. · in 14 min" (the countdown only for a departure that is still ahead today). */
-function whenLabel(it: Itinerary, date: string, now: Shared['ctx']['now'], dateText: string, t: TFn): string {
-  const isToday = date === `${now.y}-${String(now.m).padStart(2, '0')}-${String(now.d).padStart(2, '0')}`;
-  const ahead = it.depart - now.minutes;
-  return isToday && ahead >= 0 ? `${dateText} · ${t('departsIn', { d: duration(ahead, t) })}` : dateText;
-}
-
-export function ConnectionCard({ it, shared, date, base, selected, onOpen, fromPt, toPt }: { it: Itinerary; shared: Shared; date: string; base: Ymd; selected: boolean; onOpen: () => void; fromPt?: Picked['pt']; toPt?: Picked['pt'] }) {
+export function ConnectionCard({ it, shared, base, selected, onOpen, fromPt, toPt }: { it: Itinerary; shared: Shared; base: Ymd; selected: boolean; onOpen: () => void; fromPt?: Picked['pt']; toPt?: Picked['pt'] }) {
   const { t, lang } = useT();
   const { walkIn, walkOut } = endWalks(it, fromPt, toPt);
-  const dateText = useDateLabel(base, it.depart, lang);
   return (
     <button
       type="button"
@@ -88,12 +95,11 @@ export function ConnectionCard({ it, shared, date, base, selected, onOpen, fromP
       className={`block w-full overflow-hidden rounded-2xl border border-slate-200/70 bg-white text-left transition-colors hover:bg-slate-50/70 dark:border-slate-700/70 dark:bg-slate-900 dark:hover:bg-slate-800/60 ${selected && shared.desktop ? 'ring-2 ring-sky-500/70' : ''}`}
     >
       <span className="flex items-baseline justify-between gap-3 bg-slate-100 px-4 py-1.5 text-sm dark:bg-slate-800/80">
-        <span className="font-semibold text-slate-700 dark:text-slate-200" data-testid="connection-date">
-          {whenLabel(it, date, shared.ctx.now, dateText, t)}
+        <span className="font-semibold text-slate-700 first-letter:uppercase dark:text-slate-200" data-testid="connection-date">
+          {whenLabel(it, base, shared.ctx.now, t, lang)}
         </span>
         <span className="shrink-0 text-slate-500 tabular-nums dark:text-slate-400">
           {duration(it.arrive - it.depart, t)}
-          {it.legs.length > 1 && <span className="ml-1.5 text-xs">· {t('oneTransfer')}</span>}
           <Fare it={it} card={shared.fareCard} />
         </span>
       </span>
@@ -147,13 +153,13 @@ function WalkLine({ label, testId }: { label: string; testId: string }) {
 }
 
 /** One row of the detail timeline: time | rail | content. */
-function Row({ time, rail, dot, children }: { time?: ReactNode; rail?: { cls: string } | 'dashed'; dot?: 'big' | 'small' | 'end'; children: ReactNode }) {
+function Row({ time, rail, dot, children }: { time?: ReactNode; rail?: { cls: string; color?: string } | 'dashed'; dot?: 'big' | 'small' | 'end'; children: ReactNode }) {
   const bar = rail === 'dashed' ? 'border-l-2 border-dashed border-slate-300 dark:border-slate-600' : rail ? `w-1 rounded-full ${rail.cls}` : '';
   return (
     <div className="grid grid-cols-[3.5rem_1.25rem_minmax(0,1fr)] gap-x-2">
       <div className="pt-1.5 text-right text-[15px] font-semibold leading-5">{time}</div>
       <div className="relative">
-        {rail && <span className={`absolute left-1/2 -translate-x-1/2 ${dot ? 'bottom-0 top-3.5' : 'inset-y-0'} ${bar}`} />}
+        {rail && <span style={rail !== 'dashed' && rail.color ? { backgroundColor: rail.color } : undefined} className={`absolute left-1/2 -translate-x-1/2 ${dot ? 'bottom-0 top-3.5' : 'inset-y-0'} ${bar}`} />}
         {dot === 'big' && <span className="absolute left-1/2 top-2.5 z-10 size-3 -translate-x-1/2 rounded-full bg-sky-600 ring-4 ring-white dark:ring-slate-900" />}
         {dot === 'small' && <span className="absolute left-1/2 top-2.5 z-10 size-3 -translate-x-1/2 rounded-full border-[2.5px] border-slate-500 bg-white dark:border-slate-400 dark:bg-slate-900" />}
         {dot === 'end' && <Icon name="pin" className="absolute left-1/2 top-1.5 z-10 size-5 -translate-x-1/2 fill-white text-sky-600 dark:fill-slate-900" strokeWidth={2} />}
@@ -191,7 +197,9 @@ function Rides({ it, shared, fromPt, toPt, walkIn, walkOut }: { it: Itinerary; s
       {it.legs.map((l, i) => {
         const stops = tripStops(l.trip);
         const line = l.trip.line;
-        const rail = { cls: lineRailCls(line) };
+        // with a transfer every bus has its own colour, the same as on the map
+        const color = it.legs.length > 1 ? LEG_COLORS[i % LEG_COLORS.length] : undefined;
+        const rail = { cls: color ? '' : lineRailCls(line), color };
         const mid = stops.slice(l.fromPos + 1, l.toPos);
         const expanded = open.has(i);
         return (
@@ -265,30 +273,40 @@ function Rides({ it, shared, fromPt, toPt, walkIn, walkOut }: { it: Itinerary; s
   );
 }
 
-/** The whole connection: header with date and duration, the map (phone), then the buses with walks and transfers. */
-export function ConnectionDetail({ it, shared, date, base, onBack, fromPt, toPt, map, estimatedNote }: { it: Itinerary; shared: Shared; date: string; base: Ymd; onBack: () => void; fromPt: Picked['pt']; toPt: Picked['pt']; map: ReactNode; estimatedNote: ReactNode }) {
+/** The whole connection: sticky bar (back, map, PDF), header with date and duration, the buses with walks and transfers, the map (phone) last. */
+export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, estimatedNote }: { it: Itinerary; shared: Shared; base: Ymd; onBack: () => void; fromPt: Picked['pt']; toPt: Picked['pt']; map: ReactNode; estimatedNote: ReactNode }) {
   const { t, lang } = useT();
   const { walkIn, walkOut } = endWalks(it, fromPt, toPt);
-  const dateText = useDateLabel(base, it.depart, lang);
+  const mapBox = useRef<HTMLDivElement>(null);
+  const iconBtn = 'inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-full px-2 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10';
   return (
     <div className="flex flex-col gap-3" data-testid="connection-detail">
-      <button
-        type="button"
-        onClick={onBack}
-        data-testid="connection-back"
-        className="-ml-2 inline-flex h-10 items-center gap-1.5 self-start rounded-full px-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10"
-      >
-        <Icon name="back" className="size-4" />
-        {t('connectionBack')}
-      </button>
+      <div className="sticky top-(--header-h,0px) z-30 -mx-4 -mt-4 flex items-center gap-1 bg-slate-50/95 px-4 pb-1.5 pt-2.5 backdrop-blur dark:bg-slate-950/95 lg:top-0">
+        <button type="button" onClick={onBack} data-testid="connection-back" className="-ml-2 inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10">
+          <Icon name="back" className="size-4" />
+          {t('connectionBack')}
+        </button>
+        <span className="ml-auto flex items-center gap-0.5">
+          {map && (
+            <button type="button" onClick={() => mapBox.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} aria-label={t('mapShort')} title={t('mapShort')} data-testid="scroll-to-map" className={iconBtn}>
+              <Icon name="map" className="size-5" />
+            </button>
+          )}
+          {it.legs.map((l, i) => (
+            <a key={i} href={pdfHref(l.trip.line)} target="_blank" rel="noreferrer" aria-label={`${t('pdfShort')}: ${l.trip.line.number}`} title={`${t('pdfShort')}: ${l.trip.line.number}`} data-testid="open-pdf" className={iconBtn}>
+              <Icon name="file" className="size-5" />
+              {it.legs.length > 1 && <span className="text-xs">{l.trip.line.number}</span>}
+            </a>
+          ))}
+        </span>
+      </div>
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-slate-700/70 dark:bg-slate-900">
         <div className="flex items-baseline justify-between gap-3 bg-slate-100 px-4 py-1.5 text-sm dark:bg-slate-800/80">
-          <span className="font-semibold text-slate-700 dark:text-slate-200" data-testid="connection-date">
-            {whenLabel(it, date, shared.ctx.now, dateText, t)}
+          <span className="font-semibold text-slate-700 first-letter:uppercase dark:text-slate-200" data-testid="connection-date">
+            {whenLabel(it, base, shared.ctx.now, t, lang)}
           </span>
           <span className="shrink-0 text-slate-500 tabular-nums dark:text-slate-400">
             {duration(it.arrive - it.depart, t)}
-            <span className="ml-1.5 text-xs">· {it.legs.length === 1 ? t('noTransfer') : t('oneTransfer')}</span>
             <Fare it={it} card={shared.fareCard} />
           </span>
         </div>
@@ -296,8 +314,8 @@ export function ConnectionDetail({ it, shared, date, base, onBack, fromPt, toPt,
           <Rides it={it} shared={shared} fromPt={fromPt} toPt={toPt} walkIn={walkIn} walkOut={walkOut} />
         </div>
       </div>
-      {map}
       {estimatedNote}
+      {map && <div ref={mapBox} className="scroll-mt-[calc(var(--header-h,0px)+3.5rem)]">{map}</div>}
     </div>
   );
 }

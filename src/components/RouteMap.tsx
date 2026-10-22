@@ -266,6 +266,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
     if (m?.isPopupOpen()) m.getPopup()?.update();
   }, [times, stopIndex]);
 
+  const legend = layers.flatMap((l) => (l.legend ? [{ ...l.legend, color: l.color }] : []));
   return (
     <div className={full ? 'fixed inset-0 z-1000 bg-white dark:bg-slate-950' : fill ? 'relative h-full w-full' : 'relative'}>
       {/* the size classes sit on a wrapper: Leaflet owns the class list of its own container, which React must not rewrite */}
@@ -301,6 +302,17 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
             <path d="M12 1v4M12 19v4M1 12h4M19 12h4" />
           </svg>
         </button>
+      )}
+      {legend.length > 1 && (
+        <ul className="absolute bottom-6 left-3 z-500 flex max-w-[calc(100%-4.5rem)] flex-col gap-1 rounded-xl bg-white/95 p-1.5 text-xs shadow-md ring-1 ring-slate-200 dark:bg-slate-900/95 dark:ring-slate-700" data-testid="map-legend">
+          {legend.map((l, i) => (
+            <li key={i} className="flex min-w-0 items-center gap-1.5">
+              <span className="h-1.5 w-5 shrink-0 rounded-full" style={{ backgroundColor: l.color }} />
+              <span className="shrink-0 font-bold tabular-nums">{l.badge}</span>
+              <span className="min-w-0 truncate text-slate-600 dark:text-slate-300">{l.text}</span>
+            </li>
+          ))}
+        </ul>
       )}
       {failed && (
         <p

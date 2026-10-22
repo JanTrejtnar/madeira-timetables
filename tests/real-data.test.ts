@@ -470,11 +470,11 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
     expect(nearestNode(net, 32.45, -16.5, 1000)).toBeNull();
   });
   it('planner form survives the URL round trip, ignores bad values', () => {
-    const f = { from: { text: 'Santana (všechny zastávky)', key: '@par:Santana' }, to: { text: 'Funchal', key: null }, time: '07:45', date: '2026-12-08', ops: ['rodoeste', 'sam'] as ('rodoeste' | 'sam')[], directOnly: true };
-    const back = formFromQuery('?' + formToQuery(f), 600);
+    const f = { from: { text: 'Santana (všechny zastávky)', key: '@par:Santana' }, to: { text: 'Funchal', key: null }, time: '07:45', date: '2026-12-08', ops: ['rodoeste', 'sam'] as ('rodoeste' | 'sam')[], directOnly: true, type: 'urbano' as const };
+    const back = formFromQuery('?' + formToQuery(f));
     expect(back).toEqual(f);
-    expect(formFromQuery('?date=2026-02-31&time=25:99&ops=zzz', 600)).toMatchObject({ date: null, time: '10:00', ops: [] });
-    expect(formToQuery(formFromQuery('', 600))).toBe('');
+    expect(formFromQuery('?date=2026-02-31&time=25:99&ops=zzz&type=x')).toMatchObject({ date: null, time: null, ops: [], type: 'all' });
+    expect(formToQuery(formFromQuery(''))).toBe('');
   });
   it('a chosen holiday date uses the Sunday timetable, the next day the weekday one', () => {
     const hol = servicesFor(net, data.lines, { y: 2026, m: 12, d: 8 }, false, ['Funchal']).filter((t) => t.times[0]! >= 0 && t.times[0]! < 1440).length;
@@ -580,13 +580,13 @@ describe.skipIf(!existsSync(file))('position precision and parishes of intercity
     expect(dep(new Map([[0, 16]]))).toEqual([]);
   });
   it('planner URL keeps the picked map points', () => {
-    const f = formFromQuery('?from=Pinga&fk=pinga&fp=32.65001,-16.90002&to=Funchal&tp=32.7,-16.95', 600);
+    const f = formFromQuery('?from=Pinga&fk=pinga&fp=32.65001,-16.90002&to=Funchal&tp=32.7,-16.95');
     expect(f.from.pt).toEqual({ lat: 32.65001, lon: -16.90002 });
     expect(f.to.pt).toEqual({ lat: 32.7, lon: -16.95 });
-    const back = formFromQuery('?' + formToQuery(f), 600);
+    const back = formFromQuery('?' + formToQuery(f));
     expect(back.from.pt).toEqual(f.from.pt);
     expect(back.to.pt).toEqual(f.to.pt);
-    expect(formFromQuery('?from=a&fp=xx', 600).from.pt).toBeUndefined();
+    expect(formFromQuery('?from=a&fp=xx').from.pt).toBeUndefined();
   });
 });
 
