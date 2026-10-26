@@ -437,16 +437,6 @@
       ]
     },
     {
-      "name": "Boqueirão",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 7,
-      "lines": [
-        "501"
-      ]
-    },
-    {
       "name": "Monte",
       "code": null,
       "status": "no coordinates",
@@ -1366,7 +1356,7 @@
     {
       "name": "P. Cruz (Túnel)",
       "code": null,
-      "status": "settlement_center",
+      "status": "name_match",
       "lineCount": 3,
       "tripCount": 36,
       "lines": [
@@ -1550,6 +1540,17 @@
       "lines": [
         "703",
         "726"
+      ]
+    },
+    {
+      "name": "Boqueirão",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 2,
+      "tripCount": 35,
+      "lines": [
+        "501",
+        "525"
       ]
     },
     {
@@ -1992,16 +1993,6 @@
       "tripCount": 29,
       "lines": [
         "20"
-      ]
-    },
-    {
-      "name": "Boqueirão",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 28,
-      "lines": [
-        "525"
       ]
     },
     {

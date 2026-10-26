@@ -70,21 +70,22 @@
     },
     {
       "name": "P. Cruz (Túnel)",
-      "label": "HAND-PLACED, NOT VERIFIED: the 'Porto da Cruz (Túnel)' column of lines 56/103/138 (Funchal - Santana), a stop at the tunnel at the entrance to Porto da Cruz (Machico) as described by the maintainer. No bus stop at that tunnel exists in the SIGA, GTFS or OSM stop data in the repo, so the point is the centre of Porto da Cruz (OSM place 32.7725, -16.8286), up to about 1 km from the tunnel mouth",
+      "label": "HAND-PLACED, NOT VERIFIED: the 'Porto da Cruz (Túnel)' column of lines 56/103/138 (Funchal - Santana). Position about 32.7635, -16.8365 = the west portal of the tunnel on the ER101 above the valley, as told to the maintainer (an AI assistant, not a survey); no stop at the tunnel exists in the SIGA, GTFS or OSM stop data. Consistent with the data: a SIGA stop 'CAM da Referta' lies 50 m away (so a road is there), the point is 2.0 km from S. Roque do Faial (the printed times are 5 min apart) and 1.2 km west of the Porto da Cruz centre. Replaces the earlier town-centre point",
       "lines": [
         "56",
         "103",
         "138"
       ],
-      "lat": 32.772508,
-      "lon": -16.828604,
-      "locationPrecision": "settlement_center"
+      "lat": 32.7635,
+      "lon": -16.8365,
+      "locationPrecision": "name_match"
     },
     {
       "name": "Boqueirão",
-      "label": "Boqueirão in Santa Cruz parish (Caniço), terminus of line 525 - SIGA stop 'Sítio do Boqueirão' (32.690645, -16.833251) next to the OSM locality Boqueirão (32.6904, -16.8325). Line 501 (Funchal - Boqueirão via Fazenda) is not covered: which Boqueirão it ends at is not known",
+      "label": "Boqueirão in Santa Cruz parish (Caniço / Gaula), terminus of lines 525 and 501 - SIGA stop 'Sítio do Boqueirão' (32.690645, -16.833251) next to the OSM locality Boqueirão (32.6904, -16.8325). Line 501 (Funchal - Fazenda - Boqueirão) was added on the maintainer's word (an AI assistant gave 32.6865, -16.8285, 640 m from this point) and because the 5xx lines serve the east; not confirmed by the operator",
       "lines": [
-        "525"
+        "525",
+        "501"
       ],
       "lat": 32.690645,
       "lon": -16.833251,

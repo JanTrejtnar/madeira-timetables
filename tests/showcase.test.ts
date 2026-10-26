@@ -173,7 +173,8 @@ describe.skipIf(!existsSync(file))('stop positions (real data)', () => {
           const b = m(here, q);
           const c = m(p, q);
           // both neighbours far away although they are near each other (c ~ 0 = a repeated stop, not a detour)
-          if (a > 3000 && b > 3000 && c > 50 && c < 0.5 * Math.min(a, b)) bad.push(`${l.number}/${di} ${s.name}`);
+          // 56/103/138 'P. Cruz (Túnel)': the column of a variant trip via Porto da Cruz, printed between Poiso and Ribeiro Frio, which those trips skip
+          if (a > 3000 && b > 3000 && c > 50 && c < 0.5 * Math.min(a, b) && s.name !== 'P. Cruz (Túnel)') bad.push(`${l.number}/${di} ${s.name}`);
         });
       });
     }
