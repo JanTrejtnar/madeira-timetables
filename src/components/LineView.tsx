@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT, type Key } from '../i18n';
 import { stopLabel } from '../lib/text';
 import { sameCall } from '../lib/network';
+import { hasGps } from '../lib/precision';
 import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } from '../lib/departures';
 import { fmtMinutes, toMinutes } from '../lib/time';
 import { onRequestPlaces, withVia, detoursFor } from '../lib/via';
@@ -547,6 +548,13 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
         <section>
           <SectionTitle aside={<span className="text-xs text-slate-400">{shownStops.length}</span>}>{t('stopsOfDirection')}</SectionTitle>
           {shownStops.length ? (
+            <>
+            {shownStops.some((s) => !s.via && !hasGps(s)) && (
+              <p role="status" className="mb-2 flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-medium text-sky-900 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-200" data-testid="trip-no-gps">
+                <span aria-hidden="true">ℹ️</span>
+                <span className="min-w-0">{t('tripNoGps')}</span>
+              </p>
+            )}
             <ol className="rounded-2xl border border-slate-200/70 bg-white py-2 pr-2 text-sm dark:border-slate-700/70 dark:bg-slate-900">
               {shownStops.map((s, i) => {
                 const edge = i === 0 || i === shownStops.length - 1;
@@ -611,6 +619,11 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                         >
                           {content}
                         </button>
+                        {!hasCoords && !s.via ? (
+                          <span className="mr-1 shrink-0 whitespace-nowrap rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400" data-testid="stop-no-gps">
+                            {t('noGps')}
+                          </span>
+                        ) : (
                         <button
                           onClick={() => setLinksIdx(linksIdx === i ? null : i)}
                           aria-expanded={linksIdx === i}
@@ -622,6 +635,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                         >
                           <Icon name="pin" className="size-4" />
                         </button>
+                        )}
                       </div>
                       {linksIdx === i && (
                         <div className="mx-3 mb-3 flex flex-col gap-2.5 rounded-xl border border-slate-200/70 bg-slate-50/70 p-3.5 dark:border-slate-700/70 dark:bg-slate-800/40" data-testid="stop-details">
@@ -641,7 +655,6 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                             }
                           />
                           {!hasCoords && <span className="text-xs text-slate-400">{t('mapByName')}</span>}
-                          {s.approx && s.locationPrecision !== 'settlement_center' && <span className="text-xs text-amber-600">{t('coordsApprox')}</span>}
                         </div>
                       )}
                     </div>
@@ -649,6 +662,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                 );
               })}
             </ol>
+            </>
           ) : (
             <p className="px-1 text-sm text-slate-500">{t('noStops')}</p>
           )}

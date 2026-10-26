@@ -7,6 +7,7 @@ import { localStopName } from '../lib/text';
 import { spliceDetours } from '../lib/via';
 import { rideSplit } from '../lib/ride';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
+import { isApproxPosition } from '../lib/precision';
 import { drawPin } from '../lib/mapPin';
 import type { UserPos } from '../lib/nearby';
 import type { MapFocus, MapLayer, Stop } from '../types';
@@ -18,8 +19,6 @@ interface PopupLabels {
   mapy: string;
   arrival: string;
   departure: string;
-  approx: string;
-  estimated: string;
   settlement: string;
 }
 
@@ -35,18 +34,12 @@ function popupContent(s: Stop, lang: Lang, labels: PopupLabels, time: string | n
     row.textContent = `${first ? labels.departure : labels.arrival}: ${time}`;
     box.appendChild(row);
   }
-  if (s.locationPrecision === 'settlement_center') {
+  if (isApproxPosition(s)) {
     const w = document.createElement('div');
     w.setAttribute('role', 'alert');
     w.textContent = `⚠️ ${labels.settlement}`;
     w.style.cssText = 'margin-top:4px;padding:4px 6px;border-radius:6px;background:#fffbeb;color:#92400e;font-weight:600;font-size:12px;';
     box.appendChild(w);
-  } else if (s.approx) {
-    const a = document.createElement('div');
-    a.textContent = s.isEstimatedLocation ? labels.estimated : labels.approx;
-    a.style.color = '#b45309';
-    a.style.fontSize = '12px';
-    box.appendChild(a);
   }
   if (s.code) {
     const code = document.createElement('div');
@@ -157,7 +150,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
     osmTiles().addTo(map);
     mapRef.current = map;
     const group = L.featureGroup().addTo(map);
-    const labels: PopupLabels = { google: t('mapGoogle'), mapy: t('mapMapyCz'), arrival: t('arrivalWord'), departure: t('departureWord'), approx: t('coordsApprox'), estimated: t('estimatedLocation'), settlement: t('settlementWarning') };
+    const labels: PopupLabels = { google: t('mapGoogle'), mapy: t('mapMapyCz'), arrival: t('arrivalWord'), departure: t('departureWord'), settlement: t('settlementWarning') };
     let alive = true;
 
     layers.forEach((layer, li) => {
