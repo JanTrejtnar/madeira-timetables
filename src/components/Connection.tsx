@@ -162,14 +162,28 @@ function WalkLine({ label, testId }: { label: string; testId: string }) {
   );
 }
 
-/** One row of the detail timeline: time | rail | content. */
-function Row({ time, rail, dot, children }: { time?: ReactNode; rail?: { cls: string; color?: string } | 'dashed'; dot?: 'big' | 'small' | 'end'; children: ReactNode }) {
-  const bar = rail === 'dashed' ? 'border-l-2 border-dashed border-slate-300 dark:border-slate-600' : rail ? `w-1 rounded-full ${rail.cls}` : '';
+type RailSpec = { cls: string; color?: string } | 'dashed';
+
+/** One piece of the vertical line in the rail column; the dots sit 1 rem below the top of their row, and pieces meet exactly at that height. */
+function Seg({ spec, where }: { spec: RailSpec; where: 'all' | 'up' | 'down' }) {
+  const pos = where === 'all' ? 'inset-y-0' : where === 'up' ? 'top-0 h-4' : 'top-4 bottom-0';
+  const look = spec === 'dashed' ? 'border-l-2 border-dashed border-slate-300 dark:border-slate-600' : `w-1 rounded-full ${spec.cls}`;
+  return <span aria-hidden="true" style={spec !== 'dashed' && spec.color ? { backgroundColor: spec.color } : undefined} className={`absolute left-1/2 -translate-x-1/2 ${pos} ${look}`} />;
+}
+
+/**
+ * One row of the detail timeline: time | rail | content. A row without a dot carries one line over its whole height (`rail`); a row with
+ * a dot draws the line above the dot (`up`) and below it (`down`) separately, so each ride ends exactly in the middle of its last dot
+ * and the dashed transfer / walk line starts there.
+ */
+function Row({ time, rail, up, down, dot, children }: { time?: ReactNode; rail?: RailSpec; up?: RailSpec; down?: RailSpec; dot?: 'big' | 'small' | 'end'; children: ReactNode }) {
   return (
     <div className="grid grid-cols-[3.5rem_1.25rem_minmax(0,1fr)] gap-x-2">
       <div className="pt-1.5 text-right text-[15px] font-semibold leading-5">{time}</div>
       <div className="relative">
-        {rail && <span style={rail !== 'dashed' && rail.color ? { backgroundColor: rail.color } : undefined} className={`absolute left-1/2 -translate-x-1/2 ${dot ? 'bottom-0 top-3.5' : 'inset-y-0'} ${bar}`} />}
+        {rail && <Seg spec={rail} where="all" />}
+        {up && <Seg spec={up} where="up" />}
+        {down && <Seg spec={down} where="down" />}
         {dot === 'big' && <span className="absolute left-1/2 top-2.5 z-10 size-3 -translate-x-1/2 rounded-full bg-sky-600 ring-4 ring-white dark:ring-slate-900" />}
         {dot === 'small' && <span className="absolute left-1/2 top-2.5 z-10 size-3 -translate-x-1/2 rounded-full border-[2.5px] border-slate-500 bg-white dark:border-slate-400 dark:bg-slate-900" />}
         {dot === 'end' && <Icon name="pin" className="absolute left-1/2 top-1.5 z-10 size-5 -translate-x-1/2 fill-white text-sky-600 dark:fill-slate-900" strokeWidth={2} />}
@@ -209,12 +223,12 @@ function Rides({ it, shared, base, fromPt, toPt, walkIn, walkOut }: { it: Itiner
         const line = l.trip.line;
         // with a transfer every bus has its own colour, the same as on the map
         const color = it.legs.length > 1 ? LEG_COLORS[i % LEG_COLORS.length] : undefined;
-        const rail = { cls: color ? '' : lineRailCls(line), color };
+        const rail: RailSpec = { cls: color ? '' : lineRailCls(line), color };
         const mid = midStops(l.trip, l.fromPos, l.toPos);
         const expanded = open.has(i);
         return (
           <div key={i}>
-            <Row time={<Time min={l.depart} est={l.departEstimated} t={t} />} rail={rail} dot={i === 0 ? 'big' : 'small'}>
+            <Row time={<Time min={l.depart} est={l.departEstimated} t={t} />} up={i === 0 ? (walkIn ? 'dashed' : undefined) : 'dashed'} down={rail} dot={i === 0 ? 'big' : 'small'}>
               <StopRow stop={stops[l.fromPos]} lang={lang} />
             </Row>
             <Row rail={rail}>
@@ -257,11 +271,11 @@ function Rides({ it, shared, base, fromPt, toPt, walkIn, walkOut }: { it: Itiner
                 )}
               </div>
             </Row>
-            <Row time={<Time min={l.arrive} est={l.arriveEstimated} t={t} />} rail={i === last && !walkOut ? undefined : i === last ? 'dashed' : rail} dot={i === last ? 'end' : 'small'}>
+            <Row time={<Time min={l.arrive} est={l.arriveEstimated} t={t} />} up={rail} down={i < last || walkOut ? 'dashed' : undefined} dot={i === last && !walkOut ? 'end' : 'small'}>
               <StopRow stop={stops[l.toPos]} lang={lang} />
             </Row>
             {i === last && walkOut && (
-              <Row time={<span className="font-normal text-slate-500 dark:text-slate-400">{fmtMinutes(l.arrive + walkOut.min)}</span>}>
+              <Row time={<span className="font-normal text-slate-500 dark:text-slate-400">{fmtMinutes(l.arrive + walkOut.min)}</span>} up="dashed" dot="end">
                 <p className="py-1.5 text-sm leading-5 text-slate-600 dark:text-slate-300" data-testid="walk-out">
                   <span aria-hidden="true">🚶 </span>
                   {t('walkToDest', { m: walkOut.m, n: walkOut.min })}

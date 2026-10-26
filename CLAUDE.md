@@ -15,7 +15,7 @@ Vývojář/asistent MUSÍ před každým commitem automaticky a bez vyzvání sp
 1. `npm run build:data` (přegenerování dat, kontrola chybějících zastávek a poznámek)
 2. `npx tsc -b` (striktní typová kontrola bez chyb)
 3. `npm test` (vitest unit testy)
-4. E2E kontrolní sady: `node scripts/e2e-line96.mjs`, `node scripts/e2e-line208.mjs`, `node scripts/e2e-trim-notes.mjs`, `node scripts/e2e-ux.mjs`, `node scripts/e2e-planner.mjs`, `node scripts/e2e-map.mjs`
+4. E2E kontrolní sady: `node scripts/e2e-line96.mjs`, `node scripts/e2e-line208.mjs`, `node scripts/e2e-trim-notes.mjs`, `node scripts/e2e-ux.mjs`, `node scripts/e2e-planner.mjs`, `node scripts/e2e-map.mjs`, `node scripts/e2e-mobile.mjs`
 5. `npm run build` (produkční vite build)
 
 **Pokud jakýkoliv krok selže, kód se nesmí pushnout na main, dokud není chyba opravena.**

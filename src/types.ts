@@ -157,6 +157,8 @@ export interface MapLayer {
   detours?: ViaRoute[];
   /** planner leg: only the stretch from stop `from` to stop `to` of `stops` is drawn in full colour, the rest of the line faintly (`stops` = every stop of the trip, [lat, lon]) */
   ride?: { stops: ([number, number] | null)[]; from: number; to: number };
+  /** indices into `stops` of the stretch the trip serves: stops outside it are dimmed, the first (boarding) and the last (alighting) one are highlighted */
+  served?: { from: number; to: number };
   /** every stop of the drawn trip with a position, in order, and whether the trip calls there: the polyline does not drive into a side road to a stop it skips */
   trip?: { stops: { at: [number, number]; calls: boolean }[] };
   /** places where the traveller changes buses: the alighting stop, and the boarding stop of the next bus when it is another one (walk between them) */

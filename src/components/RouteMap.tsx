@@ -13,6 +13,8 @@ import type { UserPos } from '../lib/nearby';
 import type { MapFocus, MapLayer, Stop } from '../types';
 import { cutSpurs } from '../lib/spur';
 import { iconSvg } from './Icons';
+import { LocateFab, LocateHint } from './LocateControl';
+import { live, useLiveLocation } from '../lib/liveLocation';
 
 interface PopupLabels {
   google: string;
@@ -94,9 +96,6 @@ interface Props {
   focus?: MapFocus | null;
   /** GPS position of the user, shown as a pulsing dot */
   me?: UserPos | null;
-  /** adds the locate button to the map */
-  onLocate?: () => void;
-  locating?: boolean;
   /** a stop marker of the first layer was clicked (index into that layer's stops) */
   onStopClick?: (index: number) => void;
 }
@@ -108,15 +107,15 @@ function casedLine(group: L.FeatureGroup, pts: [number, number][], style: { colo
   L.polyline(pts, { color: '#0f172a', weight: weight + 3, opacity: 0.85, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(group).bringToBack();
 }
 
-/** A map that was not removed and is still in the document: Leaflet throws (_leaflet_pos) on a removed map or a detached pane. */
-const live = (map: L.Map) => !!(map as unknown as { _mapPane?: unknown })._mapPane && map.getContainer().isConnected;
-
-export function RouteMap({ layers, focus = null, me = null, onLocate, locating = false, fill = false, onStopClick }: Props) {
+export function RouteMap({ layers, focus = null, me = null, fill = false, onStopClick }: Props) {
   const { t, lang } = useT();
   const el = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
+  const [mapInst, setMapInst] = useState<L.Map | null>(null);
+  const loc = useLiveLocation(mapInst, t('yourPosition'));
   const markers = useRef(new Map<number, L.CircleMarker>());
+  const baseStyle = useRef(new Map<number, L.CircleMarkerOptions>());
   const focusRef = useRef<MapFocus | null>(focus);
   focusRef.current = focus;
   const clickRef = useRef(onStopClick);
@@ -146,9 +145,11 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
     const layers = layersRef.current;
     setFailed(false);
     markers.current = new Map();
+    baseStyle.current = new Map();
     const map = L.map(container, { scrollWheelZoom: fill, dragging: true, touchZoom: true, zoomControl: true });
     osmTiles().addTo(map);
     mapRef.current = map;
+    setMapInst(map);
     const group = L.featureGroup().addTo(map);
     const labels: PopupLabels = { google: t('mapGoogle'), mapy: t('mapMapyCz'), arrival: t('arrivalWord'), departure: t('departureWord'), settlement: t('settlementWarning') };
     let alive = true;
@@ -158,13 +159,24 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
       layer.transfers?.forEach((x) => drawTransfer(group, x, t('mapTransfer', { name: localStopName(x.name, lang) }), t('mapTransferWalk')));
       layer.stops.forEach((s, si) => {
         if (s.lat === undefined || s.lon === undefined) return;
-        const marker = L.circleMarker([s.lat, s.lon], { radius: 5.5, color: '#0f172a', weight: 2.5, fillColor: '#fff', fillOpacity: 1 })
+        // a stop the trip does not serve (outside the ridden stretch) is faint and small; boarding and alighting stand out
+        const sv = layer.served;
+        const off = !!sv && (si < sv.from || si > sv.to);
+        const board = !!sv && si === sv.from;
+        const alight = !!sv && si === sv.to && sv.to > sv.from;
+        const base: L.CircleMarkerOptions = off
+          ? { radius: 3.5, color: '#475569', weight: 1.5, fillColor: '#fff', fillOpacity: 0.25, opacity: 0.25 }
+          : board || alight
+            ? { radius: 8, color: '#0f172a', weight: 3, fillColor: board ? '#16a34a' : '#dc2626', fillOpacity: 1, opacity: 1 }
+            : { radius: 5.5, color: '#0f172a', weight: 2.5, fillColor: '#fff', fillOpacity: 1, opacity: 1 };
+        const marker = L.circleMarker([s.lat, s.lon], base)
           .bindTooltip(localStopName(s.name, lang))
           // content is built when the popup opens, so it always shows the time of the currently selected trip
           .bindPopup(() => popupContent(s, lang, labels, li === 0 ? focusRef.current?.times[si] ?? null : null, si === 0), { autoPan: true, autoPanPadding: [12, 12] })
           .addTo(group);
         if (li === 0) {
           markers.current.set(si, marker);
+          baseStyle.current.set(si, base);
           marker.on('click', () => clickRef.current?.(si));
         }
       });
@@ -210,6 +222,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
       ro.disconnect();
       map.remove();
       mapRef.current = null;
+      setMapInst(null);
       markers.current = new Map();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -249,7 +262,12 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
   const fromMap = focus?.fromMap;
   useEffect(() => {
     const map = mapRef.current;
-    for (const [i, m] of markers.current) m.setStyle({ radius: i === stopIndex ? 9 : 5, fillColor: i === stopIndex ? m.options.color : '#fff' });
+    for (const [i, m] of markers.current) {
+      const b = baseStyle.current.get(i);
+      if (!b) continue;
+      // the chosen stop is enlarged and filled, the others return to their own look (faint / highlighted / plain)
+      m.setStyle(i === stopIndex ? { ...b, radius: 9, fillColor: b.color, fillOpacity: 1, opacity: 1 } : b);
+    }
     if (!map || stopIndex === undefined) return;
     const m = markers.current.get(stopIndex);
     if (!m || !live(map)) return;
@@ -288,29 +306,15 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
           aria-label={full ? t('mapExitFullscreen') : t('mapFullscreen')}
           title={full ? t('mapExitFullscreen') : t('mapFullscreen')}
           data-testid="map-fullscreen"
-          className={`absolute z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700 ${full ? 'right-3 top-[max(0.75rem,env(safe-area-inset-top))]' : onLocate ? 'right-3 top-16' : 'right-3 top-3'}`}
+          className={`absolute z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700 ${full ? 'right-3 top-[max(0.75rem,env(safe-area-inset-top))]' : 'right-3 top-3'}`}
         >
           <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             {full ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
           </svg>
         </button>
       )}
-      {onLocate && (
-        <button
-          type="button"
-          onClick={onLocate}
-          disabled={locating}
-          aria-label={t('locateMe')}
-          title={t('locateMe')}
-          className="absolute right-3 top-3 z-500 flex size-10 items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 disabled:opacity-60 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700"
-        >
-          <svg viewBox="0 0 24 24" className={`size-5 ${locating ? 'animate-pulse' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="7" />
-            <circle cx="12" cy="12" r="2" fill="currentColor" />
-            <path d="M12 1v4M12 19v4M1 12h4M19 12h4" />
-          </svg>
-        </button>
-      )}
+      <LocateFab status={loc.status} following={loc.following} onClick={loc.locate} className={full ? 'right-3 top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))]' : 'right-3 top-16'} />
+      <LocateHint status={loc.status} />
       {legend.length > 1 && (
         <ul className="absolute bottom-6 left-3 z-500 flex max-w-[calc(100%-4.5rem)] flex-col gap-1 rounded-xl bg-white/95 p-1.5 text-xs shadow-md ring-1 ring-slate-200 dark:bg-slate-900/95 dark:ring-slate-700" data-testid="map-legend">
           {legend.map((l, i) => (

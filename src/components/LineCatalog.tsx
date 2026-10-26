@@ -3,7 +3,7 @@ import { useT } from '../i18n';
 import { OPERATORS, operatorOf, type Operator, type OperatorId } from '../lib/operators';
 import type { Line } from '../types';
 import { Icon } from './Icons';
-import type { Shared } from './common';
+import { matchesType, type LineTypeFilter, type Shared } from './common';
 
 const byNumber = (a: Line, b: Line) => a.number.localeCompare(b.number, undefined, { numeric: true });
 const initials: Record<OperatorId, string> = { hf: 'HF', rodoeste: 'RO', sam: 'SAM', cam: 'CAM' };
@@ -21,15 +21,15 @@ function OperatorBadge({ op, line }: { op: Operator; line: Line }) {
 }
 
 /** All lines in sections by operator, each with its colour, label and the termini of every line. */
-export function LineCatalog({ shared }: { shared: Shared }) {
+export function LineCatalog({ shared, type = 'all' }: { shared: Shared; type?: LineTypeFilter }) {
   const { t } = useT();
   const [open, setOpen] = useState<OperatorId | null>(null);
   const groups = useMemo(() => {
     const m = new Map<OperatorId, Line[]>(OPERATORS.map((o) => [o.id, []]));
-    for (const l of shared.lines) m.get(operatorOf(l))!.push(l);
+    for (const l of shared.lines) if (matchesType(l, type)) m.get(operatorOf(l))!.push(l);
     for (const list of m.values()) list.sort(byNumber);
     return m;
-  }, [shared.lines]);
+  }, [shared.lines, type]);
   return (
     <section className="flex flex-col gap-3" data-testid="line-catalog">
       <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('catalogTitle')}</h2>

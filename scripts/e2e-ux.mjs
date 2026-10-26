@@ -360,8 +360,7 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   check('the choice is stored', (await page.evaluate(() => localStorage.getItem('theme'))) === 'light');
   await page.reload({ waitUntil: 'networkidle0' });
   check('the choice survives a reload (no flash of the dark scheme)', !(await dark()));
-  await page.click('[data-testid=open-settings]');
-  await sleep(300);
+  check('a reload keeps the settings page (its own URL)', (await page.$('[data-testid=settings]')) !== null);
   await pick('dark');
   await sleep(300);
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);

@@ -18,6 +18,7 @@ import { ConnectionCard, ConnectionDetail, endWalks, shortDate } from './Connect
 import { walkTo } from '../lib/walk';
 import type { MapLayer, MapPin as PickedPin } from '../types';
 import { OPERATORS, operatorOf, type OperatorId } from '../lib/operators';
+import { geoDeniedText } from '../lib/geoHelp';
 import { badgeText, Card, Chip, EmptyState, EstTag, LEG_COLORS, lineColor, TypeFilter, matchesType, type Shared } from './common';
 import { Icon } from './Icons';
 import type { LineTypeFilter } from './common';
@@ -312,7 +313,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     if (!wantsLocation) return;
     if (geo === 'denied' || geo === 'error' || geo === 'unsupported') {
       setWantsLocation(false);
-      setLocNote(t(geo === 'denied' ? 'geoDenied' : geo === 'error' ? 'geoError' : 'geoUnsupported'));
+      setLocNote(geo === 'denied' ? geoDeniedText(t) : t(geo === 'error' ? 'geoError' : 'geoUnsupported'));
       return;
     }
     if (!userPos || userPos.seq === seenFix.current) return;
@@ -529,6 +530,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const rawLayers = useMemo<MapLayer[] | null>(() => {
     if (!selected) return null;
     const legs = selected.it.legs;
+    // a dash in the timetable (no time) = the trip does not call there: not drawn
+    const ridden = (l: (typeof legs)[number]) => tripStops(l.trip).slice(l.fromPos, l.toPos + 1).filter((_, k) => l.trip.times[l.fromPos + k] !== null);
     // A / B always mark the start and the destination: the picked point, else the boarding / alighting stop itself (no walk to draw then)
     const pinFor = (kind: PickedPin['kind'], pt: Picked['pt'], stop: { lat?: number; lon?: number; name: string }, path?: [number, number][]): PickedPin | null => {
       const at = pt ?? (stop.lat !== undefined && stop.lon !== undefined ? { lat: stop.lat, lon: stop.lon } : null);
@@ -550,12 +553,13 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     return legs.map((l, i) => ({
       shapeId: l.trip.dir.shapeId,
       // a dash in the timetable (no time) = the trip does not call there: not drawn
-      stops: tripStops(l.trip).slice(l.fromPos, l.toPos + 1).filter((_, k) => l.trip.times[l.fromPos + k] !== null),
+      stops: ridden(l),
       // with a transfer every bus gets its own colour and a place in the legend
       color: legs.length > 1 ? LEG_COLORS[i % LEG_COLORS.length] : lineColor(l.trip.line),
       ...(legs.length > 1 ? { legend: { badge: badgeText(l.trip.line), text: `${localStopName(tripStops(l.trip)[l.fromPos].name, lang)} → ${localStopName(tripStops(l.trip)[l.toPos].name, lang)}` } } : {}),
       detours: detoursFor(l.trip.line, l.trip.dirIndex, l.trip.notes),
       trip: { stops: tripStops(l.trip).flatMap((s, k) => (s.lat !== undefined && s.lon !== undefined ? [{ at: [s.lat, s.lon] as [number, number], calls: l.trip.times[k] !== null }] : [])) },
+      served: { from: 0, to: Math.max(0, ridden(l).length - 1) },
       ride: { stops: tripStops(l.trip).map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), from: l.fromPos, to: l.toPos },
       ...(i === 0 && pins.length ? { pins } : {}),
       ...(i === 0 && transfers.length ? { transfers } : {}),

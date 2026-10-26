@@ -283,7 +283,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
     const stops = dir.stops.flatMap((s, i) => (s.lat !== undefined && s.lon !== undefined ? [{ at: [s.lat, s.lon] as [number, number], calls: !!stopTimes[i] }] : []));
     return stops.some((s) => !s.calls) ? { stops } : undefined;
   }, [dir, sel, stopTimes]);
-  const layers = useMemo<MapLayer[]>(() => (dir ? [{ shapeId: dir.shapeId, stops: shownStops, color: lineColor(line), ...(tripPts ? { trip: tripPts } : {}), ...(pins.length ? { pins } : {}), ...(detours.length ? { detours } : {}), ...(rideShown ? { ride: { stops: shownStops.map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), ...rideShown } } : {}) }] : []), [dir, line, shownStops, detours, rideShown, pins, tripPts]);
+  const layers = useMemo<MapLayer[]>(() => (dir ? [{ shapeId: dir.shapeId, stops: shownStops, color: lineColor(line), ...(tripPts ? { trip: tripPts } : {}), ...(pins.length ? { pins } : {}), ...(detours.length ? { detours } : {}), ...(rideShown ? { served: rideShown, ride: { stops: shownStops.map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), ...rideShown } } : {}) }] : []), [dir, line, shownStops, detours, rideShown, pins, tripPts]);
   // on desktop the route is drawn on the big map next to the sidebar, on mobile it is shown inline
   const { desktop, setMap } = shared;
   useEffect(() => {

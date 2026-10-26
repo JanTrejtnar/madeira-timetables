@@ -61,10 +61,28 @@ function parseHash(): { id: number; dir?: number; ride?: { from: number; to: num
   return { id: +m[1], dir: m[2] !== undefined ? +m[2] : undefined, ...(m[3] !== undefined && +m[3] < +m[4] ? { ride: { from: +m[3], to: +m[4] } } : {}), ...(when ? { when } : {}) };
 }
 
+const TAB_KEYS: readonly Tab[] = ['search', 'route', 'map', 'departures', 'settings'];
+
+/** The page named by the hash (`#/settings`, `#/search`, ...); null for a line detail or an empty / unknown hash. */
+function parseTab(): Tab | null {
+  const m = location.hash.match(/^#\/([a-z]+)(?:[/?]|$)/);
+  return m && (TAB_KEYS as readonly string[]).includes(m[1]) ? (m[1] as Tab) : null;
+}
+
+/** Every page has its own URL, so a reload or a shared link opens the same page and the browser's Back walks through the pages. */
+const goTab = (k: Tab) => {
+  const h = `#/${k}`;
+  if (location.hash !== h) location.hash = h;
+};
+
 export function App() {
   const [lang, setLang] = useState<Lang>(initialLang);
   const t = useMemo(() => makeT(lang), [lang]);
-  const [tab, setTab] = useState<Tab>('route');
+  const [tab, setTab] = useState<Tab>(() => parseTab() ?? 'route');
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
+  // in-app navigations so far: the line detail's Back button only steps back in history when there is an app page to return to
+  const navCount = useRef(0);
   const [route, setRoute] = useState(parseHash);
   // the planner's start / destination points of the leg that was opened (the hash only carries the ridden stretch)
   const [openConn, setOpenConn] = useState<string | null>(null);
@@ -189,7 +207,19 @@ export function App() {
   }, [lang]);
   useEffect(() => {
     const id = setInterval(() => setNow(nowInMadeira()), 15_000);
-    const onHash = () => setRoute(parseHash());
+    const onHash = () => {
+      navCount.current++;
+      const r = parseHash();
+      setRoute(r);
+      const next = parseTab();
+      if (next && next !== tabRef.current) {
+        setOpenConn(null);
+        setTab(next);
+      } else if (!next && !r && tabRef.current !== 'route') {
+        setOpenConn(null);
+        setTab('route');
+      }
+    };
     window.addEventListener('hashchange', onHash);
     return () => {
       clearInterval(id);
@@ -235,14 +265,14 @@ export function App() {
               setPlannerViewState('form');
               setPlanner((p) => ({ ...p, from: { text: name, key } }));
               setTab('route');
-              if (location.hash) location.hash = '';
+              goTab('route');
             },
             useStopAs: (kind, name, key) => {
               setOpenConn(null);
               setPlannerViewState('form');
               setPlanner((p) => ({ ...p, [kind]: { text: name, key } }));
               setTab('route');
-              if (location.hash) location.hash = '';
+              goTab('route');
             },
             recent,
             favorites,
@@ -255,12 +285,39 @@ export function App() {
               setPlanner((p) => ({ ...p, from: trip.from, to: trip.to }));
               setApplied({ from: trip.from, to: trip.to });
               setTab('route');
-              if (location.hash) location.hash = '';
+              goTab('route');
             },
           }
         : null,
     [data, net, ctx, openConn, fareCard, plannerView, desktop, userPos, geo, locate, planner, applied, commit, pendingConn, clearPendingConn, recent, favorites, toggleFavorite, rememberTrip, clearRecent],
   );
+
+  // planner pages (results, an opened connection) get a history entry each, so the Back button / gesture steps from the connection to the
+  // results to the form instead of leaving the page
+  const depth = tab === 'route' ? (openConn ? 2 : plannerView === 'results' ? 1 : 0) : 0;
+  const depthRef = useRef(depth);
+  useEffect(() => {
+    const was = depthRef.current;
+    depthRef.current = depth;
+    if (depth > was) for (let d = was + 1; d <= depth; d++) history.pushState({ ...history.state, depth: d }, '');
+    else if (depth < was && history.state?.depth === was) history.go(depth - was);
+  }, [depth]);
+  useEffect(() => {
+    let hash = location.hash;
+    const onPop = () => {
+      // a fragment navigation (another page of the app) fires popstate too; only a step between entries of one page is ours
+      const same = location.hash === hash;
+      hash = location.hash;
+      if (!same) return;
+      const d: number = history.state?.depth ?? 0;
+      if (d >= depthRef.current) return;
+      depthRef.current = d;
+      if (d < 2) setOpenConn(null);
+      if (d < 1) setPlannerViewState('form');
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   // height of the sticky header: pages put their own sticky bars right under it
   const headerRef = useRef<HTMLElement>(null);
@@ -285,7 +342,16 @@ export function App() {
     cameFrom.current = null;
     setOpenConn(null);
     setTab(k);
-    if (route) location.hash = '';
+    goTab(k);
+  };
+  // the brand: back to the start page (the planner's form), with no line, connection or settings page open
+  const goHome = () => {
+    cameFrom.current = null;
+    setOpenConn(null);
+    setPlannerViewState('form');
+    setTab('route');
+    goTab('route');
+    document.getElementById('scroller')?.scrollTo(0, 0);
   };
   const toggleSettings = () => {
     if (tab === 'settings' && !route) {
@@ -294,12 +360,13 @@ export function App() {
       setTab(back.tab);
       setOpenConn(back.openConn);
       if (back.hash) location.hash = back.hash;
+      else goTab(back.tab);
       return;
     }
     cameFrom.current = { tab, hash: route ? location.hash : '', openConn };
     setOpenConn(null);
     setTab('settings');
-    if (route) location.hash = '';
+    goTab('settings');
   };
   const tabs: { key: Tab; icon: IconName; label: string }[] = [
     { key: 'route', icon: 'route', label: t('tabRoute') },
@@ -314,11 +381,13 @@ export function App() {
         <aside className={`mx-auto flex w-full max-w-2xl flex-col lg:h-dvh lg:overflow-hidden lg:bg-slate-50 dark:lg:bg-slate-950 ${splitView ? 'lg:mx-0 lg:max-w-none lg:border-r lg:border-slate-200/70 dark:lg:border-slate-800' : 'lg:border-x lg:border-slate-200/70 dark:lg:border-slate-800'}`}>
           <header ref={headerRef} className="sticky top-0 z-40 shrink-0 border-b border-slate-200/70 bg-white/90 px-4 pb-3 pt-safe backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 lg:static lg:bg-white lg:backdrop-blur-none dark:lg:bg-slate-900">
             <div className="flex items-center justify-between gap-2 pt-3">
-              <h1 className="flex items-center gap-2.5 text-lg font-bold tracking-tight">
-                <span className="flex size-8 items-center justify-center rounded-xl bg-sky-600 text-white">
-                  <Icon name="bus" className="size-5" />
-                </span>
-                {t('appName')}
+              <h1 className="text-lg font-bold tracking-tight">
+                <button type="button" onClick={goHome} data-testid="brand-home" aria-label={`${t('appName')}: ${t('tabRoute')}`} className="-ml-1 flex items-center gap-2.5 rounded-xl p-1 text-left transition-opacity hover:opacity-80 active:opacity-70">
+                  <span className="flex size-8 items-center justify-center rounded-xl bg-sky-600 text-white">
+                    <Icon name="bus" className="size-5" />
+                  </span>
+                  {t('appName')}
+                </button>
               </h1>
               <div className="flex items-center gap-1.5">
                 <LangMenu lang={lang} onChange={setLang} />
@@ -367,7 +436,7 @@ export function App() {
             {data && index && shared && (
               <>
                 {route && line ? (
-                  <LineView line={line} initialDir={route.dir} initialRide={route.ride} initialWhen={route.when} initialEnds={route.ride ? rideEnds : undefined} shared={shared} onBack={() => (history.length > 1 ? history.back() : (location.hash = ''))} />
+                  <LineView line={line} initialDir={route.dir} initialRide={route.ride} initialWhen={route.when} initialEnds={route.ride ? rideEnds : undefined} shared={shared} onBack={() => (navCount.current > 0 ? history.back() : goTab(tab))} />
                 ) : (
                   <>
                     {tab === 'map' && !desktop && (
@@ -409,7 +478,7 @@ export function App() {
         {splitView && (
           <div className="relative h-dvh bg-slate-200 dark:bg-slate-800">
             {mapLayers || !shared ? (
-              <RouteMap layers={mapLayers ?? []} focus={mapFocus} onStopClick={onMapStop} me={userPos} onLocate={locate} locating={geo === 'busy'} fill />
+              <RouteMap layers={mapLayers ?? []} focus={mapFocus} onStopClick={onMapStop} me={userPos} fill />
             ) : (
               <NetworkMap shared={shared} fill />
             )}

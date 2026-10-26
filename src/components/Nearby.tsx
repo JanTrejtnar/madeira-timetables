@@ -4,6 +4,7 @@ import { departuresFrom, nearbyStops, type NearbyStop } from '../lib/nearby';
 import type { MapLayer } from '../types';
 import { Card, EstTag, LineBadge, SectionTitle, type Shared } from './common';
 import { Icon } from './Icons';
+import { geoDeniedText } from '../lib/geoHelp';
 import { RouteMap } from './RouteMap';
 
 const fmtDist = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`);
@@ -69,7 +70,7 @@ export function Nearby({ shared }: { shared: Shared }) {
     return () => setMap(null);
   }, [desktop, pos, layers, setMap]);
 
-  const err = geo === 'denied' ? t('geoDenied') : geo === 'error' ? t('geoError') : geo === 'unsupported' ? t('geoUnsupported') : null;
+  const err = geo === 'denied' ? geoDeniedText(t) : geo === 'error' ? t('geoError') : geo === 'unsupported' ? t('geoUnsupported') : null;
   return (
     <section className="flex flex-col gap-3">
       <button
@@ -94,7 +95,7 @@ export function Nearby({ shared }: { shared: Shared }) {
           <SectionTitle aside={<span className="text-xs text-slate-400">±{Math.round(pos.acc)} m</span>}>{t('nearbyTitle')}</SectionTitle>
           {result.widened && result.stops.length > 0 && <p className="text-sm text-slate-500">{t('nearbyWidened')}</p>}
           {!result.stops.length && <p className="text-sm text-slate-500">{t('nearbyNone')}</p>}
-          {!desktop && <RouteMap layers={layers} me={pos} onLocate={locate} locating={geo === 'busy'} />}
+          {!desktop && <RouteMap layers={layers} me={pos} />}
           <div className="flex flex-col gap-2">
             {result.stops.map((s) => (
               <StopCard key={s.nodeId} stop={s} shared={shared} />

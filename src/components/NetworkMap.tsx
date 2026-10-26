@@ -11,6 +11,8 @@ import { localStopName } from '../lib/text';
 import type { Line } from '../types';
 import { EstTag, LineBadge, type Shared } from './common';
 import { Icon } from './Icons';
+import { LocateFab, LocateHint } from './LocateControl';
+import { useLiveLocation } from '../lib/liveLocation';
 
 type Selection = { kind: 'stop'; nodeId: number } | { kind: 'line'; id: number } | null;
 
@@ -29,9 +31,11 @@ const PORTO_SANTO: L.LatLngBoundsLiteral = [[33.00, -16.42], [33.13, -16.27]];
 /** The whole network when no route is shown: lines in the colour of their operator, stops as tappable points, a panel for the tapped one. */
 export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: boolean }) {
   const { t, lang } = useT();
-  const { net, lines, userPos, locate, geo } = shared;
+  const { net, lines, userPos } = shared;
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const [mapInst, setMapInst] = useState<L.Map | null>(null);
+  const loc = useLiveLocation(mapInst, t('yourPosition'));
   const [overview, setOverview] = useState<Overview | null>(null);
   const [failed, setFailed] = useState(false);
   const [sel, setSel] = useState<Selection>(null);
@@ -95,6 +99,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
     map.on('click', () => selRef.current(null));
     renderer.current = L.canvas({ padding: 0.4 });
     mapRef.current = map;
+    setMapInst(map);
     const ro = new ResizeObserver(() => map.invalidateSize());
     ro.observe(container);
     // the container may be laid out after the map is created: fit the island once its size is known, unless the user already moved the map
@@ -107,6 +112,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
       ro.disconnect();
       map.remove();
       mapRef.current = null;
+      setMapInst(null);
       renderer.current = null;
       lineLayers.current = new Map();
       operatorGroups.current = new Map();
@@ -286,27 +292,15 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
           </button>
         ))}
       </div>
-      <button
-        type="button"
-        onClick={locate}
-        disabled={geo === 'busy'}
-        aria-label={t('locateMe')}
-        title={t('locateMe')}
-        className="absolute right-3 top-3 z-500 flex size-10 items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 disabled:opacity-60 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700"
-      >
-        <svg viewBox="0 0 24 24" className={`size-5 ${geo === 'busy' ? 'animate-pulse' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="7" />
-          <circle cx="12" cy="12" r="2" fill="currentColor" />
-          <path d="M12 1v4M12 19v4M1 12h4M19 12h4" />
-        </svg>
-      </button>
+      <LocateFab status={loc.status} following={loc.following} onClick={loc.locate} className="right-3 top-16" />
+      <LocateHint status={loc.status} />
       <button
         type="button"
         onClick={() => setFull((v) => !v)}
         aria-label={full ? t('mapExitFullscreen') : t('mapFullscreen')}
         title={full ? t('mapExitFullscreen') : t('mapFullscreen')}
         data-testid="map-fullscreen"
-        className="absolute right-3 top-16 z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700"
+        className="absolute right-3 top-3 z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700"
       >
         <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           {full ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}

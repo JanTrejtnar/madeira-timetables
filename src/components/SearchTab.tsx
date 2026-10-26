@@ -32,7 +32,7 @@ export function SearchTab({ shared, index }: { shared: Shared; index: Index }) {
     <div className="flex flex-col gap-4">
       <SearchInput value={q} onChange={setQ} placeholder={t('searchPlaceholder')} autoFocus />
       <TypeFilter value={type} onChange={setType} className="self-start" />
-      {!q.trim() && <LineCatalog shared={shared} />}
+      {!q.trim() && <LineCatalog shared={shared} type={type} />}
       <Nearby shared={shared} />
 
       {pending && q.trim() && <SkeletonCards n={3} />}
