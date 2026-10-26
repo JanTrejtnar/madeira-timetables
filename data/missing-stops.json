@@ -13,17 +13,6 @@
       ]
     },
     {
-      "name": "S. Sebastião",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 2,
-      "tripCount": 17,
-      "lines": [
-        "505",
-        "527"
-      ]
-    },
-    {
       "name": "Arendrup",
       "code": null,
       "status": "no coordinates",
@@ -46,17 +35,6 @@
       ]
     },
     {
-      "name": "Cruz Guarda",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 2,
-      "tripCount": 12,
-      "lines": [
-        "208",
-        "785"
-      ]
-    },
-    {
       "name": "Fazenda",
       "code": null,
       "status": "no coordinates",
@@ -65,26 +43,6 @@
       "lines": [
         "501",
         "526"
-      ]
-    },
-    {
-      "name": "Avenida do Infante",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 50,
-      "lines": [
-        "500"
-      ]
-    },
-    {
-      "name": "Plaza Madeira",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 50,
-      "lines": [
-        "500"
       ]
     },
     {
@@ -128,26 +86,6 @@
       ]
     },
     {
-      "name": "Fajã Rolos",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 25,
-      "lines": [
-        "20"
-      ]
-    },
-    {
-      "name": "P. Empresarial",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 25,
-      "lines": [
-        "20"
-      ]
-    },
-    {
       "name": "Estreito (CONTINENTE)",
       "code": null,
       "status": "no coordinates",
@@ -155,46 +93,6 @@
       "tripCount": 24,
       "lines": [
         "137"
-      ]
-    },
-    {
-      "name": "Ach. Castanheiro",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 17,
-      "lines": [
-        "6"
-      ]
-    },
-    {
-      "name": "Boaventura",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 17,
-      "lines": [
-        "6"
-      ]
-    },
-    {
-      "name": "Lameiros",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 17,
-      "lines": [
-        "6"
-      ]
-    },
-    {
-      "name": "Lombadas",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 17,
-      "lines": [
-        "6"
       ]
     },
     {
@@ -238,16 +136,6 @@
       ]
     },
     {
-      "name": "Maiata",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 10,
-      "lines": [
-        "208"
-      ]
-    },
-    {
       "name": "Bar Maritimo",
       "code": null,
       "status": "no coordinates",
@@ -275,16 +163,6 @@
       "tripCount": 9,
       "lines": [
         "528"
-      ]
-    },
-    {
-      "name": "Remedios",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 8,
-      "lines": [
-        "527"
       ]
     },
     {
@@ -348,86 +226,6 @@
       ]
     },
     {
-      "name": "CAM do Boqueirão, 2A",
-      "code": "C202B",
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "CAM do Boqueirão, 5A",
-      "code": "C202E",
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "CAM do Boqueirão, 6A",
-      "code": "C202F",
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Larano",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "785"
-      ]
-    },
-    {
-      "name": "Maiata Cima",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "785"
-      ]
-    },
-    {
-      "name": "Palmeira",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "526"
-      ]
-    },
-    {
-      "name": "Tijuca",
-      "code": "C19A",
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Casa das Mudas / Escola",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 3,
-      "lines": [
-        "218"
-      ]
-    },
-    {
       "name": "Estreito (ESCOLA) - Castelejo",
       "code": null,
       "status": "no coordinates",
@@ -435,36 +233,6 @@
       "tripCount": 3,
       "lines": [
         "137"
-      ]
-    },
-    {
-      "name": "Via Misericordia",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 3,
-      "lines": [
-        "726"
-      ]
-    },
-    {
-      "name": "Arco da Calheta (ER222)",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "218"
-      ]
-    },
-    {
-      "name": "CAM do Boqueirão, 1A",
-      "code": "C202J",
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
       ]
     },
     {
@@ -508,36 +276,6 @@
       ]
     },
     {
-      "name": "Loreto (ER222)",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "218"
-      ]
-    },
-    {
-      "name": "Monteiros",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "218"
-      ]
-    },
-    {
-      "name": "P.Empresarial",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "20"
-      ]
-    },
-    {
       "name": "Terreiros",
       "code": null,
       "status": "no coordinates",
@@ -548,16 +286,6 @@
       ]
     },
     {
-      "name": "Aviceiro / Qta. Grande",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 1,
-      "lines": [
-        "139"
-      ]
-    },
-    {
       "name": "Estreito (ESCOLA) - Corticeiras",
       "code": null,
       "status": "no coordinates",
@@ -565,26 +293,6 @@
       "tripCount": 1,
       "lines": [
         "137"
-      ]
-    },
-    {
-      "name": "Remédios",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 1,
-      "lines": [
-        "505"
-      ]
-    },
-    {
-      "name": "S. Sebastiao",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 1,
-      "lines": [
-        "505"
       ]
     },
     {
@@ -1378,6 +1086,17 @@
       ]
     },
     {
+      "name": "S. Sebastião",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 2,
+      "tripCount": 17,
+      "lines": [
+        "505",
+        "527"
+      ]
+    },
+    {
       "name": "Santa",
       "code": null,
       "status": "name_match",
@@ -1397,6 +1116,17 @@
       "lines": [
         "785",
         "825"
+      ]
+    },
+    {
+      "name": "Cruz Guarda",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 2,
+      "tripCount": 12,
+      "lines": [
+        "208",
+        "785"
       ]
     },
     {
@@ -1548,6 +1278,16 @@
       ]
     },
     {
+      "name": "Avenida do Infante",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 50,
+      "lines": [
+        "500"
+      ]
+    },
+    {
       "name": "Avenida do Mar",
       "code": null,
       "status": "name_match",
@@ -1601,6 +1341,16 @@
       "name": "Mercado",
       "code": null,
       "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 50,
+      "lines": [
+        "500"
+      ]
+    },
+    {
+      "name": "Plaza Madeira",
+      "code": null,
+      "status": "interpolated_road_point",
       "lineCount": 1,
       "tripCount": 50,
       "lines": [
@@ -1688,6 +1438,26 @@
       ]
     },
     {
+      "name": "Fajã Rolos",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 25,
+      "lines": [
+        "20"
+      ]
+    },
+    {
+      "name": "P. Empresarial",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 25,
+      "lines": [
+        "20"
+      ]
+    },
+    {
       "name": "R.Machico",
       "code": null,
       "status": "name_match",
@@ -1718,6 +1488,16 @@
       ]
     },
     {
+      "name": "Ach. Castanheiro",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 17,
+      "lines": [
+        "6"
+      ]
+    },
+    {
       "name": "Arco São Jorge",
       "code": null,
       "status": "name_match",
@@ -1728,9 +1508,39 @@
       ]
     },
     {
+      "name": "Boaventura",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 17,
+      "lines": [
+        "6"
+      ]
+    },
+    {
       "name": "Fajã Areia",
       "code": null,
       "status": "corridor_osm_match",
+      "lineCount": 1,
+      "tripCount": 17,
+      "lines": [
+        "6"
+      ]
+    },
+    {
+      "name": "Lameiros",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 17,
+      "lines": [
+        "6"
+      ]
+    },
+    {
+      "name": "Lombadas",
+      "code": null,
+      "status": "interpolated_road_point",
       "lineCount": 1,
       "tripCount": 17,
       "lines": [
@@ -1808,6 +1618,16 @@
       ]
     },
     {
+      "name": "Maiata",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 10,
+      "lines": [
+        "208"
+      ]
+    },
+    {
       "name": "Estreito C. lobos",
       "code": null,
       "status": "name_match",
@@ -1815,6 +1635,16 @@
       "tripCount": 8,
       "lines": [
         "142"
+      ]
+    },
+    {
+      "name": "Remedios",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 8,
+      "lines": [
+        "527"
       ]
     },
     {
@@ -1908,6 +1738,26 @@
       ]
     },
     {
+      "name": "CAM do Boqueirão, 1A",
+      "code": "C202A",
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "502"
+      ]
+    },
+    {
+      "name": "CAM do Boqueirão, 2A",
+      "code": "C202B",
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "502"
+      ]
+    },
+    {
       "name": "CAM do Boqueirão, 3A",
       "code": "C202C",
       "status": "name_match",
@@ -1921,6 +1771,26 @@
       "name": "CAM do Boqueirão, 4A",
       "code": "C202D",
       "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "502"
+      ]
+    },
+    {
+      "name": "CAM do Boqueirão, 5A",
+      "code": "C202E",
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "502"
+      ]
+    },
+    {
+      "name": "CAM do Boqueirão, 6A",
+      "code": "C202F",
+      "status": "interpolated_road_point",
       "lineCount": 1,
       "tripCount": 4,
       "lines": [
@@ -2028,6 +1898,16 @@
       ]
     },
     {
+      "name": "Larano",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "785"
+      ]
+    },
+    {
       "name": "Largo da Achada",
       "code": "C31",
       "status": "name_match",
@@ -2095,6 +1975,26 @@
       "tripCount": 4,
       "lines": [
         "20"
+      ]
+    },
+    {
+      "name": "Maiata Cima",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "785"
+      ]
+    },
+    {
+      "name": "Palmeira",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "526"
       ]
     },
     {
@@ -2238,6 +2138,16 @@
       ]
     },
     {
+      "name": "Tijuca",
+      "code": "C19A",
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "502"
+      ]
+    },
+    {
       "name": "C.S. Calheta",
       "code": null,
       "status": "name_match",
@@ -2245,6 +2155,16 @@
       "tripCount": 3,
       "lines": [
         "115"
+      ]
+    },
+    {
+      "name": "Casa das Mudas / Escola",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 3,
+      "lines": [
+        "218"
       ]
     },
     {
@@ -2315,6 +2235,16 @@
       "tripCount": 3,
       "lines": [
         "139"
+      ]
+    },
+    {
+      "name": "Via Misericordia",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 3,
+      "lines": [
+        "726"
       ]
     },
     {
@@ -2448,9 +2378,9 @@
       ]
     },
     {
-      "name": "Atouguia (ER222)",
+      "name": "Arco da Calheta (ER222)",
       "code": null,
-      "status": "name_match",
+      "status": "interpolated_road_point",
       "lineCount": 1,
       "tripCount": 2,
       "lines": [
@@ -2458,13 +2388,13 @@
       ]
     },
     {
-      "name": "CAM do Boqueirão, 1A",
-      "code": "C202A",
+      "name": "Atouguia (ER222)",
+      "code": null,
       "status": "name_match",
       "lineCount": 1,
       "tripCount": 2,
       "lines": [
-        "502"
+        "218"
       ]
     },
     {
@@ -2698,6 +2628,16 @@
       ]
     },
     {
+      "name": "Loreto (ER222)",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 2,
+      "lines": [
+        "218"
+      ]
+    },
+    {
       "name": "M. Valente",
       "code": null,
       "status": "name_match",
@@ -2715,6 +2655,26 @@
       "tripCount": 2,
       "lines": [
         "80"
+      ]
+    },
+    {
+      "name": "Monteiros",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 2,
+      "lines": [
+        "218"
+      ]
+    },
+    {
+      "name": "P.Empresarial",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 2,
+      "lines": [
+        "20"
       ]
     },
     {
@@ -2908,6 +2868,16 @@
       ]
     },
     {
+      "name": "Aviceiro / Qta. Grande",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 1,
+      "lines": [
+        "139"
+      ]
+    },
+    {
       "name": "Cabo Girão",
       "code": null,
       "status": "name_match",
@@ -2965,6 +2935,26 @@
       "tripCount": 1,
       "lines": [
         "107"
+      ]
+    },
+    {
+      "name": "Remédios",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 1,
+      "lines": [
+        "505"
+      ]
+    },
+    {
+      "name": "S. Sebastiao",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 1,
+      "lines": [
+        "505"
       ]
     },
     {

@@ -211,7 +211,11 @@ async function mobileMapChecks() {
   await sleep(600);
   const warnIcons = await page.evaluate(() => [...document.querySelectorAll('[role=img]')].filter((e) => /Orientační poloha/.test(e.getAttribute('aria-label') ?? '')).length);
   check('phone: ⚠️ marker next to stops placed on a village centre', warnIcons > 0, String(warnIcons));
-  // a stop of the trip without any coordinates (Eira Achada): grey badge instead of the pin, and the banner over the list
+  // a stop of the trip without any coordinates (line 146 still has four: L. São João, Levada Poiso, Carvalhal, Socorro): grey badge instead of the pin, and the banner over the list
+  const id146 = (await (await fetch(base + 'data/schedules.json')).json()).lines.find((l) => l.number === '146').id;
+  await page.goto(`${base}#/line/${id146}/0`, { waitUntil: 'networkidle0' });
+  await page.reload({ waitUntil: 'networkidle0' });
+  await sleep(600);
   const gps = await page.evaluate(() => {
     const banner = document.querySelector('[data-testid=trip-no-gps]');
     const badge = document.querySelector('[data-testid=stop-no-gps]');
@@ -228,6 +232,9 @@ async function mobileMapChecks() {
   });
   check('phone: trip with a stop without GPS shows the banner, inside the screen', /bez přesných GPS souřadnic/.test(gps.banner) && gps.bannerIn, gps.banner.slice(0, 60));
   check('phone: that stop has the grey "Bez GPS polohy" badge instead of the pin, and no horizontal scroll', gps.badge === 'Bez GPS polohy' && gps.badgeIn && gps.noPin && !gps.overflowX, JSON.stringify(gps));
+  await page.goto(`${base}#/line/${id}/0`, { waitUntil: 'networkidle0' });
+  await page.reload({ waitUntil: 'networkidle0' });
+  await sleep(600);
   // expand the details of the Ribeira da Janela stop (pin button in its row)
   const opened = await page.evaluate(() => {
     const li = [...document.querySelectorAll('ol li')].find((x) => /^Ribeira da Janela/.test(x.innerText.trim()));

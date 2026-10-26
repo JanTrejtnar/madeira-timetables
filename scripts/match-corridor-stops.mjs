@@ -9,6 +9,8 @@
 //   --only "Name"      limit to stops whose name contains the text (repeatable)
 //   --accept "Name=ID" write the candidate OSM node ID (or place:<name>) found in the corridor of the stop
 //   --interp "Name"    write the point on the road at the ratio of the driving times between the neighbours (interpolated_road_point)
+//   --interp-all       --interp for every remaining stop that has BOTH known neighbours on every line it is on, a drawn route between them
+//                      and the same point from every direction (within 1 km); the others are listed at the end for a manual check
 //   --limit N          look at the first N stops of the list only
 //   --dry              with --auto / --accept / --interp: print what would be written, change nothing
 // Needs `npm run build:data` first (it reads public/data). Run `npm run build:data` afterwards.
@@ -23,6 +25,8 @@ const values = (n) => args.flatMap((a, i) => (a === n && args[i + 1] ? [args[i +
 const AUTO = flag('--auto');
 const REPORT = flag('--report');
 const DRY = flag('--dry');
+const INTERP_ALL = flag('--interp-all');
+const AGREE_KM = 1;
 const ONLY = values('--only').map(keyOf);
 const ACCEPT = new Map(values('--accept').map((v) => [keyOf(v.slice(0, v.lastIndexOf('='))), v.slice(v.lastIndexOf('=') + 1)]));
 const INTERP = new Set(values('--interp').map(keyOf));
@@ -239,9 +243,10 @@ function show(s, ctxs, cs) {
 }
 
 const todo = missingList.filter((s) => !ONLY.length || ONLY.some((k) => keyOf(s.name).includes(k))).slice(0, LIMIT);
-const tty = process.stdin.isTTY && !AUTO && !REPORT && !ACCEPT.size && !INTERP.size;
+const tty = process.stdin.isTTY && !INTERP_ALL && !AUTO && !REPORT && !ACCEPT.size && !INTERP.size;
 const rl = tty ? readline.createInterface({ input: process.stdin, output: process.stdout }) : null;
 const done = { matched: 0, interpolated: 0, skipped: 0 };
+const manual = [];
 for (const s of todo) {
   const ctxs = contextsOf(s.name);
   if (!ctxs.length) { console.log(`\n"${s.name}": no known neighbour on any line, skipped`); done.skipped++; continue; }
@@ -259,6 +264,18 @@ for (const s of todo) {
     if (!e) { console.log(`\n"${s.name}": no drawn route between the neighbours, cannot interpolate`); done.skipped++; continue; }
     writeOverride(s.name, ctxs, e);
     console.log(`\n"${s.name}": interpolated to ${e.p.join(', ')}`); done.interpolated++; continue;
+  }
+  if (INTERP_ALL) {
+    const why = ctxs.some((c) => !c.prev || !c.next) ? 'only one known neighbour on a line (end of the line)'
+      : ctxs.some((c) => !c.km || c.ratio == null) ? 'no drawn route between the neighbours'
+      : null;
+    const points = why ? [] : ctxs.map((c) => interpolatePoint([c]).p);
+    const spread = Math.max(0, ...points.map((p) => hav(p, points[0])));
+    const reason = why ?? (spread > AGREE_KM ? `the lines disagree on the point (${spread.toFixed(1)} km apart)` : null);
+    if (reason) { manual.push(`${s.name} (line ${s.lines.join(', ')}): ${reason}`); done.skipped++; continue; }
+    const e = interpEntry(s.name, ctxs);
+    writeOverride(s.name, ctxs, e);
+    console.log(`"${s.name}" -> ${e.p.join(', ')} [interpolated, ${ctxs.length} direction(s)]`); done.interpolated++; continue;
   }
   if (AUTO) {
     // a town name (Machico, Calheta) names too many stops to place one by it
@@ -280,4 +297,5 @@ for (const s of todo) {
   else done.skipped++;
 }
 rl?.close();
+if (manual.length) console.log(`\nLeft for a manual check (${manual.length}):\n  ${manual.join('\n  ')}`);
 console.log(`\ncorridor matcher: ${done.matched} matched, ${done.interpolated} interpolated, ${done.skipped} left (${todo.length} stops looked at). Run npm run build:data.`);
