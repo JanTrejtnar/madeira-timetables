@@ -73,11 +73,31 @@ function spurAround(shape: readonly Pt[], apex: number, lo: number, hi: number):
 }
 
 /**
+ * A short-turn trip does not run the whole road: the part before the first stop it calls at and the part after the last one are not driven.
+ * Returns the shape from the first to the last called stop and the stops between them.
+ */
+export function trimToServed(shape: Pt[], stops: readonly TripStopPt[]): { shape: Pt[]; stops: readonly TripStopPt[] } {
+  const first = stops.findIndex((s) => s.calls);
+  let last = -1;
+  stops.forEach((s, i) => { if (s.calls) last = i; });
+  if (first < 0 || (first === 0 && last === stops.length - 1)) return { shape, stops };
+  const idx = project(shape, stops);
+  const a = idx[first];
+  const b = idx[last];
+  if (b <= a) return { shape, stops };
+  return { shape: shape.slice(a, b + 1), stops: stops.slice(first, last + 1) };
+}
+
+/**
  * The polyline of one trip: side-road excursions to stops the trip does not call at are cut out. A hairpin or a loop is not an excursion
  * (the way back is another road) and stays; so does a stretch with a stop the trip calls at.
  */
-export function cutSpurs(shape: Pt[], stops: readonly TripStopPt[] | undefined): Pt[] {
-  if (!stops || !stops.some((s) => !s.calls) || shape.length < 3) return shape;
+export function cutSpurs(shape: Pt[], stops0: readonly TripStopPt[] | undefined): Pt[] {
+  if (!stops0 || !stops0.some((s) => !s.calls) || shape.length < 3) return shape;
+  const trimmed = trimToServed(shape, stops0);
+  shape = trimmed.shape;
+  const stops = trimmed.stops;
+  if (!stops.some((s) => !s.calls) || shape.length < 3) return shape;
   const idx = project(shape, stops);
   const cuts: [number, number][] = [];
   stops.forEach((s, n) => {

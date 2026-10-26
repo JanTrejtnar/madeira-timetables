@@ -2,6 +2,16 @@
   "_comment": "Hand-checked stop positions. A matching stop gets these coordinates with absolute priority over SIGA / GTFS / OSM name matching; its settlement_center warning is dropped. `name` is compared like a stop name (case, accents, punctuation ignored); `lines` (optional) limits the override to those line numbers.",
   "overrides": [
     {
+      "name": "Fôro-Corticeiras-Fontes",
+      "label": "HAND-PLACED, NOT VERIFIED: terminus of line 96 (Funchal - Estreito - Fôro/Corticeiras/Fontes). Put at the middle of the three OSM bus stops named Fontes (OSM nodes 13330115304-6, Fontes above Jardim da Serra, Câmara de Lobos); the exact terminus platform is not known - check on site or in the operator's data",
+      "lines": [
+        "96"
+      ],
+      "lat": 32.703024,
+      "lon": -17.01967,
+      "locationPrecision": "name_match"
+    },
+    {
       "name": "Machico",
       "label": "Machico terminal (main transfer hub)",
       "lat": 32.721648,

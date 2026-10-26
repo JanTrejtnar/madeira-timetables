@@ -385,14 +385,6 @@
       ]
     },
     {
-      "name": "Fôro-Corticeiras-Fontes",
-      "code": null,
-      "status": "no coordinates",
-      "lines": [
-        "96"
-      ]
-    },
-    {
       "name": "Jardim do Mar",
       "code": null,
       "status": "no coordinates",
@@ -1644,6 +1636,14 @@
       "status": "name_match",
       "lines": [
         "123"
+      ]
+    },
+    {
+      "name": "Fôro-Corticeiras-Fontes",
+      "code": null,
+      "status": "name_match",
+      "lines": [
+        "96"
       ]
     },
     {

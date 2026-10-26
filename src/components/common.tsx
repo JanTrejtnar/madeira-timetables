@@ -206,13 +206,17 @@ export function SearchInput({ value, onChange, placeholder, autoFocus = false }:
 }
 
 /** Pill-shaped toggle button used for day / direction / time chips. */
-export function Chip({ active, onClick, children, className = '' }: { active?: boolean; onClick: () => void; children: ReactNode; className?: string }) {
+export function Chip({ active, onClick, children, className = '', disabled, title }: { active?: boolean; onClick: () => void; children: ReactNode; className?: string; disabled?: boolean; title?: string }) {
   return (
     <button
       onClick={onClick}
       aria-pressed={active}
+      disabled={disabled}
+      title={title}
       className={`inline-flex min-h-9 items-center rounded-full px-3.5 text-sm font-medium transition-colors ${
-        active
+        disabled
+          ? 'cursor-not-allowed border border-dashed border-slate-200 bg-transparent text-slate-400 dark:border-slate-700 dark:text-slate-600'
+          : active
           ? 'bg-sky-600 text-white'
           : 'border border-slate-200/70 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700/70 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
       } ${className}`}

@@ -167,6 +167,8 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
     if (merged) return merged.flatMap((i) => timesOfDay(line.directions[i], day, 0).map((x) => ({ ...x, dirIdx: i }))).sort((a, b) => a.minutes - b.minutes);
     return timesOfDay(dir, day, hasTrips ? stopIdx : 0);
   }, [dir, day, hasTrips, stopIdx, merged, line]);
+  // a day tab is disabled when no trip of the shown list (merged side / this stop) runs on it
+  const dayHas = (k: DayKey) => (k === day ? times.length > 0 : merged ? merged.some((i) => timesOfDay(line.directions[i], k, 0).length) : !!dir && timesOfDay(dir, k, hasTrips ? stopIdx : 0).length > 0);
   const keyOf = (x: Timed, i: number) => {
     const d = x.dirIdx !== undefined ? line.directions[x.dirIdx] : dir;
     return x.trip && d?.trips ? `${x.dirIdx !== undefined ? `${x.dirIdx}:` : ''}t${d.trips.indexOf(x.trip)}` : `d${i}`;
@@ -337,7 +339,11 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   /** places a trip reaches only after a phone booking ("*Serviço a pedido: ..."), from its notes (legend code or free text) */
   // the grid shows the time and short legend codes only; the text of a free-text note ("Via Ilha, …") is shown below for the selected time
   const legendCodes = (notes?: readonly string[]) => (notes ?? []).filter((k) => k in line.notes && k.length <= 3);
-  const hasFreeNote = (notes?: readonly string[]) => (notes ?? []).some((k) => !(k in line.notes) || k.length > 3);
+  const isFree = (k: string) => !(k in line.notes) || k.length > 3;
+  const hasFreeNote = (notes?: readonly string[]) => (notes ?? []).some(isFree);
+  // mark at the time for free text of a trip. "via ..." only names the route (shown with the selected trip) and gets no mark; the mark is
+  // never "*": that is a real legend code (line 96) and shows only on the trips that carry it.
+  const hasFreeMark = (notes?: readonly string[]) => (notes ?? []).some((k) => isFree(k) && !/^\s*via(\s|$)/i.test(k));
   const requestPlaces = (notes?: readonly string[]) => [...new Set((notes ?? []).flatMap((k) => onRequestPlaces(line.notes[k] ?? k) ?? []))];
   const selRequest = requestPlaces(selNotes);
   const railCls = lineRailCls(line);
@@ -469,7 +475,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
           </div>
           <div className="flex flex-wrap gap-2">
             {keys.map((k) => (
-              <Chip key={k} active={k === day} onClick={() => setDay(k)}>
+              <Chip key={k} active={k === day} onClick={() => setDay(k)} disabled={!dayHas(k)} title={dayHas(k) ? undefined : t('noTripsDayTitle')}>
                 {dayLabel(k)}
               </Chip>
             ))}
@@ -505,13 +511,13 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                         {side === 0 ? line.directions[x.dirIdx].to : line.directions[x.dirIdx].from ?? line.directions[x.dirIdx].stops[0]?.name}
                       </span>
                     ) : null}
-                    {hasFreeNote(x.notes) && !requestPlaces(x.notes).length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70" title={(x.notes ?? []).map(tn).join('; ')}>*</sup> : null}
+                    {hasFreeMark(x.notes) && !requestPlaces(x.notes).length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70" title={(x.notes ?? []).map(tn).join('; ')} data-testid="free-note-mark">ⓘ</sup> : null}
                   </button>
                 );
               })}
             </Card>
           ) : (
-            <p className="px-1 text-sm text-slate-500">{t('noDeparturesInDir')}</p>
+            <p className="px-1 text-sm text-slate-500" data-testid="no-trips-day">{keys.some((k) => dayHas(k)) ? t('noTripsDay') : t('noDeparturesInDir')}</p>
           )}
           {sel?.trip?.estLast && (
             <p className="px-1 text-xs text-slate-500 dark:text-slate-400" data-testid="est-arrival">
