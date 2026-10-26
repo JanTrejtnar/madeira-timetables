@@ -4,7 +4,7 @@ import { cp, mkdir, readFile, writeFile, readdir, rm, stat } from 'node:fs/promi
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { addEstimates } from './lib-estimate.mjs';
+import { addEstimates, estimateTripEnds } from './lib-estimate.mjs';
 import { classifyLine } from './lib-classify.mjs';
 import { buildStopIndex, fillCoords } from './lib-coords.mjs';
 import { interpolateStops } from './lib-interpolate.mjs';
@@ -103,6 +103,8 @@ console.log('Funchal ends moved to the operator terminal:', funchalMoved, '- wal
 // OSRM road routes (data/routes.json, `npm run fetch:routes`) for directions without a SIGA polyline
 const routed = attachRoutes(data.lines, ROOT);
 const terminalTimes = estimateTerminals(data.lines, path.join(ROOT, 'data', 'shapes'));
+const tripEnds = data.lines.reduce((n, l) => n + estimateTripEnds(l, path.join(ROOT, 'data', 'shapes')), 0);
+console.log('trips given an estimated arrival at the final destination (no printed time):', tripEnds);
 // intermediate stops of the terminal-only directions from the SIGA planner (data/siga-patterns.json, `npm run enrich:stops`)
 const enrichReport = [];
 const enriched = enrichStops(data.lines, ROOT, enrichReport);

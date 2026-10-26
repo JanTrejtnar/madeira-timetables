@@ -7,6 +7,8 @@ export interface Timed extends Departure {
   minutes: number;
   /** the trip this time belongs to (only for timetables with times at every stop) */
   trip?: Trip;
+  /** index of the direction this time belongs to (when the list merges several directions of a line) */
+  dirIdx?: number;
 }
 
 export interface Ctx {

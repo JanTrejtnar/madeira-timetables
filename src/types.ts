@@ -35,6 +35,8 @@ export interface Trip {
   days: DayKey[];
   times: (string | null)[];
   notes?: string[];
+  /** the time at the last stop is not printed ("Destino Final" column): estimated from the route distance */
+  estLast?: true;
 }
 
 export interface Direction {

@@ -94,4 +94,17 @@ describe.skipIf(!existsSync(file))('timetable rows repaired at parse time (real 
     expect(back.trips!.some((t) => t.times[1] !== null)).toBe(true);
     expect(back.trips!.some((t) => t.times[1] === null)).toBe(true); // via Fôro
   });
+  it('line 96 ends Funchal trips at Corrida / Jardim Serra, the 08:15 trip included, with an estimated arrival', () => {
+    const l = data.lines.find((x) => x.number === '96')!;
+    const corrida = l.directions.find((d) => d.from === 'Funchal' && d.to === 'Corrida')!;
+    expect(corrida.stops.map((s) => s.name)).toEqual(['Funchal', 'Estreito de Câmara de Lobos', 'Corrida']);
+    expect(corrida.stops.every((s) => s.lat !== undefined && s.lat !== null)).toBe(true);
+    expect(corrida.shapeId).not.toBeNull();
+    const trip = corrida.trips!.find((t) => t.times[0] === '08:15')!;
+    expect(trip.times[1]).toBe('08:50');
+    expect(trip.times[2]! > '08:50').toBe(true);
+    expect(trip.estLast).toBe(true);
+    const js = l.directions.find((d) => d.to === 'Jardim Serra')!;
+    expect(js.stops.at(-1)!.name).toBe('Jardim Serra');
+  });
 });

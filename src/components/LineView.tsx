@@ -28,6 +28,9 @@ function timesOfDay(dir: Direction, day: DayKey, stopIdx: number): Timed[] {
 }
 
 /** The stop where most trips have a time: many SAM trips start mid-route, so stop 0 would show almost nothing. */
+/** The first stop of a direction is a terminal in Funchal. */
+const inFunchal = (name: string | null | undefined) => /^funchal(\s|$|-)/i.test((name ?? '').trim());
+
 function bestStop(dir: Line['directions'][number] | undefined): number {
   if (!dir?.trips?.length) return 0;
   let best = 0;
@@ -52,6 +55,21 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   const { t, lang } = useT();
   const tn = (s: string) => translateNote(s, lang);
   const [dirIndex, setDirIndex] = useState(initialDir ?? 0);
+  /** lines with many branches (Funchal - Corrida / Jardim da Serra / ...): two sides (from / to Funchal) and an optional filter of the far end */
+  const groups = useMemo(() => {
+    if (line.directions.length <= 2) return null;
+    const first = line.directions[0];
+    const sides: number[][] = [[], []];
+    line.directions.forEach((d, i) => {
+      const from = d.from ?? d.stops[0]?.name;
+      const out = inFunchal(from) && !inFunchal(d.to) ? 0 : inFunchal(d.to) && !inFunchal(from) ? 1 : from === (first.from ?? first.stops[0]?.name) ? 0 : 1;
+      sides[out].push(i);
+    });
+    if (!sides[0].length || !sides[1].length) return null;
+    return { sides, funchal: line.directions.some((d) => inFunchal(d.from) || inFunchal(d.to)) };
+  }, [line]);
+  /** every trip of the side shown in one chronological list, the far end printed on each time */
+  const [allMode, setAllMode] = useState(initialDir === undefined);
   const [stopIdx, setStopIdx] = useState(0);
   const [linksIdx, setLinksIdx] = useState<number | null>(null);
   /** selected departure (key of the Timed item); null = automatic: the next upcoming one, or the first of the day */
@@ -66,6 +84,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   const [day, setDay] = useState<DayKey | undefined>(() => defaultDay(keys, shared));
   useEffect(() => {
     setDirIndex(initialDir ?? 0);
+    setAllMode(initialDir === undefined);
     setStopIdx(bestStop(line.directions[initialDir ?? 0]));
     setDay(defaultDay(keys, shared));
     setSelKey(null);
@@ -133,8 +152,17 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   };
 
   // grid: times at the chosen stop (timetables with times at every stop) or departures from the terminal
-  const times: Timed[] = useMemo(() => (dir && day ? timesOfDay(dir, day, hasTrips ? stopIdx : 0) : []), [dir, day, hasTrips, stopIdx]);
-  const keyOf = (x: Timed, i: number) => (x.trip && dir?.trips ? `t${dir.trips.indexOf(x.trip)}` : `d${i}`);
+  const side = groups ? Math.max(0, groups.sides.findIndex((s) => s.includes(dirIndex))) : 0;
+  const merged = groups && allMode ? groups.sides[side] : null;
+  const times: Timed[] = useMemo(() => {
+    if (!dir || !day) return [];
+    if (merged) return merged.flatMap((i) => timesOfDay(line.directions[i], day, 0).map((x) => ({ ...x, dirIdx: i }))).sort((a, b) => a.minutes - b.minutes);
+    return timesOfDay(dir, day, hasTrips ? stopIdx : 0);
+  }, [dir, day, hasTrips, stopIdx, merged, line]);
+  const keyOf = (x: Timed, i: number) => {
+    const d = x.dirIdx !== undefined ? line.directions[x.dirIdx] : dir;
+    return x.trip && d?.trips ? `${x.dirIdx !== undefined ? `${x.dirIdx}:` : ''}t${d.trips.indexOf(x.trip)}` : `d${i}`;
+  };
   const isToday = day !== undefined && today.type !== null && keysFor(today.type, shared.ctx.school).includes(day);
   const nextIdx = isToday ? times.findIndex((x) => x.minutes >= shared.ctx.now.minutes) : -1;
   // exactly one time is always active: the tapped one, else the next upcoming departure, else the first of the day
@@ -148,9 +176,23 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   }, [selKey, found, dir]);
   const selIdx = found >= 0 ? found : pinned ? -1 : nextIdx >= 0 ? nextIdx : 0;
   const sel: Timed | undefined = pinned ?? times[selIdx];
+  // the merged list: the direction (stops, map) follows the selected trip
+  useEffect(() => {
+    if (!merged || sel?.dirIdx === undefined || sel.dirIdx === dirIndex) return;
+    holdSel.current.dir = true;
+    setDirIndex(sel.dirIdx);
+    setStopIdx(Math.max(0, sel.trip?.times.findIndex(Boolean) ?? 0));
+    setLinksIdx(null);
+    setFocusIdx(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [merged, sel?.dirIdx, dirIndex]);
   // a tap on a stop only moves the listed stop: the trip in use is pinned so that it cannot fall back to "the next departure"
   const pinTrip = () => {
-    if (selKey === null && sel) setSelKey(keyOf(sel, selIdx));
+    if (merged) {
+      // times at a stop exist per direction: the merged list gives way to the direction of the selected trip, the trip stays selected
+      if (sel?.trip && dir?.trips) setSelKey(`t${dir.trips.indexOf(sel.trip)}`);
+      setAllMode(false);
+    } else if (selKey === null && sel) setSelKey(keyOf(sel, selIdx));
   };
   // the passing time of the selected trip at every stop: printed times, or terminal departure + estimated offset
   const stopTimes = useMemo<(string | null)[]>(() => {
@@ -163,7 +205,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   }, [dir, sel, hasOffsets]);
   const stopTimeLabel = (i: number) => {
     const v = stopTimes[i];
-    return v ? (hasOffsets && i > 0 ? `~${v}` : v) : null;
+    return v ? ((hasOffsets && i > 0) || (sel?.trip?.estLast && i === (dir?.stops.length ?? 0) - 1) ? `~${v}` : v) : null;
   };
 
   // "Via Aeroporto" notes: the place is a stop of the selected trip (list and map); same array as dir.stops when there is none
@@ -354,22 +396,66 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
         </Card>
       )}
 
-      {line.directions.length > 1 && !initialRide && (
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('direction')}>
-          {line.directions.map((d, i) => (
-            <Chip key={i} active={i === dirIndex} onClick={() => setDirIndex(i)}>
-              {d.variant ? `${variantLabel(d.variant, lang)}: ` : ''}
-              {dirLabel(d, line.name)}
-            </Chip>
-          ))}
+      {groups && !initialRide ? (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('direction')}>
+            {groups.sides.map((idx, k) => (
+              <Chip
+                key={k}
+                active={k === side}
+                onClick={() => {
+                  if (k === side) return;
+                  setAllMode(true);
+                  setDirIndex(idx[0]);
+                }}
+              >
+                {t(k === 0 ? (groups.funchal ? 'segFromFunchal' : 'segThere') : groups.funchal ? 'segToFunchal' : 'segBack')}
+              </Chip>
+            ))}
+          </div>
+          {groups.sides[side].length > 1 && (
+            <div className="flex flex-wrap gap-2" role="group" aria-label={t(side === 0 ? 'allDestinations' : 'allOrigins')} data-testid="dir-filter">
+              <Chip active={allMode} onClick={() => setAllMode(true)}>
+                {t(side === 0 ? 'allDestinations' : 'allOrigins')}
+              </Chip>
+              {groups.sides[side].map((i) => {
+                const d = line.directions[i];
+                const end = side === 0 ? d.to : d.from ?? d.stops[0]?.name ?? '';
+                return (
+                  <Chip
+                    key={i}
+                    active={!allMode && i === dirIndex}
+                    onClick={() => {
+                      setAllMode(false);
+                      setDirIndex(i);
+                    }}
+                  >
+                    {t(side === 0 ? 'onlyDest' : 'onlyFrom').replace('{x}', `${d.variant ? `${variantLabel(d.variant, lang)} ` : ''}${end}`)}
+                  </Chip>
+                );
+              })}
+            </div>
+          )}
         </div>
+      ) : (
+        line.directions.length > 1 &&
+        !initialRide && (
+          <div className="flex flex-wrap gap-2" role="tablist" aria-label={t('direction')}>
+            {line.directions.map((d, i) => (
+              <Chip key={i} active={i === dirIndex} onClick={() => setDirIndex(i)}>
+                {d.variant ? `${variantLabel(d.variant, lang)}: ` : ''}
+                {dirLabel(d, line.name)}
+              </Chip>
+            ))}
+          </div>
+        )
       )}
 
       {line.hasParsedSchedule && dir && (
         <section className="flex flex-col gap-3">
           <div>
             <SectionTitle>
-              {hasTrips ? `${t('departuresFromStop')}: ${dir.stops[stopIdx]?.name ?? ''}` : `${t('schedule')}: ${dir.from}`}
+              {merged ? t('departuresAllDest') : hasTrips ? `${t('departuresFromStop')}: ${dir.stops[stopIdx]?.name ?? ''}` : `${t('schedule')}: ${dir.from}`}
             </SectionTitle>
             <p className="px-1 text-xs text-slate-500 dark:text-slate-400">{hasTrips ? `${t('tapTime')} ${t('tapStop')}` : t('tapTime')}</p>
           </div>
@@ -406,6 +492,11 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                     {x.t}
                     {requestPlaces(x.notes).length ? <span className="ml-0.5 text-amber-600" aria-hidden>⚠</span> : null}
                     {legendCodes(x.notes).length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70">{legendCodes(x.notes).map(tn).join(',')}</sup> : null}
+                    {merged && x.dirIdx !== undefined ? (
+                      <span className="block truncate text-[10px] font-normal opacity-70" data-testid="time-end">
+                        {side === 0 ? line.directions[x.dirIdx].to : line.directions[x.dirIdx].from ?? line.directions[x.dirIdx].stops[0]?.name}
+                      </span>
+                    ) : null}
                     {hasFreeNote(x.notes) && !requestPlaces(x.notes).length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70" title={(x.notes ?? []).map(tn).join('; ')}>*</sup> : null}
                   </button>
                 );
@@ -413,6 +504,11 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
             </Card>
           ) : (
             <p className="px-1 text-sm text-slate-500">{t('noDeparturesInDir')}</p>
+          )}
+          {sel?.trip?.estLast && (
+            <p className="px-1 text-xs text-slate-500 dark:text-slate-400" data-testid="est-arrival">
+              ~ {t('estArrival')}
+            </p>
           )}
           {sel && selRequest.length === 0 && hasFreeNote(selNotes) && (
             <p className="rounded-xl bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:bg-sky-400/10 dark:text-sky-200" data-testid="trip-note">
@@ -452,7 +548,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                       {twin && <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400" data-testid="stop-twin">({t(twin === 'arr' ? 'stopArrival' : 'stopDeparture')})</span>}
                     </span>
                     {label ? (
-                      (hasOffsets && i > 0) || s.via ? (
+                      (hasOffsets && i > 0) || s.via || (sel?.trip?.estLast && src === dir.stops.length - 1) ? (
                         <EstTag>
                           <span className="text-xs tabular-nums">{label}</span>
                         </EstTag>

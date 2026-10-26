@@ -29,6 +29,7 @@ async function clickButton(label, within = 'body') {
   );
   const el = handle.asElement();
   if (!el) return false;
+  await el.evaluate((e) => e.scrollIntoView({ block: 'center' })); // not under the sticky bars
   await el.click();
   await sleep(250);
   return true;

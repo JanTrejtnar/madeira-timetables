@@ -205,7 +205,7 @@ async function mobileMapChecks() {
     const r = await (await fetch(base + 'data/schedules.json')).json();
     return r.lines.find((l) => l.number === '139').id;
   })();
-  await page.goto(`${base}#/line/${id}`, { waitUntil: 'networkidle0' });
+  await page.goto(`${base}#/line/${id}/0`, { waitUntil: 'networkidle0' });
   await page.reload({ waitUntil: 'networkidle0' });
   await sleep(600);
   const warnIcons = await page.evaluate(() => [...document.querySelectorAll('[role=img]')].filter((e) => /Orientační poloha/.test(e.getAttribute('aria-label') ?? '')).length);

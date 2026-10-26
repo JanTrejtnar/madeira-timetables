@@ -60,3 +60,32 @@ export function addEstimates(line, shapesDir) {
   }
   return n;
 }
+
+/**
+ * Timetables that print only departures plus a "Destino Final" column (line 96): the last stop has no printed time on any trip.
+ * Its arrival is estimated from the route distance since the last printed time and marked `estLast` on the trip. Returns the number of trips.
+ */
+export function estimateTripEnds(line, shapesDir) {
+  let n = 0;
+  for (const dir of line.directions) {
+    const trips = dir.trips;
+    const last = dir.stops.length - 1;
+    if (!trips?.length || last < 1 || dir.shapeId == null || dir.stops.some((s) => s.lat == null)) continue;
+    if (trips.some((t) => t.times[last])) continue;
+    const f = path.join(shapesDir, `${dir.shapeId}.json`);
+    if (!existsSync(f)) continue;
+    const d = stopDistances(JSON.parse(readFileSync(f, 'utf8')), dir.stops);
+    if (d.some((x) => x.snapKm > 0.35)) continue;
+    const speed = speedFor(line);
+    for (const t of trips) {
+      let k = last - 1;
+      while (k >= 0 && !t.times[k]) k--;
+      if (k < 0) continue;
+      const m = +t.times[k].slice(0, 2) * 60 + +t.times[k].slice(3) + Math.max(1, Math.round(((d[last].km - d[k].km) / speed) * 60));
+      t.times[last] = String(Math.floor((m % 1440) / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+      t.estLast = true;
+      n++;
+    }
+  }
+  return n;
+}
