@@ -57,6 +57,9 @@ export interface Direction {
   isEstimated?: boolean;
   /** the timetable prints no stop list: the stops are the two terminals (data/terminals.json), the times at the far end are estimated */
   terminalsOnly?: boolean;
+  /** the intermediate stops between the printed timing points come from the SIGA journey planner; only the times at `printedIdx` are printed, the others are estimates */
+  stopsFrom?: 'siga-planner';
+  printedIdx?: number[];
   /** the intermediate stops and running times come from the SIGA journey planner (data/siga-patterns.json), not from the timetable */
   enrichedFrom?: 'siga-planner';
   /** the timetable prints no departures for this direction: they are the trips of the SIGA journey planner */

@@ -213,9 +213,11 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
       return i === 0 ? sel.t : null;
     });
   }, [dir, sel, hasOffsets]);
+  /** a time of the selected trip that is not printed: the final arrival (estLast) or a stop between the printed timing points (dir.printedIdx) */
+  const isEstTime = (i: number) => !!sel?.trip && ((!!sel.trip.estLast && i === (dir?.stops.length ?? 0) - 1) || (!!dir?.printedIdx && !dir.printedIdx.includes(i)));
   const stopTimeLabel = (i: number) => {
     const v = stopTimes[i];
-    return v ? ((hasOffsets && i > 0) || (sel?.trip?.estLast && i === (dir?.stops.length ?? 0) - 1) ? `~${v}` : v) : null;
+    return v ? ((hasOffsets && i > 0) || isEstTime(i) ? `~${v}` : v) : null;
   };
 
   // "Via Aeroporto" notes: the place is a stop of the selected trip (list and map); same array as dir.stops when there is none
@@ -562,7 +564,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                       {twin && <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400" data-testid="stop-twin">({t(twin === 'arr' ? 'stopArrival' : 'stopDeparture')})</span>}
                     </span>
                     {label ? (
-                      (hasOffsets && i > 0) || s.via || (sel?.trip?.estLast && src === dir.stops.length - 1) ? (
+                      (hasOffsets && i > 0) || s.via || (src !== null && isEstTime(src)) ? (
                         <EstTag>
                           <span className="text-xs tabular-nums">{label}</span>
                         </EstTag>

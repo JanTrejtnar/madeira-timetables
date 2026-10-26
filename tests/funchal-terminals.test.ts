@@ -90,21 +90,48 @@ describe.skipIf(!existsSync(file))('timetable rows repaired at parse time (real 
   it('line 96 keeps the passing time at Corticeiras of the trips from Corrida and Jardim Serra', () => {
     const l = data.lines.find((x) => x.number === '96')!;
     const back = l.directions.find((d) => d.from === 'Jardim Serra')!;
-    expect(back.stops.map((s) => s.name)).toEqual(['Jardim Serra', 'Corticeiras', 'Estreito de Câmara de Lobos', 'Funchal']);
-    expect(back.trips!.some((t) => t.times[1] !== null)).toBe(true);
-    expect(back.trips!.some((t) => t.times[1] === null)).toBe(true); // via Fôro
+    const names = back.stops.map((s) => s.name);
+    const ci = names.indexOf('Corticeiras');
+    expect(names[0]).toBe('Jardim Serra');
+    expect(names.at(-1)).toBe('Funchal');
+    expect(ci).toBeGreaterThan(0);
+    expect(ci).toBeLessThan(names.indexOf('Estreito de Câmara de Lobos'));
+    expect(back.trips!.some((t) => t.times[ci] !== null)).toBe(true);
+    expect(back.trips!.some((t) => t.times[ci] === null)).toBe(true); // via Fôro
   });
   it('line 96 ends Funchal trips at Corrida / Jardim Serra, the 08:15 trip included, with an estimated arrival', () => {
     const l = data.lines.find((x) => x.number === '96')!;
     const corrida = l.directions.find((d) => d.from === 'Funchal' && d.to === 'Corrida')!;
-    expect(corrida.stops.map((s) => s.name)).toEqual(['Funchal', 'Estreito de Câmara de Lobos', 'Corrida']);
+    const names = corrida.stops.map((s) => s.name);
+    expect(names[0]).toBe('Funchal');
+    expect(names.at(-1)).toBe('Corrida');
+    // the planner stops of the road between the printed ones, Jardim da Serra included (not a three-stop stub)
+    expect(names.length).toBeGreaterThan(40);
+    expect(names.some((n) => /Jardim da Serra/.test(n))).toBe(true);
+    expect(names.indexOf('Estreito de Câmara de Lobos')).toBeGreaterThan(0);
     expect(corrida.stops.every((s) => s.lat !== undefined && s.lat !== null)).toBe(true);
     expect(corrida.shapeId).not.toBeNull();
+    const ei = names.indexOf('Estreito de Câmara de Lobos');
+    expect(corrida.printedIdx).toEqual([0, ei]);
     const trip = corrida.trips!.find((t) => t.times[0] === '08:15')!;
-    expect(trip.times[1]).toBe('08:50');
-    expect(trip.times[2]! > '08:50').toBe(true);
+    expect(trip.times[ei]).toBe('08:50');
+    expect(trip.times.length).toBe(names.length);
+    expect(trip.times.every((x) => x !== null)).toBe(true);
+    expect([...trip.times].sort()).toEqual(trip.times); // rising through the intermediate stops
+    expect(trip.times.at(-1)! > '08:50').toBe(true);
     expect(trip.estLast).toBe(true);
     const js = l.directions.find((d) => d.to === 'Jardim Serra')!;
     expect(js.stops.at(-1)!.name).toBe('Jardim Serra');
+    expect(js.stops.length).toBeGreaterThan(40);
+  });
+  it('line 96 from Corrida starts at the upper terminus and runs through Jardim da Serra and Estreito to Funchal', () => {
+    const l = data.lines.find((x) => x.number === '96')!;
+    const d = l.directions.find((x) => x.from === 'Corrida' && x.to === 'Funchal')!;
+    const names = d.stops.map((s) => s.name);
+    expect(names[0]).toBe('Corrida');
+    expect(names.at(-1)).toBe('Funchal');
+    expect(names.length).toBeGreaterThan(40);
+    expect(names.some((n) => /Jardim da Serra/.test(n))).toBe(true);
+    expect(names.indexOf('Estreito de Câmara de Lobos')).toBeGreaterThan(names.findIndex((n) => /Jardim da Serra/.test(n)));
   });
 });

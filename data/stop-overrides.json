@@ -3,12 +3,12 @@
   "overrides": [
     {
       "name": "Fôro-Corticeiras-Fontes",
-      "label": "HAND-PLACED, NOT VERIFIED: terminus of line 96 (Funchal - Estreito - Fôro/Corticeiras/Fontes). Put at the middle of the three OSM bus stops named Fontes (OSM nodes 13330115304-6, Fontes above Jardim da Serra, Câmara de Lobos); the exact terminus platform is not known - check on site or in the operator's data",
+      "label": "HAND-PLACED, NOT VERIFIED: terminus of line 96 (Funchal - Estreito - Fôro/Corticeiras/Fontes), in the hamlet Fontes in the upper part of Jardim da Serra (Câmara de Lobos), on the ER229 / Caminho das Fontes. Position approximate (about 32.700, -16.985, given by the maintainer, not measured); the exact terminus platform is not known - check on site or in the operator's data. OSM also has a neighbourhood Fontes at 32.680, -16.977 and bus stops named Fontes at about -17.019, which were not used",
       "lines": [
         "96"
       ],
-      "lat": 32.703024,
-      "lon": -17.01967,
+      "lat": 32.7,
+      "lon": -16.985,
       "locationPrecision": "name_match"
     },
     {

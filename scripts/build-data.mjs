@@ -15,7 +15,7 @@ import { cleanTexts } from './lib-text.mjs';
 import { addViaPlaces, attachViaRoutes } from './lib-via.mjs';
 import { attachRoutes } from './lib-routes.mjs';
 import { addTerminalStops, estimateTerminals } from './lib-terminals.mjs';
-import { enrichStops, enrichedKm, addPlannerDepartures, pinPatternStops, splitDirectionsByNote } from './lib-enrich.mjs';
+import { enrichStops, fillSparseStops, enrichedKm, addPlannerDepartures, pinPatternStops, splitDirectionsByNote } from './lib-enrich.mjs';
 import { applyOverrides, applyFunchalTerminals, terminalWalks } from './lib-overrides.mjs';
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
 import { buildPois } from './lib-pois.mjs';
@@ -105,6 +105,10 @@ const routed = attachRoutes(data.lines, ROOT);
 const terminalTimes = estimateTerminals(data.lines, path.join(ROOT, 'data', 'shapes'));
 const tripEnds = data.lines.reduce((n, l) => n + estimateTripEnds(l, path.join(ROOT, 'data', 'shapes')), 0);
 console.log('trips given an estimated arrival at the final destination (no printed time):', tripEnds);
+// directions that print only a few timing points (96) get the road's intermediate stops from the planner, with estimated times between the printed ones
+const sparse = fillSparseStops(data.lines, ROOT);
+console.log('sparse directions given the planner stops between their printed ones:', sparse.n, 'of', sparse.report.length);
+if (process.env.ENRICH_REPORT) for (const r of sparse.report) console.log(`  ${r.ok ? 'OK  ' : 'MISS'} ${r.line} ${r.from} > ${r.to}: ${r.why}`);
 // intermediate stops of the terminal-only directions from the SIGA planner (data/siga-patterns.json, `npm run enrich:stops`)
 const enrichReport = [];
 const enriched = enrichStops(data.lines, ROOT, enrichReport);

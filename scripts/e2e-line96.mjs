@@ -44,7 +44,11 @@ const picked = await page.evaluate(() => {
 await sleep(400);
 check('08:15 to Corrida exists in the merged list', picked);
 const stops = await page.evaluate(() => [...document.querySelectorAll('ol li')].map((li) => li.textContent.replace(/\s+/g, ' ').trim()));
-check('its stops: Funchal 08:15, Estreito 08:50, Corrida with an estimated time', stops.length === 3 && /Funchal.*08:15/.test(stops[0]) && /Estreito.*08:50/.test(stops[1]) && /Corrida.*~\d\d:\d\d/.test(stops[2]), stops.join(' | '));
+const at = (re) => stops.findIndex((s) => re.test(s));
+const iF = at(/^Funchal.*08:15/);
+const iE = at(/^Estreito.*08:50/);
+const iJ = at(/Jardim da Serra/);
+check('its stops: the whole road Funchal 08:15, Estreito 08:50 (printed), Jardim da Serra, Corrida with an estimated time', stops.length > 40 && iF === 0 && iE > 0 && iJ > iE && /^Corrida.*~\d\d:\d\d/.test(stops.at(-1)) && /~\d\d:\d\d/.test(stops[iJ]) && !/~/.test(stops[iE]), `${stops.length} stops; ${stops[0]} | ${stops[iE]} | ${stops[iJ]} | ${stops.at(-1)}`);
 check('estimate is labelled', await page.evaluate(() => !!document.querySelector('[data-testid=est-arrival]')));
 const route = await page.evaluate(() => document.querySelectorAll('.leaflet-overlay-pane path').length);
 check('the route is drawn on the map', route > 0, String(route));
