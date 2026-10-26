@@ -646,26 +646,6 @@
       ]
     },
     {
-      "name": "Fajã Ovelha (Igreja)",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
-      "name": "Fajã Ovelha ER 222",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
       "name": "Florenças (ER222)",
       "code": null,
       "status": "no coordinates",
@@ -703,36 +683,6 @@
       "tripCount": 2,
       "lines": [
         "20"
-      ]
-    },
-    {
-      "name": "Paúl do Mar",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
-      "name": "Ponta Pargo (Salão)",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
-      "name": "Raposeira ER 222",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
       ]
     },
     {
@@ -2118,6 +2068,16 @@
       ]
     },
     {
+      "name": "Fajã Ovelha (Igreja)",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "80"
+      ]
+    },
+    {
       "name": "Igreja da Camacha",
       "code": "C31A",
       "status": "name_match",
@@ -2215,6 +2175,16 @@
       "tripCount": 4,
       "lines": [
         "502"
+      ]
+    },
+    {
+      "name": "Ponta Pargo (Salão)",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "80"
       ]
     },
     {
@@ -2708,7 +2678,7 @@
       ]
     },
     {
-      "name": "Fajã Ovelha (Igreja)",
+      "name": "Fajã Ovelha ER 222",
       "code": null,
       "status": "name_match",
       "lineCount": 1,
@@ -2760,7 +2730,7 @@
     {
       "name": "Lombada ER 222",
       "code": null,
-      "status": "name_match",
+      "status": "manual_osm_match",
       "lineCount": 1,
       "tripCount": 2,
       "lines": [
@@ -2798,7 +2768,7 @@
       ]
     },
     {
-      "name": "Ponta Pargo (Salão)",
+      "name": "Paúl do Mar",
       "code": null,
       "status": "name_match",
       "lineCount": 1,
@@ -2809,6 +2779,16 @@
     },
     {
       "name": "Prazeres ER 222",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 2,
+      "lines": [
+        "80"
+      ]
+    },
+    {
+      "name": "Raposeira ER 222",
       "code": null,
       "status": "name_match",
       "lineCount": 1,

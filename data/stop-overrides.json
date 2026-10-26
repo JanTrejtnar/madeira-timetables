@@ -125,6 +125,17 @@
       "locationPrecision": "exact"
     },
     {
+      "name": "Lombada ER 222",
+      "label": "Lombada, village by Ponta do Sol on the ER 222 (line 80) - manually matched to the OSM stop Lombada (Ponta Do Sol), node 2299780418; not an official SIGA position. The name match had picked the Funchal Lombada 12 km east (the ER 222 does not run through Funchal), which sent line 80 on a detour",
+      "lines": [
+        "80"
+      ],
+      "lat": 32.684537,
+      "lon": -17.088352,
+      "osmNode": 2299780418,
+      "locationPrecision": "manual_osm_match"
+    },
+    {
       "name": "Faial",
       "label": "Faial, village by Santana (lines 208, 53, 825) - not the Funchal quarter",
       "lines": [

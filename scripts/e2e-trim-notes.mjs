@@ -1,10 +1,11 @@
 // Short-turn trips are drawn only between their first and last stop; day tabs without trips are disabled; "*" shows only on the trips that carry it (line 96).
 // Usage: node scripts/e2e-trim-notes.mjs [baseUrl]   (dev server `npx vite --port 5173`)
 import puppeteer from 'puppeteer-core';
-import { freezeClock } from './lib-e2e-clock.mjs';
+import { freezeClock, waitForServer } from './lib-e2e-clock.mjs';
 
 const base = process.argv[2] ?? 'http://localhost:5173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+await waitForServer();
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
 freezeClock(browser);
 let failed = 0;

@@ -1,10 +1,11 @@
 // End-to-end test of the route map: generated road line (139), map -> list click sync, "Via" place of a trip (208).
 // Needs the dev server (npx vite --port 5173).   Usage: node scripts/e2e-map.mjs [baseUrl]
 import puppeteer from 'puppeteer-core';
-import { freezeClock } from './lib-e2e-clock.mjs';
+import { freezeClock, waitForServer } from './lib-e2e-clock.mjs';
 
 const base = process.argv[2] ?? 'http://localhost:5173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+await waitForServer();
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
 freezeClock(browser);
 const errors = [];

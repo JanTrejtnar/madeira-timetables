@@ -36,3 +36,20 @@ export function freezeClock(browser, iso = FIXED_NOW) {
   if (create) browser.createBrowserContext = async (...args) => patch(await create(...args));
   return browser;
 }
+
+/** Waits until the dev server answers (Vite may still be starting or restarting); throws after `timeoutMs`. */
+export async function waitForServer(url = process.argv[2] ?? 'http://localhost:5173/', timeoutMs = 60000) {
+  const end = Date.now() + timeoutMs;
+  let last = '';
+  while (Date.now() < end) {
+    try {
+      const r = await fetch(url);
+      if (r.ok) return;
+      last = `HTTP ${r.status}`;
+    } catch (e) {
+      last = String(e.cause?.code ?? e.message);
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`dev server ${url} not reachable after ${timeoutMs / 1000} s (${last}); start it with: npx vite --port 5173`);
+}

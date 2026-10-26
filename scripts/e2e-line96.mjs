@@ -1,10 +1,11 @@
 // End-to-end check of a line with many branches (96): two sides + destination filter, 08:15 to Corrida with its stops and an estimated arrival.
 // Usage: node scripts/e2e-line96.mjs [baseUrl]   (dev server `npx vite --port 5173`)
 import puppeteer from 'puppeteer-core';
-import { freezeClock } from './lib-e2e-clock.mjs';
+import { freezeClock, waitForServer } from './lib-e2e-clock.mjs';
 
 const base = process.argv[2] ?? 'http://localhost:5173/';
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+await waitForServer();
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
 freezeClock(browser);
 let failed = 0;
