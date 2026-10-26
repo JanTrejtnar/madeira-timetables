@@ -27,6 +27,7 @@ const PLACE_TYPES = new Set(['city', 'town', 'village', 'suburb', 'hamlet']);
 const VILLAGE_STOP = /^(partida|igreja|salao|bomba|centro)$/;
 const villageName = (name) => [...name.matchAll(/\(([^)]*)\)/g)].every((m) => VILLAGE_STOP.test(keyOf(m[1])));
 const MAX_NEIGHBOUR_KM = 20;
+const GAP_KM = 0.5; // extra distance allowed per unplaced stop between the candidate and its nearest placed neighbour
 const PLATFORM_KM = 0.35; // a platform this close to the village centre stands for the village stop
 
 // Abbreviations printed in the timetables (key as keyOf() writes it) -> the name used on the map
@@ -187,10 +188,11 @@ export function applyOsm(lines, osm, areas, shapesDir, places = []) {
         }
         if (pick) {
           // sanity: a namesake on the other side of the island is not the stop (the neighbours of the direction are known)
+          // the nearest known neighbour of an express line can be many unplaced stops away: the allowed distance grows with that gap
           const near = [];
-          for (let j = i - 1; j >= 0; j--) if (has(d.stops[j])) { near.push([d.stops[j].lat, d.stops[j].lon]); break; }
-          for (let j = i + 1; j < d.stops.length; j++) if (has(d.stops[j])) { near.push([d.stops[j].lat, d.stops[j].lon]); break; }
-          if (near.some((x) => hav(pick.p, x) > MAX_NEIGHBOUR_KM)) pick = null;
+          for (let j = i - 1; j >= 0; j--) if (has(d.stops[j])) { near.push([d.stops[j].lat, d.stops[j].lon, i - j]); break; }
+          for (let j = i + 1; j < d.stops.length; j++) if (has(d.stops[j])) { near.push([d.stops[j].lat, d.stops[j].lon, j - i]); break; }
+          if (near.some((x) => hav(pick.p, x) > MAX_NEIGHBOUR_KM + GAP_KM * (x[2] - 1))) pick = null;
         }
         if (!pick) { r.missing++; return; }
         Object.assign(s, { lat: +pick.p[0].toFixed(6), lon: +pick.p[1].toFixed(6), approx: true, source: 'osm', locationPrecision: how === 'place' ? 'settlement_center' : how === 'platform' ? 'name_match' : 'exact' });

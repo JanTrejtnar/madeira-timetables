@@ -79,17 +79,6 @@
       ]
     },
     {
-      "name": "Achadas Cruz",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 2,
-      "tripCount": 17,
-      "lines": [
-        "139",
-        "250"
-      ]
-    },
-    {
       "name": "Eira Achada",
       "code": null,
       "status": "no coordinates",
@@ -397,16 +386,6 @@
       ]
     },
     {
-      "name": "Ponta Pargo",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 8,
-      "lines": [
-        "142"
-      ]
-    },
-    {
       "name": "Remedios",
       "code": null,
       "status": "no coordinates",
@@ -474,16 +453,6 @@
       "tripCount": 5,
       "lines": [
         "137"
-      ]
-    },
-    {
-      "name": "Achadas da Cruz",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "80"
       ]
     },
     {
@@ -627,16 +596,6 @@
       ]
     },
     {
-      "name": "Arco Calheta ER 222",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
       "name": "Arco da Calheta (ER222)",
       "code": null,
       "status": "no coordinates",
@@ -644,16 +603,6 @@
       "tripCount": 2,
       "lines": [
         "218"
-      ]
-    },
-    {
-      "name": "Atouguia",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
       ]
     },
     {
@@ -684,26 +633,6 @@
       "tripCount": 2,
       "lines": [
         "218"
-      ]
-    },
-    {
-      "name": "Estreito Calheta ER 222",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
-      "name": "Estrela Calheta",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
       ]
     },
     {
@@ -747,16 +676,6 @@
       ]
     },
     {
-      "name": "Jardim do Mar",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
       "name": "Loreto (ER222)",
       "code": null,
       "status": "no coordinates",
@@ -764,26 +683,6 @@
       "tripCount": 2,
       "lines": [
         "218"
-      ]
-    },
-    {
-      "name": "Madalena do Mar",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
-      "name": "Moledos ER 222",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
       ]
     },
     {
@@ -818,26 +717,6 @@
     },
     {
       "name": "Ponta Pargo (Salão)",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
-      "name": "Porto Moniz",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
-      "name": "Prazeres ER 222",
       "code": null,
       "status": "no coordinates",
       "lineCount": 1,
@@ -904,26 +783,6 @@
       "tripCount": 2,
       "lines": [
         "123"
-      ]
-    },
-    {
-      "name": "Vila da Calheta",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
-      "name": "Vila da Calheta (Partida)",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
       ]
     },
     {
@@ -1208,7 +1067,20 @@
       "code": null,
       "status": "name_match",
       "lineCount": 4,
-      "tripCount": 29,
+      "tripCount": 31,
+      "lines": [
+        "107",
+        "115",
+        "142",
+        "80"
+      ]
+    },
+    {
+      "name": "Atouguia",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 4,
+      "tripCount": 28,
       "lines": [
         "107",
         "115",
@@ -1385,7 +1257,7 @@
       ]
     },
     {
-      "name": "Atouguia",
+      "name": "Estreito Calheta",
       "code": null,
       "status": "name_match",
       "lineCount": 3,
@@ -1397,15 +1269,15 @@
       ]
     },
     {
-      "name": "Estreito Calheta",
+      "name": "Porto Moniz",
       "code": null,
       "status": "name_match",
       "lineCount": 3,
-      "tripCount": 26,
+      "tripCount": 24,
       "lines": [
-        "107",
-        "115",
-        "142"
+        "139",
+        "250",
+        "80"
       ]
     },
     {
@@ -1430,18 +1302,6 @@
         "107",
         "115",
         "142"
-      ]
-    },
-    {
-      "name": "Porto Moniz",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 3,
-      "tripCount": 22,
-      "lines": [
-        "139",
-        "250",
-        "80"
       ]
     },
     {
@@ -1635,6 +1495,17 @@
       ]
     },
     {
+      "name": "Achadas Cruz",
+      "code": null,
+      "status": "manual_osm_match",
+      "lineCount": 2,
+      "tripCount": 17,
+      "lines": [
+        "139",
+        "250"
+      ]
+    },
+    {
       "name": "Lamaceiros",
       "code": null,
       "status": "settlement_center",
@@ -1734,6 +1605,17 @@
       ]
     },
     {
+      "name": "Vila da Calheta",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 2,
+      "tripCount": 8,
+      "lines": [
+        "218",
+        "80"
+      ]
+    },
+    {
       "name": "Ribeira Brava (Partida)",
       "code": null,
       "status": "name_match",
@@ -1741,17 +1623,6 @@
       "tripCount": 7,
       "lines": [
         "139",
-        "80"
-      ]
-    },
-    {
-      "name": "Vila da Calheta",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 2,
-      "tripCount": 6,
-      "lines": [
-        "218",
         "80"
       ]
     },
@@ -1987,6 +1858,16 @@
       ]
     },
     {
+      "name": "Ponta Pargo",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 18,
+      "lines": [
+        "142"
+      ]
+    },
+    {
       "name": "Arco São Jorge",
       "code": null,
       "status": "name_match",
@@ -2054,16 +1935,6 @@
       "tripCount": 10,
       "lines": [
         "6"
-      ]
-    },
-    {
-      "name": "Ponta Pargo",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 10,
-      "lines": [
-        "142"
       ]
     },
     {
@@ -2144,6 +2015,16 @@
       "tripCount": 5,
       "lines": [
         "208"
+      ]
+    },
+    {
+      "name": "Achadas da Cruz",
+      "code": null,
+      "status": "manual_osm_match",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "80"
       ]
     },
     {
@@ -2247,6 +2128,16 @@
       ]
     },
     {
+      "name": "Jardim do Mar",
+      "code": null,
+      "status": "settlement_center",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "80"
+      ]
+    },
+    {
       "name": "Lapinhas-Eira de Fora",
       "code": "C45",
       "status": "name_match",
@@ -2304,6 +2195,16 @@
       "tripCount": 4,
       "lines": [
         "123"
+      ]
+    },
+    {
+      "name": "Madalena do Mar",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 4,
+      "lines": [
+        "80"
       ]
     },
     {
@@ -2607,6 +2508,16 @@
       ]
     },
     {
+      "name": "Arco Calheta ER 222",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 2,
+      "lines": [
+        "80"
+      ]
+    },
+    {
       "name": "Atouguia (ER222)",
       "code": null,
       "status": "name_match",
@@ -2767,6 +2678,16 @@
       ]
     },
     {
+      "name": "Estreito Calheta ER 222",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 2,
+      "lines": [
+        "80"
+      ]
+    },
+    {
       "name": "Estreito Calheta ER 223",
       "code": null,
       "status": "name_match",
@@ -2837,16 +2758,6 @@
       ]
     },
     {
-      "name": "Jardim do Mar",
-      "code": null,
-      "status": "settlement_center",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "80"
-      ]
-    },
-    {
       "name": "Lombada ER 222",
       "code": null,
       "status": "name_match",
@@ -2867,7 +2778,7 @@
       ]
     },
     {
-      "name": "Madalena do Mar",
+      "name": "Moledos ER 222",
       "code": null,
       "status": "name_match",
       "lineCount": 1,
@@ -2888,6 +2799,16 @@
     },
     {
       "name": "Ponta Pargo (Salão)",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 2,
+      "lines": [
+        "80"
+      ]
+    },
+    {
+      "name": "Prazeres ER 222",
       "code": null,
       "status": "name_match",
       "lineCount": 1,
@@ -2994,6 +2915,16 @@
       "tripCount": 2,
       "lines": [
         "502"
+      ]
+    },
+    {
+      "name": "Vila da Calheta (Partida)",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 2,
+      "lines": [
+        "80"
       ]
     },
     {

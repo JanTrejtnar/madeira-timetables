@@ -121,6 +121,30 @@ describe.skipIf(!existsSync(file))('timetable rows repaired at parse time (real 
       }
     }
   });
+  it('Achadas da Cruz (lines 80, 139, 250) sits on the OSM node 111788136 at the cable-car junction, labelled as a manual match', () => {
+    const at = (line: string, name: string) => data.lines.filter((x) => x.number === line).flatMap((l) => l.directions.flatMap((d) => d.stops)).filter((s) => s.name === name);
+    for (const [line, name] of [['80', 'Achadas da Cruz'], ['139', 'Achadas Cruz'], ['250', 'Achadas Cruz']]) {
+      const found = at(line, name);
+      expect(found.length, `${line} ${name}`).toBeGreaterThan(0);
+      for (const s of found) {
+        expect(s.lat, `${line} ${name}`).toBeCloseTo(32.8407892, 5);
+        expect(s.lon, `${line} ${name}`).toBeCloseTo(-17.2078548, 5);
+        expect(s.locationPrecision, `${line} ${name}`).toBe('manual_osm_match');
+        expect(s.approx, `${line} ${name}`).toBe(true);
+      }
+    }
+  });
+  it('line 80 (express, many unplaced stops in a row) gets its Calheta corridor placed, and no namesake from the other end of the island', () => {
+    const l = data.lines.find((x) => x.number === '80')!;
+    for (const d of l.directions) {
+      const placed = d.stops.filter((s) => s.lat !== undefined && s.lon !== undefined);
+      expect(placed.length).toBeGreaterThan(d.stops.length / 2);
+      for (const name of ['Vila da Calheta', 'Jardim do Mar', 'Porto Moniz']) expect(d.stops.find((s) => s.name === name)?.lat, name).toBeDefined();
+    }
+    // 'Central (ER222)' of line 218 is not the Funchal stop of that name, 24 km from Calheta
+    const central = data.lines.find((x) => x.number === '218')!.directions.flatMap((d) => d.stops).filter((s) => s.name === 'Central (ER222)');
+    for (const s of central) if (s.lon !== undefined) expect(s.lon).toBeLessThan(-17);
+  });
   it('line 96 ends Funchal trips at Corrida / Jardim Serra, the 08:15 trip included, with an estimated arrival', () => {
     const l = data.lines.find((x) => x.number === '96')!;
     const corrida = l.directions.find((d) => d.from === 'Funchal' && d.to === 'Corrida')!;

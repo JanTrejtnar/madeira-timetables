@@ -163,7 +163,7 @@ describe.skipIf(!existsSync(file))('stop positions (real data)', () => {
     for (const l of data.lines) {
       l.directions.forEach((d, di) => {
         d.stops.forEach((s, i) => {
-          if (s.lat === undefined || s.lon === undefined || s.locationPrecision !== 'name_match') return;
+          if (s.lat === undefined || s.lon === undefined || s.locationPrecision !== 'name_match' && s.locationPrecision !== 'manual_osm_match') return;
           const at = (x: typeof s | undefined) => (x && x.lat !== undefined && x.lon !== undefined ? { lat: x.lat, lon: x.lon } : null);
           const p = d.stops.slice(0, i).reverse().map(at).find(Boolean);
           const q = d.stops.slice(i + 1).map(at).find(Boolean);

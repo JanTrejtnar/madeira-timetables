@@ -125,7 +125,7 @@ const viaRoutesFile = path.join(ROOT, 'data', 'via-routes.json');
 const viaRouted = existsSync(viaRoutesFile) ? attachViaRoutes(data.lines, JSON.parse(await readFile(viaRoutesFile, 'utf8'))) : 0;
 console.log('via stretches routed through their places:', viaRouted);
 // precision of every position (the OSM step already set settlement_center / exact for its stops)
-const precision = { exact: 0, interpolated: 0, settlement_center: 0, name_match: 0 };
+const precision = { exact: 0, interpolated: 0, settlement_center: 0, name_match: 0, manual_osm_match: 0 };
 for (const l of data.lines) {
   for (const d of l.directions) {
     for (const s of d.stops) {

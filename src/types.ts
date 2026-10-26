@@ -17,9 +17,10 @@ export interface Stop {
   /**
    * How trustworthy the position is: exact = official stop (SIGA / GTFS / OSM bus stop); interpolated = evenly spaced on the route
    * polyline; settlement_center = centre of the village the stop is named after (platform not verified);
-   * name_match = taken from a stop of the same name on another route.
+   * name_match = taken from a stop of the same name on another route; manual_osm_match = placed by hand on an OSM node
+   * (see the override's label), not an official stop position.
    */
-  locationPrecision?: 'exact' | 'interpolated' | 'settlement_center' | 'name_match';
+  locationPrecision?: 'exact' | 'interpolated' | 'settlement_center' | 'name_match' | 'manual_osm_match';
   /** not a stop of the timetable: a "Via X" place inserted for the selected trip (position estimated, time interpolated) */
   via?: boolean;
   /** id of the Funchal terminal the stop belongs to (data/stop-overrides.json funchalTerminals): stops of two terminals are never one node */

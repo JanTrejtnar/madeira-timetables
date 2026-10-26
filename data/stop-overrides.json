@@ -228,10 +228,35 @@
     {
       "name": "Achada",
       "label": "Achada on line 146 between Monte and Canhas: OSM place 'Achada e Levada do Poiso' (32.7052, -17.1154), north of Canhas. HAND-PLACED, NOT VERIFIED. The maintainer's first choice, the OSM place 'Achada' at 32.6762, -17.0715, lies 3 km east of Ponta do Sol and turns the route back on itself (Ponta Sol - Canhas 7.6 km instead of 2.2 km, the stop Ponta Sol falls off the line), so it was not used; the actual stop is not known",
-      "lines": ["146"],
+      "lines": [
+        "146"
+      ],
       "lat": 32.7052,
       "lon": -17.1154,
       "locationPrecision": "settlement_center"
+    },
+    {
+      "name": "Achadas da Cruz",
+      "label": "Ověřeno manuálně přes OSM uzel 111788136 u odbočky na lanovku (křižovatka ER101 a odbočky na Teleférico das Achadas da Cruz). Ruční shoda s OSM uzlem, ne oficiální poloha zastávky SIGA; přesné nástupiště se může lišit",
+      "lines": [
+        "80"
+      ],
+      "lat": 32.8407892,
+      "lon": -17.2078548,
+      "locationPrecision": "manual_osm_match",
+      "osmNode": 111788136
+    },
+    {
+      "name": "Achadas Cruz",
+      "label": "Ověřeno manuálně přes OSM uzel 111788136 u odbočky na lanovku (křižovatka ER101 a odbočky na Teleférico das Achadas da Cruz). Ruční shoda s OSM uzlem, ne oficiální poloha zastávky SIGA; přesné nástupiště se může lišit",
+      "lines": [
+        "139",
+        "250"
+      ],
+      "lat": 32.8407892,
+      "lon": -17.2078548,
+      "locationPrecision": "manual_osm_match",
+      "osmNode": 111788136
     }
   ],
   "funchalTerminals": {
