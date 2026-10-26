@@ -231,6 +231,19 @@ function tripsOfDirection(
 /** Stops of a trip, aligned with `trip.nodes` / `trip.times` (the direction's stops plus the "Via" places the trip calls at). */
 export const tripStops = (trip: Trip): Stop[] => trip.stops ?? trip.dir.stops;
 
+/**
+ * Two rows of a timetable that are one stop (arrival and departure of a bus that waits there): the same name and the same pole (code / position).
+ * Stops of one street that merely share a name (ESTR Joao Goncalves Zarco, every pole with its own code) are consecutive calls, not a wait.
+ */
+export const sameCall = (a: Stop, b: Stop): boolean =>
+  a.name === b.name && (a.code ?? null) === (b.code ?? null) && Math.abs((a.lat ?? 0) - (b.lat ?? 0)) < 0.0002 && Math.abs((a.lon ?? 0) - (b.lon ?? 0)) < 0.0002;
+
+/** Row `i + 1` of the trip is the departure row of the stop in row `i` (a real wait), not the next pole of the same street. */
+export const dwellsAt = (trip: Trip, i: number): boolean => {
+  const st = tripStops(trip);
+  return i + 1 < trip.nodes.length && trip.nodes[i + 1] === trip.nodes[i] && !!st[i] && !!st[i + 1] && sameCall(st[i], st[i + 1]);
+};
+
 /** All trips relevant for a search on `date`: late trips of the day before, the day itself and the next morning. */
 export function servicesFor(net: Network, lines: Line[], date: Ymd, school: boolean, municipalities: readonly string[]): Trip[] {
   const out: Trip[] = [];

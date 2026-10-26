@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT, type Key } from '../i18n';
 import { stopLabel } from '../lib/text';
+import { sameCall } from '../lib/network';
 import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } from '../lib/departures';
 import { fmtMinutes, toMinutes } from '../lib/time';
 import { onRequestPlaces, withVia, detoursFor } from '../lib/via';
 import { serviceDay } from '../lib/holidays';
-import type { DayKey, Direction, Line, MapFocus, MapLayer, MapPin } from '../types';
+import type { DayKey, Direction, Line, MapFocus, MapLayer, MapPin, Stop } from '../types';
 import { Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, pdfHref, PrecisionWarning, SectionTitle, type RideEnds, type RideWhen, type Shared } from './common';
 import { Icon } from './Icons';
 import { RouteMap } from './RouteMap';
@@ -553,7 +554,10 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                 const active = hasTrips ? src === stopIdx : i === focusIdx;
                 const label = shownLabel(i);
                 // the same stop twice in a row = arrival and departure of one bus waiting there
-                const twin = shownStops[i + 1]?.name === s.name && !s.via ? 'arr' : i > 0 && shownStops[i - 1].name === s.name && !s.via ? 'dep' : null;
+                const pair = (o?: Stop) => !!o && !s.via && !o.via && o.name === s.name;
+                const twin = pair(shownStops[i + 1]) && sameCall(s, shownStops[i + 1]) ? 'arr' : i > 0 && pair(shownStops[i - 1]) && sameCall(s, shownStops[i - 1]) ? 'dep' : null;
+                // a street with several poles of one name: the pole code tells the rows apart
+                const sameName = !twin && !s.via && !!s.code && (pair(shownStops[i + 1]) || (i > 0 && pair(shownStops[i - 1])));
                 // Google Maps style: outside the ridden stretch the stop fades
                 const faded = !!rideShown && (i < rideShown.from || i > rideShown.to);
                 const boardOff = !!rideShown && (i === rideShown.from || i === rideShown.to);
@@ -561,6 +565,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                   <>
                     <span className={`min-w-0 flex-1 ${edge || active || boardOff ? 'font-semibold' : ''}`}>
                       {stopLabel(s, lang)} {s.via ? <ViaTag /> : <PrecisionWarning stop={s} />}
+                      {sameName && <span className="ml-1 text-xs font-normal tabular-nums text-slate-500 dark:text-slate-400" data-testid="stop-pole">({s.code})</span>}
                       {twin && <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400" data-testid="stop-twin">({t(twin === 'arr' ? 'stopArrival' : 'stopDeparture')})</span>}
                     </span>
                     {label ? (

@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { board } from '../src/lib/departures';
 import { buildIndex, findConnections, searchLines, searchStops } from '../src/lib/search';
-import { buildNetwork, nearbyStopNodes, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Trip } from '../src/lib/network';
+import { buildNetwork, nearbyStopNodes, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, sameCall, servicesFor, suggest, tripStops, type Trip } from '../src/lib/network';
 import { formFromQuery, formToQuery } from '../src/lib/plannerForm';
 import { serviceDay } from '../src/lib/holidays';
 import { variantLabel } from '../src/lib/notes';
@@ -527,6 +527,17 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
       expect(sv.length).toBe(1);
       expect(sv[0].depart).toBeGreaterThan(sv[0].arrive);
       for (let i = 1; i < mid.length; i++) expect(mid[i].stop.name === mid[i - 1].stop.name).toBe(false);
+    });
+    it('line 96: poles of one street with the same name are consecutive calls without a waiting time; only a genuine twin row waits', () => {
+      const l96 = data.lines.find((x) => x.number === '96')!;
+      const trips = servicesFor(net3, data.lines, { y: 2026, m: 10, d: 23 }, true, ['Funchal', 'Câmara de Lobos']).filter((t) => t.line.id === l96.id && t.times.filter((x) => x !== null).length > 40);
+      expect(trips.length).toBeGreaterThan(0);
+      for (const trip of trips) {
+        const mid = midStops(trip, 0, trip.times.length - 1);
+        expect(mid.filter((m) => m.depart !== undefined), `${trip.dir.from}>${trip.dir.to}`).toEqual([]); // nothing on line 96 waits
+        const st = tripStops(trip);
+        for (let i = 1; i < st.length; i++) if (st[i].name === st[i - 1].name) expect(sameCall(st[i], st[i - 1]), `${st[i].name} ${st[i - 1].code}/${st[i].code}`).toBe(false);
+      }
     });
     it('line 139: a time printed with a footnote mark ("09:50 a)") is parsed (arrival row of São Vicente, then the 10:15 departure row)', () => {
       const t = friday.find((x) => x.line.number === '139' && x.dirIndex === 2 && x.times[0] === mm(7, 35))!;

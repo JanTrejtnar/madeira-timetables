@@ -1,5 +1,5 @@
 // Journey search: direct connections and connections with one transfer (earliest arrival, IDOS-style).
-import type { Network, Node, Trip } from './network';
+import { dwellsAt, type Network, type Node, type Trip } from './network';
 
 export const MIN_TRANSFER = 5; // minutes between arrival and the next departure (plus walking time)
 /** Longer buffer when at least one of the two buses has estimated (not printed) times: mountain roads are slow. */
@@ -106,7 +106,7 @@ const leg = (trip: Trip, i: number, j: number): Leg => ({
 export type WalkIn = ReadonlyMap<number, number>;
 
 /** The same stop in the next row(s) of a trip is a waiting bus (arrival row, then departure row): the bus leaves with the last of them. */
-const departsLater = (trip: Trip, i: number): boolean => i + 1 < trip.nodes.length && trip.nodes[i + 1] === trip.nodes[i] && trip.times[i + 1] !== null;
+const departsLater = (trip: Trip, i: number): boolean => dwellsAt(trip, i) && trip.times[i + 1] !== null;
 
 function earliestBoard(trip: Trip, from: Set<number>, notBefore: number, walkIn?: WalkIn): number {
   for (let i = 0; i < trip.nodes.length - 1; i++) {
@@ -182,9 +182,9 @@ export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to:
       if (arriveK === null) continue;
       // a waiting bus (the same stop in two rows): the traveller gets off with the arrival row, the transfer counts from that time;
       // only the wait cap below counts from the bus leaving, since staying on board until then is just as good
-      if (k > i + 1 && t1.nodes[k - 1] === t1.nodes[k] && t1.times[k - 1] !== null) continue;
+      if (k > i + 1 && dwellsAt(t1, k - 1) && t1.times[k - 1] !== null) continue;
       let busLeaves = arriveK;
-      for (let q = k + 1; q < t1.nodes.length && t1.nodes[q] === t1.nodes[k]; q++) busLeaves = t1.times[q] ?? busLeaves;
+      for (let q = k + 1; q < t1.nodes.length && dwellsAt(t1, q - 1); q++) busLeaves = t1.times[q] ?? busLeaves;
       if (shortHop(net, t1.nodes[i], t1.nodes[k], k - i, arriveK - l1depart)) continue;
       if (closer && !closer(t1.nodes[i], t1.nodes[k], HUB_DETOUR_M)) continue;
       for (const { node, walk } of net.near.get(t1.nodes[k]) ?? []) {
