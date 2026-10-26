@@ -307,16 +307,6 @@
       ]
     },
     {
-      "name": "Achada",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 16,
-      "lines": [
-        "146"
-      ]
-    },
-    {
       "name": "Carvalhal",
       "code": null,
       "status": "no coordinates",
@@ -387,16 +377,6 @@
       ]
     },
     {
-      "name": "Canhas",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 9,
-      "lines": [
-        "146"
-      ]
-    },
-    {
       "name": "Maiato",
       "code": null,
       "status": "no coordinates",
@@ -434,16 +414,6 @@
       "tripCount": 8,
       "lines": [
         "527"
-      ]
-    },
-    {
-      "name": "Monte",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 7,
-      "lines": [
-        "146"
       ]
     },
     {
@@ -1123,6 +1093,21 @@
       ]
     },
     {
+      "name": "Achada",
+      "code": null,
+      "status": "settlement_center",
+      "lineCount": 6,
+      "tripCount": 77,
+      "lines": [
+        "111",
+        "146",
+        "208",
+        "525",
+        "526",
+        "785"
+      ]
+    },
+    {
       "name": "Ponta Sol",
       "code": null,
       "status": "name_match",
@@ -1150,20 +1135,6 @@
         "146",
         "4",
         "8"
-      ]
-    },
-    {
-      "name": "Achada",
-      "code": null,
-      "status": "settlement_center",
-      "lineCount": 5,
-      "tripCount": 61,
-      "lines": [
-        "111",
-        "208",
-        "525",
-        "526",
-        "785"
       ]
     },
     {
@@ -1224,7 +1195,7 @@
       "code": null,
       "status": "name_match",
       "lineCount": 4,
-      "tripCount": 30,
+      "tripCount": 39,
       "lines": [
         "107",
         "115",
@@ -2046,6 +2017,16 @@
       ]
     },
     {
+      "name": "Monte",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 16,
+      "lines": [
+        "146"
+      ]
+    },
+    {
       "name": "Furna",
       "code": null,
       "status": "settlement_center",
@@ -2083,16 +2064,6 @@
       "tripCount": 10,
       "lines": [
         "142"
-      ]
-    },
-    {
-      "name": "Monte",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 9,
-      "lines": [
-        "146"
       ]
     },
     {

@@ -214,6 +214,24 @@
       "lat": 32.72982,
       "lon": -16.92729,
       "locationPrecision": "exact"
+    },
+    {
+      "name": "Monte",
+      "label": "Monte, hamlet in Ponta do Sol parish on the climb from Ponta do Sol towards Canhas (line 146), NOT the Monte quarter above Funchal that the name matched before. HAND-PLACED from the maintainer's information (about 32.682, -17.098, an AI assistant's estimate), NOT VERIFIED: no stop of that name is mapped here",
+      "lines": [
+        "146"
+      ],
+      "lat": 32.682,
+      "lon": -17.098,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Achada",
+      "label": "Achada on line 146 between Monte and Canhas: OSM place 'Achada e Levada do Poiso' (32.7052, -17.1154), north of Canhas. HAND-PLACED, NOT VERIFIED. The maintainer's first choice, the OSM place 'Achada' at 32.6762, -17.0715, lies 3 km east of Ponta do Sol and turns the route back on itself (Ponta Sol - Canhas 7.6 km instead of 2.2 km, the stop Ponta Sol falls off the line), so it was not used; the actual stop is not known",
+      "lines": ["146"],
+      "lat": 32.7052,
+      "lon": -17.1154,
+      "locationPrecision": "settlement_center"
     }
   ],
   "funchalTerminals": {
