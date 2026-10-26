@@ -31,6 +31,11 @@ function timesOfDay(dir: Direction, day: DayKey, stopIdx: number): Timed[] {
 /** The first stop of a direction is a terminal in Funchal. */
 const inFunchal = (name: string | null | undefined) => /^funchal(\s|$|-)/i.test((name ?? '').trim());
 
+/** The code of a legend note (`*`, `a`, `b`, ...) as a badge in front of its text. */
+function NoteCode({ code }: { code: string }) {
+  return <span className="mr-1.5 inline-flex min-w-[1.4rem] items-center justify-center rounded-md bg-slate-200 px-1.5 py-0.5 align-baseline text-xs font-bold text-slate-800 dark:bg-slate-700 dark:text-slate-100" data-testid="note-code">{code}</span>;
+}
+
 function bestStop(dir: Line['directions'][number] | undefined): number {
   if (!dir?.trips?.length) return 0;
   let best = 0;
@@ -109,11 +114,14 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   useEffect(() => {
     const d = line.directions[dirIndex];
     if (!d || !line.hasParsedSchedule) return;
-    if (day && timesOfDay(d, day, 0).length) return;
-    const alt = keys.find((k) => timesOfDay(d, k, 0).length);
+    // the merged list covers the whole side: a day is empty only when no direction of the side runs on it (else weekday / weekend-only branches flip the day back and forth)
+    const ds = groups && allMode ? groups.sides[groups.sides.findIndex((x) => x.includes(dirIndex))].map((i) => line.directions[i]) : [d];
+    const has = (k: DayKey) => ds.some((x) => timesOfDay(x, k, 0).length);
+    if (day && has(day)) return;
+    const alt = keys.find(has);
     if (alt) setDay(alt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dirIndex, line.id, day]);
+  }, [dirIndex, line.id, day, allMode]);
   useEffect(() => {
     if (holdSel.current.day) holdSel.current.day = false;
     else setSelKey(null);
@@ -648,17 +656,23 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
               const dim = selNotes.length > 0 && !on;
               return (
                 <li key={k} className={on ? 'rounded-lg bg-sky-50 px-2 py-1 font-medium dark:bg-sky-400/10' : dim ? 'opacity-40' : ''}>
-                  <b>{k}</b> – <Linkified text={tn(v)} />
+                  <NoteCode code={k} />
+                  <Linkified text={tn(v)} />
                 </li>
               );
             })}
             {selNotes
               .filter((k) => !(k in line.notes))
-              .map((k) => (
-                <li key={`sel-${k}`} className="rounded-lg bg-sky-50 px-2 py-1 font-medium dark:bg-sky-400/10">
-                  <Linkified text={tn(k)} />
-                </li>
-              ))}
+              .map((k) => {
+                // a free-text note keeps its leading marker ("*Serviço a pedido: ...") as the badge
+                const m = /^\s*(\*+)\s*(?=\S)/.exec(k) ?? /^\s*([a-z])\s*[:)\-–]\s+(?=\S)/i.exec(k);
+                return (
+                  <li key={`sel-${k}`} className="rounded-lg bg-sky-50 px-2 py-1 font-medium dark:bg-sky-400/10">
+                    {m && <NoteCode code={m[1]} />}
+                    <Linkified text={tn(m ? k.slice(m[0].length) : k)} />
+                  </li>
+                );
+              })}
             {line.generalNotes?.map((n, i) => (
               <li key={`g${i}`} className="text-slate-500">
                 <Linkified text={tn(n)} />

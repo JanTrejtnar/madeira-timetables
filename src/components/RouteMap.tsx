@@ -115,6 +115,9 @@ function casedLine(group: L.FeatureGroup, pts: [number, number][], style: { colo
   L.polyline(pts, { color: '#0f172a', weight: weight + 3, opacity: 0.85, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(group).bringToBack();
 }
 
+/** A map that was not removed and is still in the document: Leaflet throws (_leaflet_pos) on a removed map or a detached pane. */
+const live = (map: L.Map) => !!(map as unknown as { _mapPane?: unknown })._mapPane && map.getContainer().isConnected;
+
 export function RouteMap({ layers, focus = null, me = null, onLocate, locating = false, fill = false, onStopClick }: Props) {
   const { t, lang } = useT();
   const el = useRef<HTMLDivElement>(null);
@@ -174,7 +177,8 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
       });
     });
     const fit = () => {
-      if (!alive) return;
+      // a late call (timer, route loaded) on a removed map or a detached container would throw inside Leaflet (_leaflet_pos)
+      if (!alive || !container.isConnected) return;
       map.invalidateSize();
       const b = group.getBounds();
       if (b.isValid()) map.fitBounds(b, { padding: [32, 32], animate: false });
@@ -238,7 +242,7 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
   }, [me, layersKey, t, fill]);
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !me || meSeq === undefined) return;
+    if (!map || !me || meSeq === undefined || !live(map)) return;
     // include the nearest shown stops so the user sees both themselves and where to walk
     const pts: L.LatLngTuple[] = [[me.lat, me.lon]];
     for (const l of layers) for (const s of l.stops.slice(0, 3)) if (s.lat !== undefined && s.lon !== undefined) pts.push([s.lat, s.lon]);
@@ -255,15 +259,19 @@ export function RouteMap({ layers, focus = null, me = null, onLocate, locating =
     for (const [i, m] of markers.current) m.setStyle({ radius: i === stopIndex ? 9 : 5, fillColor: i === stopIndex ? m.options.color : '#fff' });
     if (!map || stopIndex === undefined) return;
     const m = markers.current.get(stopIndex);
-    if (!m) return;
+    if (!m || !live(map)) return;
     m.bringToFront();
     // clicked on the map itself: the popup is already open and the map where the reader put it
     if (fromMap) return;
     // open the popup once the map has settled, so it pans into view instead of being cut off by the map's edge
     map.flyTo(m.getLatLng(), Math.max(map.getZoom(), 14), { duration: 0.6 });
-    map.once('moveend', () => m.openPopup());
-    const fallback = setTimeout(() => !m.isPopupOpen() && m.openPopup(), 900);
-    return () => clearTimeout(fallback);
+    const open = () => live(map) && m.openPopup();
+    map.once('moveend', open);
+    const fallback = setTimeout(() => !m.isPopupOpen() && open(), 900);
+    return () => {
+      clearTimeout(fallback);
+      map.off('moveend', open);
+    };
   }, [seq, stopIndex]);
   // another trip selected while a popup is open: refresh the time in it
   const times = focus?.times;

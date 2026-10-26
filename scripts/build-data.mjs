@@ -160,3 +160,5 @@ const snapped = await snapShapeEnds(data.lines, path.join(OUT, 'data', 'shapes')
 console.log('route lines joined to the end stops:', snapped.joined, '(gap over', snapped.maxGapM, 'm left alone:', snapped.skipped.length + ')');
 console.log('estimated directions:', estimated, rejected.length ? `(rejected: ${rejected.join('; ')})` : '');
 console.log('public/ updated:', data.lines.length, 'lines,', (await readdir(path.join(OUT, 'data', 'shapes'))).length, 'shapes,', local, 'local pdfs');
+// stops without (or with only estimated) coordinates -> data/missing-stops.json
+await import('./audit-stops.mjs');
