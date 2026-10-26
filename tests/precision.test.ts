@@ -6,7 +6,7 @@ const stop = (o: Partial<Stop>): Stop => ({ name: 'X', code: null, ...o }) as St
 
 describe('position warnings', () => {
   it('warns for anything but an official position', () => {
-    for (const locationPrecision of ['settlement_center', 'name_match', 'manual_osm_match', 'interpolated'] as const) expect(isApproxPosition(stop({ lat: 1, lon: 2, locationPrecision }))).toBe(true);
+    for (const locationPrecision of ['settlement_center', 'name_match', 'manual_osm_match', 'corridor_osm_match', 'interpolated_road_point', 'interpolated'] as const) expect(isApproxPosition(stop({ lat: 1, lon: 2, locationPrecision }))).toBe(true);
     expect(isApproxPosition(stop({ lat: 1, lon: 2, approx: true, locationPrecision: 'exact' }))).toBe(true); // OSM stop matched by name
     expect(isApproxPosition(stop({ lat: 1, lon: 2, isEstimatedLocation: true }))).toBe(true);
     expect(isApproxPosition(stop({ lat: 1, lon: 2, locationPrecision: 'exact' }))).toBe(false);

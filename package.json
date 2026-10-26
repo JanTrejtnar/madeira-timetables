@@ -15,6 +15,7 @@
     "build:data": "node scripts/build-data.mjs",
     "audit": "node scripts/audit-schedules.mjs",
     "audit:stops": "node scripts/audit-stops.mjs",
+    "match:corridor": "node scripts/match-corridor-stops.mjs",
     "audit:via": "node scripts/audit-via.mjs",
     "dev": "vite",
     "build": "npm run build:data && tsc -b && vite build",
