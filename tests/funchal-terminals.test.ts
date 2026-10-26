@@ -99,6 +99,28 @@ describe.skipIf(!existsSync(file))('timetable rows repaired at parse time (real 
     expect(back.trips!.some((t) => t.times[ci] !== null)).toBe(true);
     expect(back.trips!.some((t) => t.times[ci] === null)).toBe(true); // via Fôro
   });
+  it('line 96 Corticeiras is the junction below Jardim da Serra, so Corrida > Funchal is no longer than Funchal > Corrida', () => {
+    const l = data.lines.find((x) => x.number === '96')!;
+    const there = l.directions.find((d) => d.from === 'Funchal' && d.to === 'Corrida')!;
+    const back = l.directions.find((d) => d.from === 'Corrida' && d.to === 'Funchal')!;
+    const c = back.stops.find((s) => s.name === 'Corticeiras')!;
+    // not the upper hamlet (32.709, -16.974) next to Corrida: the stop of the SIGA planner 'ESTR das Corticeiras' (32.6848, -16.9888)
+    expect(Math.hypot((c.lat! - 32.68482) * 111, (c.lon! - -16.988796) * 93)).toBeLessThan(0.1);
+    const km = (d: typeof there) => d.stops.slice(1).reduce((n, s, k) => n + Math.hypot((s.lat! - d.stops[k].lat!) * 111, (s.lon! - d.stops[k].lon!) * 93), 0);
+    expect(km(back)).toBeLessThan(1.1 * km(there));
+    expect(back.stops.map((s) => s.name).indexOf('Hotel Jardim da Serra')).toBeLessThan(back.stops.map((s) => s.name).indexOf('Corticeiras'));
+  });
+  it('the most-used stops that had no coordinates now have a labelled position (Tabúa, Achada, P. Cruz (Túnel), Boqueirão, Meia Légua)', () => {
+    const at = (line: string, name: string) => data.lines.filter((x) => x.number === line).flatMap((l) => l.directions.flatMap((d) => d.stops)).filter((s) => s.name === name);
+    for (const [line, name] of [['4', 'Tabúa'], ['6', 'Meia Légua'], ['56', 'P. Cruz (Túnel)'], ['525', 'Boqueirão'], ['525', 'Achada'], ['111', 'Achada'], ['208', 'Achada']]) {
+      const found = at(line, name);
+      expect(found.length, `${line} ${name}`).toBeGreaterThan(0);
+      for (const s of found) {
+        expect(s.lat, `${line} ${name}`).toBeDefined();
+        expect(s.locationPrecision, `${line} ${name}`).not.toBe('exact'); // hand-matched by name, never presented as official
+      }
+    }
+  });
   it('line 96 ends Funchal trips at Corrida / Jardim Serra, the 08:15 trip included, with an estimated arrival', () => {
     const l = data.lines.find((x) => x.number === '96')!;
     const corrida = l.directions.find((d) => d.from === 'Funchal' && d.to === 'Corrida')!;

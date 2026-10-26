@@ -304,11 +304,12 @@ export function fillSparseStops(lines, root) {
       const first = anchors[0];
       const last = anchors.at(-1);
       if (first.i >= last.i) { note(false, 'anchors in the wrong order'); continue; }
-      // a printed stop near a planner stop replaces it; one off the pattern is placed after the planner stop it is nearest to (the first one before)
+      // a terminal near a planner stop replaces it; a printed place name in the middle (Estreito, Corticeiras) never deletes a real stop (a school, a church) and, like a stop off the pattern, is placed after the planner stop it is nearest to (the first one before)
+      anchors.forEach((a, k) => { a.replace = a.near && (k === 0 || k === anchors.length - 1); });
       const items = [];
-      anchors.forEach((a, k) => items.push({ stop: a.stop, off: p.offsets[a.i], i: a.i, order: a.near ? 0 : k === 0 ? -1 : 1 }));
+      anchors.forEach((a, k) => items.push({ stop: a.stop, off: p.offsets[a.i], i: a.i, order: a.replace ? 0 : k === 0 ? -1 : 1 }));
       p.stops.forEach((c, i) => {
-        if (i <= first.i || i > last.i || anchors.some((a) => a.near && a.i === i)) return;
+        if (i <= first.i || i > last.i || anchors.some((a) => a.replace && a.i === i)) return;
         items.push({ stop: planner(c), off: p.offsets[i], i, order: 0 });
       });
       items.sort((x, y) => x.i - y.i || x.order - y.order);

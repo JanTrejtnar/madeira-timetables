@@ -12,6 +12,96 @@
       "locationPrecision": "name_match"
     },
     {
+      "name": "Corticeiras",
+      "label": "Corticeiras of line 96 = the junction of the Caminho das Corticeiras below Jardim da Serra (Camara de Lobos), as given by the maintainer - NOT the upper hamlet of the same name NE of Corrida (OSM place=hamlet 32.7089, -16.9739). Coordinates are those of the official SIGA planner stop 'ESTR das Corticeiras' (code 13008); that this is the stop the printed timetable means is the maintainer's reading (name match), not confirmed by the operator",
+      "lines": [
+        "96"
+      ],
+      "lat": 32.68482,
+      "lon": -16.988796,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Tabúa",
+      "label": "Tabúa (Ribeira Brava), main-road stop on the ER222 in the village centre. Coordinates of the official SIGA planner stop 'ER 222 Tabua' (code 24099); the 'Junta Freguesia Tabua' stop (32.6816, -17.0759) and 'Ponte Tabua' (32.6835, -17.0747) lie within 200 m. The printed 'Tabúa' is matched to it by name - which stop of the village the bus uses is not confirmed",
+      "lines": [
+        "4",
+        "8",
+        "107",
+        "115",
+        "142",
+        "146"
+      ],
+      "lat": 32.68273,
+      "lon": -17.075894,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Achada",
+      "label": "Achada in Santa Cruz parish (Caniço), on the road of the SIGA stops 'ESTR P. Alfredo Vieira Freitas Achada' - coordinates of stop 68313, the middle one of three (32.682-32.687, -16.827). The 'Achada' of lines 525/526 shares this road with their Boqueirão. Matched by name and by the road, not confirmed by the operator",
+      "lines": [
+        "525",
+        "526"
+      ],
+      "lat": 32.686197,
+      "lon": -16.826799,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Achada",
+      "label": "Achada of line 111 = the Achada neighbourhood in São Gonçalo (Funchal), OSM place 32.65475, -16.919121; the Funchal bus stops 'CAM Achada Ant QTA Lago' and 'Escola Achada' lie next to it. Place centre matched by name (the line runs Funchal - Achada), the actual terminus stop is not known",
+      "lines": [
+        "111"
+      ],
+      "lat": 32.65475,
+      "lon": -16.919121,
+      "locationPrecision": "settlement_center"
+    },
+    {
+      "name": "Achada",
+      "label": "Achada between Porto da Cruz and Faial (neighbourhood, OSM place 32.7661, -16.8404): line 785 runs Porto da Cruz - Achada - Referta, line 208 Maiata Baixo - Achada - Moinhos. Place centre matched by the neighbouring stops, not a surveyed stop",
+      "lines": [
+        "785",
+        "208"
+      ],
+      "lat": 32.766104,
+      "lon": -16.840423,
+      "locationPrecision": "settlement_center"
+    },
+    {
+      "name": "P. Cruz (Túnel)",
+      "label": "HAND-PLACED, NOT VERIFIED: the 'Porto da Cruz (Túnel)' column of lines 56/103/138 (Funchal - Santana), a stop at the tunnel at the entrance to Porto da Cruz (Machico) as described by the maintainer. No bus stop at that tunnel exists in the SIGA, GTFS or OSM stop data in the repo, so the point is the centre of Porto da Cruz (OSM place 32.7725, -16.8286), up to about 1 km from the tunnel mouth",
+      "lines": [
+        "56",
+        "103",
+        "138"
+      ],
+      "lat": 32.772508,
+      "lon": -16.828604,
+      "locationPrecision": "settlement_center"
+    },
+    {
+      "name": "Boqueirão",
+      "label": "Boqueirão in Santa Cruz parish (Caniço), terminus of line 525 - SIGA stop 'Sítio do Boqueirão' (32.690645, -16.833251) next to the OSM locality Boqueirão (32.6904, -16.8325). Line 501 (Funchal - Boqueirão via Fazenda) is not covered: which Boqueirão it ends at is not known",
+      "lines": [
+        "525"
+      ],
+      "lat": 32.690645,
+      "lon": -16.833251,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Meia Légua",
+      "label": "Meia Légua (Ribeira Brava), village on the ER228 towards Serra de Água - SIGA stop 'Meia Legua Capela' (code 24185), the centre of the OSM neighbourhood Meia Légua. The 'Continente Meia Legua' stops (32.6941, -17.0463) and 'Meia Legua Entrada' (32.698, -17.0439) lie within 500 m. Matched by name, which stop the bus uses is not confirmed",
+      "lines": [
+        "6",
+        "139"
+      ],
+      "lat": 32.699745,
+      "lon": -17.042437,
+      "locationPrecision": "name_match"
+    },
+    {
       "name": "Machico",
       "label": "Machico terminal (main transfer hub)",
       "lat": 32.721648,
