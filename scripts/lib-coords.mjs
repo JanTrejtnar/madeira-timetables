@@ -18,6 +18,8 @@ export const tokens = (k) => k.split(' ').filter((w) => w.length > 1 && !NOISE.h
 const QUALIFIERS = new Set(['cima', 'baixo', 'alto', 'fundo', 'norte', 'sul']);
 export const GENERIC = new Set(['funchal', 'centro', 'machico', 'santa cruz', 'st cruz', 'calheta', 'camacha', 'canico', 'porto moniz', 'ribeira brava', 'camara de lobos', 'ponta do sol', 'santana', 'sao vicente']);
 
+/** a namesake of an official stop this close is the same boarding place */
+const SAME_SPOT_KM = 0.25;
 const R = 6371.0088;
 const rad = Math.PI / 180;
 function hav(a, b) {
@@ -128,13 +130,41 @@ export function fillCoords(lines, index) {
           if (place) {
             s.lat = +place[0].toFixed(6);
             s.lon = +place[1].toFixed(6);
-            s.approx = true;
+            // the same name as a stop with an official position, every such stop within SAME_SPOT_KM: the same boarding place, not a guess
+            if (how === 'exact' && pts.every((p) => hav(p, place) < SAME_SPOT_KM)) s.locationPrecision = 'exact';
+            else s.approx = true;
             filled++;
           } else missing++;
         });
       }
     }
   }
-  filled = lines.reduce((n, l) => n + l.directions.reduce((m, d) => m + d.stops.filter((s) => s.approx).length, 0), 0);
+  filled = lines.reduce((n, l) => n + l.directions.reduce((m, d) => m + d.stops.filter((s) => s.approx || s.locationPrecision === 'exact').length, 0), 0);
   return { filled, missing };
+}
+
+/**
+ * Last step before the precision labels: a stop with only an estimated position (name_match, settlement centre, interpolated,
+ * corridor match) that has an official namesake within SAME_SPOT_KM takes that stop's position and precision. Hand-placed
+ * overrides keep theirs. Returns the stops moved.
+ */
+export function inheritSameSpot(lines) {
+  const official = new Map();
+  const isOfficial = (s) => has(s) && !s.via && (s.locationPrecision === 'exact' || (!s.locationPrecision && !s.approx && !s.isEstimatedLocation));
+  for (const l of lines) for (const d of l.directions) for (const s of d.stops) if (isOfficial(s)) (official.get(keyOf(s.name)) ?? official.set(keyOf(s.name), []).get(keyOf(s.name))).push([s.lat, s.lon]);
+  let moved = 0;
+  for (const l of lines) {
+    for (const d of l.directions) {
+      for (const s of d.stops) {
+        if (!has(s) || s.via || isOfficial(s) || s.source === 'override' || s.locationPrecision === 'manual_osm_match') continue;
+        const near = (official.get(keyOf(s.name)) ?? []).filter((p) => hav(p, [s.lat, s.lon]) < SAME_SPOT_KM);
+        if (!near.length || !near.every((p) => hav(p, near[0]) < SAME_SPOT_KM)) continue;
+        near.sort((a, b) => hav(a, [s.lat, s.lon]) - hav(b, [s.lat, s.lon]));
+        for (const f of ['approx', 'isEstimatedLocation', 'source']) delete s[f];
+        Object.assign(s, { lat: near[0][0], lon: near[0][1], locationPrecision: 'exact' });
+        moved++;
+      }
+    }
+  }
+  return moved;
 }

@@ -784,6 +784,20 @@
       "lat": 32.73257,
       "lon": -16.815595,
       "locationPrecision": "interpolated_road_point"
+    },
+    {
+      "name": "Poiso",
+      "label": "Poiso (saddle at the ER103 / ER202 crossroads): manual match to the OSM bus stop S9 'Poiso' (SIGA, gtfs_id 891, survey 2025-11-30, node 1139447948) which OSM lists for lines 56, 103 and 138. The opposite-direction platform (OSM node 6468873426) is 20 m away and is not distinguished. Not an official SIGA position.",
+      "lines": [
+        "56",
+        "103",
+        "138",
+        "HF Areeiro"
+      ],
+      "lat": 32.712225,
+      "lon": -16.8880585,
+      "locationPrecision": "manual_osm_match",
+      "osmNode": 1139447948
     }
   ],
   "funchalTerminals": {

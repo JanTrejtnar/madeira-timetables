@@ -479,6 +479,19 @@
       ]
     },
     {
+      "name": "Poiso",
+      "code": null,
+      "status": "manual_osm_match",
+      "lineCount": 4,
+      "tripCount": 40,
+      "lines": [
+        "103",
+        "138",
+        "56",
+        "HF Areeiro"
+      ]
+    },
+    {
       "name": "Canhas",
       "code": null,
       "status": "name_match",
@@ -627,18 +640,6 @@
     },
     {
       "name": "P. Cruz (Túnel)",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 3,
-      "tripCount": 36,
-      "lines": [
-        "103",
-        "138",
-        "56"
-      ]
-    },
-    {
-      "name": "Poiso",
       "code": null,
       "status": "name_match",
       "lineCount": 3,
@@ -811,17 +812,6 @@
       "lines": [
         "501",
         "525"
-      ]
-    },
-    {
-      "name": "Funchal",
-      "code": null,
-      "status": "settlement_center",
-      "lineCount": 2,
-      "tripCount": 31,
-      "lines": [
-        "181",
-        "503"
       ]
     },
     {
@@ -1288,26 +1278,6 @@
       ]
     },
     {
-      "name": "Fórum Madeira",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 50,
-      "lines": [
-        "500"
-      ]
-    },
-    {
-      "name": "Lido",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 50,
-      "lines": [
-        "500"
-      ]
-    },
-    {
       "name": "Mercado",
       "code": null,
       "status": "name_match",
@@ -1321,16 +1291,6 @@
       "name": "Plaza Madeira",
       "code": null,
       "status": "interpolated_road_point",
-      "lineCount": 1,
-      "tripCount": 50,
-      "lines": [
-        "500"
-      ]
-    },
-    {
-      "name": "Praia Formosa",
-      "code": null,
-      "status": "name_match",
       "lineCount": 1,
       "tripCount": 50,
       "lines": [
@@ -1405,6 +1365,16 @@
       "tripCount": 29,
       "lines": [
         "20"
+      ]
+    },
+    {
+      "name": "Funchal",
+      "code": null,
+      "status": "settlement_center",
+      "lineCount": 1,
+      "tripCount": 27,
+      "lines": [
+        "503"
       ]
     },
     {
@@ -1538,16 +1508,6 @@
       ]
     },
     {
-      "name": "Rosário",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 17,
-      "lines": [
-        "6"
-      ]
-    },
-    {
       "name": "Monte",
       "code": null,
       "status": "name_match",
@@ -1658,26 +1618,6 @@
       ]
     },
     {
-      "name": "Seara Velha Baixo",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 6,
-      "lines": [
-        "181"
-      ]
-    },
-    {
-      "name": "Terra Chã Cima",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 6,
-      "lines": [
-        "181"
-      ]
-    },
-    {
       "name": "ESTR Lombo Chão",
       "code": null,
       "status": "name_match",
@@ -1705,16 +1645,6 @@
       "tripCount": 4,
       "lines": [
         "80"
-      ]
-    },
-    {
-      "name": "Antes da Madre Água",
-      "code": "C3",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
       ]
     },
     {
@@ -1798,16 +1728,6 @@
       ]
     },
     {
-      "name": "Casa do Requeijão",
-      "code": "C53",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
       "name": "Covão",
       "code": null,
       "status": "settlement_center",
@@ -1815,16 +1735,6 @@
       "tripCount": 4,
       "lines": [
         "258"
-      ]
-    },
-    {
-      "name": "Depois da Madre Água",
-      "code": "C7",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
       ]
     },
     {
@@ -1848,16 +1758,6 @@
       ]
     },
     {
-      "name": "Igreja da Camacha",
-      "code": "C31A",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
       "name": "Jardim do Mar",
       "code": null,
       "status": "settlement_center",
@@ -1865,16 +1765,6 @@
       "tripCount": 4,
       "lines": [
         "80"
-      ]
-    },
-    {
-      "name": "Lapinhas-Eira de Fora",
-      "code": "C45",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
       ]
     },
     {
@@ -1888,28 +1778,8 @@
       ]
     },
     {
-      "name": "Largo da Achada",
-      "code": "C31",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
       "name": "LEV da Serra-ESTR Gaula",
       "code": "C198",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Levada da Serra-Rochão",
-      "code": "C35",
       "status": "name_match",
       "lineCount": 1,
       "tripCount": 4,
@@ -1978,16 +1848,6 @@
       ]
     },
     {
-      "name": "Piquetes-Rochão",
-      "code": "C39",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
       "name": "Ponta Pargo (Salão)",
       "code": null,
       "status": "name_match",
@@ -1995,16 +1855,6 @@
       "tripCount": 4,
       "lines": [
         "80"
-      ]
-    },
-    {
-      "name": "Ponte do Rochão",
-      "code": "C37",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
       ]
     },
     {
@@ -2028,36 +1878,6 @@
       ]
     },
     {
-      "name": "REST Katespero",
-      "code": "C57",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "RIB Porto Novo-Eira Fora",
-      "code": "C41",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "RIB Serrão-Eira de Fora",
-      "code": "C51",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
       "name": "Santa P.Moniz",
       "code": null,
       "status": "corridor_osm_match",
@@ -2078,38 +1898,8 @@
       ]
     },
     {
-      "name": "Sítio da Eira de Fora",
-      "code": "C49",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Sítio da Madre Água",
-      "code": "C5",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
       "name": "Sítio do Boqueirão",
       "code": "C202",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Sítio do Vale Paraíso",
-      "code": "C15",
       "status": "name_match",
       "lineCount": 1,
       "tripCount": 4,
@@ -2145,16 +1935,6 @@
       "tripCount": 3,
       "lines": [
         "218"
-      ]
-    },
-    {
-      "name": "Lombo Chão",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 3,
-      "lines": [
-        "181"
       ]
     },
     {
@@ -2238,108 +2018,8 @@
       ]
     },
     {
-      "name": "Águas Mansas-Zona 24",
-      "code": "C58",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Águas Mansas-Zona-36, 25",
-      "code": "C59",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Aldeia Paz-Vale Paraíso",
-      "code": "C9",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Antes da Cornélia",
-      "code": "C6",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Antes da ENT Carreiras",
-      "code": "C18",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Antes da Igreja Velha",
-      "code": "C32",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Antes do Largo da Achada",
-      "code": "C29",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Antes Estação de Serviço",
-      "code": "C46",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
       "name": "Antes LEV Serra-Gaula",
       "code": "C253",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Antes REST Katespero",
-      "code": "C55",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Antes RIB Porto Novo",
-      "code": "C42",
       "status": "name_match",
       "lineCount": 1,
       "tripCount": 2,
@@ -2378,16 +2058,6 @@
       ]
     },
     {
-      "name": "Camacha Shopping, T-129",
-      "code": "C21A",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
       "name": "Canhas ER 222",
       "code": null,
       "status": "name_match",
@@ -2408,118 +2078,8 @@
       ]
     },
     {
-      "name": "CZ da Padaria",
-      "code": "C23",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Depois da Cornélia",
-      "code": "C1",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Depois da Igreja Velha",
-      "code": "C33",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Depois ESCL SEC Camacha",
-      "code": "C27",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Depois Estação de Serviço",
-      "code": "C47",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
       "name": "Depois LEV da Serra Faial",
       "code": "C200",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Depois REST Katespero",
-      "code": "C54",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Depois RIB Porto Novo",
-      "code": "C43",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Depois Saída Carreiras",
-      "code": "C16",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "ENT Aldeia da Paz",
-      "code": "C14",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Entrada para Carreiras",
-      "code": "C13",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "ESCL SEC da Camacha",
-      "code": "C25",
       "status": "name_match",
       "lineCount": 1,
       "tripCount": 2,
@@ -2718,16 +2278,6 @@
       ]
     },
     {
-      "name": "Reis Magos",
-      "code": null,
-      "status": "settlement_center",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "556"
-      ]
-    },
-    {
       "name": "Ribeira Funda",
       "code": null,
       "status": "name_match",
@@ -2805,46 +2355,6 @@
       "tripCount": 2,
       "lines": [
         "123"
-      ]
-    },
-    {
-      "name": "Vale Paraíso",
-      "code": "C11",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Vale Paraíso-Cemitério",
-      "code": "C21",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Variante Nova Camacha",
-      "code": "C26",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
-      ]
-    },
-    {
-      "name": "Variante Nova-Shopping",
-      "code": "C24",
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "502"
       ]
     },
     {
@@ -2985,16 +2495,6 @@
       "tripCount": 0,
       "lines": [
         "127"
-      ]
-    },
-    {
-      "name": "Ponta da Oliveira",
-      "code": null,
-      "status": "settlement_center",
-      "lineCount": 1,
-      "tripCount": 0,
-      "lines": [
-        "555"
       ]
     },
     {
