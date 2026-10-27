@@ -3,7 +3,7 @@
 import puppeteer from 'puppeteer-core';
 import { freezeClock, waitForServer } from './lib-e2e-clock.mjs';
 
-const base = process.argv[2] ?? 'http://localhost:5173/';
+const base = process.argv[2] ?? `http://localhost:${process.env.E2E_PORT ?? process.env.PORT ?? 5173}/`;
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 await waitForServer();
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });

@@ -24,6 +24,6 @@ Vývojář/asistent MUSÍ před každým commitem automaticky a bez vyzvání sp
 4. E2E kontrolní sady: `node scripts/e2e-line96.mjs`, `node scripts/e2e-line208.mjs`, `node scripts/e2e-trim-notes.mjs`, `node scripts/e2e-ux.mjs`, `node scripts/e2e-planner.mjs`, `node scripts/e2e-map.mjs`, `node scripts/e2e-mobile.mjs`
 5. `npm run build` (produkční vite build)
 
-Celý postup (včetně fetch:routes a časových limitů pro každý krok, `e2e-ux` trvá ~150 s, limit 240 s) spustí `npm run verify` (dev server musí běžet; `-- --skip-e2e` vynechá E2E).
+Celý postup (včetně fetch:routes a časových limitů pro každý krok, `e2e-ux` trvá ~150 s, limit 240 s) spustí `npm run verify` (`-- --skip-e2e` vynechá E2E). Dev server si `verify` obstará sám: použije `E2E_PORT`/`PORT` (výchozí 5173), pokud tam běží tato aplikace; jinak (port volný nebo obsazený cizím serverem) na dobu běhu spustí vlastní Vite na volném portu. E2E skripty používají stejné proměnné, takže jde i `E2E_PORT=5174 node scripts/e2e-ux.mjs`.
 
 **Pokud jakýkoliv krok selže, kód se nesmí pushnout na main, dokud není chyba opravena.**

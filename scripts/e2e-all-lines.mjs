@@ -3,7 +3,7 @@
 import puppeteer from 'puppeteer-core';
 import { freezeClock } from './lib-e2e-clock.mjs';
 
-const base = process.argv[2] ?? 'http://localhost:5173/';
+const base = process.argv[2] ?? `http://localhost:${process.env.E2E_PORT ?? process.env.PORT ?? 5173}/`;
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const data = await (await fetch(`${base}data/schedules.json`)).json();
 const lines = data.lines.filter((l) => l.hasParsedSchedule);

@@ -38,7 +38,7 @@ export function freezeClock(browser, iso = FIXED_NOW) {
 }
 
 /** Waits until the dev server answers (Vite may still be starting or restarting); throws after `timeoutMs`. */
-export async function waitForServer(url = process.argv[2] ?? 'http://localhost:5173/', timeoutMs = 60000) {
+export async function waitForServer(url = process.argv[2] ?? `http://localhost:${process.env.E2E_PORT ?? process.env.PORT ?? 5173}/`, timeoutMs = 60000) {
   const end = Date.now() + timeoutMs;
   let last = '';
   while (Date.now() < end) {
