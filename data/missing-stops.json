@@ -24,6 +24,25 @@
   ],
   "estimated": [
     {
+      "name": "Santa Cruz",
+      "code": null,
+      "status": "settlement_center",
+      "lineCount": 10,
+      "tripCount": 205,
+      "lines": [
+        "208",
+        "505",
+        "525",
+        "526",
+        "527",
+        "528",
+        "604",
+        "675",
+        "703",
+        "Via Rápida"
+      ]
+    },
+    {
       "name": "Rª Brava",
       "code": null,
       "status": "name_match",
@@ -223,16 +242,16 @@
       ]
     },
     {
-      "name": "Santa Cruz",
+      "name": "Porto da Cruz",
       "code": null,
-      "status": "settlement_center",
+      "status": "place_centroid",
       "lineCount": 4,
-      "tripCount": 49,
+      "tripCount": 52,
       "lines": [
-        "526",
-        "528",
-        "604",
-        "703"
+        "208",
+        "56",
+        "785",
+        "825"
       ]
     },
     {
@@ -297,18 +316,6 @@
         "139",
         "500",
         "80"
-      ]
-    },
-    {
-      "name": "St.Cruz",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 3,
-      "tripCount": 112,
-      "lines": [
-        "525",
-        "526",
-        "527"
       ]
     },
     {
@@ -489,18 +496,6 @@
         "107",
         "115",
         "142"
-      ]
-    },
-    {
-      "name": "St. Cruz",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 3,
-      "tripCount": 18,
-      "lines": [
-        "208",
-        "505",
-        "675"
       ]
     },
     {
@@ -836,17 +831,6 @@
       ]
     },
     {
-      "name": "Porto Cruz",
-      "code": null,
-      "status": "place_centroid",
-      "lineCount": 2,
-      "tripCount": 15,
-      "lines": [
-        "785",
-        "825"
-      ]
-    },
-    {
       "name": "Referta",
       "code": null,
       "status": "interpolated_road_point",
@@ -899,17 +883,6 @@
       "lines": [
         "115",
         "142"
-      ]
-    },
-    {
-      "name": "S.Serra",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 2,
-      "tripCount": 11,
-      "lines": [
-        "675",
-        "825"
       ]
     },
     {
@@ -1137,16 +1110,6 @@
       ]
     },
     {
-      "name": "P.Cruz",
-      "code": null,
-      "status": "place_centroid",
-      "lineCount": 1,
-      "tripCount": 29,
-      "lines": [
-        "208"
-      ]
-    },
-    {
       "name": "Portela",
       "code": null,
       "status": "name_match",
@@ -1237,16 +1200,6 @@
       ]
     },
     {
-      "name": "S. Cruz",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 24,
-      "lines": [
-        "Via Rápida"
-      ]
-    },
-    {
       "name": "Ponta Pargo",
       "code": null,
       "status": "name_match",
@@ -1317,7 +1270,7 @@
       ]
     },
     {
-      "name": "P. Delgada",
+      "name": "Ponta Delgada",
       "code": null,
       "status": "name_match",
       "lineCount": 1,
@@ -1554,16 +1507,6 @@
       "tripCount": 5,
       "lines": [
         "181"
-      ]
-    },
-    {
-      "name": "P. Cruz",
-      "code": null,
-      "status": "place_centroid",
-      "lineCount": 1,
-      "tripCount": 5,
-      "lines": [
-        "208"
       ]
     },
     {
@@ -1894,16 +1837,6 @@
       "tripCount": 3,
       "lines": [
         "115"
-      ]
-    },
-    {
-      "name": "Porto da Cruz",
-      "code": null,
-      "status": "place_centroid",
-      "lineCount": 1,
-      "tripCount": 3,
-      "lines": [
-        "56"
       ]
     },
     {
@@ -2267,16 +2200,6 @@
       ]
     },
     {
-      "name": "S.Cruz",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "675"
-      ]
-    },
-    {
       "name": "São Paulo",
       "code": null,
       "status": "name_match",
@@ -2284,26 +2207,6 @@
       "tripCount": 2,
       "lines": [
         "123"
-      ]
-    },
-    {
-      "name": "St. Serra",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "20"
-      ]
-    },
-    {
-      "name": "St.Serra",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "825"
       ]
     },
     {

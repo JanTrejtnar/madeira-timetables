@@ -4,7 +4,7 @@
 // not by an identifier shared with the timetable).
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { GENERIC, keyOf, tokens } from './lib-coords.mjs';
+import { GENERIC, keyOf, plainKey, tokens } from './lib-coords.mjs';
 import { areaOf } from './lib-areas.mjs';
 
 const R = 6371.0088;
@@ -57,7 +57,8 @@ export function buildOsmIndex(osm, places = []) {
   for (const s of osm.stops) {
     for (const nm of [s.name, s.alt].filter(Boolean)) {
       const key = keyOf(nm);
-      if (key) stops.push({ key, tok: new Set(tokens(key)), p: [s.lat, s.lon] });
+      // words of the printed name: "S.Cruz" must not gain the words "santa" and "cruz" of its full name (lib-abbrev) and thereby match the stop "Santa"
+      if (key) stops.push({ key, plain: plainKey(nm), tok: new Set(tokens(plainKey(nm))), p: [s.lat, s.lon] });
     }
   }
   const exact = new Map();
@@ -96,7 +97,7 @@ function candidates(index, name) {
   let out = [];
   for (const e of index.stops) {
     if (!tk.every((w) => e.tok.has(w))) continue;
-    const extra = e.key.split(' ').length - k.split(' ').length;
+    const extra = e.plain.split(' ').length - k.split(' ').length;
     if (extra < best) { best = extra; out = []; }
     if (extra === best) out.push(e.p);
   }

@@ -1,5 +1,7 @@
 // Fills coordinates of stops that are only known by name (SAM sheets, manual transcriptions, "Transbordo" tables)
 // from stops of other routes that have coordinates (shapedata). Matches are marked `approx: true`.
+import { expandKey } from './lib-abbrev.mjs';
+
 const norm = (s) =>
   s
     .normalize('NFD')
@@ -8,8 +10,11 @@ const norm = (s) =>
     .replace(/[^a-z0-9 ]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-/** stop name without the direction marker ("…, D", "…, S2A", "T-49") */
-export const keyOf = (name) => norm(name).replace(/ (d|s)\d*[a-z]?$/, '').replace(/ t \d+$/, '');
+export const normName = norm;
+/** stop name without the direction marker ("…, D", "…, S2A", "T-49"), printed abbreviations ("P.Cruz") resolved (lib-abbrev) */
+/** keyOf without the abbreviations resolved: its words are the printed ones (token matching must not gain words from lib-abbrev) */
+export const plainKey = (name) => norm(name).replace(/ (d|s)\d*[a-z]?$/, '').replace(/ t \d+$/, '');
+export const keyOf = (name) => expandKey(plainKey(name), norm);
 // words that carry no identity ("ESTR Lombo Chão" = the junction at Lombo Chão)
 const NOISE = new Set(['estr', 'cam', 'caminho', 'estrada', 'rua', 'de', 'da', 'do', 'dos', 'das', 'e', 'a', 'o', 'ee', 'escola', 'esc', 'ant', 'antes', 'apos', 'junto', 'via']);
 export const tokens = (k) => k.split(' ').filter((w) => w.length > 1 && !NOISE.has(w) && !/^\d+$/.test(w));
@@ -42,7 +47,8 @@ export function buildStopIndex(lines) {
         if (!has(s) || s.approx || s.source === 'override') continue;
         const k = keyOf(s.name);
         if (!k) continue;
-        const e = { key: k, tok: new Set(tokens(k)), p: [s.lat, s.lon] };
+        // words of the printed name, not of the full name an abbreviation stands for (see plainKey)
+        const e = { key: k, tok: new Set(tokens(plainKey(s.name))), p: [s.lat, s.lon] };
         (exact.get(k) ?? exact.set(k, []).get(k)).push(e);
         all.push(e);
       }

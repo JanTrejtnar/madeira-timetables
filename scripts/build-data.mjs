@@ -168,3 +168,4 @@ console.log('estimated directions:', estimated, rejected.length ? `(rejected: ${
 console.log('public/ updated:', data.lines.length, 'lines,', (await readdir(path.join(OUT, 'data', 'shapes'))).length, 'shapes,', local, 'local pdfs');
 // stops without (or with only estimated) coordinates -> data/missing-stops.json
 await import('./audit-stops.mjs');
+(await import('./audit-split-stops.mjs')).printSplitStops();

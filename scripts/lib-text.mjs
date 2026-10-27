@@ -1,5 +1,8 @@
 // Text clean-up for the data: HTML entities left in the scraped PDFs / pages ("Baía D&#039;Abra") and names printed in
 // capitals ("CANIÇAL", "BAÇA D'ABRA") -> "Caniçal", "Baía d'Abra". Applied by build:data to every line, direction and stop.
+import { expandName } from './lib-abbrev.mjs';
+import { normName } from './lib-coords.mjs';
+
 const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
 
 /** Decodes numeric (&#039; &#x27;) and the common named HTML entities. */
@@ -51,7 +54,7 @@ export function cleanName(raw) {
   }
   // "Baía D'Abra" -> "Baía d'Abra" (a French-style elision in the middle of a name)
   s = s.replace(/(?<=\S )D'(?=[A-ZÀ-Ý])/g, "d'");
-  return FIXES[s] ?? s;
+  return expandName(FIXES[s] ?? s, normName);
 }
 
 const NAME_KEYS = new Set(['name', 'route', 'from', 'to']);

@@ -16,6 +16,7 @@
     "verify": "node scripts/verify.mjs",
     "audit": "node scripts/audit-schedules.mjs",
     "audit:stops": "node scripts/audit-stops.mjs",
+    "audit:split-stops": "node scripts/audit-split-stops.mjs",
     "match:corridor": "node scripts/match-corridor-stops.mjs",
     "audit:via": "node scripts/audit-via.mjs",
     "dev": "vite",

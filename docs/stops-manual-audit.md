@@ -25,7 +25,7 @@ Poloha je střed osady, **ne** nástupiště. Štítek v UI: „Not an official 
 |---|---|---|---|
 | **Maiata Baixo** | 208, 785 | 32.76689, -16.821417 | Střed osady Maiata Baixo; sousedé: P.Cruz, Cruz Guarda, Achada, Serra. Najít skutečné nástupiště mezi sousedními zastávkami. |
 | **Fajã** | 218 | 32.713362, -17.160572 | Střed osady Fajã; sousedé: Rotunda Ledo ↔ Vila da Calheta. Zastávka by měla ležet na silnici mezi nimi. |
-| **Porto da Cruz** (též „P.Cruz“, „P. Cruz“, „Porto Cruz“) | 56, 208, 785, 825 | 32.7717386, -16.829496 | Bod zvolený správcem na mapy.com (OSM podklad), ~120 m od dřívějšího odhadu obce (32.7721, -16.828284). Nástupiště není ověřeno; na lince 208 sousedí Moinhos, Maroços, Maiata Baixo, Achada, Referta. |
+| **Porto da Cruz** (v datech též „P.Cruz“, „P. Cruz“, „Porto Cruz“ – sjednoceno, `scripts/lib-abbrev.mjs`) | 56, 208, 785, 825 | 32.7717386, -16.829496 | Bod zvolený správcem na mapy.com (OSM podklad), ~120 m od dřívějšího odhadu obce (32.7721, -16.828284). Nástupiště není ověřeno; na lince 208 sousedí Moinhos, Maroços, Maiata Baixo, Achada, Referta. |
 | **Pastel** | 726 | 32.739309, -16.77493 | Střed osady Pastel; konečná, soused Machico. |
 | **Lº Galego** | 56 | 32.773235, -16.874181 | OSM vesnice „Lombo do Galego“; sousedé: Faial ↔ Santana. |
 
