@@ -32,11 +32,15 @@ function rideWhen(l: Leg, base: Ymd): RideWhen {
   return { dep: fmtMinutes(((l.depart % 1440) + 1440) % 1440), date: `${d.y}-${pad(d.m)}-${pad(d.d)}` };
 }
 
-function Time({ min, est, t, className = '' }: { min: number; est: boolean; t: TFn; className?: string }) {
+/** Days the time lies after the day the connection leaves (not after the searched day: a trip of tomorrow is no "+1" on its own). */
+export const daysAfter = (min: number, it: Itinerary) => Math.floor(min / 1440) - Math.floor(it.depart / 1440);
+
+function Time({ min, est, t, className = '', it }: { min: number; est: boolean; t: TFn; className?: string; it: Itinerary }) {
+  const late = daysAfter(min, it);
   return (
     <span className={`whitespace-nowrap tabular-nums ${className}`}>
       {est ? <span title={t('estimateWord')} className="text-amber-700 dark:text-amber-300">~{fmtMinutes(min)}</span> : fmtMinutes(min)}
-      {min >= 1440 && <sup className="ml-0.5 text-[9px] text-slate-400">+1</sup>}
+      {late > 0 && <sup className="ml-0.5 text-[9px] text-slate-400">+{late}</sup>}
     </span>
   );
 }
@@ -121,13 +125,13 @@ export function ConnectionCard({ it, shared, base, selected, onOpen, fromPt, toP
             return (
               <span key={i} className="flex flex-col gap-2">
                 {prev && <span className="pl-12 text-xs text-slate-400">{t('waitMin', { n: l.depart - prev.arrive })}</span>}
-                <span className={`grid ${it.arrive >= 1440 ? 'grid-cols-[2.75rem_4.5rem_minmax(0,1fr)]' : 'grid-cols-[2.75rem_3.5rem_minmax(0,1fr)]'} items-baseline gap-x-1.5 gap-y-0.5`}>
+                <span className={`grid ${daysAfter(it.arrive, it) > 0 ? 'grid-cols-[2.75rem_4.5rem_minmax(0,1fr)]' : 'grid-cols-[2.75rem_3.5rem_minmax(0,1fr)]'} items-baseline gap-x-1.5 gap-y-0.5`}>
                   <span className="row-span-2 self-center">
                     <LineBadge line={l.trip.line} />
                   </span>
-                  <Time min={l.depart} est={l.departEstimated} t={t} className="font-semibold" />
+                  <Time it={it} min={l.depart} est={l.departEstimated} t={t} className="font-semibold" />
                   <span className="truncate font-medium">{stopLabel(stops[l.fromPos], lang)}</span>
-                  <Time min={l.arrive} est={l.arriveEstimated} t={t} className="font-semibold" />
+                  <Time it={it} min={l.arrive} est={l.arriveEstimated} t={t} className="font-semibold" />
                   <span className="truncate text-slate-600 dark:text-slate-300">{stopLabel(stops[l.toPos], lang)}</span>
                 </span>
               </span>
@@ -228,7 +232,7 @@ function Rides({ it, shared, base, fromPt, toPt, walkIn, walkOut }: { it: Itiner
         const expanded = open.has(i);
         return (
           <div key={i}>
-            <Row time={<Time min={l.depart} est={l.departEstimated} t={t} />} up={i === 0 ? (walkIn ? 'dashed' : undefined) : 'dashed'} down={rail} dot={i === 0 ? 'big' : 'small'}>
+            <Row time={<Time it={it} min={l.depart} est={l.departEstimated} t={t} />} up={i === 0 ? (walkIn ? 'dashed' : undefined) : 'dashed'} down={rail} dot={i === 0 ? 'big' : 'small'}>
               <StopRow stop={stops[l.fromPos]} lang={lang} />
             </Row>
             <Row rail={rail}>
@@ -271,7 +275,7 @@ function Rides({ it, shared, base, fromPt, toPt, walkIn, walkOut }: { it: Itiner
                 )}
               </div>
             </Row>
-            <Row time={<Time min={l.arrive} est={l.arriveEstimated} t={t} />} up={rail} down={i < last || walkOut ? 'dashed' : undefined} dot={i === last && !walkOut ? 'end' : 'small'}>
+            <Row time={<Time it={it} min={l.arrive} est={l.arriveEstimated} t={t} />} up={rail} down={i < last || walkOut ? 'dashed' : undefined} dot={i === last && !walkOut ? 'end' : 'small'}>
               <StopRow stop={stops[l.toPos]} lang={lang} />
             </Row>
             {i === last && walkOut && (

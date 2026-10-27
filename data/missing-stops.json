@@ -24,17 +24,6 @@
       ]
     },
     {
-      "name": "Referta",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 2,
-      "tripCount": 13,
-      "lines": [
-        "208",
-        "785"
-      ]
-    },
-    {
       "name": "Fazenda",
       "code": null,
       "status": "no coordinates",
@@ -61,16 +50,6 @@
       "status": "no coordinates",
       "lineCount": 1,
       "tripCount": 31,
-      "lines": [
-        "20"
-      ]
-    },
-    {
-      "name": "Lombo Faias",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 27,
       "lines": [
         "20"
       ]
@@ -246,27 +225,7 @@
       ]
     },
     {
-      "name": "Central (ER222)",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "218"
-      ]
-    },
-    {
       "name": "Fajã",
-      "code": null,
-      "status": "no coordinates",
-      "lineCount": 1,
-      "tripCount": 2,
-      "lines": [
-        "218"
-      ]
-    },
-    {
-      "name": "Florenças (ER222)",
       "code": null,
       "status": "no coordinates",
       "lineCount": 1,
@@ -1119,6 +1078,17 @@
       ]
     },
     {
+      "name": "Referta",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 2,
+      "tripCount": 13,
+      "lines": [
+        "208",
+        "785"
+      ]
+    },
+    {
       "name": "Cruz Guarda",
       "code": null,
       "status": "interpolated_road_point",
@@ -1433,6 +1403,16 @@
       "status": "name_match",
       "lineCount": 1,
       "tripCount": 29,
+      "lines": [
+        "20"
+      ]
+    },
+    {
+      "name": "Lombo Faias",
+      "code": null,
+      "status": "interpolated_road_point",
+      "lineCount": 1,
+      "tripCount": 27,
       "lines": [
         "20"
       ]
@@ -2418,6 +2398,16 @@
       ]
     },
     {
+      "name": "Central (ER222)",
+      "code": null,
+      "status": "manual_osm_match",
+      "lineCount": 1,
+      "tripCount": 2,
+      "lines": [
+        "218"
+      ]
+    },
+    {
       "name": "CZ da Padaria",
       "code": "C23",
       "status": "name_match",
@@ -2575,6 +2565,16 @@
       "tripCount": 2,
       "lines": [
         "80"
+      ]
+    },
+    {
+      "name": "Florenças (ER222)",
+      "code": null,
+      "status": "manual_osm_match",
+      "lineCount": 1,
+      "tripCount": 2,
+      "lines": [
+        "218"
       ]
     },
     {
