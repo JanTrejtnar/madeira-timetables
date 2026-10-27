@@ -10,7 +10,7 @@ export const routeShapeId = (lineId, dirIdx) => ROUTE_ID_BASE + lineId * 10 + di
 
 const has = (s) => s.lat !== undefined && s.lon !== undefined;
 // name_match / settlement_center positions may lie in a field: they are only waypoints when the router finds a road next to them
-const WAYPOINT = new Set(['exact', 'interpolated', 'settlement_center', 'name_match', 'manual_osm_match', 'corridor_osm_match', 'interpolated_road_point']);
+const WAYPOINT = new Set(['exact', 'interpolated', 'settlement_center', 'name_match', 'manual_osm_match', 'corridor_osm_match', 'interpolated_road_point', 'place_centroid']);
 
 /** Ordered waypoints [lat, lon] of a direction: its stops with a position, consecutive duplicates removed. */
 export function waypointsOf(dir) {

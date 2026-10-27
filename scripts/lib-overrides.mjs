@@ -9,7 +9,8 @@ export function applyOverrides(lines, file) {
     for (const d of l.directions) {
       for (const s of d.stops) {
         const k = keyOf(s.name);
-        const o = list.find((x) => x.key === k && (!x.lines || x.lines.includes(l.number)));
+        const near = [d.stops[d.stops.indexOf(s) - 1], d.stops[d.stops.indexOf(s) + 1]].filter(Boolean).map((x) => keyOf(x.name));
+        const o = list.find((x) => x.key === k && (!x.lines || x.lines.includes(l.number)) && (!x.adjacent || x.adjacent.some((a) => near.includes(keyOf(a)))));
         if (!o) continue;
         for (const f of ['approx', 'isEstimatedLocation']) delete s[f];
         const precision = o.locationPrecision ?? 'exact';

@@ -127,7 +127,7 @@ console.log('via stretches routed through their places:', viaRouted);
 const sameSpot = inheritSameSpot(data.lines);
 console.log('estimated stops that took the position of an official namesake within 250 m:', sameSpot);
 // precision of every position (the OSM step already set settlement_center / exact for its stops)
-const precision = { exact: 0, interpolated: 0, settlement_center: 0, name_match: 0, manual_osm_match: 0, corridor_osm_match: 0, interpolated_road_point: 0 };
+const precision = { exact: 0, interpolated: 0, settlement_center: 0, name_match: 0, manual_osm_match: 0, corridor_osm_match: 0, interpolated_road_point: 0, place_centroid: 0 };
 for (const l of data.lines) {
   for (const d of l.directions) {
     for (const s of d.stops) {

@@ -20,9 +20,10 @@ export interface Stop {
    * name_match = taken from a stop of the same name on another route; manual_osm_match = placed by hand on an OSM node
    * (see the override's label), not an official stop position;
    * corridor_osm_match = an OSM stop / place found between the neighbouring stops of the line (scripts/match-corridor-stops.mjs);
-   * interpolated_road_point = a point on the drawn road at the ratio of the driving times between the neighbours.
+   * interpolated_road_point = a point on the drawn road at the ratio of the driving times between the neighbours;
+   * place_centroid = the centre of an OSM place (hamlet / neighbourhood) the stop is named after; the platform itself is not known.
    */
-  locationPrecision?: 'exact' | 'interpolated' | 'settlement_center' | 'name_match' | 'manual_osm_match' | 'corridor_osm_match' | 'interpolated_road_point';
+  locationPrecision?: 'exact' | 'interpolated' | 'settlement_center' | 'name_match' | 'manual_osm_match' | 'corridor_osm_match' | 'interpolated_road_point' | 'place_centroid';
   /** not a stop of the timetable: a "Via X" place inserted for the selected trip (position estimated, time interpolated) */
   via?: boolean;
   /** id of the Funchal terminal the stop belongs to (data/stop-overrides.json funchalTerminals): stops of two terminals are never one node */

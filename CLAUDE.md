@@ -8,6 +8,9 @@ stops without any coordinates (`missing`) and stops whose position is only an es
 **Whenever a developer or an assistant adds coordinates for a previously unknown stop (e.g. in `data/stop-overrides.json`), the stop must leave the `missing` list of `data/missing-stops.json`, and `npm run build:data` must be run.** The list is regenerated from the built data, so after the build the stop must no longer be in it; check that, and commit the updated `data/missing-stops.json` together with the override.
 Hand-entered or estimated positions are labelled as such (`locationPrecision`), never presented as official.
 
+Override options in `data/stop-overrides.json`: `lines` limits an override to some lines, `adjacent` (names of neighbouring stops) to the directions where the stop stands next to one of them – for a name that is two different places on one line (e.g. `Rib. Machico` on line 20). The corridor matcher takes `--line N` and `--adjacent "Name"` for the same purpose.
+Precisions of overrides: `name_match` (position of an official SIGA planner stop of the same name, `data/sources/siga/siga-otp-dump.json`), `manual_osm_match`, `corridor_osm_match`, `interpolated_road_point`, `place_centroid` (centre of an OSM place; the platform is not known), `interpolated` (straight-line midpoint). All except `exact` show the warning in the UI.
+
 ## Povinný verifikační proces před každým commitem/pushem
 
 Vývojář/asistent MUSÍ před každým commitem automaticky a bez vyzvání spustit a ověřit tuto kompletní pipeline (E2E sady potřebují běžící dev server `npx vite --port 5173`):

@@ -798,6 +798,277 @@
       "lon": -16.8880585,
       "locationPrecision": "manual_osm_match",
       "osmNode": 1139447948
+    },
+    {
+      "name": "Arendrup",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'Arendrup' (code 68445). Same name, and it lies on the road between Santo da Serra and Santa Cruz (lines 528 and 675).",
+      "lines": [
+        "528",
+        "675"
+      ],
+      "lat": 32.7073337,
+      "lon": -16.8210172,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Bar Maritimo",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'Joao Frino Bar Maritimo' (code 68518). The planner stop name contains the timetable name; it is in the same cluster as the other stops of line 528 (Arendrup, Morena).",
+      "lines": [
+        "528"
+      ],
+      "lat": 32.7058324,
+      "lon": -16.8297963,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Relaçao",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'CAM da Morana Relacao' (code 68532). The planner stop name ends with the timetable name (spelt without cedilla); it is in the same cluster as the other stops of line 528.",
+      "lines": [
+        "528"
+      ],
+      "lat": 32.7013706,
+      "lon": -16.8258291,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Levada Poiso",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'CZ Levada do Poiso' (code 34602). Levada do Poiso above Canhas (Ponta do Sol), 1.3 km from Canhas, the previous stop of line 146.",
+      "lines": [
+        "146"
+      ],
+      "lat": 32.7087352,
+      "lon": -17.1173503,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Carvalhal",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'CZ Entrada CAM Carvalhal' (code 34590). Entrance of the Carvalhal path above Canhas; the planner has no stop named just Carvalhal, the position is the nearest one by name.",
+      "lines": [
+        "146"
+      ],
+      "lat": 32.7041086,
+      "lon": -17.1259217,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Socorro",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'Capela do Socorro' (code 34560). Chapel of Socorro above Canhas, the end of line 146; the planner has other stops named Socorro within 100 m (Antes/Depois Socorro), so the exact terminus platform is not known.",
+      "lines": [
+        "146"
+      ],
+      "lat": 32.7073696,
+      "lon": -17.1281388,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Estreito (CONTINENTE)",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'Continente do Estreito D' (code 12901). Supermarket Continente in Estreito de Camara de Lobos (also OSM stop 3467094043 Continente at the same spot).",
+      "lines": [
+        "137"
+      ],
+      "lat": 32.669893,
+      "lon": -16.977204,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Estreito (ESCOLA)",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'Escola do Estreito' (code 12973). School in the centre of Estreito de Camara de Lobos.",
+      "lines": [
+        "137"
+      ],
+      "lat": 32.6720364,
+      "lon": -16.9788224,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Estreito (ESCOLA) - via CONTINENTE",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'Escola do Estreito' (code 12973). Timetable variant of the school stop in Estreito de Camara de Lobos (the bus goes via Continente).",
+      "lines": [
+        "137"
+      ],
+      "lat": 32.6720364,
+      "lon": -16.9788224,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Estreito (ESCOLA) - Castelejo",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'ESTR Nova do Castelejo' (code 12703). Variant of the Estreito terminal ending in Castelejo (upper Estreito); the exact turning point of this variant is not known. Same spot as the unnamed OSM bus stop 11486572120.",
+      "lines": [
+        "137"
+      ],
+      "lat": 32.682016,
+      "lon": -16.970259,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Estreito (ESCOLA) - Corticeiras",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'ESTR das Corticeiras' (code 13008). Variant of the Estreito terminal ending at the Caminho das Corticeiras; same stop as the line 96 override Corticeiras. The exact turning point of this variant is not known.",
+      "lines": [
+        "137"
+      ],
+      "lat": 32.6848204,
+      "lon": -16.9887962,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Castelejo - Ernesto",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'ESTR Nova do Castelejo' (code 12703). Castelejo in upper Estreito; the Ernesto path is not separately identified (planner stops CAM do Ernesto lie 1.4 km lower). Same spot as the unnamed OSM bus stop 11486572120.",
+      "lines": [
+        "137"
+      ],
+      "lat": 32.682016,
+      "lon": -16.970259,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Ernesto-Castelejo",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'ESTR Nova do Castelejo' (code 12703). Castelejo in upper Estreito; the Ernesto path is not separately identified (planner stops CAM do Ernesto lie 1.4 km lower). Same spot as the unnamed OSM bus stop 11486572120.",
+      "lines": [
+        "137"
+      ],
+      "lat": 32.682016,
+      "lon": -16.970259,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Caminho Ribeiro Real / Vargem",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'Caminho Ribeiro Real' (code 10010). One of five planner stops of the Caminho Ribeiro Real (codes 10004-10011, about 300 m apart); the exact stop is not known.",
+      "lines": [
+        "137"
+      ],
+      "lat": 32.660264,
+      "lon": -16.97172,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Vargem - Caminho Ribeiro Real",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'Caminho Ribeiro Real' (code 10010). One of five planner stops of the Caminho Ribeiro Real (codes 10004-10011, about 300 m apart); the exact stop is not known.",
+      "lines": [
+        "137"
+      ],
+      "lat": 32.660264,
+      "lon": -16.97172,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Terreiros",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'ESTR Terreiros' (code 24133). Terreiros hamlet above Quinta Grande, 500 m from Lugar Serra, the neighbouring stop of line 123 (the planner has a second stop, code 24140, on the opposite side).",
+      "lines": [
+        "123"
+      ],
+      "lat": 32.697566,
+      "lon": -17.012223,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Rib. Machico",
+      "label": "NAME MATCH, NOT CONFIRMED BY THE OPERATOR: position of the official SIGA planner stop 'ESTR D. Manue I Rib de Machico' (code 56863). 'Rib.' is Ribeira; the position is in Ribeira de Machico on the way between Portela and Lombo Faias. Only the variant next to Portela (the other variant lies near P. Empresarial).",
+      "lines": [
+        "20"
+      ],
+      "adjacent": [
+        "Portela"
+      ],
+      "lat": 32.7346861,
+      "lon": -16.819146,
+      "locationPrecision": "name_match"
+    },
+    {
+      "name": "Maiata Baixo",
+      "label": "PLACE CENTROID, NOT A SURVEYED STOP: centre of the OSM neighbourhood 'Maiata de Baixo' (32.76689, -16.821417); the real stop platform is not known and may be several hundred metres away. Lines 208 and 785 between Porto da Cruz and Faial. Generated by hand from data/osm/places.json.",
+      "lines": [
+        "208",
+        "785"
+      ],
+      "lat": 32.76689,
+      "lon": -16.821417,
+      "locationPrecision": "place_centroid"
+    },
+    {
+      "name": "Fajã",
+      "label": "PLACE CENTROID, NOT A SURVEYED STOP: centre of the OSM neighbourhood 'Fajã' (32.713362, -17.160572); the real stop platform is not known and may be several hundred metres away. Line 218 at Vila da Calheta; planner stops Fajã Calheta (codes 45283 / 45284) lie 200 m away. Generated by hand from data/osm/places.json.",
+      "lines": [
+        "218"
+      ],
+      "lat": 32.713362,
+      "lon": -17.160572,
+      "locationPrecision": "place_centroid"
+    },
+    {
+      "name": "Pastel",
+      "label": "PLACE CENTROID, NOT A SURVEYED STOP: centre of the OSM neighbourhood 'Pastel' (32.739309, -16.77493); the real stop platform is not known and may be several hundred metres away. Line 726 north of Machico; the only OSM Pastel near the line. Generated by hand from data/osm/places.json.",
+      "lines": [
+        "726"
+      ],
+      "lat": 32.739309,
+      "lon": -16.77493,
+      "locationPrecision": "place_centroid"
+    },
+    {
+      "name": "Lº Galego",
+      "label": "PLACE CENTROID, NOT A SURVEYED STOP: centre of the OSM village 'Lombo do Galego' (32.773235, -16.874181); the real stop platform is not known and may be several hundred metres away. Line 56 terminus above Faial; the planner has many Lombo Galego stops along 2 km of road, so the terminus platform is not known. Generated by hand from data/osm/places.json.",
+      "lines": [
+        "56"
+      ],
+      "lat": 32.773235,
+      "lon": -16.874181,
+      "locationPrecision": "place_centroid"
+    },
+    {
+      "name": "Miradouro (Jangão)",
+      "label": "Miradouro (Jangão) on line 4 above Ponta do Sol - manually matched to the OSM stop of the same name, node 13334177782 (the other direction of the line already used it); not an official SIGA position.",
+      "lines": [
+        "4"
+      ],
+      "lat": 32.696392,
+      "lon": -17.085227,
+      "osmNode": 13334177782,
+      "locationPrecision": "manual_osm_match"
+    },
+    {
+      "name": "Rib. Machico",
+      "label": "INTERPOLATED ON THE ROAD, NOT A SURVEYED STOP: line 20 between P. Empresarial and Fajã Rolos, at 50 % of the driving time between them along the drawn route (no OSM stop of this name in the corridor). Generated by scripts/match-corridor-stops.mjs.",
+      "lines": [
+        "20"
+      ],
+      "adjacent": [
+        "P. Empresarial",
+        "P.Empresarial",
+        "Fajã Rolos"
+      ],
+      "lat": 32.731349,
+      "lon": -16.795783,
+      "locationPrecision": "interpolated_road_point"
+    },
+    {
+      "name": "Fazenda",
+      "label": "INTERPOLATED ON THE ROAD, NOT A SURVEYED STOP: line 526 between Porto Novo and Palmeira, at 33 % of the driving time between them along the drawn route (no OSM stop of this name in the corridor). Generated by scripts/match-corridor-stops.mjs.",
+      "lines": [
+        "526"
+      ],
+      "lat": 32.69111,
+      "lon": -16.840506,
+      "locationPrecision": "interpolated_road_point"
+    },
+    {
+      "name": "Maiato",
+      "label": "INTERPOLATED ON THE ROAD, NOT A SURVEYED STOP: line 528 between Arendrup and Santa Cruz, at 40 % of the driving time between them along the drawn route (no OSM stop of this name in the corridor). Generated by scripts/match-corridor-stops.mjs.",
+      "lines": [
+        "528"
+      ],
+      "lat": 32.701276,
+      "lon": -16.815824,
+      "locationPrecision": "interpolated_road_point"
+    },
+    {
+      "name": "L. São João",
+      "label": "STRAIGHT-LINE MIDPOINT, NOT A SURVEYED STOP: line 146 between Achada and Canhas (0.9 km apart, 50 % of the driving time); no drawn road route exists between them, so the point is the midpoint of the two stops, not a point on the road. The planner stops named Lombo S. Joao lie 1 km east of both neighbours and were not used. Placed by hand.",
+      "lines": [
+        "146"
+      ],
+      "lat": 32.701171,
+      "lon": -17.116199,
+      "locationPrecision": "interpolated"
     }
   ],
   "funchalTerminals": {

@@ -211,11 +211,18 @@ async function mobileMapChecks() {
   await sleep(600);
   const warnIcons = await page.evaluate(() => [...document.querySelectorAll('[role=img]')].filter((e) => /Orientační poloha/.test(e.getAttribute('aria-label') ?? '')).length);
   check('phone: ⚠️ marker next to stops placed on a village centre', warnIcons > 0, String(warnIcons));
-  // a stop of the trip without any coordinates (line 146 still has four: L. São João, Levada Poiso, Carvalhal, Socorro): grey badge instead of the pin, and the banner over the list
-  const id146 = (await (await fetch(base + 'data/schedules.json')).json()).lines.find((l) => l.number === '146').id;
-  await page.goto(`${base}#/line/${id146}/0`, { waitUntil: 'networkidle0' });
-  await page.reload({ waitUntil: 'networkidle0' });
-  await sleep(600);
+  // a stop of the trip without any coordinates (the data keeps shrinking, so take the first direction that still has one): grey badge instead of the pin, and the banner over the list
+  const candidates = (await (await fetch(base + 'data/schedules.json')).json()).lines
+    .flatMap((l) => l.directions.map((d, i) => ({ id: l.id, i, d })))
+    .filter((x) => x.d.stops.some((s) => s.lat === undefined && !s.via));
+  if (!candidates.length) throw new Error('no stop without coordinates left - this check needs one; drop it or build a fixture');
+  // the URL's direction index belongs to the grouped directions of the page, so try the candidates until the banner shows
+  for (const c of candidates) {
+    await page.goto(`${base}#/line/${c.id}/${c.i}`, { waitUntil: 'networkidle0' });
+    await page.reload({ waitUntil: 'networkidle0' });
+    await sleep(600);
+    if (await page.$('[data-testid=trip-no-gps]')) break;
+  }
   const gps = await page.evaluate(() => {
     const banner = document.querySelector('[data-testid=trip-no-gps]');
     const badge = document.querySelector('[data-testid=stop-no-gps]');

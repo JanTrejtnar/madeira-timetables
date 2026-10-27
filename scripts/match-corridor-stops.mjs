@@ -12,6 +12,9 @@
 //   --interp-all       --interp for every remaining stop that has BOTH known neighbours on every line it is on, a drawn route between them
 //                      and the same point from every direction (within 1 km); the others are listed at the end for a manual check
 //   --limit N          look at the first N stops of the list only
+//   --line N           look at the directions of line N only (repeatable); the override then gets `lines`
+//   --adjacent "Name" look at the directions where the stop is next to a stop of that name (repeatable); the override gets `adjacent`,
+//                      so the same stop name can be two different places on one line
 //   --dry              with --auto / --accept / --interp: print what would be written, change nothing
 // Needs `npm run build:data` first (it reads public/data). Run `npm run build:data` afterwards.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -30,6 +33,8 @@ const AGREE_KM = 1;
 const ONLY = values('--only').map(keyOf);
 const ACCEPT = new Map(values('--accept').map((v) => [keyOf(v.slice(0, v.lastIndexOf('='))), v.slice(v.lastIndexOf('=') + 1)]));
 const INTERP = new Set(values('--interp').map(keyOf));
+const LINES = values('--line');
+const ADJACENT = values('--adjacent');
 const LIMIT = Number(values('--limit')[0] ?? Infinity);
 
 const SIDE_KM = 1.5; // corridor half-width around the route axis
@@ -114,6 +119,7 @@ const toMin = (t) => (typeof t === 'string' && /^\d+:\d\d/.test(t) ? +t.slice(0,
 function contextsOf(name) {
   const out = [];
   for (const l of schedules.lines) {
+    if (LINES.length && !LINES.includes(l.number)) continue;
     for (const d of l.directions) {
       const idx = d.stops.findIndex((s) => s.name === name && !has(s) && !s.via);
       if (idx < 0) continue;
@@ -122,6 +128,7 @@ function contextsOf(name) {
       const next = known.find(([, i]) => i > idx);
       if (!prev && !next) continue;
       const A = prev?.[0], B = next?.[0];
+      if (ADJACENT.length && ![A, B].some((s) => s && ADJACENT.some((a) => keyOf(a) === keyOf(s.name)))) continue;
       const ends = [A, B].filter(Boolean).map((s) => [s.lat, s.lon]);
       let axis = ends;
       let km = null; // the road polyline between the neighbours, when the direction has a drawn route
@@ -200,9 +207,9 @@ function save() {
 }
 function writeOverride(name, ctxs, entry) {
   const lines = [...new Set(ctxs.map((c) => c.line))].sort();
-  const o = { name, label: entry.label, lines, lat: entry.p[0], lon: entry.p[1], ...(entry.osmNode ? { osmNode: entry.osmNode } : {}), locationPrecision: entry.precision };
+  const o = { name, label: entry.label, lines, ...(ADJACENT.length ? { adjacent: ADJACENT } : {}), lat: entry.p[0], lon: entry.p[1], ...(entry.osmNode ? { osmNode: entry.osmNode } : {}), locationPrecision: entry.precision };
   const key = keyOf(name);
-  const at = overrides.overrides.findIndex((x) => keyOf(x.name) === key && JSON.stringify([...(x.lines ?? [])].sort()) === JSON.stringify(lines));
+  const at = overrides.overrides.findIndex((x) => keyOf(x.name) === key && JSON.stringify([...(x.lines ?? [])].sort()) === JSON.stringify(lines) && JSON.stringify(x.adjacent ?? []) === JSON.stringify(ADJACENT));
   if (at >= 0) overrides.overrides[at] = o;
   else overrides.overrides.push(o);
   save();
