@@ -16,7 +16,7 @@ const hav = (a, b) => {
 };
 /** the printed name without the direction marker, abbreviations NOT resolved */
 const plain = (n) => normName(n).replace(/ (d|s)\d*[a-z]?$/, '').replace(/ t \d+$/, '');
-const good = (p) => p.prec === 'exact' || p.prec === 'name_match' || p.prec === 'manual_osm_match';
+const good = (p) => p.prec === 'exact' || p.prec === 'name_match' || p.prec === 'manual_osm_match' || p.prec === 'inherited_split_stop';
 const weak = (e) => e.missing || e.pts.every((p) => !good(p));
 
 export function splitStops(schedules) {

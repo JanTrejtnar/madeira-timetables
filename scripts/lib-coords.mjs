@@ -174,3 +174,39 @@ export function inheritSameSpot(lines) {
   }
   return moved;
 }
+
+/**
+ * A stop with only a machine-made estimate (village centre, interpolation) that has an official stop within SPLIT_KM whose
+ * words are a subset or superset of its own ("Furneira" ~ "Furneira - Volta") is the same place printed differently: it takes
+ * that position and is labelled inherited_split_stop (still a warning, the match is by name). Skipped when the official
+ * stops that qualify lie more than SPLIT_AMBIGUOUS_KM apart (a village name with several stops), and for hand-placed overrides.
+ * Returns the stops moved.
+ */
+const SPLIT_KM = 0.15;
+const SPLIT_AMBIGUOUS_KM = 0.05;
+export function inheritSplitStops(lines) {
+  const isOfficial = (s) => has(s) && !s.via && (s.locationPrecision === 'exact' || (!s.locationPrecision && !s.approx && !s.isEstimatedLocation));
+  const isWeak = (s) => has(s) && !s.via && s.source !== 'override' && (s.locationPrecision === 'settlement_center' || (!s.locationPrecision && s.isEstimatedLocation));
+  const long = (t) => t.size > 0 && [...t].join('').length >= 5;
+  const official = [];
+  for (const l of lines) for (const d of l.directions) for (const s of d.stops) if (isOfficial(s)) official.push({ key: keyOf(s.name), tok: new Set(tokens(plainKey(s.name))), p: [s.lat, s.lon] });
+  let moved = 0;
+  for (const l of lines) {
+    for (const d of l.directions) {
+      for (const s of d.stops) {
+        if (!isWeak(s)) continue;
+        const k = keyOf(s.name);
+        const tok = new Set(tokens(plainKey(s.name)));
+        if (!long(tok)) continue;
+        const sub = (a, b) => [...a].every((w) => b.has(w));
+        const near = official.filter((o) => o.key !== k && long(o.tok) && hav(o.p, [s.lat, s.lon]) < SPLIT_KM && (sub(tok, o.tok) || sub(o.tok, tok)));
+        if (!near.length || !near.every((o) => hav(o.p, near[0].p) < SPLIT_AMBIGUOUS_KM)) continue;
+        near.sort((a, b) => hav(a.p, [s.lat, s.lon]) - hav(b.p, [s.lat, s.lon]));
+        for (const f of ['approx', 'isEstimatedLocation', 'source']) delete s[f];
+        Object.assign(s, { lat: near[0].p[0], lon: near[0].p[1], locationPrecision: 'inherited_split_stop' });
+        moved++;
+      }
+    }
+  }
+  return moved;
+}

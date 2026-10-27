@@ -611,13 +611,13 @@ describe.skipIf(!existsSync(file))('position precision and parishes of intercity
   const stops = data.lines.flatMap((l) => l.directions.flatMap((d) => d.stops));
   const m = (a: [number, number], b: [number, number]) => Math.hypot((a[1] - b[1]) * 111320 * Math.cos((a[0] * Math.PI) / 180), (a[0] - b[0]) * 110540);
 
-  it('every positioned stop has a precision; only the eight known values occur', () => {
+  it('every positioned stop has a precision; only the nine known values occur', () => {
     const kinds = new Set<string>();
     for (const s of stops) {
       if (s.lat === undefined) expect(s.locationPrecision).toBeUndefined();
       else kinds.add(String(s.locationPrecision));
     }
-    expect([...kinds].sort()).toEqual(['corridor_osm_match', 'exact', 'interpolated', 'interpolated_road_point', 'manual_osm_match', 'name_match', 'place_centroid', 'settlement_center']);
+    expect([...kinds].sort()).toEqual(['corridor_osm_match', 'exact', 'inherited_split_stop', 'interpolated', 'interpolated_road_point', 'manual_osm_match', 'name_match', 'place_centroid', 'settlement_center']);
   });
   it('corridor matches and road interpolations are labelled overrides, never official positions', () => {
     const ov = JSON.parse(readFileSync('data/stop-overrides.json', 'utf8')).overrides as { locationPrecision?: string; label?: string; osmNode?: number }[];

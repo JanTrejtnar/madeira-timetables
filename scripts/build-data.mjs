@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { addEstimates, estimateTripEnds } from './lib-estimate.mjs';
 import { classifyLine } from './lib-classify.mjs';
-import { buildStopIndex, fillCoords, inheritSameSpot } from './lib-coords.mjs';
+import { buildStopIndex, fillCoords, inheritSameSpot, inheritSplitStops } from './lib-coords.mjs';
 import { interpolateStops } from './lib-interpolate.mjs';
 import { snapShapeEnds } from './lib-shape-ends.mjs';
 import { applyOsm } from './lib-osm.mjs';
@@ -126,8 +126,9 @@ const viaRouted = existsSync(viaRoutesFile) ? attachViaRoutes(data.lines, JSON.p
 console.log('via stretches routed through their places:', viaRouted);
 const sameSpot = inheritSameSpot(data.lines);
 console.log('estimated stops that took the position of an official namesake within 250 m:', sameSpot);
+console.log('estimated stops that took the position of an official stop of a differently printed name within 150 m (inherited_split_stop):', inheritSplitStops(data.lines));
 // precision of every position (the OSM step already set settlement_center / exact for its stops)
-const precision = { exact: 0, interpolated: 0, settlement_center: 0, name_match: 0, manual_osm_match: 0, corridor_osm_match: 0, interpolated_road_point: 0, place_centroid: 0 };
+const precision = { exact: 0, interpolated: 0, settlement_center: 0, name_match: 0, manual_osm_match: 0, corridor_osm_match: 0, interpolated_road_point: 0, place_centroid: 0, inherited_split_stop: 0 };
 for (const l of data.lines) {
   for (const d of l.directions) {
     for (const s of d.stops) {
