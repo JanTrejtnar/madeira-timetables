@@ -838,7 +838,7 @@
     {
       "name": "Porto Cruz",
       "code": null,
-      "status": "name_match",
+      "status": "place_centroid",
       "lineCount": 2,
       "tripCount": 15,
       "lines": [
@@ -1139,7 +1139,7 @@
     {
       "name": "P.Cruz",
       "code": null,
-      "status": "name_match",
+      "status": "place_centroid",
       "lineCount": 1,
       "tripCount": 29,
       "lines": [
@@ -1559,7 +1559,7 @@
     {
       "name": "P. Cruz",
       "code": null,
-      "status": "name_match",
+      "status": "place_centroid",
       "lineCount": 1,
       "tripCount": 5,
       "lines": [
@@ -1899,7 +1899,7 @@
     {
       "name": "Porto da Cruz",
       "code": null,
-      "status": "name_match",
+      "status": "place_centroid",
       "lineCount": 1,
       "tripCount": 3,
       "lines": [
