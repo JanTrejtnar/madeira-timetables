@@ -1,10 +1,11 @@
 // Reports routes whose drawn polyline does not start/end at the first/last stop (default tolerance 30 m).
 // Usage: node scripts/check-shape-ends.mjs [toleranceMetres]   (reads public/data after `npm run build:data`)
 import { readFileSync, existsSync } from 'node:fs';
+import { metres } from '../shared/geo.mjs';
 const tol = +(process.argv[2] ?? 30);
 const root = new URL('../public/data/', import.meta.url);
 const data = JSON.parse(readFileSync(new URL('schedules.json', root), 'utf8'));
-const m = (a, b) => Math.hypot((a[1] - b[1]) * 111320 * Math.cos((a[0] * Math.PI) / 180), (a[0] - b[0]) * 110540);
+const m = metres;
 let checked = 0;
 const bad = [];
 for (const l of data.lines) {

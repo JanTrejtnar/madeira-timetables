@@ -1,0 +1,11 @@
+export type LatLon = { lat: number; lon: number } | readonly [number, number];
+export const M_PER_DEG_LAT: number;
+export const M_PER_DEG_LON_EQ: number;
+export const EARTH_RADIUS_KM: number;
+export const MADEIRA_COS: number;
+export function haversineKm(a: LatLon, b: LatLon): number;
+export function haversineM(a: LatLon, b: LatLon): number;
+export function metres(a: LatLon, b: LatLon): number;
+export function metresToSegment(p: LatLon, a: LatLon, b: LatLon): number;
+export function localSq(p: LatLon, q: LatLon): number;
+export function norm(s: string): string;

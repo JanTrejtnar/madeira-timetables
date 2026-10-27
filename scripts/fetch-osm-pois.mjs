@@ -4,6 +4,7 @@
 // data/osm/places.json into public/data/pois.json.
 // `npm run fetch:pois` -> data/osm/pois.json (committed; build:data needs no network). Data (c) OpenStreetMap contributors, ODbL.
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { metres } from '../shared/geo.mjs';
 
 const ENDPOINTS = process.env.OVERPASS_URL ? [process.env.OVERPASS_URL] : ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
 const OUT = new URL('../data/osm/', import.meta.url);
@@ -98,7 +99,7 @@ for (const e of raw.elements) {
   // the same name and kind within 300 m is one feature (a museum mapped as a node and as a building)
   const key = `${kind}|${name.toLowerCase()}`;
   const same = byKey.get(key) ?? [];
-  if (same.some((q) => Math.hypot((q.lat - p.lat) * 110540, (q.lon - p.lon) * 111320 * Math.cos((p.lat * Math.PI) / 180)) < 300)) continue;
+  if (same.some((q) => metres(q, p) < 300)) continue;
   same.push(p);
   byKey.set(key, same);
 }

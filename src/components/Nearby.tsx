@@ -5,7 +5,7 @@ import type { MapLayer } from '../types';
 import { Card, EstTag, LineBadge, SectionTitle, type Shared } from './common';
 import { Icon } from './Icons';
 import { geoDeniedText } from '../lib/geoHelp';
-import { RouteMap } from './RouteMap';
+import { RouteMap } from './LazyMaps';
 
 const fmtDist = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`);
 

@@ -1,4 +1,5 @@
 // Journey search: direct connections and connections with one transfer (earliest arrival, IDOS-style).
+import { metres } from '../../shared/geo.mjs';
 import { dwellsAt, type Network, type Node, type Trip } from './network';
 
 export const MIN_TRANSFER = 5; // minutes between arrival and the next departure (plus walking time)
@@ -21,7 +22,7 @@ const nodeMetres = (net: Network, from: number, to: number): number => {
   const a = net.nodes[from];
   const b = net.nodes[to];
   if (a.lat === undefined || a.lon === undefined || b.lat === undefined || b.lon === undefined) return Infinity;
-  return Math.hypot((a.lon - b.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180), (a.lat - b.lat) * 110540);
+  return metres(a as Required<Node>, b as Required<Node>);
 };
 function shortHop(net: Network, from: number, to: number, stops: number, minutes: number): boolean {
   if (isMicro(stops, minutes)) return true;
@@ -46,7 +47,7 @@ function progressToward(net: Network, to: ReadonlySet<number>): Closer | undefin
   const pts = [...to].map((id) => net.nodes[id]).filter((n) => n.lat !== undefined && n.lon !== undefined) as Required<Pick<Node, 'lat' | 'lon'>>[];
   if (!pts.length) return undefined;
   const ref = { lat: pts.reduce((a, n) => a + n.lat, 0) / pts.length, lon: pts.reduce((a, n) => a + n.lon, 0) / pts.length };
-  const m = (n: { lat: number; lon: number }) => Math.hypot((n.lon - ref.lon) * 111320 * Math.cos((ref.lat * Math.PI) / 180), (n.lat - ref.lat) * 110540);
+  const m = (n: { lat: number; lon: number }) => metres(n, ref);
   if (Math.max(...pts.map(m)) > REF_SPREAD_M) return undefined;
   return (from, to2, slackM = 0) => {
     const a = net.nodes[from];
@@ -152,10 +153,28 @@ export function direct(trips: Trip[], from: Set<number>, to: Set<number>, depart
   return out.sort((a, b) => a.depart - b.depart || a.finish - b.finish);
 }
 
-export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn, maxWait = MAX_WAIT, walkOut?: WalkOut, guard?: Guard): Itinerary[] {
-  const { closer } = guard ?? {};
-  // second legs: for each node, the trips that call there and later reach `to`
-  const second = new Map<number, { trip: Trip; m: number; j: number }[]>();
+/** A way of finishing the journey: board `trip` at its row `m`, get off at row `j` (the first stop of the destination). */
+type SecondLeg = { trip: Trip; m: number; j: number };
+type SecondIndex = Map<number, SecondLeg[]>;
+
+/**
+ * Index of the second legs: for each node, the trips that call there and later reach `to`. It depends on the trips of the day and the destination
+ * (not on the start, the departure time or the longest wait), so the "earlier / later" probes, the fallback search with a longer wait and a
+ * second search for the same destination reuse it. Cached per trips array (a new day / school switch / operator filter builds a new array).
+ */
+const secondCache = new WeakMap<readonly Trip[], Map<string, SecondIndex>>();
+const SECOND_CACHE_MAX = 6;
+
+function secondLegs(trips: readonly Trip[], to: Set<number>, walkOut: WalkOut | undefined, closer: Closer | undefined): SecondIndex {
+  const key = [
+    [...to].sort((a, b) => a - b).join(','),
+    walkOut ? [...walkOut].sort((a, b) => a[0] - b[0]).map(([id, min]) => `${id}:${min}`).join(',') : '-',
+    closer ? 'c' : '-',
+  ].join('|');
+  let perTrips = secondCache.get(trips);
+  const hit = perTrips?.get(key);
+  if (hit) return hit;
+  const second: SecondIndex = new Map();
   for (const trip of trips) {
     for (let m = 0; m < trip.nodes.length - 1; m++) {
       if (trip.times[m] === null || departsLater(trip, m)) continue;
@@ -166,6 +185,15 @@ export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to:
       second.set(trip.nodes[m], list);
     }
   }
+  if (!perTrips) secondCache.set(trips, (perTrips = new Map()));
+  if (perTrips.size >= SECOND_CACHE_MAX) perTrips.delete(perTrips.keys().next().value as string);
+  perTrips.set(key, second);
+  return second;
+}
+
+export function withTransfer(net: Network, trips: Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn, maxWait = MAX_WAIT, walkOut?: WalkOut, guard?: Guard): Itinerary[] {
+  const { closer } = guard ?? {};
+  const second = secondLegs(trips, to, walkOut, closer);
   const found: Itinerary[] = [];
   for (const t1 of trips) {
     if (guard?.intoOrigin(t1)) continue;

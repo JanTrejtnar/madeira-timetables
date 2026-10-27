@@ -1,6 +1,7 @@
 // Search aliases: English/Czech/German words and tourist destinations mapped to the names that appear in the timetables.
 // Stop and line names stay as printed in Portuguese; this only widens what the typed text matches.
 import type { Lang } from '../i18n';
+import { norm } from '../../shared/geo.mjs';
 
 export interface Poi {
   id: string;
@@ -17,15 +18,6 @@ export interface Poi {
   /** line (id) that serves the place, offered as a card above the results */
   lineId?: number;
 }
-
-const norm = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
 
 export const POIS: Poi[] = [
   {

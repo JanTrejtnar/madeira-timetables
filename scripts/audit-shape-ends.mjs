@@ -1,14 +1,10 @@
 // Checks that the drawn polyline of every direction starts at its first and ends at its last stop (the pins on the map).
 // Needs public/data (npm run build:data). Usage: node scripts/audit-shape-ends.mjs [maxGapMetres]
 import { existsSync, readFileSync } from 'node:fs';
+import { haversineM } from '../shared/geo.mjs';
 const MAX = +(process.argv[2] ?? 60);
 const data = JSON.parse(readFileSync(new URL('../public/data/schedules.json', import.meta.url), 'utf8'));
-const R = 6371000;
-const rad = Math.PI / 180;
-const hav = (a, b) => {
-  const x = Math.sin(((b[0] - a[0]) * rad) / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(((b[1] - a[1]) * rad) / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(x));
-};
+const hav = haversineM;
 let n = 0;
 const bad = [];
 for (const l of data.lines) {

@@ -6,15 +6,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { GENERIC, keyOf, plainKey, tokens } from './lib-coords.mjs';
 import { areaOf } from './lib-areas.mjs';
+import { haversineKm } from '../shared/geo.mjs';
 
-const R = 6371.0088;
-const rad = Math.PI / 180;
-function hav(a, b) {
-  const dLat = (b[0] - a[0]) * rad;
-  const dLon = (b[1] - a[1]) * rad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+const hav = haversineKm;
 const has = (s) => s.lat !== undefined && s.lon !== undefined;
 const PLACE_KM = 0.25; // stops this close count as one place (the two sides of a road)
 const SHAPE_KM = 0.15; // a candidate must lie this close to the route polyline

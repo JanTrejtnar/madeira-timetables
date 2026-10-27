@@ -4,10 +4,10 @@
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { metres } from '../shared/geo.mjs';
 
 const MAX_GAP_M = 120;
 const MIN_GAP_M = 1;
-const metres = (a, b) => Math.hypot((a[1] - b[1]) * 111320 * Math.cos((a[0] * Math.PI) / 180), (a[0] - b[0]) * 110540);
 const has = (s) => s.lat !== undefined && s.lon !== undefined;
 
 /** Rewrites the shape files in `dir` (the copies in public/). Returns { joined, skipped: ["line/dir: start|end gap m"], maxGapM }. */

@@ -2,11 +2,12 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type Keyboard
 import { useT, type Key } from '../i18n';
 import { localStopName } from '../lib/text';
 import { useViaRoutes } from '../data';
+import { metres } from '../../shared/geo.mjs';
 import { detoursFor } from '../lib/via';
 import { addDays, serviceDay } from '../lib/holidays';
 import { fmtMinutes } from '../lib/time';
 import { plainPlace } from '../lib/text';
-import { CITY_PREFIX, PARISH_PREFIX, FAR_PLACE_M, NEAR_PLACE_M, hubsNear, nearbyStopNodes, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
+import { CITY_PREFIX, PARISH_PREFIX, FAR_PLACE_M, NEAR_PLACE_M, PICK_RADIUS_M, hubsNear, nearbyStopNodes, nearestNode, nodeIdsOfKeys, nodesNearPoint, resolveNodes, servicesFor, suggest, tripStops, type Suggestion } from '../lib/network';
 import { norm } from '../lib/search';
 import { KIND_META, isPoiKey, loadPlaces, poiKey, searchPlaces, type Place, type PlaceIndex } from '../lib/places';
 import { useFootRoutes, type FootPair } from '../lib/foot';
@@ -23,8 +24,7 @@ import { geoDeniedText } from '../lib/geoHelp';
 import { badgeText, Card, Chip, EmptyState, EstTag, LEG_COLORS, lineColor, TypeFilter, matchesType, type Shared } from './common';
 import { Icon } from './Icons';
 import type { LineTypeFilter } from './common';
-import { MapPicker, PICK_RADIUS_M } from './MapPicker';
-import { RouteMap } from './RouteMap';
+import { MapPicker, RouteMap } from './LazyMaps';
 import { TripShortcuts } from './TripShortcuts';
 
 /** A row of the suggestion list: a stop (or an "all stops of" area) or a place of interest. */
@@ -350,6 +350,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const [h, m] = (time ?? '').split(':').map(Number);
   const departAt = time === null ? frozenNow : (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
 
+  // the trips the search may use (line type / operator filter); one array per filter, so the router can reuse its per-destination index
+  const only = useMemo(() => trips.filter((tr) => matchesType(tr.line, type) && (!ops.length || ops.includes(operatorOf(tr.line)))), [trips, type, ops]);
   // the search for a departure time (minutes from midnight of the chosen day, may pass 24:00): the results, and the "earlier / later" probes
   const run = useCallback((at: number) => {
     if (!searched) return null;
@@ -377,7 +379,6 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const A = na.ids;
     const B = nb.ids;
     if (!dFrom.text.trim() || !dTo.text.trim()) return null;
-    const only = trips.filter((tr) => matchesType(tr.line, type) && (!ops.length || ops.includes(operatorOf(tr.line))));
     // walking from a picked start point: a bus counts only when it leaves after departAt + the walk to its stop
     let walkIn: Map<number, number> | undefined;
     if (na.extra?.size) walkIn = new Map(na.extra);
@@ -419,7 +420,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     const missing = na.place && A.size === 0 ? dFrom.text : nb.place && B.size === 0 ? dTo.text : null;
     const far = na.widened ? dFrom.text : nb.widened ? dTo.text : null;
     return { A: A.size, B: B.size, missing, far, ext: { from: na.at && na.base ? { pt: na.at, base: na.base } : undefined, to: nb.at && nb.base ? { pt: nb.at, base: nb.base } : undefined }, plan: directOnly ? { ...found, transfers: [] } : found };
-  }, [shared.net, trips, dFrom, dTo, ops, directOnly, type, searched]);
+  }, [shared.net, only, dFrom, dTo, directOnly, searched]);
   const result = useMemo(() => run(departAt), [run, departAt]);
 
   // the point to walk from / to for a connection: a picked place or map point, or the picked stop when the bus boards / alights at another stop near it
@@ -518,7 +519,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
     legs.slice(0, -1).forEach((l, i) => {
       const a = ll(tripStops(l.trip)[l.toPos]);
       const b = ll(tripStops(legs[i + 1].trip)[legs[i + 1].fromPos]);
-      pairs.push(a && b && Math.hypot((b.lat - a.lat) * 110540, (b.lon - a.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180)) > 5 ? [a, b] : null);
+      pairs.push(a && b && metres(a as { lat: number; lon: number }, b as { lat: number; lon: number }) > 5 ? [a, b] : null);
     });
     return pairs;
   })();
@@ -550,7 +551,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       const b = tripStops(legs[i + 1].trip)[legs[i + 1].fromPos];
       if (a.lat === undefined || a.lon === undefined) return [];
       const at: [number, number] = [a.lat, a.lon];
-      const apart = b.lat !== undefined && b.lon !== undefined && Math.hypot((b.lat - a.lat) * 110540, (b.lon - a.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180)) > 5;
+      const apart = b.lat !== undefined && b.lon !== undefined && metres(a as { lat: number; lon: number }, b as { lat: number; lon: number }) > 5;
       return [{ name: a.name, at, ...(apart ? { to: [b.lat, b.lon] as [number, number] } : {}), ...(apart && foot[2 + i] ? { path: foot[2 + i]!.pts } : {}) }];
     });
     return legs.map((l, i) => ({

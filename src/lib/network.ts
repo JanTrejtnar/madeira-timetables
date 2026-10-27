@@ -6,6 +6,7 @@ import { toMinutes } from './time';
 import type { Direction, Line, Stop } from '../types';
 import { viaAt, viaMinutesChain, viaStop } from './via';
 import { expandTerms } from './aliases';
+import { M_PER_DEG_LAT, metres } from '../../shared/geo.mjs';
 
 export interface Node {
   id: number;
@@ -50,10 +51,6 @@ const WALK_M = 200;
 const HUB_WALK_M = 400;
 const WALK_M_PER_MIN = 70;
 
-const metres = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => {
-  const kx = 111320 * Math.cos(((a.lat + b.lat) / 2) * (Math.PI / 180));
-  return Math.hypot((a.lon - b.lon) * kx, (a.lat - b.lat) * 110540);
-};
 
 const displayName = (name: string) => name.replace(/,?\s*(D|S)\d*[A-Z]?$/, '').trim();
 export const dirKey = (line: Line, dirIndex: number) => `${line.id}:${dirIndex}`;
@@ -122,7 +119,7 @@ export function buildNetwork(lines: Line[], terminalWalks: readonly { a: string;
   for (const n of nodes) near.set(n.id, [{ node: n.id, walk: 0 }]);
   for (let i = 0; i < located.length; i++) {
     for (let j = i + 1; j < located.length; j++) {
-      if (((located[j].lat as number) - (located[i].lat as number)) * 110540 > WALK_M) break;
+      if (((located[j].lat as number) - (located[i].lat as number)) * M_PER_DEG_LAT > WALK_M) break;
       const d = metres(located[i] as Required<Node>, located[j] as Required<Node>);
       if (d <= WALK_M) {
         const walk = Math.max(1, Math.ceil(d / WALK_M_PER_MIN));
@@ -385,7 +382,7 @@ export function nearestNode(net: Network, lat: number, lon: number, maxM: number
   const p = { lat, lon };
   for (const n of net.nodes) {
     if (n.lat === undefined || n.lon === undefined) continue;
-    if (Math.abs(n.lat - lat) * 110540 > maxM) continue;
+    if (Math.abs(n.lat - lat) * M_PER_DEG_LAT > maxM) continue;
     const d = metres(n as Required<Node>, p);
     if (d <= maxM && (!best || d < best.metres)) best = { node: n, metres: d };
   }
@@ -401,6 +398,8 @@ export function hubsNear(net: Network, lat: number, lon: number, maxM: number): 
 /** Reach of a picked place or map point: stops within this distance count as "at" the place; if there are none, the wider radius is tried. */
 export const NEAR_PLACE_M = 900;
 export const FAR_PLACE_M = 2200;
+/** A point picked on the map snaps to a stop within this many metres. */
+export const PICK_RADIUS_M = 1000;
 
 /**
  * The stops to walk to from a place (a beach, a hotel, a point on the map): up to `limit` nearest stops (one per name, both sides of the road
@@ -410,7 +409,7 @@ export function nodesNearPoint(net: Network, lat: number, lon: number, limit = 8
   const p = { lat, lon };
   const all: { node: Node; metres: number }[] = [];
   for (const n of net.nodes) {
-    if (n.lat === undefined || n.lon === undefined || Math.abs(n.lat - lat) * 110540 > FAR_PLACE_M) continue;
+    if (n.lat === undefined || n.lon === undefined || Math.abs(n.lat - lat) * M_PER_DEG_LAT > FAR_PLACE_M) continue;
     const d = metres(n as Required<Node>, p);
     if (d <= FAR_PLACE_M) all.push({ node: n, metres: d });
   }

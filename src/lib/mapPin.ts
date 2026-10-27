@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import { metres } from '../../shared/geo.mjs';
 import type { MapPin } from '../types';
 
 /** Red map pin with the letter of the field it belongs to (A = from, B = to). */
@@ -8,7 +9,6 @@ export function pinIcon(kind: MapPin['kind']): L.DivIcon {
 }
 
 const walkerIcon = L.divIcon({ className: 'walk-pin', html: '<span aria-hidden="true">🚶</span>', iconSize: [26, 26], iconAnchor: [13, 13] });
-const metresBetween = (a: [number, number], b: [number, number]) => Math.hypot((a[1] - b[1]) * 111320 * Math.cos((a[0] * Math.PI) / 180), (a[0] - b[0]) * 110540);
 
 /**
  * Adds the pin (always: A / B stand for start and destination even when the stop is right there) and, when the stop is another place, the
@@ -16,7 +16,7 @@ const metresBetween = (a: [number, number], b: [number, number]) => Math.hypot((
  */
 export function drawPin(into: L.LayerGroup, pin: MapPin, label: string, walkLabel = ''): void {
   const walk = (pin.path ?? (pin.stop ? [[pin.lat, pin.lon], [pin.stop.lat, pin.stop.lon]] : null)) as [number, number][] | null;
-  if (walk && walk.length > 1 && metresBetween(walk[0], walk[walk.length - 1]) > 8) {
+  if (walk && walk.length > 1 && metres(walk[0], walk[walk.length - 1]) > 8) {
     L.polyline(walk, { color: '#0f172a', weight: 6, opacity: 0.45, lineCap: 'round', interactive: false }).addTo(into);
     L.polyline(walk, { color: '#fb7185', weight: 3.5, opacity: 1, dashArray: pin.path ? '1 7' : '5 7', lineCap: 'round', interactive: false }).addTo(into);
     L.marker(walk[Math.floor(walk.length / 2)], { icon: walkerIcon, zIndexOffset: 850, keyboard: false, interactive: false }).addTo(into).bindTooltip(walkLabel, { permanent: false });

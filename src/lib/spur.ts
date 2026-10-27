@@ -1,5 +1,7 @@
 // One road polyline serves every trip of a direction, but a trip may skip stops (a dash in the timetable). When a skipped stop lies on a
 // side road that the bus would drive into and out of again (Ginjas on line 139), the polyline of that trip must not make the excursion.
+import { MADEIRA_COS, M_PER_DEG_LAT, M_PER_DEG_LON_EQ } from '../../shared/geo.mjs';
+
 type Pt = [number, number];
 
 /** a stop of the trip in driving order: where it is, and whether the trip calls there */
@@ -8,9 +10,8 @@ export interface TripStopPt {
   calls: boolean;
 }
 
-const M_LAT = 110540;
-const M_LON = 111320 * 0.84;
-const dist = (a: Pt, b: Pt) => Math.hypot((a[0] - b[0]) * M_LAT, (a[1] - b[1]) * M_LON);
+const M_LON = M_PER_DEG_LON_EQ * MADEIRA_COS;
+const dist = (a: Pt, b: Pt) => Math.hypot((a[0] - b[0]) * M_PER_DEG_LAT, (a[1] - b[1]) * M_LON);
 
 /** the road comes back to within this distance of the junction: out and back on one road */
 const JUNCTION_M = 25;

@@ -1,15 +1,8 @@
 // Fills coordinates of stops that are only known by name (SAM sheets, manual transcriptions, "Transbordo" tables)
 // from stops of other routes that have coordinates (shapedata). Matches are marked `approx: true`.
 import { expandKey } from './lib-abbrev.mjs';
+import { haversineKm, norm } from '../shared/geo.mjs';
 
-const norm = (s) =>
-  s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
 export const normName = norm;
 /** stop name without the direction marker ("…, D", "…, S2A", "T-49"), printed abbreviations ("P.Cruz") resolved (lib-abbrev) */
 /** keyOf without the abbreviations resolved: its words are the printed ones (token matching must not gain words from lib-abbrev) */
@@ -25,14 +18,7 @@ export const GENERIC = new Set(['funchal', 'centro', 'machico', 'santa cruz', 's
 
 /** a namesake of an official stop this close is the same boarding place */
 const SAME_SPOT_KM = 0.25;
-const R = 6371.0088;
-const rad = Math.PI / 180;
-function hav(a, b) {
-  const dLat = (b[0] - a[0]) * rad;
-  const dLon = (b[1] - a[1]) * rad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+const hav = haversineKm;
 const centroid = (pts) => [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length];
 const has = (s) => s.lat !== undefined && s.lon !== undefined;
 

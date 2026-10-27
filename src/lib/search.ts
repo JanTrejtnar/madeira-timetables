@@ -1,15 +1,9 @@
 import type { Direction, Line } from '../types';
 import { expandTerms } from './aliases';
+import { norm } from '../../shared/geo.mjs';
 
-/** lower-case, no diacritics, punctuation → spaces */
-export const norm = (s: string) =>
-  s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+/** lower-case, no diacritics, punctuation → spaces (shared/geo.mjs) */
+export { norm };
 
 /** Stop name without the trailing direction marker ("…, D", "…, S2A") so both sides of the road match. */
 export const stopKey = (name: string) => norm(name).replace(/ (d|s)\d*[a-z]?$/, '');

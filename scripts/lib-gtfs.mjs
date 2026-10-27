@@ -1,16 +1,9 @@
 // Official stop coordinates from the Horários do Funchal GTFS feed (data/gtfs/stops.json, see fetch-gtfs.mjs) and the
 // municipality (concelho) of every stop, used for the "all stops of <town>" search.
 import { areaOf } from './lib-areas.mjs';
+import { haversineKm, norm } from '../shared/geo.mjs';
 
-const R = 6371.0088;
-const rad = Math.PI / 180;
-function hav(a, b) {
-  const dLat = (b[0] - a[0]) * rad;
-  const dLon = (b[1] - a[1]) * rad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
-const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+const hav = haversineKm;
 const SIDE = /\s+(d|s|t)\s*\d*[a-z]?$|\s+t\s*\d+$/;
 const words = (name) => new Set(norm(name).replace(SIDE, '').split(' ').filter((w) => w.length >= 4 && !/^\d+$/.test(w)));
 const has = (s) => s.lat !== undefined && s.lon !== undefined;

@@ -3,14 +3,13 @@ import L from 'leaflet';
 import { osmTiles } from '../lib/tiles';
 import { useT } from '../i18n';
 import { pinIcon } from '../lib/mapPin';
-import { nearestNode } from '../lib/network';
+import { PICK_RADIUS_M, nearestNode } from '../lib/network';
 import { fetchFoot } from '../lib/foot';
 import type { Picked } from '../lib/plannerForm';
 import type { Shared } from './common';
 import { Icon } from './Icons';
 
 /** How far from the tapped point a stop is still accepted. */
-export const PICK_RADIUS_M = 1000;
 
 interface Props {
   shared: Shared;

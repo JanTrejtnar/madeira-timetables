@@ -2,6 +2,7 @@
 // with the street geometry; the app shows it on the map and uses the real distance for the walk times. Offline, or when the service
 // is slow or says something absurd, the callers keep the straight line corrected for winding roads (lib/walk.ts).
 import { useEffect, useState } from 'react';
+import { haversineM } from '../../shared/geo.mjs';
 
 export const FOOT_URL = 'https://routing.openstreetmap.de/routed-foot/route/v1/foot';
 /** a slow or rate-limited public server is given up on quickly: the straight dashed line is drawn instead */
@@ -24,12 +25,7 @@ export interface FootRoute {
   pts: [number, number][];
 }
 
-const R = 6_371_008.8;
-const rad = Math.PI / 180;
-export function straightM(a: LatLon, b: LatLon): number {
-  const h = Math.sin(((b.lat - a.lat) * rad) / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(((b.lon - a.lon) * rad) / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+export const straightM: (a: LatLon, b: LatLon) => number = haversineM;
 
 export const footKey = (a: LatLon, b: LatLon) => `${a.lat.toFixed(5)},${a.lon.toFixed(5)};${b.lat.toFixed(5)},${b.lon.toFixed(5)}`;
 

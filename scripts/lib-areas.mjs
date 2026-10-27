@@ -1,5 +1,6 @@
 // Municipality (concelho) and parish (freguesia) of a point from the OSM boundary polygons (data/osm/areas.json).
 // A point just outside every polygon (coast, simplified outline) takes the area whose outline is closest, up to 400 m.
+import { metresToSegment } from '../shared/geo.mjs';
 const rad = Math.PI / 180;
 
 function inRing(ring, lat, lon) {
@@ -16,14 +17,7 @@ const bboxOf = (ring) => {
   for (const [y, x] of ring) { a = Math.min(a, y); b = Math.min(b, x); c = Math.max(c, y); d = Math.max(d, x); }
   return [a, b, c, d];
 };
-const segDist = (p, a, b) => {
-  const kx = 111320 * Math.cos(p[0] * rad);
-  const ky = 110540;
-  const ax = (a[1] - p[1]) * kx, ay = (a[0] - p[0]) * ky, bx = (b[1] - p[1]) * kx, by = (b[0] - p[0]) * ky;
-  const dx = bx - ax, dy = by - ay;
-  const t = Math.max(0, Math.min(1, (-ax * dx - ay * dy) / (dx * dx + dy * dy || 1)));
-  return Math.hypot(ax + t * dx, ay + t * dy);
-};
+const segDist = metresToSegment;
 
 /** Prepares the polygons: bounding boxes, the municipality of every parish and a unique label per parish. */
 export function prepareAreas(raw) {

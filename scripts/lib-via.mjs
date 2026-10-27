@@ -6,15 +6,9 @@ import path from 'node:path';
 import { keyOf, tokens } from './lib-coords.mjs';
 import { buildOsmIndex, namedPlaces } from './lib-osm.mjs';
 import { areaOf } from './lib-areas.mjs';
+import { haversineKm, localSq } from '../shared/geo.mjs';
 
-const R = 6371.0088;
-const rad = Math.PI / 180;
-function hav(a, b) {
-  const dLat = (b[0] - a[0]) * rad;
-  const dLon = (b[1] - a[1]) * rad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+const hav = haversineKm;
 const has = (s) => s.lat !== undefined && s.lon !== undefined;
 const MAX_DETOUR_KM = 1.5; // the place must lie this close to the straight way between its neighbouring stops
 const MAX_DETOUR_MANUAL_KM = 3; // hand-placed positions are place centres, not stops: more slack
@@ -47,7 +41,7 @@ function alongRoute(d, shapesDir) {
     let best = from;
     let bd = Infinity;
     for (let i = from; i < poly.length; i++) {
-      const d2 = (poly[i][0] - p[0]) ** 2 + ((poly[i][1] - p[1]) * 0.84) ** 2;
+      const d2 = localSq(poly[i], p);
       if (d2 < bd) { bd = d2; best = i; }
     }
     return best;

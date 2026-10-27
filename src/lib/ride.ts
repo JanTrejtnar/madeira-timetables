@@ -2,10 +2,11 @@
 // the rest (before boarding, after getting off) is faint or hidden.
 import { sameCall, tripStops, type Trip } from './network';
 import type { Stop } from '../types';
+import { localSq } from '../../shared/geo.mjs';
 
 type Pt = [number, number];
 
-const sq = (p: readonly number[], q: readonly number[]) => (p[0] - q[0]) ** 2 + ((p[1] - q[1]) * 0.84) ** 2;
+const sq = localSq;
 
 export interface RideSplit {
   before: Pt[];

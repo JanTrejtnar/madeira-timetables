@@ -3,6 +3,7 @@
 // planner's trips) with a time interpolated between the neighbouring stops. "Via Rápida" (motorway) has no entry and stays a note.
 import type { Direction, Line, Stop, ViaPlace, ViaRoute, ViaRoutes } from '../types';
 import { fmtMinutes, toMinutes } from './time';
+import { haversineKm, localSq } from '../../shared/geo.mjs';
 
 export interface ShownStops {
   stops: Stop[];
@@ -12,14 +13,7 @@ export interface ShownStops {
   viaTimes: (string | null)[];
 }
 
-const R = 6371.0088;
-const rad = Math.PI / 180;
-function km(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
-  const dLat = (b.lat - a.lat) * rad;
-  const dLon = (b.lon - a.lon) * rad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+const km = haversineKm;
 const placed = (s: Stop | undefined): s is Stop & { lat: number; lon: number } => !!s && s.lat !== undefined && s.lon !== undefined;
 
 export interface ViaCall {
@@ -141,11 +135,11 @@ export function detoursFor(routes: ViaRoutes | undefined, dirIndex: number, note
   return out;
 }
 
-const sq = (p: readonly number[], q: readonly number[]) => (p[0] - q[0]) ** 2 + ((p[1] - q[1]) * 0.84) ** 2;
+const sq = localSq;
 /** The shape with each detour replacing the stretch between its two anchor points (detours that do not fit the shape are ignored). */
 export function spliceDetours(shape: [number, number][], detours: readonly ViaRoute[] | undefined): [number, number][] {
   if (!detours?.length) return shape;
-  const nearest = (p: readonly number[], from: number) => {
+  const nearest = (p: readonly [number, number], from: number) => {
     let best = from;
     let bd = Infinity;
     for (let i = from; i < shape.length; i++) {

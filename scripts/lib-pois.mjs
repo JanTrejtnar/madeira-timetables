@@ -1,14 +1,8 @@
 // Searchable places for the planner's autocomplete: OpenStreetMap points of interest (data/osm/pois.json, `npm run fetch:pois`),
 // the towns and villages of data/osm/places.json and a hand-made list of famous destinations (data/pois-curated.json).
 // Output (public/data/pois.json): { places: [[name, kind, lat, lon, alt?]] } sorted by name, a few hundred KB at most.
-const fold = (s) =>
-  String(s)
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-const metres = (a, b) => Math.hypot((a.lat - b.lat) * 110540, (a.lon - b.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180));
+import { metres, norm } from '../shared/geo.mjs';
+const fold = norm;
 const tokens = (name) => fold(name).split(' ').filter((t) => t.length >= 5);
 
 /** kind of a town / village record of data/osm/places.json */

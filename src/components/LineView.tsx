@@ -11,7 +11,7 @@ import { serviceDay } from '../lib/holidays';
 import type { DayKey, Direction, Line, MapFocus, MapLayer, MapPin, Stop } from '../types';
 import { Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, pdfHref, PrecisionWarning, SectionTitle, type RideEnds, type RideWhen, type Shared } from './common';
 import { Icon } from './Icons';
-import { RouteMap } from './RouteMap';
+import { RouteMap } from './LazyMaps';
 import { useFootRoutes } from '../lib/foot';
 
 function defaultDay(keys: DayKey[], shared: Shared): DayKey | undefined {

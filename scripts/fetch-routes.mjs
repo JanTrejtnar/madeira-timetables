@@ -6,6 +6,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_RADIUS_M, END_RADIUS_M, hav, routeShapeId, signature, waypointsOf } from './lib-routes.mjs';
+import { metres } from '../shared/geo.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BASE = process.env.OSRM_URL ?? 'https://router.project-osrm.org';
@@ -15,7 +16,7 @@ const only = process.argv.includes('--line') ? process.argv[process.argv.indexOf
 const MAX_DETOUR = 2.6;
 const MAX_DROPPED = 0.25;
 const rad = Math.PI / 180;
-const straightKm = (pts) => pts.slice(1).reduce((s, x, k) => s + Math.hypot((x.p[1] - pts[k].p[1]) * 111.32 * Math.cos(x.p[0] * rad), (x.p[0] - pts[k].p[0]) * 110.54), 0);
+const straightKm = (pts) => pts.slice(1).reduce((s, x, k) => s + metres(x.p, pts[k].p) / 1000, 0);
 /** an end of the route further than this from its stop is joined to it with a straight piece */
 const END_JOIN_M = 15;
 const CHUNK = 40; // waypoints per request (the demo server allows 100)

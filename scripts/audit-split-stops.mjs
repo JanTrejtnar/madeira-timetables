@@ -7,13 +7,9 @@
 // `npm run audit:split-stops` after build:data (build:data prints it too); it only reports, the data is not changed.
 import { readFileSync } from 'node:fs';
 import { keyOf, normName, tokens } from './lib-coords.mjs';
+import { haversineM } from '../shared/geo.mjs';
 
-const R = 6371.0088;
-const rad = Math.PI / 180;
-const hav = (a, b) => {
-  const h = Math.sin(((b.lat - a.lat) * rad) / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(((b.lon - a.lon) * rad) / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h)) * 1000;
-};
+const hav = haversineM;
 /** the printed name without the direction marker, abbreviations NOT resolved */
 const plain = (n) => normName(n).replace(/ (d|s)\d*[a-z]?$/, '').replace(/ t \d+$/, '');
 const good = (p) => p.prec === 'exact' || p.prec === 'name_match' || p.prec === 'manual_osm_match' || p.prec === 'inherited_split_stop';

@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { keyOf, GENERIC } from './lib-coords.mjs';
 import { findTerminal } from './lib-terminals.mjs';
+import { metres } from '../shared/geo.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FILE = path.join(ROOT, 'data', 'terminals.json');
@@ -22,8 +23,7 @@ const ALIASES = {
   centro: 'Vila Baleira',
 };
 
-const rad = Math.PI / 180;
-const km = (a, b) => Math.hypot((a.lon - b.lon) * 111.32 * Math.cos(((a.lat + b.lat) / 2) * rad), (a.lat - b.lat) * 110.54);
+const km = (a, b) => metres(a, b) / 1000;
 const FUNCHAL = { lat: 32.6475, lon: -16.907 };
 const inPortoSanto = (p) => p.lat > 32.95;
 const read = (f) => JSON.parse(readFileSync(path.join(ROOT, f), 'utf8'));

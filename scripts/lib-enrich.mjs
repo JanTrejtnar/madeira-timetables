@@ -4,6 +4,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { stopDistances } from './lib-estimate.mjs';
+import { metres as flatMetres, norm } from '../shared/geo.mjs';
 
 /** one end must lie at a terminal (or carry its name); the other may be a few stops away (the Funchal terminals of the planner differ from ours) */
 const NEAR_M = 1500;
@@ -14,16 +15,9 @@ const PINNED = {
 };
 /** a stop of a planner pattern counts as lying on the drawn route within this distance */
 const ON_ROUTE_M = 400;
-const rad = Math.PI / 180;
-const metres = (a, b) => Math.hypot((a.lon - b[2]) * 111320 * Math.cos(a.lat * rad), (a.lat - b[1]) * 110540);
-const fold = (s) =>
-  String(s)
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/\(.*?\)/g, ' ')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
+/** metres from a point { lat, lon } to a table row [id, lat, lon] */
+const metres = (a, b) => flatMetres(a, { lat: b[1], lon: b[2] });
+const fold = (s) => norm(String(s).replace(/\(.*?\)/g, ' '));
 /** "Porto Moniz" matches "Porto Moniz (Piscinas)" / "Porto Moniz Centro": one name contains the other */
 const sameName = (x, y) => {
   const a = fold(x);

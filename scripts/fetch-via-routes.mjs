@@ -6,16 +6,13 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { placesSig, routeKey } from './lib-via.mjs';
+import { haversineKm, localSq } from '../shared/geo.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BASE = process.env.OSRM_URL ?? 'https://router.project-osrm.org';
 const STOP_RADIUS_M = 200;
 const PLACE_RADIUS_M = 400;
-const hav = (a, b) => {
-  const rad = Math.PI / 180;
-  const h = Math.sin(((b[0] - a[0]) * rad) / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(((b[1] - a[1]) * rad) / 2) ** 2;
-  return 2 * 6371.0088 * Math.asin(Math.sqrt(h));
-};
+const hav = haversineKm;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const has = (s) => s.lat !== undefined && s.lon !== undefined;
 
@@ -48,7 +45,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     let best = from;
     let bd = Infinity;
     for (let i = from; i < poly.length; i++) {
-      const d2 = (poly[i][0] - p[0]) ** 2 + ((poly[i][1] - p[1]) * 0.84) ** 2;
+      const d2 = localSq(poly[i], p);
       if (d2 < bd) { bd = d2; best = i; }
     }
     return best;

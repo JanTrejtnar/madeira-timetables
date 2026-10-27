@@ -1,5 +1,6 @@
 // Manual stop positions (data/stop-overrides.json) that win over every automatic source.
 import { keyOf } from './lib-coords.mjs';
+import { metres } from '../shared/geo.mjs';
 
 /** Applies the overrides to every matching stop; returns the number of stops changed. */
 export function applyOverrides(lines, file) {
@@ -58,7 +59,7 @@ export function terminalWalks(file) {
     const a = groups.get(w.a);
     const b = groups.get(w.b);
     if (!a || !b) throw new Error(`funchalTerminals.walks: unknown terminal ${!a ? w.a : w.b}`);
-    const m = Math.hypot((a.lon - b.lon) * 111320 * Math.cos((a.lat * Math.PI) / 180), (a.lat - b.lat) * 110540);
+    const m = metres(a, b);
     out.push({ a: w.a, b: w.b, min: Math.max(w.minutes, Math.ceil(m / WALK_M_PER_MIN)) });
   }
   return out;

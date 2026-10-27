@@ -110,3 +110,26 @@ describe('mergePlans', () => {
     expect(g.closer?.(ids('cabo').values().next().value!, ids('far west').values().next().value!)).toBe(false);
   });
 });
+
+describe('second-leg index cache', () => {
+  const sig = (p: ReturnType<typeof plan>) => JSON.stringify([...p.direct, ...p.transfers].map((it) => [it.depart, it.arrive, it.finish, it.legs.map((l) => [l.trip.line.id, l.fromPos, l.toPos])]));
+  it('later searches for the same destination give what a search from scratch gives', () => {
+    const from = nodes('alpha');
+    const to = nodes('echo');
+    plan(net, trips, from, to, 7 * 60 + 50); // fills the cache
+    for (const at of [0, 7 * 60 + 50, 8 * 60 + 5, 9 * 60, 11 * 60]) {
+      const cached = plan(net, trips, from, to, at);
+      const fresh = plan(net, [...trips], from, to, at); // a new array: nothing cached
+      expect(sig(cached)).toBe(sig(fresh));
+    }
+  });
+  it('a different destination or walk-out does not reuse the index of another', () => {
+    const a = plan(net, trips, nodes('alpha'), nodes('echo'), 7 * 60 + 50);
+    const b = plan(net, trips, nodes('alpha'), nodes('delta'), 7 * 60 + 50);
+    expect(sig(a)).not.toBe(sig(b));
+    const walk = new Map([...nodes('echo')].map((id) => [id, 7] as const));
+    const w = plan(net, trips, nodes('alpha'), nodes('echo'), 7 * 60 + 50, undefined, walk);
+    expect(w.transfers[0].finish).toBe(w.transfers[0].arrive + 7);
+    expect(plan(net, trips, nodes('alpha'), nodes('echo'), 7 * 60 + 50).transfers[0].finish).toBe(a.transfers[0].finish);
+  });
+});

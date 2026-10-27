@@ -3,6 +3,7 @@
 // data/shapes/<id>.json plus data/routes.json (committed). build:data then attaches those shapes (shapeSource: 'osrm').
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { haversineKm } from '../shared/geo.mjs';
 
 /** shape ids of generated routes start here; SIGA ids are five digits */
 export const ROUTE_ID_BASE = 1_000_000;
@@ -25,14 +26,7 @@ export function waypointsOf(dir) {
   return dropOutliers(pts);
 }
 
-const R = 6371.0088;
-const rad = Math.PI / 180;
-export function hav(a, b) {
-  const dLat = (b[0] - a[0]) * rad;
-  const dLon = (b[1] - a[1]) * rad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+export const hav = haversineKm;
 const MIN_EXCESS_KM = 4;
 const RUN = 3; // runs of up to this many consecutive waypoints are tested together (a wrong namesake often comes with its neighbour)
 

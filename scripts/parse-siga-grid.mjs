@@ -2,9 +2,9 @@
 // Layout: two stop lists on the left (one per direction), then 3 day bands (Dias úteis / Sábados /
 // Domingos e Feriados), each with one time column per terminal. Times exist for terminals only.
 import { pdfItems } from './lib-pdf.mjs';
+import { norm } from '../shared/geo.mjs';
 
-export const norm = (s) =>
-  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+export { norm };
 
 const STOP_RE = /^(.*?)\s*\(([A-Z]?\d+[A-Z]?)\)\s*$/;
 const TIME_G = /(\d{1,2}):(\d{2})/g;

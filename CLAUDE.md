@@ -13,6 +13,12 @@ Precisions of overrides: `name_match` (position of an official SIGA planner stop
 
 Stop names: the printed abbreviations of the operators (`P.Cruz`, `S.Serra`, `S.Cruz` …, `scripts/lib-abbrev.mjs`) are resolved in `keyOf` (so an override, OSM, the SIGA dump and `inheritSameSpot` see "Porto da Cruz") and a stop whose whole name is such an abbreviation is shown under the full name. Add a new abbreviation there, not as a second override. `npm run build:data` also prints `scripts/audit-split-stops.mjs` (one place printed differently, a position known on one side only) – review that list after a data change. A settlement-centre / interpolated estimate with a single official stop of a differently printed name within 150 m (words a subset, official stops within 50 m of each other) takes its position as `inherited_split_stop` (`inheritSplitStops` in `lib-coords.mjs`; hand-placed overrides are never moved).
 
+## Sdílené pomocné funkce
+
+`shared/geo.mjs` je jediný zdroj pravdy pro vzdálenosti (`haversineKm`/`haversineM`, `metres` = rychlá plochá aproximace, `metresToSegment`, `localSq`) a normalizaci textu (`norm`); používá ho `src/` i `scripts/`. Nový výpočet vzdálenosti nebo normalizace patří tam, ne jako další lokální kopie (konstanty `111320`, `110540`, `6371`, `0.84` mimo tento soubor jsou chyba). Změna tohoto modulu mění build dat: porovnej kontrolní součty `public/data/*.json` před a po.
+
+Mapy (Leaflet) se načítají líně: komponenty `RouteMap`, `NetworkMap` a `MapPicker` se importují jen přes `src/components/LazyMaps.tsx`, nikdy přímo, jinak se Leaflet vrátí do hlavního chunku.
+
 ## Povinný verifikační proces před každým commitem/pushem
 
 Vývojář/asistent MUSÍ před každým commitem automaticky a bez vyzvání spustit a ověřit tuto kompletní pipeline (E2E sady potřebují běžící dev server `npx vite --port 5173`):

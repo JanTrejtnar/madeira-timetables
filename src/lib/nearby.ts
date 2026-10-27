@@ -3,6 +3,7 @@ import type { Line } from '../types';
 import { dirKey, type Network } from './network';
 import { nextAtStop, nextDepartures, type Ctx, type Upcoming } from './departures';
 import { toMinutes } from './time';
+import { haversineM } from '../../shared/geo.mjs';
 
 export interface UserPos {
   lat: number;
@@ -23,14 +24,8 @@ export interface NearbyStop {
   dist: number;
 }
 
-const R = 6_371_008.8;
-const rad = Math.PI / 180;
-export function distanceM(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
-  const dLat = (b.lat - a.lat) * rad;
-  const dLon = (b.lon - a.lon) * rad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+/** Great-circle distance in metres. */
+export const distanceM: (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => number = haversineM;
 
 export const NEAR_M = 500;
 export const FAR_M = 1000;

@@ -21,6 +21,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import readline from 'node:readline/promises';
 import { canon } from './lib-osm.mjs';
 import { GENERIC, keyOf, tokens } from './lib-coords.mjs';
+import { haversineKm, metresToSegment } from '../shared/geo.mjs';
 
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
@@ -45,27 +46,11 @@ const LIST_SIM = 0.4;
 const MAX_SNAP_KM = 0.35;
 const SAME_PLACE_KM = 0.25;
 
-const R = 6371.0088;
-const rad = Math.PI / 180;
-function hav(a, b) {
-  const dLat = (b[0] - a[0]) * rad;
-  const dLon = (b[1] - a[1]) * rad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+const hav = haversineKm;
 const has = (s) => s.lat !== undefined && s.lon !== undefined;
 
 /** Distance (km) from p to the segment a-b, in a local flat projection. */
-function distToSegment(p, a, b) {
-  const kx = 111.32 * Math.cos(p[0] * rad);
-  const ky = 110.54;
-  const ax = (a[1] - p[1]) * kx, ay = (a[0] - p[0]) * ky;
-  const bx = (b[1] - p[1]) * kx, by = (b[0] - p[0]) * ky;
-  const dx = bx - ax, dy = by - ay;
-  const len2 = dx * dx + dy * dy;
-  const t = len2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
-  return Math.hypot(ax + t * dx, ay + t * dy);
-}
+const distToSegment = (p, a, b) => metresToSegment(p, a, b) / 1000;
 const distToPath = (poly, p) => {
   let d = Infinity;
   for (let i = 1; i < poly.length; i++) d = Math.min(d, distToSegment(p, poly[i - 1], poly[i]));
