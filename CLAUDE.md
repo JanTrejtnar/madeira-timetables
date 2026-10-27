@@ -25,6 +25,12 @@ Mapy (Leaflet) se načítají líně: komponenty `RouteMap`, `NetworkMap` a `Map
 
 Planner: stav a výsledky v `src/components/planner/usePlanner.ts`, samotné hledání je čistá funkce `runSearch` v `src/lib/plannerSearch.ts`, `PlannerTab.tsx` jen skládá díly.
 
+## Offline mapy
+
+Nastavení → Offline mapy stáhne jeden PMTiles archiv (`ARCHIVE_URL` = `maps/madeira.pmtiles`, vektorové dlaždice Madeira + Porto Santo) po kusech 2 MB do Cache Storage (`offline-maps-v1`, `src/lib/offlineMaps.ts`; instalace je atomická – záznam `meta` se zapíše jako poslední, přerušené stažení pokračuje). Mapy (`src/lib/basemap.ts`) pak kreslí `protomaps-leaflet` z uloženého balíčku (`vectorBasemap.ts`, načítá se líně jen s balíčkem; světlý/tmavý motiv podle tématu aplikace); bez balíčku zůstávají online dlaždice OSM. Sekce v Nastavení se nezobrazí, dokud server archiv nemá.
+
+**Dlaždice z `tile.openstreetmap.org` se nikdy nepředstahují** (pravidla OSMF). Skutečný archiv patří do `public/maps/madeira.pmtiles` (jméno i cesta jsou napevno v `ARCHIVE_URL`, `src/lib/offlineMaps.ts`; sekce v Nastavení se objeví sama, jakmile tam server soubor má). Je to PMTiles v3 s vektorovými dlaždicemi ve schématu Protomaps basemap (aktuální build; `protomaps-leaflet` 5.x). Pomocí CLI z github.com/protomaps/go-pmtiles: `pmtiles extract <build>.pmtiles madeira.pmtiles --bbox=-17.30,32.55,-16.20,33.15`. Soubor přidat do gitu (`.gitignore` ho ignoruje, dokud je to jen lokální náhrada: smazat řádek nebo `git add -f`), zkontrolovat velikost (Cloudflare Pages: max 25 MiB na soubor; větší patří jinam a pak se musí změnit `ARCHIVE_URL` a nastavit CORS pro Range a ETag) a atribuci © OpenStreetMap contributors. Testy a e2e používají commitnutou fixture `tests/fixtures/madeira-test.pmtiles` (generuje ji `scripts/make-test-pmtiles.mjs` z tras projektu, není to mapa); e2e ji zkopíruje na `public/maps/`, když tam skutečný archiv není.
+
 ## Povinný verifikační proces před každým commitem/pushem
 
 Vývojář/asistent MUSÍ před každým commitem automaticky a bez vyzvání spustit a ověřit tuto kompletní pipeline (E2E sady potřebují běžící dev server `npx vite --port 5173`):
@@ -33,7 +39,7 @@ Vývojář/asistent MUSÍ před každým commitem automaticky a bez vyzvání sp
    - po každé změně poloh zastávek (override, `inheritSameSpot`, nové souřadnice) jsou uložené trasy zastaralé: spusť `npm run fetch:routes` (překreslí jen změněné směry) a pak znovu `npm run build:data`, jinak `shape-ends.test.ts` selže na odchylce konců tras (druhá, nahodilá příčina – timeout pod zátěží – je ošetřena v samotném testu)
 2. `npx tsc -b` (striktní typová kontrola bez chyb)
 3. `npm test` (vitest unit testy)
-4. E2E kontrolní sady: `node scripts/e2e-line96.mjs`, `node scripts/e2e-line208.mjs`, `node scripts/e2e-trim-notes.mjs`, `node scripts/e2e-ux.mjs`, `node scripts/e2e-planner.mjs`, `node scripts/e2e-map.mjs`, `node scripts/e2e-mobile.mjs`, `node scripts/e2e-robust.mjs`
+4. E2E kontrolní sady: `node scripts/e2e-line96.mjs`, `node scripts/e2e-line208.mjs`, `node scripts/e2e-trim-notes.mjs`, `node scripts/e2e-ux.mjs`, `node scripts/e2e-planner.mjs`, `node scripts/e2e-map.mjs`, `node scripts/e2e-mobile.mjs`, `node scripts/e2e-robust.mjs`, `node scripts/e2e-offline-map.mjs`
 5. `npm run build` (produkční vite build)
 
 Celý postup (včetně fetch:routes a časových limitů pro každý krok, `e2e-ux` trvá ~150 s, limit 240 s) spustí `npm run verify` (`-- --skip-e2e` vynechá E2E). Dev server si `verify` obstará sám: použije `E2E_PORT`/`PORT` (výchozí 5173), pokud tam běží tato aplikace; jinak (port volný nebo obsazený cizím serverem) na dobu běhu spustí vlastní Vite na volném portu. E2E skripty používají stejné proměnné, takže jde i `E2E_PORT=5174 node scripts/e2e-ux.mjs`.

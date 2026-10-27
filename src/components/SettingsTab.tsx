@@ -2,6 +2,7 @@ import { useT, type Key } from '../i18n';
 import { FARE_CARDS, type FareCard } from '../lib/fare';
 import { THEMES, type ThemePref } from '../lib/theme';
 import { Card, SectionTitle } from './common';
+import { OfflineMaps } from './OfflineMaps';
 
 /** Rarely needed switches. The data and build stamp sit at the very end of the page. */
 export function SettingsTab({ school, autoSchool, onSchool, onSchoolReset, fareCard, onFareCard, theme, onTheme, generatedAt }: { school: boolean; autoSchool: boolean; onSchool: (v: boolean) => void; onSchoolReset: () => void; fareCard: FareCard; onFareCard: (c: FareCard) => void; theme: ThemePref; onTheme: (v: ThemePref) => void; generatedAt: string | null }) {
@@ -57,6 +58,7 @@ export function SettingsTab({ school, autoSchool, onSchool, onSchoolReset, fareC
           </div>
         </Card>
       </section>
+      <OfflineMaps />
       {generatedAt && (
         <p className="mt-6 text-center text-xs text-slate-400">
           {t('dataFrom')} {generatedAt.slice(0, 10)}

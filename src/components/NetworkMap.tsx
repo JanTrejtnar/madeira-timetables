@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { osmTiles } from '../lib/tiles';
+import { addBasemap } from '../lib/basemap';
 import { useT } from '../i18n';
 import { departuresFrom } from '../lib/nearby';
 import { decodeSegment, loadOverview, type Overview } from '../lib/overview';
@@ -88,7 +88,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
     const container = el.current;
     if (!container) return;
     const map = L.map(container, { zoomControl: true, preferCanvas: true, scrollWheelZoom: fill, zoomAnimation: true, wheelDebounceTime: 60 });
-    osmTiles().addTo(map);
+    addBasemap(map);
     map.fitBounds(ISLAND, { animate: false });
     let moved = false;
     map.once('movestart', () => (moved = true));

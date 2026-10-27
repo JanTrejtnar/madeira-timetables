@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { osmTiles } from '../lib/tiles';
+import { addBasemap } from '../lib/basemap';
 import { loadShape } from '../data';
 import { useT, type Lang } from '../i18n';
 import { localStopName } from '../lib/text';
@@ -147,7 +147,7 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
     markers.current = new Map();
     baseStyle.current = new Map();
     const map = L.map(container, { scrollWheelZoom: fill, dragging: true, touchZoom: true, zoomControl: true });
-    osmTiles().addTo(map);
+    addBasemap(map);
     mapRef.current = map;
     setMapInst(map);
     const group = L.featureGroup().addTo(map);
