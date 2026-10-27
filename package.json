@@ -13,6 +13,7 @@
     "resolve:terminals": "node scripts/resolve-terminals.mjs",
     "fetch:via-routes": "node scripts/fetch-via-routes.mjs",
     "build:data": "node scripts/build-data.mjs",
+    "verify": "node scripts/verify.mjs",
     "audit": "node scripts/audit-schedules.mjs",
     "audit:stops": "node scripts/audit-stops.mjs",
     "match:corridor": "node scripts/match-corridor-stops.mjs",

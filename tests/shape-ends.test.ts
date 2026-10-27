@@ -1,6 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Dataset } from '../src/types';
+
+// reads hundreds of shape files: with 23 parallel workers the default 5 s limit was exceeded now and then
+vi.setConfig({ testTimeout: 30000 });
 
 const file = 'public/data/schedules.json';
 const m = (a: [number, number], b: [number, number]) => Math.hypot((a[0] - b[0]) * 110540, (a[1] - b[1]) * 111320 * Math.cos((a[0] * Math.PI) / 180));
