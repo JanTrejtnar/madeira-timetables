@@ -12,8 +12,8 @@ Aplikace u nich místo pinu ukazuje šedý štítek „Bez GPS polohy“ a nad s
 
 | Zastávka | Linka | Směr | Předchozí → následující známá zastávka | Poznámka |
 |---|---|---|---|---|
-| **Fazenda** | 501 (Funchal – Boqueirão) | oba směry | Střed OSM čtvrti Fazenda v Gaule (32.664755, -16.811842) | `place_centroid` z `data/stop-overrides.json`. Jediné místo toho jména v okrese Santa Cruz, ale trasa 501 ho nepotvrzuje (leží ~2,5 km za Boqueirão) – ověřit na mapě; může jít o zastávku na silnici mezi Funchalem a Boqueirão. Fazenda v Machicu s linkou nesouvisí. |
-| **Sant'Ana** | 725 (Água Pena) | Machico → Sant'Ana a Sant'Ana → Machico (varianta, 2 stopy) | Machico (32.7216, -16.7702) ↔ konec trasy | Jízdní řád SAM v Machicu. Konec trasy; v OSM/SIGA není místo tohoto jména v okolí. Není ověřeno, zda jde o „Capela de Santa Ana“. |
+| **Fazenda** | 501 (Funchal – Boqueirão) | oba směry | Funchal → ? → Boqueirão (32.6906, -16.8333) | Bez souřadnic. Dřívější `place_centroid` v Gaule (32.664755, -16.811842) byl odstraněn: ležel ~2,5 km za Boqueirão a trasa 501 kvůli němu dělala ~4,4 km zajížďku tam a zpět (19,6 km místo ~8 km vzdušně). K ověření ručně na mapě: kde linka 501 mezi Funchalem a Boqueirão skutečně staví. Fazenda v Machicu a Fazenda linky 526 s tou linkou nesouvisí. |
+| **Sant'Ana** | 725 (Água Pena) | Machico → Sant'Ana a Sant'Ana → Machico (varianta, 2 stopy) | Machico (32.7216, -16.7702) ↔ konec trasy | Jízdní řád SAM v Machicu. Konečná linky Machico ↔ Sant'Ana bez mezilehlých zastávek, proto nemá žádné sousedy a ani `shapeId` (bez geometrie trasy). V OSM/SIGA není místo tohoto jména v okolí. Není ověřeno, zda jde o „Capela de Santa Ana“. |
 
 Co udělat: najít zastávku na mapě / v terénu a doplnit override do `data/stop-overrides.json` (nejlépe `manual_osm_match` na OSM uzel). Pak zastávka opustí `missing`.
 
