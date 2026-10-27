@@ -19,6 +19,12 @@ Stop names: the printed abbreviations of the operators (`P.Cruz`, `S.Serra`, `S.
 
 Mapy (Leaflet) se načítají líně: komponenty `RouteMap`, `NetworkMap` a `MapPicker` se importují jen přes `src/components/LazyMaps.tsx`, nikdy přímo, jinak se Leaflet vrátí do hlavního chunku.
 
+## Data a chybové stavy
+
+`src/lib/validate.ts` (`datasetProblem`/`isDataset`) je ruční kontrola tvaru `schedules.json` (žádná knihovna typu zod). `loadDataset` v `src/data.ts` použije platná čerstvá data a uloží je do Cache Storage (`dataset-last-good`); když stažení selže nebo data neprojdou kontrolou, tiše se použije poslední dobrá kopie, a teprve bez ní se zobrazí stránka „Data jízdních řádů jsou dočasně nedostupná“ (`ErrorBoundary.tsx`; ta zachytí i pád vykreslování). Přidáš-li do dat pole, které aplikace povinně čte, doplň ho do `datasetProblem`.
+
+Planner: stav a výsledky v `src/components/planner/usePlanner.ts`, samotné hledání je čistá funkce `runSearch` v `src/lib/plannerSearch.ts`, `PlannerTab.tsx` jen skládá díly.
+
 ## Povinný verifikační proces před každým commitem/pushem
 
 Vývojář/asistent MUSÍ před každým commitem automaticky a bez vyzvání spustit a ověřit tuto kompletní pipeline (E2E sady potřebují běžící dev server `npx vite --port 5173`):
@@ -27,7 +33,7 @@ Vývojář/asistent MUSÍ před každým commitem automaticky a bez vyzvání sp
    - po každé změně poloh zastávek (override, `inheritSameSpot`, nové souřadnice) jsou uložené trasy zastaralé: spusť `npm run fetch:routes` (překreslí jen změněné směry) a pak znovu `npm run build:data`, jinak `shape-ends.test.ts` selže na odchylce konců tras (druhá, nahodilá příčina – timeout pod zátěží – je ošetřena v samotném testu)
 2. `npx tsc -b` (striktní typová kontrola bez chyb)
 3. `npm test` (vitest unit testy)
-4. E2E kontrolní sady: `node scripts/e2e-line96.mjs`, `node scripts/e2e-line208.mjs`, `node scripts/e2e-trim-notes.mjs`, `node scripts/e2e-ux.mjs`, `node scripts/e2e-planner.mjs`, `node scripts/e2e-map.mjs`, `node scripts/e2e-mobile.mjs`
+4. E2E kontrolní sady: `node scripts/e2e-line96.mjs`, `node scripts/e2e-line208.mjs`, `node scripts/e2e-trim-notes.mjs`, `node scripts/e2e-ux.mjs`, `node scripts/e2e-planner.mjs`, `node scripts/e2e-map.mjs`, `node scripts/e2e-mobile.mjs`, `node scripts/e2e-robust.mjs`
 5. `npm run build` (produkční vite build)
 
 Celý postup (včetně fetch:routes a časových limitů pro každý krok, `e2e-ux` trvá ~150 s, limit 240 s) spustí `npm run verify` (`-- --skip-e2e` vynechá E2E). Dev server si `verify` obstará sám: použije `E2E_PORT`/`PORT` (výchozí 5173), pokud tam běží tato aplikace; jinak (port volný nebo obsazený cizím serverem) na dobu běhu spustí vlastní Vite na volném portu. E2E skripty používají stejné proměnné, takže jde i `E2E_PORT=5174 node scripts/e2e-ux.mjs`.

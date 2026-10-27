@@ -277,6 +277,9 @@ const dict = {
 		holidayNote: "Svátky: platí jízdní řád pro neděle a svátky.",
 		loading: "Načítám jízdní řády…",
 		loadError: "Data se nepodařilo načíst.",
+		dataUnavailableTitle: "Data jízdních řádů jsou dočasně nedostupná",
+		dataUnavailableBody: "Zkuste to prosím za chvíli znovu. Jakmile budete mít signál, jízdní řády se načtou a uloží pro použití bez připojení.",
+		dataReload: "Zkusit znovu",
 		dataFrom: "Data ze siga.madeira.gov.pt, zpracováno",
 		interurban: "meziměstská",
 		urban: "městská",
@@ -574,6 +577,9 @@ const dict = {
 		holidayNote: "Holidays use the Sundays & holidays timetable.",
 		loading: "Loading timetables…",
 		loadError: "Could not load the data.",
+		dataUnavailableTitle: "Timetable data is temporarily unavailable",
+		dataUnavailableBody: "Please try again in a moment. Once you have a signal, the timetables load and are saved for use offline.",
+		dataReload: "Try again",
 		dataFrom: "Data from siga.madeira.gov.pt, processed",
 		interurban: "interurban",
 		urban: "urban",
@@ -873,6 +879,9 @@ const dict = {
 		holidayNote: "Nos feriados vale o horário de domingos e feriados.",
 		loading: "A carregar horários…",
 		loadError: "Não foi possível carregar os dados.",
+		dataUnavailableTitle: "Os horários estão temporariamente indisponíveis",
+		dataUnavailableBody: "Tente novamente daqui a pouco. Com sinal, os horários são carregados e guardados para uso sem ligação.",
+		dataReload: "Tentar de novo",
 		dataFrom: "Dados de siga.madeira.gov.pt, processados em",
 		interurban: "interurbana",
 		urban: "urbana",
@@ -901,6 +910,19 @@ const dict = {
 		schoolToggle: "Calendário escolar",
 	},
 } as const;
+
+/** The language of a first visit: the saved choice, else English unless the browser is set to Czech or Portuguese. */
+export function initialLang(): Lang {
+	let saved: string | null = null;
+	try {
+		saved = localStorage.getItem("lang");
+	} catch {
+		/* storage unavailable */
+	}
+	if (saved && (LANGS as string[]).includes(saved)) return saved as Lang;
+	const nav = (navigator.languages?.[0] ?? navigator.language ?? "").slice(0, 2).toLowerCase();
+	return nav === "cs" || nav === "pt" ? nav : "en";
+}
 
 export type Key = keyof (typeof dict)["cs"];
 export type T = (key: Key, vars?: Record<string, string | number>) => string;

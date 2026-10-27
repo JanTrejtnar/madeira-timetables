@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { pruneShapeCache, useDataset } from './data';
-import { LANGS, LangContext, makeT, type Lang } from './i18n';
+import { LangContext, initialLang, makeT, type Lang } from './i18n';
 import { LangMenu } from './components/LangMenu';
 import { SettingsTab } from './components/SettingsTab';
 import { isFareCard, type FareCard } from './lib/fare';
@@ -12,6 +12,7 @@ import { LineView } from './components/LineView';
 import { PlannerTab } from './components/PlannerTab';
 import { buildNetwork } from './lib/network';
 import { SearchTab } from './components/SearchTab';
+import { DataUnavailable, ErrorBoundary } from './components/ErrorBoundary';
 import { EmptyState, SkeletonCards, type RideEnds, type Shared } from './components/common';
 import { Icon, type IconName } from './components/Icons';
 import { NetworkMap, RouteMap } from './components/LazyMaps';
@@ -40,14 +41,6 @@ const store = {
     }
   },
 };
-
-function initialLang(): Lang {
-  const saved = store.get('lang');
-  if (saved && (LANGS as string[]).includes(saved)) return saved as Lang;
-  // English unless the browser is set to Czech (or Portuguese)
-  const nav = (navigator.languages?.[0] ?? navigator.language ?? '').slice(0, 2).toLowerCase();
-  return nav === 'cs' || nav === 'pt' ? nav : 'en';
-}
 
 function parseHash(): { id: number; dir?: number; ride?: { from: number; to: number }; when?: RideWhen } | null {
   const m = location.hash.match(/^#\/line\/(\d+)(?:\/(\d+))?(?:\/(\d+)-(\d+))?(?:\?(.*))?/);
@@ -427,14 +420,14 @@ export function App() {
             </div>
           )}
           <main id="scroller" className="flex-1 px-4 pb-28 pt-4 lg:min-h-0 lg:overflow-y-auto lg:pb-6">
-            {error && <EmptyState icon="alert" tone="warn" title={t('loadError')} />}
+            {error && <DataUnavailable />}
             {!data && !error && (
               <div aria-label={t('loading')}>
                 <SkeletonCards n={5} />
               </div>
             )}
             {data && index && shared && (
-              <>
+              <ErrorBoundary resetKey={`${tab}${route?.id ?? ''}`}>
                 {route && line ? (
                   <LineView line={line} initialDir={route.dir} initialRide={route.ride} initialWhen={route.when} initialEnds={route.ride ? rideEnds : undefined} shared={shared} onBack={() => (navCount.current > 0 ? history.back() : goTab(tab))} />
                 ) : (
@@ -470,7 +463,7 @@ export function App() {
                     )}
                   </>
                 )}
-              </>
+              </ErrorBoundary>
             )}
           </main>
         </aside>

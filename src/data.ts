@@ -2,17 +2,74 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Dataset, Line, ViaRoutes } from './types';
 import { buildIndex } from './lib/search';
 import { decodeEntitiesInJson } from './lib/text';
+import { datasetProblem, isShape, isViaRoutes } from './lib/validate';
 
 const url = (path: string) => `${import.meta.env.BASE_URL}${path}`;
+
+/** Where the last dataset that passed the check is kept (Cache Storage: far more room than localStorage, and the service worker leaves it alone). */
+export interface LastGoodStore {
+  read(): Promise<string | null>;
+  write(text: string, stamp: string): Promise<void>;
+}
+
+const LAST_GOOD_CACHE = 'dataset-last-good';
+const LAST_GOOD_URL = url('data/last-good.json');
+
+export const cacheLastGood: LastGoodStore = {
+  async read() {
+    if (typeof caches === 'undefined') return null;
+    const hit = await (await caches.open(LAST_GOOD_CACHE)).match(LAST_GOOD_URL);
+    return hit ? hit.text() : null;
+  },
+  async write(text, stamp) {
+    if (typeof caches === 'undefined') return;
+    const cache = await caches.open(LAST_GOOD_CACHE);
+    // the same build again: nothing to rewrite (the file is ~2 MB)
+    if ((await cache.match(LAST_GOOD_URL))?.headers.get('x-stamp') === stamp) return;
+    await cache.put(LAST_GOOD_URL, new Response(text, { headers: { 'content-type': 'application/json', 'x-stamp': stamp } }));
+  },
+};
+
+function parseDataset(txt: string): Dataset {
+  const d: unknown = JSON.parse(decodeEntitiesInJson(txt));
+  const problem = datasetProblem(d);
+  if (problem) throw new Error(`timetable data rejected: ${problem}`);
+  return d as Dataset;
+}
+
+/**
+ * The timetable dataset: freshly fetched when it passes the check (and then remembered as the last good copy); when the download fails or
+ * the data is damaged (truncated, wrong build, an error page in place of the JSON) the last good copy is used instead, silently. Only with
+ * neither does it reject, and the app shows its "data unavailable" page.
+ */
+export async function loadDataset(fetchText: () => Promise<string>, store: LastGoodStore = cacheLastGood): Promise<Dataset> {
+  try {
+    const txt = await fetchText();
+    const d = parseDataset(txt);
+    void store.write(txt, `${d.generatedAt}|${txt.length}`).catch(() => undefined);
+    return d;
+  } catch (e) {
+    console.warn('Timetable data unusable, trying the last good copy:', e);
+    const old = await store.read().catch(() => null);
+    if (old) {
+      try {
+        return parseDataset(old);
+      } catch (e2) {
+        console.warn('The last good copy is unusable too:', e2);
+      }
+    }
+    throw e;
+  }
+}
+
+const fetchSchedules = () => fetch(url('data/schedules.json')).then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))));
 
 export function useDataset() {
   const [data, setData] = useState<Dataset | null>(null);
   const [error, setError] = useState(false);
   useEffect(() => {
     let alive = true;
-    fetch(url('data/schedules.json'))
-      .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
-      .then((txt) => JSON.parse(decodeEntitiesInJson(txt)) as Dataset)
+    loadDataset(fetchSchedules)
       .then((d) => {
         registerShapeRevs(d.lines);
         if (alive) setData(d);
@@ -56,7 +113,9 @@ export async function pruneShapeCache(): Promise<void> {
 export async function loadShape(shapeId: number): Promise<[number, number][]> {
   const r = await fetch(shapeUrl(shapeId));
   if (!r.ok) throw new Error(String(r.status));
-  return r.json();
+  const pts: unknown = await r.json();
+  if (!isShape(pts)) throw new Error(`route ${shapeId}: not a list of points`);
+  return pts;
 }
 
 const viaLoaded = new Map<number, Promise<ViaRoutes>>();
@@ -65,7 +124,8 @@ export function loadViaRoutes(lineId: number): Promise<ViaRoutes> {
   let p = viaLoaded.get(lineId);
   if (!p) {
     p = fetch(url(`data/via/${lineId}.json`))
-      .then((r) => (r.ok ? (r.json() as Promise<ViaRoutes>) : Promise.reject(new Error(String(r.status)))))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((j: unknown) => (isViaRoutes(j) ? (j as ViaRoutes) : Promise.reject(new Error('detour routes: bad shape'))))
       .catch(() => {
         viaLoaded.delete(lineId); // retried the next time the line is opened
         return {} as ViaRoutes;
