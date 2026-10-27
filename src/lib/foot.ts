@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 export const FOOT_URL = 'https://routing.openstreetmap.de/routed-foot/route/v1/foot';
 /** a slow or rate-limited public server is given up on quickly: the straight dashed line is drawn instead */
-export const FOOT_TIMEOUT_MS = 1500;
+export const FOOT_TIMEOUT_MS = 3000;
 const MEM_MAX = 200;
 const STORE_KEY = 'footRoutes.v1';
 const STORE_MAX = 80;

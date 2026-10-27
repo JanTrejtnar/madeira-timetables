@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useT, type Key } from '../i18n';
 import { localStopName } from '../lib/text';
+import { useViaRoutes } from '../data';
 import { detoursFor } from '../lib/via';
 import { addDays, serviceDay } from '../lib/holidays';
 import { fmtMinutes } from '../lib/time';
@@ -526,6 +527,8 @@ export function PlannerTab({ shared }: { shared: Shared }) {
   const selTo = toPtOf(selected?.it);
   const footSig = foot.map((r) => (r ? r.m : '-')).join(',');
 
+  // detour routes of the selected connection's lines (loaded on demand)
+  const viaRoutes = useViaRoutes(selected ? selected.it.legs.map((l) => l.trip.line) : []);
   // the selected itinerary is drawn on the map (desktop side map, small map on the phone when a point was picked)
   const rawLayers = useMemo<MapLayer[] | null>(() => {
     if (!selected) return null;
@@ -557,7 +560,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       // with a transfer every bus gets its own colour and a place in the legend
       color: legs.length > 1 ? LEG_COLORS[i % LEG_COLORS.length] : lineColor(l.trip.line),
       ...(legs.length > 1 ? { legend: { badge: badgeText(l.trip.line), text: `${localStopName(tripStops(l.trip)[l.fromPos].name, lang)} → ${localStopName(tripStops(l.trip)[l.toPos].name, lang)}` } } : {}),
-      detours: detoursFor(l.trip.line, l.trip.dirIndex, l.trip.notes),
+      detours: detoursFor(viaRoutes.get(l.trip.line.id), l.trip.dirIndex, l.trip.notes),
       trip: { stops: tripStops(l.trip).flatMap((s, k) => (s.lat !== undefined && s.lon !== undefined ? [{ at: [s.lat, s.lon] as [number, number], calls: l.trip.times[k] !== null }] : [])) },
       served: { from: 0, to: Math.max(0, ridden(l).length - 1) },
       ride: { stops: tripStops(l.trip).map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), from: l.fromPos, to: l.toPos },
@@ -565,7 +568,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       ...(i === 0 && transfers.length ? { transfers } : {}),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, selFrom, selTo, footSig, t, lang]);
+  }, [selected, selFrom, selTo, footSig, t, lang, viaRoutes]);
   const layers = rawLayers;
   const { desktop, setMap } = shared;
   useEffect(() => {

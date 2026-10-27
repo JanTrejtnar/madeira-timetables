@@ -1,5 +1,6 @@
 // Copies parsed data into public/ for the app: schedules.json, route geometries and (small) original PDFs
 // of lines whose schedule could not be parsed. Everything else links to the original siga.madeira.gov.pt PDF.
+import { createHash } from 'node:crypto';
 import { cp, mkdir, readFile, writeFile, readdir, rm, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -149,7 +150,6 @@ console.log('position precision:', JSON.stringify(precision));
 console.log('manual overrides (data/stop-overrides.json) applied to stops:', overridden);
 console.log('GTFS', gtfs.feedVersion, '- stops by code:', JSON.stringify(gtfsStats));
 console.log('municipality of stops:', JSON.stringify(assignMunicipalities(data.lines, gtfs, areas)));
-await writeFile(path.join(OUT, 'data', 'schedules.json'), JSON.stringify(data));
 await cp(path.join(ROOT, 'data', 'shapes'), path.join(OUT, 'data', 'shapes'), { recursive: true });
 // places for the planner's autocomplete (towns, beaches, peaks, viewpoints, harbours, malls ...)
 const poiFile = path.join(ROOT, 'data', 'osm', 'pois.json');
@@ -165,6 +165,31 @@ console.log('overview map:', overview.lines.length, 'lines,', overview.lines.red
 // the drawn route must leave from / arrive at the pins of the first and last stop
 const snapped = await snapShapeEnds(data.lines, path.join(OUT, 'data', 'shapes'));
 console.log('route lines joined to the end stops:', snapped.joined, '(gap over', snapped.maxGapM, 'm left alone:', snapped.skipped.length + ')');
+
+// The client loads the big, rarely needed parts on demand, so schedules.json stays small:
+// - public/data/via/<lineId>.json = line.viaRoutes (detour geometry, opened with the line's detail; precached by the service worker),
+// - dir.shapeRev = content hash of the (snapped) route file: the client's cache key of a route, so a cached route is dropped only when its geometry changed.
+const viaDir = path.join(OUT, 'data', 'via');
+await rm(viaDir, { recursive: true, force: true });
+await mkdir(viaDir, { recursive: true });
+let viaFiles = 0;
+for (const l of data.lines) {
+  if (!l.viaRoutes) continue;
+  await writeFile(path.join(viaDir, `${l.id}.json`), JSON.stringify(l.viaRoutes));
+  l.hasViaRoutes = true;
+  delete l.viaRoutes;
+  viaFiles++;
+}
+const shapeRev = new Map();
+for (const l of data.lines) {
+  for (const d of l.directions) {
+    if (d.shapeId === null || d.shapeId === undefined) continue;
+    if (!shapeRev.has(d.shapeId)) shapeRev.set(d.shapeId, createHash('sha1').update(await readFile(path.join(OUT, 'data', 'shapes', `${d.shapeId}.json`))).digest('hex').slice(0, 8));
+    d.shapeRev = shapeRev.get(d.shapeId);
+  }
+}
+await writeFile(path.join(OUT, 'data', 'schedules.json'), JSON.stringify(data));
+console.log('schedules.json:', (await stat(path.join(OUT, 'data', 'schedules.json'))).size, 'bytes; via-route files:', viaFiles, '; route revisions:', shapeRev.size);
 console.log('estimated directions:', estimated, rejected.length ? `(rejected: ${rejected.join('; ')})` : '');
 console.log('public/ updated:', data.lines.length, 'lines,', (await readdir(path.join(OUT, 'data', 'shapes'))).length, 'shapes,', local, 'local pdfs');
 // stops without (or with only estimated) coordinates -> data/missing-stops.json

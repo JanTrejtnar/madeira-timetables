@@ -113,9 +113,6 @@ export function App() {
     store.set('theme', v);
   }, []);
   useEffect(() => {
-    void pruneShapeCache();
-  }, []);
-  useEffect(() => {
     applyTheme(theme);
     if (theme !== 'system') return;
     const mq = matchMedia('(prefers-color-scheme: dark)');
@@ -128,6 +125,10 @@ export function App() {
     store.set('fareCard', c);
   }, []);
   const { data, index, error } = useDataset();
+  // cached routes of an older geometry are dropped once the dataset says which revisions are current
+  useEffect(() => {
+    if (data) void pruneShapeCache();
+  }, [data]);
   const desktop = useMedia('(min-width: 1024px)');
   const [mapLayers, setMapLayers] = useState<MapLayer[] | null>(null);
   const [mapFocus, setMapFocus] = useState<MapFocus | null>(null);

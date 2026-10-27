@@ -1,7 +1,7 @@
 // "Via X" notes (e.g. 208 "a" = "Via Aeroporto"): for a trip carrying such a note, the place is a real call between two stops of
 // the list. build:data resolves the place (`line.via`); here it is inserted into the stop list of the selected trip (and into the
 // planner's trips) with a time interpolated between the neighbouring stops. "Via Rápida" (motorway) has no entry and stays a note.
-import type { Direction, Line, Stop, ViaPlace, ViaRoute } from '../types';
+import type { Direction, Line, Stop, ViaPlace, ViaRoute, ViaRoutes } from '../types';
 import { fmtMinutes, toMinutes } from './time';
 
 export interface ShownStops {
@@ -133,11 +133,11 @@ export function withVia(line: Line, dirIndex: number, dir: Direction, notes: rea
   return { stops, srcIdx, viaTimes };
 }
 
-/** Road routes through the via places a trip with `notes` calls at in direction `dirIndex` (drawn instead of the straight stretch of the shape). */
-export function detoursFor(line: Line, dirIndex: number, notes: readonly string[] | undefined): ViaRoute[] {
-  if (!line.viaRoutes || !notes?.length) return [];
+/** Road routes (of `line.hasViaRoutes` lines, from `useViaRoutes`) through the via places a trip with `notes` calls at in direction `dirIndex` (drawn instead of the straight stretch of the shape). */
+export function detoursFor(routes: ViaRoutes | undefined, dirIndex: number, notes: readonly string[] | undefined): ViaRoute[] {
+  if (!routes || !notes?.length) return [];
   const out: ViaRoute[] = [];
-  for (const code of notes) for (const [key, r] of Object.entries(line.viaRoutes)) if (key.startsWith(`${code}|${dirIndex}|`)) out.push(r);
+  for (const code of notes) for (const [key, r] of Object.entries(routes)) if (key.startsWith(`${code}|${dirIndex}|`)) out.push(r);
   return out;
 }
 

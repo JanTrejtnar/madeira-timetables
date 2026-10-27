@@ -5,6 +5,7 @@ import { sameCall } from '../lib/network';
 import { hasGps } from '../lib/precision';
 import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } from '../lib/departures';
 import { fmtMinutes, toMinutes } from '../lib/time';
+import { useViaRoutes } from '../data';
 import { onRequestPlaces, withVia, detoursFor } from '../lib/via';
 import { serviceDay } from '../lib/holidays';
 import type { DayKey, Direction, Line, MapFocus, MapLayer, MapPin, Stop } from '../types';
@@ -253,7 +254,8 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   const hasMap = !!dir && (dir.stops.some((s) => s.lat !== undefined) || dir.shapeId !== null);
   const noteKey = sel?.notes?.join('') ?? '';
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const detours = useMemo(() => detoursFor(line, dirIndex, sel?.notes), [line, dirIndex, noteKey]);
+  const viaRoutes = useViaRoutes([line]).get(line.id);
+  const detours = useMemo(() => detoursFor(viaRoutes, dirIndex, sel?.notes), [viaRoutes, dirIndex, noteKey]);
   // planner start / destination of the ridden stretch: the A / B pins and the walk between the picked point and the stop
   const endStops = useMemo(() => {
     if (!initialRide || !initialEnds || !dir || dirIndex !== (initialDir ?? 0)) return null;
