@@ -11,9 +11,6 @@ data/scrape.log
 public/data/
 public/pdf/
 
-# the offline map archive served by the app: while it is only a local stand-in copied from tests/fixtures (by the e2e suite) it is not tracked.
-# To ship the REAL Protomaps extract: put it here and delete the next line (or `git add -f public/maps/madeira.pmtiles`).
-public/maps/madeira.pmtiles
 
 # local / editor / debug artefacts
 *.log
