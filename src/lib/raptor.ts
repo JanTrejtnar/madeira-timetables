@@ -5,8 +5,16 @@
 // Two labels per stop and round, because the transfer buffer depends on the pair of buses (printed times: 5 minutes, any estimated
 // time on either side: 12), not on the stop: class 0 = best arrival of any leg, class 1 = best arrival of a leg with printed times.
 // Boarding an estimated trip needs class 0 + the long buffer; boarding a printed one takes the better of class 1 + short and class 0 + long.
+//
+// Every class keeps two labels: the best arrival and the best arrival by a bus of another group (a line). Two lines that reach a stop at the same
+// minute must both stay usable: the traveller may not go on by the line they came by, and which of the two that is must not depend on which
+// was met first.
 
 export const INF = 0x3fffffff;
+/** label channels: class (any leg / printed leg) x slot (best / best of another group) */
+const NCH = 4;
+/** the group of a trip that is not of any: the start of a journey (never equal to the group of a trip) */
+export const NO_GROUP = -1;
 
 /** One run of a bus: stops with arrival and departure minute at each (a wait at a stop = arr < dep); calls without a time are left out. */
 export interface RaptorTrip {
@@ -15,6 +23,11 @@ export interface RaptorTrip {
   dep: ArrayLike<number>;
   /** times are estimates, not printed in the timetable */
   estimated: boolean;
+  /**
+   * A traveller who got off a bus of a group is not offered another bus of that group right there (a U-turn onto the same line). Default:
+   * a group of its own, so nothing is refused. Must not be -1.
+   */
+  group?: number;
 }
 
 export interface RaptorInput {
@@ -37,6 +50,7 @@ export interface RaptorIndex {
   tripBase: Int32Array;
   tripRef: Int32Array;
   tripPat: Int32Array;
+  tripGroup: Int32Array;
   arr: Int32Array;
   dep: Int32Array;
   /** patterns boarding at a stop (not at their last position): paPat / paPos from paStart[stop] */
@@ -88,6 +102,7 @@ export function buildRaptorIndex(input: RaptorInput): RaptorIndex {
   const tripBase = new Int32Array(tripCount);
   const tripRef = new Int32Array(tripCount);
   const tripPat = new Int32Array(tripCount);
+  const tripGroup = new Int32Array(tripCount);
   const arr = new Int32Array(timeLen);
   const dep = new Int32Array(timeLen);
   let sp = 0;
@@ -108,6 +123,7 @@ export function buildRaptorIndex(input: RaptorInput): RaptorIndex {
       tripBase[g] = tp;
       tripRef[g] = ti;
       tripPat[g] = p;
+      tripGroup[g] = trips[ti].group ?? -(ti + 2);
       for (let i = 0; i < len; i++) {
         arr[tp + i] = trips[ti].arr[i];
         dep[tp + i] = trips[ti].dep[i];
@@ -139,7 +155,7 @@ export function buildRaptorIndex(input: RaptorInput): RaptorIndex {
   const fpMin = new Int32Array(fpStart[stopCount]);
   for (let s = 0; s < stopCount; s++) links[s].forEach(([, b, m], k) => { fpTo[fpStart[s] + k] = b; fpMin[fpStart[s] + k] = m; });
 
-  return { stopCount, patternCount, patStop, seq, patTrip, patEst, tripBase, tripRef, tripPat, arr, dep, paStart, paPat, paPos, fpStart, fpTo, fpMin };
+  return { stopCount, patternCount, patStop, seq, patTrip, patEst, tripBase, tripRef, tripPat, tripGroup, arr, dep, paStart, paPat, paPos, fpStart, fpTo, fpMin };
 }
 
 export interface RaptorHooks {
@@ -167,6 +183,8 @@ export interface RaptorQuery {
   hooks?: RaptorHooks;
   /** every departure searched from scratch instead of reusing the labels of the later ones (slow; the reference the shared run is tested against) */
   independentRuns?: boolean;
+  /** search at most this many departures, the earliest ones (a wide window on a busy network would otherwise run for hundreds of departures) */
+  maxRuns?: number;
   /** one run for a traveller leaving at departAt, whenever the first bus goes (the window is ignored): a cheap way to learn when a connection exists at all */
   earliestOnly?: boolean;
 }
@@ -275,22 +293,42 @@ export function raptor(ix: RaptorIndex, q: RaptorQuery): RaptorJourney[] {
       }
     }
   }
-  const departures = q.earliestOnly ? [q.departAt] : [...cands].sort((a, b) => b - a);
+  const departures = q.earliestOnly ? [q.departAt] : [...cands].sort((a, b) => a - b).slice(0, q.maxRuns ?? Infinity).reverse();
 
-  // labels per class (0 = any leg, 1 = printed leg), round and stop at [round * n + stop]
-  const mk = () => [new Int32Array(R * n), new Int32Array(R * n)];
-  const Aarr = mk(), Aleave = mk(), Afoot = mk(), Awalk = mk();
+  // Labels per CHANNEL, round and stop at [round * n + stop]. channel = class * 2 + slot: class 0 = any leg, class 1 = printed leg;
+  // slot 0 = the best arrival, slot 1 = the best arrival by a bus of ANOTHER group than slot 0 (two lines that reach a stop at the same
+  // minute: the traveller may not go on by the group they came by, and which one that is must not depend on which was met first).
+  // `A*` = where the traveller can board from (after a bus or after a walk), `B*` = the bus that brought them there.
+  const mk = (): Int32Array[] => Array.from({ length: NCH }, () => new Int32Array(R * n));
+  const Aarr = mk(), Aleave = mk(), Afoot = mk(), Afch = mk(), Awalk = mk(), Agrp = mk();
   const Barr = mk(), Bg = mk(), Bfrom = mk(), Bto = mk(), Bpc = mk(), Bleave = mk();
-  for (let c = 0; c < 2; c++) { Aarr[c].fill(INF); Barr[c].fill(INF); }
-  const upd = [new Int32Array(n), new Int32Array(n)];
+  const FIELDS = [Aarr, Aleave, Afoot, Afch, Awalk, Agrp, Barr, Bg, Bfrom, Bto, Bpc, Bleave];
+  const resetLabels = () => {
+    for (let ch = 0; ch < NCH; ch++) { Aarr[ch].fill(INF); Barr[ch].fill(INF); }
+  };
+  resetLabels();
+  const upd = Array.from({ length: NCH }, () => new Int32Array(n));
   const qPos = new Int32Array(ix.patternCount).fill(INF);
   const inNext = new Uint8Array(n);
   const inBus = new Uint8Array(n);
-  /** best arrival at a stop in rounds 1..k (round 0 is the start itself: arriving back at a boarding stop is still a way to go on) */
-  const bound = (c: number, s: number, k: number) => {
+  const copyLabel = (from: number, to: number, idx: number) => { for (const f of FIELDS) f[to][idx] = f[from][idx]; };
+  /** best arrival of class c at a stop in rounds 1..k-1 (round 0 is the start itself: arriving back at a boarding stop is still a way to go on) */
+  const prevBound = (c: number, s: number, k: number) => {
     let m = INF;
-    for (let j = 1; j <= k; j++) if (Aarr[c][j * n + s] < m) m = Aarr[c][j * n + s];
+    for (let j = 1; j < k; j++) if (Aarr[c * 2][j * n + s] < m) m = Aarr[c * 2][j * n + s];
     return m;
+  };
+  /** The channel an arrival (class c, minute t, group grp) at stop s in round k would take, or -1 when it improves nothing. */
+  const slotFor = (c: number, k: number, s: number, t: number, grp: number): number => {
+    if (t >= prevBound(c, s, k)) return -1;
+    const idx = k * n + s;
+    const best = c * 2;
+    if (t < Aarr[best][idx]) return best;
+    return Agrp[best][idx] !== grp && t < Aarr[best + 1][idx] ? best + 1 : -1;
+  };
+  /** Before a new best takes slot 0, the old best moves to slot 1 unless it is of the same group (then slot 1 stays as it is). */
+  const makeRoom = (ch: number, idx: number, grp: number) => {
+    if (ch % 2 === 0 && Aarr[ch][idx] < INF && Agrp[ch][idx] !== grp) copyLabel(ch, ch + 1, idx);
   };
 
   const found: RaptorJourney[] = [];
@@ -301,25 +339,25 @@ export function raptor(ix: RaptorIndex, q: RaptorQuery): RaptorJourney[] {
     const legs: (RaptorLeg & { g: number })[] = [];
     let r = k;
     let stop = dest;
-    let cls = 0;
+    let ch = 0;
     while (r >= 1) {
       const idx = r * n + stop;
-      const g = Bg[cls][idx];
-      const from = Bfrom[cls][idx];
-      const pc = Bpc[cls][idx];
+      const g = Bg[ch][idx];
+      const from = Bfrom[ch][idx];
+      const pc = Bpc[ch][idx];
       const boardStop = tripStop(g, from);
       const pidx = (r - 1) * n + boardStop;
       const foot = Afoot[pc][pidx];
-      legs.push({ trip: ix.tripRef[g], g, from, to: Bto[cls][idx], walkBefore: foot >= 0 ? Awalk[pc][pidx] : 0 });
-      stop = foot >= 0 ? foot : boardStop;
-      cls = pc;
+      legs.push({ trip: ix.tripRef[g], g, from, to: Bto[ch][idx], walkBefore: foot >= 0 ? Awalk[pc][pidx] : 0 });
+      if (foot >= 0) { stop = foot; ch = Afch[pc][pidx]; }
+      else { stop = boardStop; ch = pc; }
       r--;
     }
     legs.reverse();
     const first = legs[0];
     first.walkBefore = walkIn[tripStop(first.g, first.from)];
-    // labels kept from other runs may have been improved since, and a part stitched together this way is feasible only if the buffer and
-    // the cap on the wait still hold; a chain that breaks them is dropped (the run that made it has already reported it)
+    // labels kept from other runs may have been improved since, and a part stitched together this way is feasible only if the buffer, the
+    // cap on the wait and the rule on groups still hold; a chain that breaks them is dropped (the run that made it has already reported it)
     for (let i = 1; i < legs.length; i++) {
       const a = legs[i - 1];
       const b = legs[i];
@@ -327,6 +365,7 @@ export function raptor(ix: RaptorIndex, q: RaptorQuery): RaptorJourney[] {
       const board = ix.dep[ix.tripBase[b.g] + b.from];
       if (board < ix.arr[ix.tripBase[a.g] + a.to] + b.walkBefore + buf) return null;
       if (board - (ix.dep[ix.tripBase[a.g] + a.to] + b.walkBefore + buf) > maxWait) return null;
+      if (ix.tripGroup[a.g] === ix.tripGroup[b.g]) return null;
     }
     const last = legs[legs.length - 1];
     const arrive = ix.arr[ix.tripBase[last.g] + last.to];
@@ -340,21 +379,21 @@ export function raptor(ix: RaptorIndex, q: RaptorQuery): RaptorJourney[] {
   }
 
   for (const d of departures) {
-    if (q.independentRuns) {
-      for (let c = 0; c < 2; c++) { Aarr[c].fill(INF); Barr[c].fill(INF); }
-    }
-    upd[0].fill(-1);
-    upd[1].fill(-1);
+    if (q.independentRuns) resetLabels();
+    for (let ch = 0; ch < NCH; ch++) upd[ch].fill(-1);
     let marked: number[] = [];
     for (const s of origin) {
       // a candidate departure d: the traveller is at each stop at d (those too far to reach by then are not boarded from this run);
       // earliest only: at each stop as soon as they can walk there
       if (!q.earliestOnly && d - walkIn[s] < q.departAt) continue;
       const start = q.earliestOnly ? q.departAt + walkIn[s] : d;
-      for (let c = 0; c < 2; c++) {
-        Aarr[c][s] = start;
-        Aleave[c][s] = start;
-        Afoot[c][s] = -1;
+      // no `prevBound` on the start: a bus may bring the traveller back to a boarding stop (a hop between two stops of the start area,
+      // then a walk to a stop outside it) – the router has always offered that, and pruning it loses a connection plan() finds
+      for (const ch of [0, 2]) {
+        Aarr[ch][s] = start;
+        Aleave[ch][s] = start;
+        Afoot[ch][s] = -1;
+        Agrp[ch][s] = NO_GROUP;
       }
       marked.push(s);
     }
@@ -382,76 +421,69 @@ export function raptor(ix: RaptorIndex, q: RaptorQuery): RaptorJourney[] {
         const g1 = ix.patTrip[p + 1];
         let cur = -1;
         let curBoard = -1;
-        let curCls = 0;
+        let curCh = 0;
         for (let i = pos0; i < len; i++) {
           const s = ix.seq[off + i];
           if (cur >= 0) {
             const t = ix.arr[ix.tripBase[cur] + i];
             const w = walkOut[s];
             if (t < bestFin && (w < 0 || t + w < bestFin) && ridesAfter[s] <= K - k) {
-              const updE = t < bound(0, s, k);
-              const updN = !est && t < bound(1, s, k);
-              if ((updE || updN) && (!hooks.leg || hooks.leg(ix.tripRef[cur], curBoard, i, k, w >= 0))) {
+              const grp = ix.tripGroup[cur];
+              const chE = slotFor(0, k, s, t, grp);
+              const chN = est ? -1 : slotFor(1, k, s, t, grp);
+              if ((chE >= 0 || chN >= 0) && (!hooks.leg || hooks.leg(ix.tripRef[cur], curBoard, i, k, w >= 0))) {
                 const lv = ix.dep[ix.tripBase[cur] + i];
-                for (let c = 0; c < 2; c++) {
-                  if (c === 0 ? !updE : !updN) continue;
-                  const idx = kn + s;
-                  Barr[c][idx] = t;
-                  Bg[c][idx] = cur;
-                  Bfrom[c][idx] = curBoard;
-                  Bto[c][idx] = i;
-                  Bpc[c][idx] = curCls;
-                  Bleave[c][idx] = lv;
-                  Aarr[c][idx] = t;
-                  Aleave[c][idx] = lv;
-                  Afoot[c][idx] = -1;
-                  upd[c][s] = k;
+                const idx = kn + s;
+                for (const ch of [chE, chN]) {
+                  if (ch < 0) continue;
+                  makeRoom(ch, idx, grp);
+                  Barr[ch][idx] = t;
+                  Bg[ch][idx] = cur;
+                  Bfrom[ch][idx] = curBoard;
+                  Bto[ch][idx] = i;
+                  Bpc[ch][idx] = curCh;
+                  Bleave[ch][idx] = lv;
+                  Aarr[ch][idx] = t;
+                  Aleave[ch][idx] = lv;
+                  Afoot[ch][idx] = -1;
+                  Agrp[ch][idx] = grp;
+                  upd[ch][s] = k;
                 }
                 if (!inBus[s]) { inBus[s] = 1; newBus.push(s); }
               }
             }
           }
           if (i === len - 1) break;
-          // boarding: from the labels of the previous round, with the buffer of this pair of buses
-          let ready: number;
-          let base: number;
-          let cls: number;
-          if (k === 1) {
-            const a = Aarr[0][pn + s];
+          // boarding: from the labels of the previous round, with the buffer of this pair of buses; the earliest trip that is not of the
+          // group the traveller arrives by wins, whichever label it comes from
+          let bestG = cur >= 0 ? cur : g1;
+          let bestCh = -1;
+          for (let ch = 0; ch < (k === 1 ? 1 : NCH); ch++) {
+            const a = Aarr[ch][pn + s];
             if (a >= INF) continue;
-            ready = a;
-            base = a;
-            cls = 0;
-          } else {
-            const aE = Aarr[0][pn + s];
-            const aN = Aarr[1][pn + s];
-            if (est) {
-              if (aE >= INF) continue;
-              ready = aE + bufE;
-              base = Aleave[0][pn + s] + bufE;
-              cls = 0;
-            } else {
-              const rn = aN < INF ? aN + bufP : INF;
-              const re = aE < INF ? aE + bufE : INF;
-              if (rn >= INF && re >= INF) continue;
-              if (rn <= re) { ready = rn; base = Aleave[1][pn + s] + bufP; cls = 1; }
-              else { ready = re; base = Aleave[0][pn + s] + bufE; cls = 0; }
+            let ready = a;
+            let base = a;
+            if (k > 1) {
+              const buf = ch >> 1 === 1 && !est ? bufP : bufE;
+              ready = a + buf;
+              base = Aleave[ch][pn + s] + buf;
             }
+            let g = lowerBound(ix, g0, bestG, i, ready);
+            if (g >= bestG) continue;
+            const grp = Agrp[ch][pn + s];
+            let prevTrip = -1;
+            if (hooks.board && k > 1) {
+              const foot = Afoot[ch][pn + s];
+              prevTrip = foot >= 0 ? ix.tripRef[Bg[Afch[ch][pn + s]][pn + foot]] : ix.tripRef[Bg[ch][pn + s]];
+            }
+            for (; g < bestG; g++) {
+              if (k > 1 && ix.dep[ix.tripBase[g] + i] - base > maxWait) { g = bestG; break; }
+              if (grp !== NO_GROUP && ix.tripGroup[g] === grp) continue; // back onto the group the traveller came by
+              if (!hooks.board || hooks.board(ix.tripRef[g], s, k, prevTrip)) break;
+            }
+            if (g < bestG) { bestG = g; bestCh = ch; }
           }
-          const limit = cur >= 0 ? cur : g1;
-          if (cur >= 0 && ready > ix.dep[ix.tripBase[cur] + i]) continue; // the trip already on is the earlier one
-          let g = lowerBound(ix, g0, limit, i, ready);
-          if (g >= limit) continue;
-          let prevTrip = -1;
-          if (hooks.board && k > 1) {
-            const foot = Afoot[cls][pn + s];
-            prevTrip = ix.tripRef[Bg[cls][pn + (foot >= 0 ? foot : s)]];
-          }
-          for (; g < limit; g++) {
-            if (k > 1 && ix.dep[ix.tripBase[g] + i] - base > maxWait) { g = limit; break; }
-            if (!hooks.board || hooks.board(ix.tripRef[g], s, k, prevTrip)) break;
-          }
-          if (g < limit) { cur = g; curBoard = i; curCls = cls; }
+          if (bestCh >= 0) { cur = bestG; curBoard = i; curCh = bestCh; }
         }
       }
       // the best arrival at the destination in this round (only a bus arrival counts, not a walk)
@@ -476,16 +508,21 @@ export function raptor(ix: RaptorIndex, q: RaptorQuery): RaptorJourney[] {
         for (let a = ix.fpStart[p]; a < ix.fpStart[p + 1]; a++) {
           const s = ix.fpTo[a];
           if (walkOut[s] >= 0 || ridesFrom[s] > K - k) continue;
-          for (let c = 0; c < 2; c++) {
-            if (upd[c][p] !== k) continue;
-            const val = Barr[c][kn + p] + ix.fpMin[a];
-            if (val < Aarr[c][kn + s] && val < bound(c, s, k)) {
-              Aarr[c][kn + s] = val;
-              Aleave[c][kn + s] = Bleave[c][kn + p] + ix.fpMin[a];
-              Afoot[c][kn + s] = p;
-              Awalk[c][kn + s] = ix.fpMin[a];
-              if (!inNext[s]) { inNext[s] = 1; next.push(s); }
-            }
+          for (let ch = 0; ch < NCH; ch++) {
+            if (upd[ch][p] !== k) continue;
+            const val = Barr[ch][kn + p] + ix.fpMin[a];
+            const grp = Agrp[ch][kn + p];
+            const to = slotFor(ch >> 1, k, s, val, grp);
+            if (to < 0) continue;
+            const idx = kn + s;
+            makeRoom(to, idx, grp);
+            Aarr[to][idx] = val;
+            Aleave[to][idx] = Bleave[ch][kn + p] + ix.fpMin[a];
+            Afoot[to][idx] = p;
+            Afch[to][idx] = ch;
+            Awalk[to][idx] = ix.fpMin[a];
+            Agrp[to][idx] = grp;
+            if (!inNext[s]) { inNext[s] = 1; next.push(s); }
           }
         }
       }

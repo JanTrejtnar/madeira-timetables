@@ -148,7 +148,8 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   });
   check('results: the back-to-search button stays visible under the header while scrolling', sticky.scrolled > 100 && sticky.top >= sticky.headerBottom - 2 && sticky.top < sticky.headerBottom + 60, JSON.stringify(sticky));
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.evaluate(() => document.querySelector('[data-testid=connection]').click());
+  // a connection with a transfer (rows of two buses): its detail is taller than the screen, so the map icon has something to scroll over
+  await page.evaluate(() => ([...document.querySelectorAll('[data-testid=connection]')].find((c) => c.querySelectorAll('[class*="grid-cols-[2.75rem"]').length >= 2) ?? document.querySelector('[data-testid=connection]')).click());
   await sleep(1200);
   const det = await page.evaluate(async () => {
     const d = document.querySelector('[data-testid=connection-detail]');

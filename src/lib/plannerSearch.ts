@@ -3,7 +3,8 @@
 import { CITY_PREFIX, PARISH_PREFIX, hubsNear, nearbyStopNodes, nodeIdsOfKeys, nodesNearPoint, resolveNodes, type Network, type Trip } from './network';
 import { isPoiKey } from './places';
 import type { Picked } from './plannerForm';
-import { plan, type Plan } from './router';
+import { planRaptor } from './raptorAdapter';
+import type { Plan } from './router';
 import { walkTo } from './walk';
 
 /** a picked stop also stands for the stops this many minutes away on foot */
@@ -83,14 +84,14 @@ export function runSearch(net: Network, trips: Trip[], from: Picked, to: Picked,
       if (w) walkOut.set(id, w.min);
     }
   }
-  let found = plan(net, trips, A, B, at, walkIn, walkOut);
+  let found = planRaptor(net, trips, A, B, at, walkIn, walkOut);
   // "Funchal" as a whole town: leave from its terminals (Rodoeste, SAM, CAM, the cable car ...); a wayside stop is offered only when nothing leaves from a terminal
   if (!from.pt && from.key?.startsWith(CITY_PREFIX)) {
     // a terminal: marked as one, a transfer hub, or the stop where a line starts (the Areeiro bus leaves from its own stop at the cable car)
     const starts = new Set(trips.map((tr) => tr.nodes[0]));
     const terminals = new Set([...A].filter((id) => net.nodes[id].terminal || net.nodes[id].transferHub || starts.has(id)));
     if (terminals.size && terminals.size < A.size) {
-      const fromTerminals = plan(net, trips, terminals, B, at, walkIn, walkOut);
+      const fromTerminals = planRaptor(net, trips, terminals, B, at, walkIn, walkOut);
       if (fromTerminals.direct.length || fromTerminals.transfers.length) found = fromTerminals;
     }
   }

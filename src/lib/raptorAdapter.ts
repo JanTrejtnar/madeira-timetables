@@ -46,7 +46,14 @@ export function compactTrip(trip: Trip): CompactTrip {
 export interface Prepared {
   index: RaptorIndex;
   compact: CompactTrip[];
+  /**
+   * For a trip that is in the index: itself first, then the trips of other lines that run the very same bus (same calls, same times:
+   * lines 6 and 139 share runs). The index holds one of them; which line the traveller is shown is decided when the itinerary is made.
+   */
+  aliases: number[][];
 }
+
+const NOTHING: RaptorTrip = { nodes: [], arr: [], dep: [], estimated: false };
 
 const cache = new WeakMap<readonly Trip[], { net: Network; prepared: Prepared }>();
 
@@ -55,9 +62,27 @@ export function prepare(net: Network, trips: readonly Trip[]): Prepared {
   const hit = cache.get(trips);
   if (hit && hit.net === net) return hit.prepared;
   const compact = trips.map(compactTrip);
+  const aliases: number[][] = trips.map(() => []);
+  const first = new Map<string, number>();
+  const indexTrips = compact.map((ct, i) => {
+    const key = [ct.estimated ? 1 : 0, trips[i].nodes.join(), trips[i].times.join(), ct.arrRow.join(), ct.depRow.join()].join('|');
+    const rep = first.get(key);
+    if (rep === undefined) {
+      first.set(key, i);
+      aliases[i] = [i];
+      return ct;
+    }
+    aliases[rep].push(i);
+    return NOTHING;
+  });
+  // the group of a trip is its line: never back onto the same line right at the stop one got off. A bus that several lines run is of no
+  // group (default), the line is chosen afterwards (toItinerary), so that it is not the line of the bus before or after.
+  aliases.forEach((list, i) => {
+    if (list.length && list.every((a) => trips[a].line.id === trips[i].line.id)) compact[i].group = trips[i].line.id;
+  });
   const footpaths: [number, number, number][] = [];
   for (const [from, list] of net.near) for (const { node, walk } of list) if (node !== from) footpaths.push([from, node, walk]);
-  const prepared = { index: buildRaptorIndex({ stopCount: net.nodes.length, trips: compact, footpaths }), compact };
+  const prepared = { index: buildRaptorIndex({ stopCount: net.nodes.length, trips: indexTrips, footpaths }), compact, aliases };
   cache.set(trips, { net, prepared });
   return prepared;
 }
@@ -69,6 +94,8 @@ export interface JourneyOptions {
   maxWait?: number;
   /** default 2 */
   maxTransfers?: number;
+  /** at most this many departures are searched, the earliest (default: all of the window) */
+  maxRuns?: number;
   /** search every departure from scratch (slow reference for tests) */
   independentRuns?: boolean;
   /** one run: the journeys for a traveller who leaves at departAt and takes the first buses that go (any time of the services' 48 hours) */
@@ -81,12 +108,13 @@ export interface JourneyOptions {
  */
 export function raptorJourneys(net: Network, trips: readonly Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn, walkOut?: WalkOut, opts: JourneyOptions = {}): Itinerary[] {
   if (!from.size || !to.size) return [];
-  const { index, compact } = prepare(net, trips);
+  const { index, compact, aliases } = prepare(net, trips);
   const guard = routeGuard(net, from, to);
   const { closer } = guard;
   const hooks: RaptorHooks = {
-    // the first bus must not head back into the starting area; a transfer never goes back onto the same line (a U-turn)
-    board: (trip, _stop, round, prev) => (round === 1 ? !guard.intoOrigin(trips[trip]) : trips[prev].line.id !== trips[trip].line.id),
+    // the first bus must not head back into the starting area
+    // (a transfer never goes back onto the same line: that is the group of a trip in the search itself)
+    board: (trip, _stop, round) => round !== 1 || !guard.intoOrigin(trips[trip]),
     leg: (trip, f, t, round, final) => {
       const ct = compact[trip];
       const a = ct.nodes[f];
@@ -108,25 +136,48 @@ export function raptorJourneys(net: Network, trips: readonly Trip[], from: Set<n
     buffer: { printed: MIN_TRANSFER, estimated: MIN_TRANSFER_ESTIMATED },
     hooks,
     independentRuns: opts.independentRuns,
+    maxRuns: opts.maxRuns,
     earliestOnly: opts.earliestOnly,
   });
-  return journeys.map((j) => toItinerary(j, trips, compact));
+  return journeys.flatMap((j) => toItinerary(j, trips, compact, aliases) ?? []);
 }
 
-function toItinerary(j: RaptorJourney, trips: readonly Trip[], compact: CompactTrip[]): Itinerary {
-  const legs = j.legs.map((l) => ({ ...leg(trips[l.trip], compact[l.trip].depRow[l.from], compact[l.trip].arrRow[l.to]), walkBefore: l.walkBefore }));
+/** The itinerary of a journey, each leg on one of the lines that run its bus, never the same line twice in a row (null if that cannot be). */
+function toItinerary(j: RaptorJourney, trips: readonly Trip[], compact: CompactTrip[], aliases: number[][]): Itinerary | null {
+  const pick = (k: number, prevLine: number): number[] | null => {
+    for (const a of aliases[j.legs[k].trip]) {
+      if (trips[a].line.id === prevLine) continue;
+      const rest = k + 1 < j.legs.length ? pick(k + 1, trips[a].line.id) : [];
+      if (rest) return [a, ...rest];
+    }
+    return null;
+  };
+  const chosen = pick(0, -1);
+  if (!chosen) return null;
+  const legs = j.legs.map((l, k) => ({ ...leg(trips[chosen[k]], compact[chosen[k]].depRow[l.from], compact[chosen[k]].arrRow[l.to]), walkBefore: l.walkBefore }));
   return { legs, depart: j.depart, arrive: j.arrive, finish: j.finish, walk: legs.slice(1).reduce((s, l) => s + l.walkBefore, 0) };
 }
 
-/** Departures this many minutes after the wanted time are shown (and after the first connection, when none leaves sooner). */
-const SHOWN_WINDOW = 180;
+/**
+ * Departures this many minutes after the wanted time are searched: the next 3 hours first, then 24 hours while fewer than
+ * DIRECT_SHOWN direct connections turn up (as `plan()` showed the next eight whenever they were). After the first connection when none leaves sooner.
+ */
+const WINDOWS = [180, 1440];
+const SHOWN_WINDOW = WINDOWS[0];
+const DIRECT_SHOWN = 8;
+/** departures searched per call of the planner: the next ones; later ones come with "later connections" */
+const MAX_RUNS = 100;
 
 /** The same result shape as `plan()` (direct connections, then connections with transfers), found by RAPTOR. */
 export function planRaptor(net: Network, trips: readonly Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn, walkOut?: WalkOut): Plan {
   if (!from.size || !to.size) return { direct: [], transfers: [] };
   const search = (maxWait: number) => {
     const run = (o: JourneyOptions) => raptorJourneys(net, trips, from, to, departAt, walkIn, walkOut, { maxWait, ...o });
-    let all = run({ window: SHOWN_WINDOW });
+    let all: Itinerary[] = [];
+    for (const window of WINDOWS) {
+      all = run({ window, maxRuns: MAX_RUNS });
+      if (all.filter((it) => it.legs.length === 1).length >= DIRECT_SHOWN) break;
+    }
     if (!all.length) {
       // nothing in the next hours (the last bus has gone, a sparse line): one cheap run finds when a connection first runs, then what leaves around then is shown
       const first = run({ earliestOnly: true });
@@ -153,5 +204,5 @@ export function planRaptor(net: Network, trips: readonly Trip[], from: Set<numbe
   transfers = transfers.filter((x) => needTransfers || x.finish + TRANSFER_PENALTY < bestDirectArrive);
   // nothing else: a long wait beats no connection at all
   if (!direct.length && !transfers.length) transfers = search(MAX_WAIT_FALLBACK).transfers;
-  return { direct: direct.slice(0, 8), transfers: transfers.slice(0, 6) };
+  return { direct: direct.slice(0, DIRECT_SHOWN), transfers: transfers.slice(0, 6) };
 }

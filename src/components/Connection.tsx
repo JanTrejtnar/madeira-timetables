@@ -64,6 +64,13 @@ export function endWalks(it: Itinerary, fromPt: Picked['pt'], toPt: Picked['pt']
   return { walkIn: real(fromPt, inStop, false) ?? walkTo(fromPt, inStop), walkOut: real(toPt, outStop, true) ?? walkTo(toPt, outStop) };
 }
 
+/** Minutes on foot between the bus before leg `i` and leg `i` (a transfer to a stop nearby; 0 = the same stop). */
+export const transferWalk = (it: Itinerary, i: number): number => it.legs[i].walkBefore ?? (it.legs.length === 2 ? it.walk : 0);
+
+/** All the walking of a connection: to the first stop, between the buses, from the last stop to the destination. */
+export const totalWalk = (it: Itinerary, walkIn: { min: number } | null | undefined, walkOut: { min: number } | null | undefined): number =>
+  (walkIn?.min ?? 0) + (walkOut?.min ?? 0) + it.legs.slice(1).reduce((sum, _, k) => sum + transferWalk(it, k + 1), 0);
+
 /** Where the leg starts / ends for the line detail: the picked point when the leg is the first / last one, else the stop itself. */
 export function rideEnds(it: Itinerary, i: number, fromPt: Picked['pt'], toPt: Picked['pt']): RideEnds {
   return {
@@ -286,18 +293,31 @@ function Rides({ it, shared, base, fromPt, toPt, walkIn, walkOut }: { it: Itiner
                 </p>
               </Row>
             )}
-            {i < last && (
-              <Row rail="dashed">
-                <p className="py-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                  <b className="font-semibold text-slate-600 dark:text-slate-300">{t('transferWord')}</b>
-                  {' · '}
-                  {stopLabel(tripStops(it.legs[i + 1].trip)[it.legs[i + 1].fromPos], lang)}
-                  {' · '}
-                  {t('waitMin', { n: it.legs[i + 1].depart - l.arrive })}
-                  {it.walk > 0 ? ` · ${t('walkMin', { n: it.walk })}` : ''}
-                </p>
-              </Row>
-            )}
+            {i < last && (() => {
+              const next = it.legs[i + 1];
+              const walk = transferWalk(it, i + 1);
+              const nextStop = tripStops(next.trip)[next.fromPos];
+              return (
+                <>
+                  <Row rail="dashed">
+                    <p className="py-2 text-xs leading-5 text-slate-500 dark:text-slate-400" data-testid="transfer">
+                      <b className="font-semibold text-slate-600 dark:text-slate-300">{t('transferWord')}</b>
+                      {walk === 0 && <>{' · '}{stopLabel(nextStop, lang)}</>}
+                      {' · '}
+                      {t('waitMin', { n: next.depart - l.arrive - walk })}
+                    </p>
+                  </Row>
+                  {walk > 0 && (
+                    <Row time={<span className="font-normal text-slate-500 dark:text-slate-400">{fmtMinutes(l.arrive + walk)}</span>} rail="dashed">
+                      <p className="py-1.5 text-sm leading-5 text-slate-600 dark:text-slate-300" data-testid="walk-transfer">
+                        <span aria-hidden="true">🚶 </span>
+                        {t('walkTransfer', { n: walk, name: stopLabel(nextStop, lang) })}
+                      </p>
+                    </Row>
+                  )}
+                </>
+              );
+            })()}
           </div>
         );
       })}
@@ -381,6 +401,7 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
           </span>
           <span className="shrink-0 text-slate-500 tabular-nums dark:text-slate-400">
             {duration(it.arrive - it.depart, t)}
+            {totalWalk(it, walkIn, walkOut) > 0 && <span data-testid="walk-total"> · 🚶 {t('walkTotal', { n: totalWalk(it, walkIn, walkOut) })}</span>}
             <Fare it={it} card={shared.fareCard} />
           </span>
         </div>

@@ -3,11 +3,12 @@ import { buildRaptorIndex, raptor, type RaptorHooks, type RaptorQuery, type Rapt
 
 type Call = number | [arr: number, dep: number];
 /** a trip: stop ids and the time at each (a pair = arrives, leaves later) */
-const trip = (nodes: number[], times: Call[], estimated = false): RaptorTrip => ({
+const trip = (nodes: number[], times: Call[], estimated = false, group?: number): RaptorTrip => ({
   nodes,
   arr: times.map((t) => (Array.isArray(t) ? t[0] : t)),
   dep: times.map((t) => (Array.isArray(t) ? t[1] : t)),
   estimated,
+  ...(group === undefined ? {} : { group }),
 });
 const run = (trips: RaptorTrip[], q: Partial<RaptorQuery> & { departAt: number }, foot: [number, number, number][] = []) =>
   raptor(buildRaptorIndex({ stopCount: 12, trips, footpaths: foot }), { from: new Map([[0, 0]]), to: new Map([[3, 0]]), ...q });
@@ -128,5 +129,27 @@ describe('raptor: hooks', () => {
     const hooks: RaptorHooks = { board: (_t, _s, round, prev) => (round > 1 && prevs.push(prev), true) };
     run([trip([0, 1], [100, 110]), trip([1, 3], [120, 130])], { departAt: 90, hooks });
     expect(prevs).toContain(0);
+  });
+});
+
+describe('raptor: groups (lines)', () => {
+  // two buses reach stop 1 at the same minute, one of group 1 and one of group 2; the bus on from stop 1 is of group 1
+  const viaA = trip([0, 1], [100, 110], false, 1);
+  const viaB = trip([0, 4, 1], [100, 105, 110], false, 2);
+  const onward = trip([1, 3], [120, 130], false, 1);
+  it('never goes back onto the group the traveller got off, and still finds the other bus that arrives at the same minute', () => {
+    for (const trips of [[viaA, viaB, onward], [viaB, viaA, onward]]) {
+      const r = run(trips, { departAt: 90 });
+      expect(r).toHaveLength(1);
+      expect(r[0].legs.map((l) => trips[l.trip].group)).toEqual([2, 1]);
+    }
+  });
+  it('a journey that could only be made by changing from a group to itself is not offered', () => {
+    expect(run([viaA, onward], { departAt: 90 })).toEqual([]);
+  });
+  it('a walk in between does not lift the rule', () => {
+    const toFoot = trip([0, 1], [100, 110], false, 1);
+    const same = trip([2, 3], [118, 130], false, 1);
+    expect(run([toFoot, same], { departAt: 90 }, [[1, 2, 2]])).toEqual([]);
   });
 });

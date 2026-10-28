@@ -76,6 +76,18 @@ describe('planRaptor on small networks', () => {
     expect(three.transfers[0].legs.map((l) => l.trip.line.number)).toEqual(['11', '12', '13']);
     expect(planRaptor(s.net, s.trips, s.nodes('p1'), s.nodes('p5'), 7 * 60 + 50)).toEqual({ direct: [], transfers: [] });
   });
+  it('lines that run the same bus (6 and 139 share a run): the transfer onto line 6 is offered with the other line first, not lost as a U-turn', () => {
+    // line 6 has two directions: Alpha > Bravo at 08:00 (the same bus as line 139) and Bravo > Charlie at 09:00
+    const six = printed(6, '6', [['Alpha', 32.65, -16.9], ['Bravo', 32.66, -16.9]], [['08:00', '08:30']]);
+    six.directions.push(printed(6, '6', [['Bravo', 32.66, -16.9], ['Charlie', 32.67, -16.9]], [['09:00', '09:30']]).directions[0]);
+    const shared = printed(139, '139', [['Alpha', 32.65, -16.9], ['Bravo', 32.66, -16.9]], [['08:00', '08:30']]);
+    const s = setup([six, shared]);
+    const mine = planRaptor(s.net, s.trips, s.nodes('alpha'), s.nodes('charlie'), 7 * 60 + 50);
+    const old = plan(s.net, s.trips, s.nodes('alpha'), s.nodes('charlie'), 7 * 60 + 50);
+    expect(old.transfers[0].legs.map((l) => l.trip.line.number)).toEqual(['139', '6']);
+    expect(mine.transfers[0].legs.map((l) => l.trip.line.number)).toEqual(['139', '6']);
+    expect(mine.transfers[0]).toMatchObject({ depart: t('08:00'), finish: t('09:30') });
+  });
   it('nothing for the next hours: shows the first connection that runs, not an empty list', () => {
     const r = planRaptor(net, trips, nodes('alpha'), nodes('bravo'), 22 * 60);
     expect(r.direct[0]?.depart).toBeGreaterThan(22 * 60); // tomorrow's first bus (the 48 hours of services)

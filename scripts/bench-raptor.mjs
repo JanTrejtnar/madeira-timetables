@@ -47,7 +47,7 @@ async function bench(n) {
   }
   const methods = {
     'plan() (current)': (q) => plan(net, trips, q.A, q.B, q.at),
-    'planRaptor (3 h window, 48 h if empty)': (q) => planRaptor(net, trips, q.A, q.B, q.at),
+    'planRaptor (3 h, then 24 h, <=100 runs)': (q) => planRaptor(net, trips, q.A, q.B, q.at),
     'raptorJourneys 3 h': (q) => raptorJourneys(net, trips, q.A, q.B, q.at, undefined, undefined, { window: 180 }),
     'raptorJourneys 12 h': (q) => raptorJourneys(net, trips, q.A, q.B, q.at, undefined, undefined, { window: 720 }),
   };
