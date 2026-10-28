@@ -1,9 +1,13 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import Pbf from 'pbf';
 import { VectorTile } from '@mapbox/vector-tile';
 import { PMTiles } from 'pmtiles';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CacheArchiveSource, downloadArchive, fmtBytes, offlineMapInstalled, probeArchive, readInstalled, removeArchive, type Progress } from '../src/lib/offlineMaps';
+import { shapeFileUrl } from '../src/lib/shapeUrl';
+import { CacheArchiveSource, downloadArchive as download, fmtBytes, offlineMapInstalled, probeArchive, probePack, readInstalled, removeArchive, type DownloadOptions, type Progress } from '../src/lib/offlineMaps';
+
+/** the archive alone (the route pack has its own tests below) */
+const downloadArchive = (o: DownloadOptions = {}) => download({ shapes: null, ...o });
 
 // ---- an in-memory Cache Storage entry and a fetch that serves byte ranges ------------------------------------------------------------------
 function memoryCache(): Cache {
@@ -21,7 +25,7 @@ function memoryCache(): Cache {
       return store.delete(urlOf(r));
     },
     async keys() {
-      return [...store.keys()].map((u) => new Request(u));
+      return [...store.keys()].map((u) => new Request(new URL(u, 'http://localhost')));
     },
   } as unknown as Cache;
 }
@@ -161,6 +165,125 @@ describe('downloadArchive', () => {
     expect(await readInstalled(cache)).toBeNull();
     expect(offlineMapInstalled()).toBe(false);
     expect(await cache.keys()).toHaveLength(0);
+  });
+});
+
+// ---- the route pack: all route geometries in one file, unpacked into the route cache ----------------------------------------------------------
+type Pack = Record<string, [string, [number, number][]]>;
+const PACK: Pack = {
+  '101': ['aaaa1111', [[32.6, -16.9], [32.61, -16.91], [32.62, -16.92]]],
+  '102': ['bbbb2222', [[32.7, -16.8], [32.71, -16.81]]],
+  '103': ['cccc3333', [[32.8, -17.0], [32.81, -17.01], [32.82, -17.02], [32.83, -17.03]]],
+};
+const SHAPES = { url: '/shapes-all.json', metaUrl: '/shapes-all.meta.json' };
+/** the archive server plus the two files of the route pack */
+function site(file: Uint8Array, pack: Pack | null, opts: { rev?: string; failShapes?: boolean } = {}) {
+  const arch = server(file);
+  const requested: string[] = [];
+  const text = JSON.stringify(pack);
+  const fn = (async (u: RequestInfo | URL, init?: RequestInit) => {
+    const href = String(u);
+    requested.push(href);
+    if (href === SHAPES.metaUrl) return pack ? Response.json({ rev: opts.rev ?? 'r1', count: Object.keys(pack).length, bytes: 1000, raw: 4000 }) : new Response('<!doctype html>', { status: 200 });
+    if (href === SHAPES.url) return opts.failShapes ? new Response('x', { status: 500 }) : new Response(text);
+    return arch.fn(u, init);
+  }) as typeof fetch;
+  return { fn, requested, calls: arch.calls };
+}
+const abs = (u: string) => new URL(u, 'http://localhost').href;
+const pointsIn = async (cache: Cache, id: number, rev: string) => {
+  const hit = await cache.match(shapeFileUrl(id, rev));
+  return hit ? ((await hit.json()) as unknown) : undefined;
+};
+
+describe('route pack', () => {
+  const file = archiveBytes(6000);
+  it('probePack adds the routes to the size; without a pack on the server it is the archive alone', async () => {
+    const withShapes = await probePack({ url: '/x', shapes: SHAPES, fetchFn: site(file, PACK).fn });
+    expect(withShapes).toMatchObject({ size: 6000, total: 7000, shapes: { rev: 'r1', count: 3, bytes: 1000 } });
+    const without = await probePack({ url: '/x', shapes: SHAPES, fetchFn: site(file, null).fn });
+    expect(without).toMatchObject({ size: 6000, total: 6000, shapes: null });
+  });
+
+  it('unpacks every route under the key of a normal fetch, counts them in the progress and installs only with them', async () => {
+    const cache = memoryCache();
+    const shapesCache = memoryCache();
+    const progress: Progress[] = [];
+    const pack = await download({ url: '/x', shapes: SHAPES, cache, shapesCache, fetchFn: site(file, PACK).fn, chunkBytes: 2048, onProgress: (p) => progress.push(p) });
+    expect(progress.at(-1)).toEqual({ done: 7000, total: 7000 });
+    expect(pack.shapes).toMatchObject({ rev: 'r1', items: [[101, 'aaaa1111'], [102, 'bbbb2222'], [103, 'cccc3333']] });
+    for (const [id, [rev, pts]] of Object.entries(PACK)) expect(await pointsIn(shapesCache, Number(id), rev)).toEqual(pts);
+    expect((await shapesCache.keys()).map((k) => k.url).sort()).toEqual(Object.entries(PACK).map(([id, [rev]]) => abs(shapeFileUrl(Number(id), rev))).sort());
+    expect(await readInstalled(cache)).toMatchObject({ shapes: { rev: 'r1' } });
+  });
+
+  it('a failing route download leaves nothing installed; the next try does not fetch the archive chunks again', async () => {
+    const cache = memoryCache();
+    const shapesCache = memoryCache();
+    await expect(download({ url: '/x', shapes: SHAPES, cache, shapesCache, fetchFn: site(file, PACK, { failShapes: true }).fn, chunkBytes: 2048 })).rejects.toThrow(/routes/);
+    expect(await readInstalled(cache)).toBeNull();
+    expect(offlineMapInstalled()).toBe(false);
+    const again = site(file, PACK);
+    await download({ url: '/x', shapes: SHAPES, cache, shapesCache, fetchFn: again.fn, chunkBytes: 2048 });
+    expect(again.calls).toEqual(['bytes=0-6']); // only the probe: all 3 chunks were kept
+    expect(await readInstalled(cache)).toMatchObject({ chunks: 3, shapes: { rev: 'r1' } });
+  });
+
+  it('refuses a damaged pack (a route of one point) without storing any route', async () => {
+    const shapesCache = memoryCache();
+    const broken = { ...PACK, '104': ['dddd4444', [[1, 2]]] } as unknown as Pack;
+    await expect(download({ url: '/x', shapes: SHAPES, cache: memoryCache(), shapesCache, fetchFn: site(file, broken).fn, chunkBytes: 2048 })).rejects.toThrow(/bad route 104/);
+    expect(await shapesCache.keys()).toHaveLength(0);
+  });
+
+  it('new routes with the same archive replace only the routes, the unchanged archive is not downloaded again', async () => {
+    const cache = memoryCache();
+    const shapesCache = memoryCache();
+    await download({ url: '/x', shapes: SHAPES, cache, shapesCache, fetchFn: site(file, PACK).fn, chunkBytes: 2048 });
+    const next: Pack = { '101': ['aaaa1111', PACK['101'][1]], '102': ['b2b2b2b2', [[32.9, -16.7], [32.91, -16.71]]] };
+    const s = site(file, next, { rev: 'r2' });
+    const pack = await download({ url: '/x', shapes: SHAPES, cache, shapesCache, fetchFn: s.fn, chunkBytes: 2048 });
+    expect(s.calls).toEqual(['bytes=0-6']);
+    expect(pack.shapes?.rev).toBe('r2');
+    expect(await pointsIn(shapesCache, 102, 'bbbb2222')).toBeUndefined(); // the old revision is gone
+    expect(await pointsIn(shapesCache, 103, 'cccc3333')).toBeUndefined(); // a route that no longer exists
+    expect(await pointsIn(shapesCache, 102, 'b2b2b2b2')).toEqual(next['102'][1]);
+    expect(await pointsIn(shapesCache, 101, 'aaaa1111')).toEqual(PACK['101'][1]);
+  });
+
+  it('removing the pack deletes its routes and nothing else in the route cache', async () => {
+    const cache = memoryCache();
+    const shapesCache = memoryCache();
+    await shapesCache.put(shapeFileUrl(999, 'seen-online'), Response.json([[1, 2], [3, 4]]));
+    await download({ url: '/x', shapes: SHAPES, cache, shapesCache, fetchFn: site(file, PACK).fn, chunkBytes: 2048 });
+    expect(await shapesCache.keys()).toHaveLength(4);
+    await removeArchive(cache, shapesCache);
+    expect((await shapesCache.keys()).map((k) => k.url)).toEqual([abs(shapeFileUrl(999, 'seen-online'))]);
+    expect(await cache.keys()).toHaveLength(0);
+    expect(offlineMapInstalled()).toBe(false);
+  });
+});
+
+// what build:data really wrote, checked against the single route files and the schedules (independent of the code that wrote it)
+describe.skipIf(!existsSync('public/data/shapes-all.json'))('the route pack built by build:data', () => {
+  const pack = JSON.parse(readFileSync('public/data/shapes-all.json', 'utf8')) as Pack;
+  const meta = JSON.parse(readFileSync('public/data/shapes-all.meta.json', 'utf8')) as { rev: string; count: number; raw: number; bytes: number };
+  const schedules = JSON.parse(readFileSync('public/data/schedules.json', 'utf8')) as { lines: { directions: { shapeId: number | null; shapeRev?: string }[] }[] };
+  const used = new Map<number, string>();
+  for (const l of schedules.lines) for (const d of l.directions) if (d.shapeId != null) used.set(d.shapeId, d.shapeRev ?? '');
+
+  it('has every route a direction draws, with the revision the app asks for', () => {
+    expect(Object.keys(pack).map(Number).sort((a, b) => a - b)).toEqual([...used.keys()].sort((a, b) => a - b));
+    for (const [id, rev] of used) expect(pack[id][0]).toBe(rev);
+  });
+  it('holds the geometry of the single route files, point for point', () => {
+    for (const id of used.keys()) expect(pack[id][1]).toEqual(JSON.parse(readFileSync(`public/data/shapes/${id}.json`, 'utf8')));
+  });
+  it('is described by its meta file', () => {
+    expect(meta.count).toBe(used.size);
+    expect(meta.raw).toBe(statSync('public/data/shapes-all.json').size);
+    expect(meta.bytes).toBeGreaterThan(0);
+    expect(meta.bytes).toBeLessThan(meta.raw);
   });
 });
 

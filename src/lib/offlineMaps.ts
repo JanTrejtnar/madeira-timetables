@@ -4,12 +4,19 @@
 // - Nothing here touches the OpenStreetMap tile servers; the archive is hosted with the app (see ARCHIVE_URL).
 // Only types are imported from 'pmtiles' (this module is part of the first screen's bundle through the settings page).
 import type { RangeResponse, Source } from 'pmtiles';
+import { shapeFileUrl } from './shapeUrl';
+import { isShape } from './validate';
 
 /** The archive, hosted next to the app. Served with HTTP Range support (static hosting does that). */
 export const ARCHIVE_URL = `${import.meta.env.BASE_URL}maps/madeira.pmtiles`;
+/** All route geometries in one file (+ its small description), written by build:data; the pack unpacks them into the route cache. */
+export const SHAPES_URL = `${import.meta.env.BASE_URL}data/shapes-all.json`;
+export const SHAPES_META_URL = `${import.meta.env.BASE_URL}data/shapes-all.meta.json`;
 export const CHUNK_BYTES = 2 * 1024 * 1024;
 
 const CACHE_NAME = 'offline-maps-v1';
+/** The service worker's runtime cache of route files (vite.config.ts); the pack's routes are put there under the keys a normal fetch uses. */
+const SHAPES_CACHE = 'shapes';
 const FLAG_KEY = 'offlineMap';
 /** Cache Storage wants URLs as keys; these are never fetched, and no service worker rule matches them. */
 const key = (name: string) => `https://offline-maps.invalid/madeira/${name}`;
@@ -22,15 +29,32 @@ export interface ArchiveInfo {
   version: string;
   size: number;
 }
+/** shapes-all.meta.json: `rev` identifies the content, `bytes` is what travels (gzipped), `raw` what the unpacked routes take on the device. */
+export interface ShapesInfo {
+  rev: string;
+  count: number;
+  bytes: number;
+  raw: number;
+}
 export interface InstalledPack extends ArchiveInfo {
   chunks: number;
   chunkBytes: number;
   at: number;
+  /** the routes unpacked into the route cache: their revision and cache keys' [id, rev] (to delete exactly these again) */
+  shapes?: { rev: string; bytes: number; items: [number, string][] };
 }
 export interface Probe extends ArchiveInfo {
   /** the server answers byte-range requests */
   ranges: boolean;
 }
+/** What one download takes: the archive plus the routes (null: this server has no route pack, the maps alone are offered). */
+export interface PackProbe extends Probe {
+  shapes: ShapesInfo | null;
+  /** archive + routes as transferred */
+  total: number;
+}
+/** the size the pack shows and counts in progress */
+export const packBytes = (p: { size: number; shapes?: { bytes: number } | null }) => p.size + (p.shapes?.bytes ?? 0);
 export interface Progress {
   done: number;
   total: number;
@@ -105,6 +129,28 @@ export async function probeArchive(url = ARCHIVE_URL, fetchFn: typeof fetch = fe
   return { version, size, ranges: res.status === 206 };
 }
 
+/** Description of the route pack, or null when the server has none (a 404, or the app's index.html answered instead of JSON). */
+export async function fetchShapesInfo(url = SHAPES_META_URL, fetchFn: typeof fetch = fetch, signal?: AbortSignal): Promise<ShapesInfo | null> {
+  try {
+    const res = await fetchFn(url, { signal });
+    if (!res.ok) return null;
+    const m = (await res.json()) as Partial<ShapesInfo> | null;
+    const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0;
+    return m && typeof m.rev === 'string' && num(m.count) && m.count > 0 && num(m.bytes) && num(m.raw) ? { rev: m.rev, count: m.count, bytes: m.bytes, raw: m.raw } : null;
+  } catch {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    return null;
+  }
+}
+
+/** What a download takes: the archive and the route pack. */
+export async function probePack(opts: { url?: string; shapes?: ShapesLocation | null; fetchFn?: typeof fetch; signal?: AbortSignal } = {}): Promise<PackProbe> {
+  const { url = ARCHIVE_URL, fetchFn = fetch, signal } = opts;
+  const loc = opts.shapes === undefined ? DEFAULT_SHAPES : opts.shapes;
+  const [probe, shapes] = await Promise.all([probeArchive(url, fetchFn, signal), loc ? fetchShapesInfo(loc.metaUrl, fetchFn, signal) : null]);
+  return { ...probe, shapes, total: packBytes({ size: probe.size, shapes }) };
+}
+
 /** The first `n` bytes of a response; a full 200 response is cancelled after them. */
 async function readHead(res: Response, n: number): Promise<ArrayBuffer> {
   if (!res.body) return (await res.arrayBuffer()).slice(0, n);
@@ -127,11 +173,21 @@ async function readHead(res: Response, n: number): Promise<ArrayBuffer> {
   return out.slice(0, n).buffer;
 }
 
+export interface ShapesLocation {
+  url: string;
+  metaUrl: string;
+}
+const DEFAULT_SHAPES: ShapesLocation = { url: SHAPES_URL, metaUrl: SHAPES_META_URL };
+
 export interface DownloadOptions {
   url?: string;
+  /** where the route pack is; null: archive only */
+  shapes?: ShapesLocation | null;
   signal?: AbortSignal;
   onProgress?: (p: Progress) => void;
   cache?: Cache;
+  /** the route cache the routes are unpacked into */
+  shapesCache?: Cache;
   fetchFn?: typeof fetch;
   chunkBytes?: number;
 }
@@ -140,44 +196,79 @@ async function clearAll(cache: Cache) {
   for (const req of await cache.keys()) await cache.delete(req);
 }
 
+const openShapesCache = () => caches.open(SHAPES_CACHE);
+
+/** Deletes the routes of a pack from the route cache, except those in `keep` (same id and revision). */
+async function dropShapes(cache: Cache, items: [number, string][], keep: ReadonlySet<string> = new Set()) {
+  for (const [id, rev] of items) if (!keep.has(`${id}/${rev}`)) await cache.delete(shapeFileUrl(id, rev));
+}
+
+/**
+ * Downloads the route pack (all route geometries in one file) and unpacks it into the route cache under the keys a normal fetch of each route
+ * uses, so the map code finds them without knowing about the pack. Returns what was written.
+ */
+async function installShapes(info: ShapesInfo, loc: ShapesLocation, cache: Cache, fetchFn: typeof fetch, signal?: AbortSignal): Promise<[number, string][]> {
+  const res = await fetchFn(loc.url, { signal });
+  if (!res.ok) throw new Error(`routes: HTTP ${res.status}`);
+  const all: unknown = await res.json();
+  if (!all || typeof all !== 'object' || Array.isArray(all)) throw new Error('routes: bad pack');
+  const entries = Object.entries(all as Record<string, unknown>);
+  if (entries.length !== info.count) throw new Error('routes: incomplete pack');
+  const items: [number, string][] = [];
+  for (const [key, value] of entries) {
+    const id = Number(key);
+    if (!Number.isInteger(id) || !Array.isArray(value) || typeof value[0] !== 'string' || !isShape(value[1])) throw new Error(`routes: bad route ${key}`);
+    items.push([id, value[0]]);
+  }
+  for (const [i, [id, rev]] of items.entries()) {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    await cache.put(shapeFileUrl(id, rev), new Response(JSON.stringify((entries[i][1] as [string, unknown])[1]), { headers: { 'content-type': 'application/json' } }));
+  }
+  return items;
+}
+
 /**
  * Downloads the archive chunk by chunk into Cache Storage and installs it. A download that was interrupted (offline, cancelled, tab closed) is
  * continued with the chunks already stored; a pack of another version is replaced. The pack counts as installed only when every chunk is there.
  */
 export async function downloadArchive(opts: DownloadOptions = {}): Promise<InstalledPack> {
   const { url = ARCHIVE_URL, signal, onProgress, fetchFn = fetch } = opts;
+  const loc = opts.shapes === undefined ? DEFAULT_SHAPES : opts.shapes;
   const chunkBytes = opts.chunkBytes ?? CHUNK_BYTES;
   const cache = opts.cache ?? (await openCache());
-  const probe = await probeArchive(url, fetchFn, signal);
+  const [probe, shapes] = await Promise.all([probeArchive(url, fetchFn, signal), loc ? fetchShapesInfo(loc.metaUrl, fetchFn, signal) : null]);
   const chunks = Math.ceil(probe.size / chunkBytes);
+  const total = packBytes({ size: probe.size, shapes });
 
   const installed = await readJson<InstalledPack>(cache, META);
-  if (installed && installed.version === probe.version && installed.size === probe.size && installed.chunks === chunks) {
-    onProgress?.({ done: probe.size, total: probe.size });
+  const sameArchive = !!installed && installed.version === probe.version && installed.size === probe.size && installed.chunks === chunks;
+  const sameShapes = (installed?.shapes?.rev ?? null) === (shapes?.rev ?? null);
+  if (installed && sameArchive && sameShapes) {
+    onProgress?.({ done: total, total });
     return installed;
   }
-  // a half-finished download of this very version is continued, anything else starts clean
+  // a half-finished download of this very version is continued, anything else starts clean (an installed archive that is current is kept)
   const partial = await readJson<ArchiveInfo & { chunkBytes: number }>(cache, PARTIAL);
-  if (!partial || partial.version !== probe.version || partial.size !== probe.size || partial.chunkBytes !== chunkBytes || installed) {
+  if (!sameArchive && (!partial || partial.version !== probe.version || partial.size !== probe.size || partial.chunkBytes !== chunkBytes || installed)) {
     setFlag(null); // the old pack is replaced: until the new one is complete the maps use the online tiles
     await clearAll(cache);
   }
-  await putJson(cache, PARTIAL, { version: probe.version, size: probe.size, chunkBytes });
+  if (!sameArchive) await putJson(cache, PARTIAL, { version: probe.version, size: probe.size, chunkBytes });
 
   const span = (i: number) => ({ start: i * chunkBytes, end: Math.min(probe.size, (i + 1) * chunkBytes) - 1 });
   let done = 0;
   const have: boolean[] = [];
   for (let i = 0; i < chunks; i++) {
-    have[i] = !!(await cache.match(chunkKey(i)));
+    have[i] = sameArchive || !!(await cache.match(chunkKey(i)));
     if (have[i]) done += span(i).end - span(i).start + 1;
   }
-  onProgress?.({ done, total: probe.size });
+  onProgress?.({ done: sameArchive ? probe.size : done, total });
 
   const store = async (i: number, data: ArrayBuffer) => {
     await cache.put(chunkKey(i), new Response(data, { headers: { 'content-type': 'application/octet-stream' } }));
     const n = data.byteLength;
     done += n;
-    onProgress?.({ done, total: probe.size });
+    onProgress?.({ done, total });
   };
   const missing = have.map((h, i) => (h ? -1 : i)).filter((i) => i >= 0);
   if (missing.length && !probe.ranges) {
@@ -200,18 +291,32 @@ export async function downloadArchive(opts: DownloadOptions = {}): Promise<Insta
       await store(i, data);
     }
   }
-  const pack: InstalledPack = { version: probe.version, size: probe.size, chunks, chunkBytes, at: Date.now() };
+  // the routes go in before the commit: a pack counts as installed only with its routes
+  let shapesPack: InstalledPack['shapes'];
+  if (loc && shapes) {
+    const shapesCache = opts.shapesCache ?? (await openShapesCache());
+    const items = await installShapes(shapes, loc, shapesCache, fetchFn, signal);
+    await dropShapes(shapesCache, installed?.shapes?.items ?? [], new Set(items.map(([id, rev]) => `${id}/${rev}`)));
+    shapesPack = { rev: shapes.rev, bytes: shapes.bytes, items };
+    onProgress?.({ done: total, total });
+  } else if (installed?.shapes) {
+    await dropShapes(opts.shapesCache ?? (await openShapesCache()), installed.shapes.items);
+  }
+  const pack: InstalledPack = { version: probe.version, size: probe.size, chunks, chunkBytes, at: Date.now(), ...(shapesPack && { shapes: shapesPack }) };
   await putJson(cache, META, pack); // the commit: from here on the pack is installed
   await cache.delete(PARTIAL);
   setFlag(pack);
   return pack;
 }
 
-/** Deletes the installed pack and any half-finished download. */
-export async function removeArchive(cache?: Cache): Promise<void> {
+/** Deletes the installed pack (the map and the routes it unpacked) and any half-finished download. */
+export async function removeArchive(cache?: Cache, shapesCache?: Cache): Promise<void> {
   setFlag(null);
   if (!cache && !cachesAvailable()) return;
-  await clearAll(cache ?? (await openCache()));
+  const c = cache ?? (await openCache());
+  const items = (await readJson<InstalledPack>(c, META))?.shapes?.items ?? [];
+  if (items.length) await dropShapes(shapesCache ?? (await openShapesCache()), items);
+  await clearAll(c);
 }
 
 /** A PMTiles `Source` that answers byte-range reads from the chunks in Cache Storage. */

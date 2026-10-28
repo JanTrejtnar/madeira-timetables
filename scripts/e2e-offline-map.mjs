@@ -91,18 +91,33 @@ const drawnTiles = (page) =>
   await page.goto(`${base}#/settings`, { waitUntil: 'networkidle0' });
   await waitFor(page, '[data-testid=offline-download]', 8000);
   const label = await text(page, '[data-testid=offline-download]');
-  check('the section offers the download with its size', /Stáhnout mapu \(\d+(\.\d)? (kB|MB)\)/.test(label ?? ''), label ?? '');
+  check('the section offers the download with its size', /Stáhnout mapu a trasy \(\d+(\.\d)? (kB|MB)\)/.test(label ?? ''), label ?? '');
   check('the storage line is shown', /Úložiště zařízení: .+ z .+/.test((await text(page, '[data-testid=offline-storage]')) ?? ''));
   await tap(page, '[data-testid=offline-download]');
   await waitFor(page, '[data-testid=offline-remove]', 30000);
   const status = await text(page, '[data-testid=offline-status]');
-  check('installed: the status names the size', /Mapa je uložená v zařízení \(\d/.test(status ?? ''), status ?? '');
+  check('installed: the status names the size', /Mapa a trasy linek jsou uložené v zařízení \(\d/.test(status ?? ''), status ?? '');
   const stored = await page.evaluate(async () => {
     const c = await caches.open('offline-maps-v1');
     const keys = (await c.keys()).map((k) => k.url);
     return { chunks: keys.filter((k) => /chunk-\d+$/.test(k)).length, meta: keys.some((k) => k.endsWith('/meta')), partial: keys.some((k) => k.endsWith('/partial')), flag: localStorage.getItem('offlineMap') };
   });
   check('the chunks and the install record are in Cache Storage, no leftover of the download', stored.chunks >= 1 && stored.meta && !stored.partial && !!stored.flag, JSON.stringify(stored));
+
+  // the routes of every line were unpacked into the route cache, under the keys the app's own fetch of a route uses
+  const routes = await page.evaluate(async () => {
+    const lines = (await (await fetch('data/schedules.json')).json()).lines;
+    const wanted = new Map();
+    for (const l of lines) for (const d of l.directions) if (d.shapeId != null) wanted.set(d.shapeId, d.shapeRev);
+    const cache = await caches.open('shapes');
+    const keyOf = (id, rev) => new URL('data/shapes/' + id + '.json?v=' + rev, location.href).href;
+    let hits = 0;
+    for (const [id, rev] of wanted) if (await cache.match(keyOf(id, rev))) hits++;
+    const [id, rev] = [...wanted][0];
+    const one = await (await cache.match(keyOf(id, rev)))?.json();
+    return { wanted: wanted.size, hits, firstOk: Array.isArray(one) && one.length > 1 && one[0].length === 2 };
+  });
+  check('every route of every line is in the route cache after the install', routes.wanted > 100 && routes.hits === routes.wanted && routes.firstOk, JSON.stringify(routes));
 
   // from now on the archive is unreachable: the map must come from the stored pack
   state.blockArchive = true;
@@ -133,6 +148,8 @@ const drawnTiles = (page) =>
   await waitFor(page, '[data-testid=offline-download]', 8000);
   const after = await page.evaluate(async () => ({ keys: (await (await caches.open('offline-maps-v1')).keys()).length, flag: localStorage.getItem('offlineMap') }));
   check('delete empties the store and clears the flag', after.keys === 0 && after.flag === null, JSON.stringify(after));
+  const left = await page.evaluate(async () => (await (await caches.open('shapes')).keys()).length);
+  check('...and takes the unpacked routes out of the route cache', left === 0, String(left));
   seen.osm = 0;
   await page.evaluate(() => { location.hash = '#/map'; });
   await waitFor(page, '[data-testid=map-tab] .leaflet-container', 10000);

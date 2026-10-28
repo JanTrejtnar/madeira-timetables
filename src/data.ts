@@ -3,6 +3,7 @@ import type { Dataset, Line, ViaRoutes } from './types';
 import { buildIndex } from './lib/search';
 import { decodeEntitiesInJson } from './lib/text';
 import { datasetProblem, isShape, isViaRoutes } from './lib/validate';
+import { shapeFileUrl } from './lib/shapeUrl';
 
 const url = (path: string) => `${import.meta.env.BASE_URL}${path}`;
 
@@ -93,7 +94,7 @@ const shapeRevs = new Map<number, string>();
 export function registerShapeRevs(lines: readonly Line[]) {
   for (const l of lines) for (const d of l.directions) if (d.shapeId !== null && d.shapeRev) shapeRevs.set(d.shapeId, d.shapeRev);
 }
-const shapeUrl = (shapeId: number) => url(`data/shapes/${shapeId}.json?v=${shapeRevs.get(shapeId) ?? '0'}`);
+const shapeUrl = (shapeId: number) => shapeFileUrl(shapeId, shapeRevs.get(shapeId) ?? '0');
 
 /** Drops the cached copies of routes whose geometry changed (their hash is not the current one) and of routes that no longer exist. */
 export async function pruneShapeCache(): Promise<void> {

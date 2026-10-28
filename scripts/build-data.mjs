@@ -21,6 +21,7 @@ import { applyOverrides, applyFunchalTerminals, terminalWalks } from './lib-over
 import { applyGtfs, assignMunicipalities, gtfsAsLine } from './lib-gtfs.mjs';
 import { buildPois } from './lib-pois.mjs';
 import { buildOverview } from './lib-overview.mjs';
+import { buildShapesPack } from './lib-shapes-pack.mjs';
 import { loadNoteFixes, recodeNotes } from './lib-note-fixes.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -188,6 +189,8 @@ for (const l of data.lines) {
     d.shapeRev = shapeRev.get(d.shapeId);
   }
 }
+const shapesPack = await buildShapesPack(shapeRev, path.join(OUT, 'data'));
+console.log('offline route pack (shapes-all.json):', shapesPack.count, 'routes,', shapesPack.raw, 'bytes,', shapesPack.bytes, 'gzipped');
 await writeFile(path.join(OUT, 'data', 'schedules.json'), JSON.stringify(data));
 console.log('schedules.json:', (await stat(path.join(OUT, 'data', 'schedules.json'))).size, 'bytes; via-route files:', viaFiles, '; route revisions:', shapeRev.size);
 console.log('estimated directions:', estimated, rejected.length ? `(rejected: ${rejected.join('; ')})` : '');

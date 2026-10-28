@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useT } from '../i18n';
-import { cachesAvailable, downloadArchive, fmtBytes, probeArchive, readInstalled, removeArchive, requestPersistence, storageStatus, type InstalledPack, type Probe, type StorageStatus } from '../lib/offlineMaps';
+import { cachesAvailable, downloadArchive, fmtBytes, packBytes, probePack, readInstalled, removeArchive, requestPersistence, storageStatus, type InstalledPack, type PackProbe, type StorageStatus } from '../lib/offlineMaps';
 import { Card, SectionTitle } from './common';
 
 type View =
   | { kind: 'checking' }
-  | { kind: 'none'; probe: Probe }
+  | { kind: 'none'; probe: PackProbe }
   | { kind: 'downloading'; done: number; total: number }
-  | { kind: 'installed'; pack: InstalledPack; newer: Probe | null }
+  | { kind: 'installed'; pack: InstalledPack; newer: PackProbe | null }
   | { kind: 'hidden' };
 
 /**
@@ -23,9 +23,9 @@ export function OfflineMaps() {
 
   const refresh = useCallback(async () => {
     if (!cachesAvailable()) return setView({ kind: 'hidden' });
-    const [pack, probe] = await Promise.all([readInstalled().catch(() => null), probeArchive(undefined, undefined, AbortSignal.timeout(6000)).catch(() => null)]);
+    const [pack, probe] = await Promise.all([readInstalled().catch(() => null), probePack({ signal: AbortSignal.timeout(6000) }).catch(() => null)]);
     setStorage(await storageStatus());
-    if (pack) setView({ kind: 'installed', pack, newer: probe && probe.version !== pack.version ? probe : null });
+    if (pack) setView({ kind: 'installed', pack, newer: probe && (probe.version !== pack.version || (probe.shapes?.rev ?? null) !== (pack.shapes?.rev ?? null)) ? probe : null });
     else setView(probe ? { kind: 'none', probe } : { kind: 'hidden' });
   }, []);
   useEffect(() => {
@@ -33,18 +33,19 @@ export function OfflineMaps() {
     return () => abort.current?.abort();
   }, [refresh]);
 
-  const download = async (probe: Probe) => {
+  const download = async (probe: PackProbe) => {
     setError(null);
-    // room for the pack and some to spare; a refusal later (quota) is reported just the same
+    // room for the pack (the map and the unpacked routes) and some to spare; a refusal later (quota) is reported just the same
     const status = await storageStatus();
-    if (status && status.quota && status.quota - status.usage < probe.size * 1.2) {
-      setError(t('offlineMapsNoSpace', { need: fmtBytes(probe.size), free: fmtBytes(Math.max(0, status.quota - status.usage)) }));
+    const need = probe.size + (probe.shapes?.raw ?? 0);
+    if (status && status.quota && status.quota - status.usage < need * 1.2) {
+      setError(t('offlineMapsNoSpace', { need: fmtBytes(need), free: fmtBytes(Math.max(0, status.quota - status.usage)) }));
       return;
     }
     void requestPersistence();
     const ctl = new AbortController();
     abort.current = ctl;
-    setView({ kind: 'downloading', done: 0, total: probe.size });
+    setView({ kind: 'downloading', done: 0, total: probe.total });
     try {
       await downloadArchive({ signal: ctl.signal, onProgress: (p) => setView({ kind: 'downloading', done: p.done, total: p.total }) });
     } catch (e) {
@@ -71,7 +72,7 @@ export function OfflineMaps() {
         <p className="text-sm text-slate-500 dark:text-slate-400">{t('offlineMapsHint')}</p>
         {view.kind === 'none' && (
           <button type="button" className={`${primary} self-start`} onClick={() => void download(view.probe)} data-testid="offline-download">
-            {t('offlineMapsDownload', { size: fmtBytes(view.probe.size) })}
+            {t('offlineMapsDownload', { size: fmtBytes(view.probe.total) })}
           </button>
         )}
         {view.kind === 'downloading' && (
@@ -90,12 +91,12 @@ export function OfflineMaps() {
         {view.kind === 'installed' && (
           <>
             <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300" data-testid="offline-status">
-              {t('offlineMapsInstalled', { size: fmtBytes(view.pack.size) })}
+              {t('offlineMapsInstalled', { size: fmtBytes(packBytes(view.pack)) })}
             </p>
             <div className="flex flex-wrap gap-2">
               {view.newer && (
                 <button type="button" className={primary} onClick={() => void download(view.newer!)} data-testid="offline-update">
-                  {t('offlineMapsUpdate', { size: fmtBytes(view.newer.size) })}
+                  {t('offlineMapsUpdate', { size: fmtBytes(view.newer.total) })}
                 </button>
               )}
               <button type="button" className={secondary} onClick={() => void remove()} data-testid="offline-remove">
