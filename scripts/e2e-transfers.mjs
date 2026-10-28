@@ -1,6 +1,8 @@
 // Connections with two transfers and a walk between the lines (RAPTOR planner), against the dev server (npx vite --port 5173):
-// Santana -> Porto Moniz at 08:00 (clock frozen on Friday 2026-10-23) is 019 > 021 > 139 with 3 minutes on foot before the 2nd and the 3rd bus.
-// Checks the card (three buses), the detail (a walk step before every bus reached on foot, the walking total, the duration), and the map legend.
+// Santana (the parish, as the suggestion list picks it: fk=@par:Santana) -> Porto Moniz at 08:00 (clock frozen on Friday 2026-10-23): the mountains
+// leave no other way than over Funchal (103 > 139 / 80), a ride away from the destination that the router offers only when nothing else is found.
+// Checks that the first bus really leaves from Santana (not from the Funchal stops named "Santana"), then a connection with three buses (any
+// card: Funchal > ... ), the card, the detail (a walk step before every bus reached on foot, the walking total, the duration), and the map legend.
 // Usage: node scripts/e2e-transfers.mjs [baseUrl]    Phone and desktop viewport.
 import puppeteer from 'puppeteer-core';
 import { freezeClock, waitForServer } from './lib-e2e-clock.mjs';
@@ -13,7 +15,8 @@ freezeClock(browser);
 const results = [];
 const check = (name, ok, extra = '') => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${extra ? ' – ' + extra : ''}`); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const url = `${base}?from=${encodeURIComponent('Santana')}&to=${encodeURIComponent('Porto Moniz')}&time=08:00`;
+const url = `${base}?from=${encodeURIComponent('Santana')}&fk=${encodeURIComponent('@par:Santana')}&to=${encodeURIComponent('Porto Moniz')}&tk=${encodeURIComponent('@par:Porto Moniz')}&time=08:00`;
+const plainUrl = `${base}?from=${encodeURIComponent('Santana')}&to=${encodeURIComponent('Porto Moniz')}&time=08:00`;
 
 /** "2 h 14 min" / "45 min" -> minutes */
 const minutesOf = (s) => {
@@ -35,6 +38,16 @@ async function run(label, viewport) {
   await page.goto(url, { waitUntil: 'networkidle0' });
   await page.evaluate(() => localStorage.clear());
   await page.goto(url, { waitUntil: 'networkidle0' });
+  await sleep(1500);
+
+  // Santana by its parish: connections exist, and each one starts in Santana (the first stop of the first leg is named in the card)
+  // the first row of each card: line, departure time, the stop it leaves from, arrival time, the stop it arrives at
+  const santana = await page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].map((c) => c.querySelector('[class*="grid-cols-[2.75rem"]')?.innerText.replace(/\s+/g, ' ') ?? ''));
+  check(`${label}: Santana -> Porto Moniz (parishes) offers connections`, santana.length > 0, `${santana.length} cards`);
+  const origin = (row) => /\d{1,2}:\d{2} (.+?) \d{1,2}:\d{2}/.exec(row)?.[1] ?? '';
+  check(`${label}: every connection leaves from a stop outside Funchal (the Funchal stops named "Santana" are not the parish)`, santana.length > 0 && santana.every((r) => origin(r) && !/Funchal|CAM|Rampa/.test(origin(r))), santana.map(origin).join(' | '));
+  // plain text "Santana" also matches the Funchal stops of that name: it is the 3-bus case below
+  await page.goto(plainUrl, { waitUntil: 'networkidle0' });
   await sleep(1500);
 
   // the card of a connection with three buses (one row per bus)

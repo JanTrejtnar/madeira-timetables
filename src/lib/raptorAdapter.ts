@@ -98,6 +98,8 @@ export interface JourneyOptions {
   maxRuns?: number;
   /** search every departure from scratch (slow reference for tests) */
   independentRuns?: boolean;
+  /** no "gets closer to the destination" test (the last resort when nothing is found, see `routeGuard`) */
+  relaxed?: boolean;
   /** one run: the journeys for a traveller who leaves at departAt and takes the first buses that go (any time of the services' 48 hours) */
   earliestOnly?: boolean;
 }
@@ -109,7 +111,7 @@ export interface JourneyOptions {
 export function raptorJourneys(net: Network, trips: readonly Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn, walkOut?: WalkOut, opts: JourneyOptions = {}): Itinerary[] {
   if (!from.size || !to.size) return [];
   const { index, compact, aliases } = prepare(net, trips);
-  const guard = routeGuard(net, from, to);
+  const guard = routeGuard(net, from, to, opts.relaxed);
   const { closer } = guard;
   const hooks: RaptorHooks = {
     // the first bus must not head back into the starting area
@@ -171,8 +173,8 @@ const MAX_RUNS = 100;
 /** The same result shape as `plan()` (direct connections, then connections with transfers), found by RAPTOR. */
 export function planRaptor(net: Network, trips: readonly Trip[], from: Set<number>, to: Set<number>, departAt: number, walkIn?: WalkIn, walkOut?: WalkOut): Plan {
   if (!from.size || !to.size) return { direct: [], transfers: [] };
-  const search = (maxWait: number) => {
-    const run = (o: JourneyOptions) => raptorJourneys(net, trips, from, to, departAt, walkIn, walkOut, { maxWait, ...o });
+  const search = (maxWait: number, relaxed = false) => {
+    const run = (o: JourneyOptions) => raptorJourneys(net, trips, from, to, departAt, walkIn, walkOut, { maxWait, relaxed, ...o });
     let all: Itinerary[] = [];
     for (const window of WINDOWS) {
       all = run({ window, maxRuns: MAX_RUNS });
@@ -204,5 +206,10 @@ export function planRaptor(net: Network, trips: readonly Trip[], from: Set<numbe
   transfers = transfers.filter((x) => needTransfers || x.finish + TRANSFER_PENALTY < bestDirectArrive);
   // nothing else: a long wait beats no connection at all
   if (!direct.length && !transfers.length) transfers = search(MAX_WAIT_FALLBACK).transfers;
+  // still nothing: a ride away from the destination to a hub (Santana -> Funchal -> Porto Moniz) beats no connection, as in `plan()`
+  if (!direct.length && !transfers.length && routeGuard(net, from, to).closer) {
+    transfers = search(MAX_WAIT, true).transfers;
+    if (!transfers.length) transfers = search(MAX_WAIT_FALLBACK, true).transfers;
+  }
   return { direct: direct.slice(0, DIRECT_SHOWN), transfers: transfers.slice(0, 6) };
 }

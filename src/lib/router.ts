@@ -63,9 +63,13 @@ export interface Guard {
   /** a bus that ends in the starting area (Ponta do Sol -> Funchal for a traveller leaving Funchal) heads home, not away */
   intoOrigin: (trip: Trip) => boolean;
 }
-export function routeGuard(net: Network, from: ReadonlySet<number>, to: ReadonlySet<number>): Guard {
+/**
+ * `relaxed`: no distance test, only the one against heading back home. The last resort of a search that found nothing: a connection
+ * that must first ride away from the destination (Santana -> Funchal -> Porto Moniz, the mountains leave no other way) beats none.
+ */
+export function routeGuard(net: Network, from: ReadonlySet<number>, to: ReadonlySet<number>, relaxed = false): Guard {
   const apart = ![...to].some((id) => from.has(id));
-  return { closer: progressToward(net, to), intoOrigin: (trip) => apart && from.has(trip.nodes[trip.nodes.length - 1]) };
+  return { closer: relaxed ? undefined : progressToward(net, to), intoOrigin: (trip) => apart && from.has(trip.nodes[trip.nodes.length - 1]) };
 }
 
 const HORIZON = 48 * 60; // services cover yesterday, the day itself and tomorrow
@@ -262,10 +266,16 @@ export function plan(net: Network, trips: Trip[], from: Set<number>, to: Set<num
   const nearest = d[0];
   // transfers help when there is no direct trip, it leaves much later, or a transfer arrives clearly earlier
   const needTransfers = !nearest || nearest.depart - departAt > 60;
-  const search = (maxWait: number) => withTransfer(net, trips, from, to, departAt, walkIn, maxWait, walkOut, guard).filter((x) => needTransfers || x.finish + TRANSFER_PENALTY < bestDirectArrive);
+  const search = (maxWait: number, g = guard) => withTransfer(net, trips, from, to, departAt, walkIn, maxWait, walkOut, g).filter((x) => needTransfers || x.finish + TRANSFER_PENALTY < bestDirectArrive);
   let t = search(MAX_WAIT);
   // nothing else: a long wait beats no connection at all
   if (!d.length && !t.length) t = search(MAX_WAIT_FALLBACK);
+  // still nothing: a detour away from the destination (over a hub in the other direction) beats no connection
+  if (!d.length && !t.length && guard.closer) {
+    const loose = routeGuard(net, from, to, true);
+    t = search(MAX_WAIT, loose);
+    if (!t.length) t = search(MAX_WAIT_FALLBACK, loose);
+  }
   return { direct: d.slice(0, 8), transfers: t.slice(0, 6) };
 }
 

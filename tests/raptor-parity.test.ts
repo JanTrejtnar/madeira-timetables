@@ -3,7 +3,7 @@
 // not arriving later, not changing more. And what RAPTOR offers must be a ride that can be made (buffers, walks, stops line up).
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { buildNetwork, nearbyStopNodes, nodeIdsOfKeys, servicesFor, type Network } from '../src/lib/network';
+import { PARISH_PREFIX, buildNetwork, nearbyStopNodes, nodeIdsOfKeys, resolveNodes, servicesFor, type Network } from '../src/lib/network';
 import { MAX_WAIT, MAX_WAIT_FALLBACK, MIN_TRANSFER, MIN_TRANSFER_ESTIMATED, plan, type Itinerary } from '../src/lib/router';
 import { planRaptor, raptorJourneys } from '../src/lib/raptorAdapter';
 import type { Dataset } from '../src/types';
@@ -84,7 +84,9 @@ describe.skipIf(!existsSync(file))('RAPTOR vs plan() (real data)', () => {
       for (const it of [...old.direct, ...old.transfers]) {
         if (it.depart > at + WINDOW) continue;
         compared++;
-        const best = pool.find((j) => dominates(j, it));
+        let best = pool.find((j) => dominates(j, it));
+        // `plan()` offers a ride away from the destination when nothing else is found
+        if (!best && !old.direct.length) best = raptorJourneys(net, trips, A.ids, B.ids, at, A.extra, B.extra, { window: WINDOW, maxWait: MAX_WAIT_FALLBACK, relaxed: true }).find((j) => dominates(j, it));
         if (!best) {
           missed.push(`${a.name} -> ${b.name} @${at}${near ? ' (near)' : ''}: ${it.legs.map((l) => `${l.trip.line.number}:${l.depart}-${l.arrive}`).join(' > ')} finish ${it.finish}`);
         } else if (best.depart > it.depart || best.finish < it.finish || best.legs.length < it.legs.length) better++;
@@ -109,6 +111,20 @@ describe.skipIf(!existsSync(file))('RAPTOR vs plan() (real data)', () => {
     expect(missed.slice(0, 15)).toEqual([]);
     expect(compared).toBeGreaterThan(50);
   }, 600_000);
+
+  it('Santana -> Porto Moniz (parishes, as the UI picks them) is found over Funchal, by plan() and by RAPTOR', () => {
+    const from = resolveNodes(net, 'Santana', `${PARISH_PREFIX}Santana`);
+    const to = resolveNodes(net, 'Porto Moniz', `${PARISH_PREFIX}Porto Moniz`);
+    expect(from.size).toBeGreaterThan(0);
+    expect(to.size).toBeGreaterThan(0);
+    for (const at of [390, 480]) {
+      for (const p of [plan(net, trips, from, to, at), planRaptor(net, trips, from, to, at)]) {
+        expect(p.transfers.length).toBeGreaterThan(0);
+        // the first bus really leaves from a stop of Santana
+        expect(p.transfers.every((it) => from.has(it.legs[0].trip.nodes[it.legs[0].fromPos]))).toBe(true);
+      }
+    }
+  });
 
   it('planRaptor gives the same shape as plan(): direct departures in time order, a few transfers, never more than two changes', () => {
     const rand2 = rng(7);
