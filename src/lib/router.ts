@@ -6,7 +6,7 @@ export const MIN_TRANSFER = 5; // minutes between arrival and the next departure
 /** Longer buffer when at least one of the two buses has estimated (not printed) times: mountain roads are slow. */
 export const MIN_TRANSFER_ESTIMATED = 12;
 /** Longest wait offered at a transfer; only when nothing else is found does the search allow up to MAX_WAIT_FALLBACK (sparse country lines). */
-export const MAX_WAIT = 30;
+export const MAX_WAIT = 45;
 export const MAX_WAIT_FALLBACK = 120;
 /** A transfer must arrive this much earlier than the best direct bus to be offered. */
 export const TRANSFER_PENALTY = 10;
@@ -24,13 +24,13 @@ const nodeMetres = (net: Network, from: number, to: number): number => {
   if (a.lat === undefined || a.lon === undefined || b.lat === undefined || b.lon === undefined) return Infinity;
   return metres(a as Required<Node>, b as Required<Node>);
 };
-function shortHop(net: Network, from: number, to: number, stops: number, minutes: number): boolean {
+export function shortHop(net: Network, from: number, to: number, stops: number, minutes: number): boolean {
   if (isMicro(stops, minutes)) return true;
   return stops <= MAX_HOP_STOPS && nodeMetres(net, from, to) <= WALK_INSTEAD_M;
 }
 /** A last leg of one stop (two minutes at most) that ends within this distance of where it starts is never offered: the traveller walks. */
 const LAST_HOP_WALK_M = 800;
-const lastHop = (net: Network, from: number, to: number, stops: number, minutes: number): boolean => stops <= 1 && minutes <= 2 && nodeMetres(net, from, to) < LAST_HOP_WALK_M;
+export const lastHop = (net: Network, from: number, to: number, stops: number, minutes: number): boolean => stops <= 1 && minutes <= 2 && nodeMetres(net, from, to) < LAST_HOP_WALK_M;
 /** A destination whose stops lie within this radius of their centre is a place we can head for; a wide area (Funchal) has no single direction. */
 const REF_SPREAD_M = 6000;
 /** The first bus of a transfer may carry the traveller this much further from the destination (to a hub) before the second one heads back. */
@@ -80,6 +80,8 @@ export interface Leg {
   departEstimated: boolean;
   arriveEstimated: boolean;
   stops: number; // stops travelled
+  /** minutes walking before boarding this leg (a transfer on foot; for the first leg the walk from a picked start point). Set by the RAPTOR search. */
+  walkBefore?: number;
 }
 
 export interface Itinerary {
@@ -92,7 +94,7 @@ export interface Itinerary {
   walk: number;
 }
 
-const leg = (trip: Trip, i: number, j: number): Leg => ({
+export const leg = (trip: Trip, i: number, j: number): Leg => ({
   trip,
   fromPos: i,
   toPos: j,

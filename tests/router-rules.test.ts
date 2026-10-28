@@ -31,9 +31,9 @@ describe('transfer rules', () => {
     expect(withTransfer(net, [first2, walkable, near], new Set([0]), new Set([4]), 470)).toEqual([]);
   });
 
-  it('limits the wait at a transfer to 30 minutes, longer only when nothing else exists', () => {
+  it('limits the wait at a transfer to 45 minutes, longer only when nothing else exists', () => {
     const first = trip(1, 0, [0, 1, 2], [480, 490, 500]);
-    const late = trip(2, 0, [2, 5, 6], [549, 560, 570]); // 49 min wait
+    const late = trip(2, 0, [2, 5, 6], [556, 566, 576]); // 56 min wait (51 after the 5 minute buffer)
     expect(withTransfer(net, [first, late], new Set([0]), new Set([6]), 470)).toEqual([]);
     expect(plan(net, [first, late], new Set([0]), new Set([6]), 470).transfers).toHaveLength(1);
     const soon = trip(3, 0, [2, 5, 6], [520, 530, 540]);
