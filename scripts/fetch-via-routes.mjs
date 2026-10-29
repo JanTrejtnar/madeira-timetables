@@ -50,6 +50,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     }
     return best;
   };
+  /** p is (still) a vertex of the polyline */
+  const anchored = (poly, p) => localSq(poly[nearest(poly, p, 0)], p) < 1e-10;
   for (const line of data.lines) {
     if (!line.via) continue;
     for (const [code, places] of Object.entries(line.via)) {
@@ -68,7 +70,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
           const b = d.stops[bIdx];
           const key = `${line.id}|${routeKey(code, di, after)}`;
           const sig = placesSig(list);
-          if (store.routes[key]?.sig === sig) { out[key] = store.routes[key]; kept++; continue; }
+          // a stored route is reused while the places did not move AND the polyline it replaces is still the one it was made for (its anchor points are vertices of it):
+          // when the route of the direction was redrawn (a stop moved), the anchors no longer fit and the detour would silently not be drawn
+          const old = store.routes[key];
+          if (old?.sig === sig && anchored(poly, old.a) && anchored(poly, old.b)) { out[key] = old; kept++; continue; }
           let at = 0;
           let stopAt = null;
           for (let i = 0; i < d.stops.length && i <= bIdx; i++) {

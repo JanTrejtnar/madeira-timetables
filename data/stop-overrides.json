@@ -1072,9 +1072,9 @@
     },
     {
       "name": "Porto da Cruz",
-      "label": "PLACE POSITION GIVEN BY THE MAINTAINER, NOT A SURVEYED STOP: point in Porto da Cruz picked on mapy.com (OSM base map) at 32.7717386, -16.829496, about 120 m from the previous settlement estimate; the real stop platform is not known. Valid for the spellings P.Cruz / P. Cruz / Porto Cruz of other lines too (scripts/lib-abbrev.mjs).",
-      "lat": 32.7717386,
-      "lon": -16.829496,
+      "label": "PLACE POSITION GIVEN BY THE MAINTAINER, NOT A SURVEYED STOP: point in Porto da Cruz given by the maintainer as 32.77182932561351, -16.8289640158653 (earlier picked on mapy.com at 32.7717386, -16.829496, 51 m away); the real stop platform is not known. Valid for the spellings P.Cruz / P. Cruz / Porto Cruz of other lines too (scripts/lib-abbrev.mjs).",
+      "lat": 32.77182932561351,
+      "lon": -16.8289640158653,
       "locationPrecision": "place_centroid"
     }
   ],

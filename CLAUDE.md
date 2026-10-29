@@ -39,6 +39,7 @@ Vývojář/asistent MUSÍ před každým commitem automaticky a bez vyzvání sp
 
 1. `npm run build:data` (přegenerování dat, kontrola chybějících zastávek a poznámek)
    - po každé změně poloh zastávek (override, `inheritSameSpot`, nové souřadnice) jsou uložené trasy zastaralé: spusť `npm run fetch:routes` (překreslí jen změněné směry) a pak znovu `npm run build:data`, jinak `shape-ends.test.ts` selže na odchylce konců tras (druhá, nahodilá příčina – timeout pod zátěží – je ošetřena v samotném testu)
+   - totéž platí pro objížďky přes místa „Via“ (`data/via-routes.json`): jejich kotvy musí ležet na aktuální trase směru, jinak je mapa mlčky nevykreslí (`tests/route-geometry.test.ts` to hlídá). Po překreslení tras spusť `npm run fetch:via-routes` (stáhne jen ty, jejichž kotvy už nesedí) a znovu `npm run build:data`; `npm run verify` to dělá sám
 2. `npx tsc -b` (striktní typová kontrola bez chyb)
 3. `npm test` (vitest unit testy)
 4. E2E kontrolní sady: `node scripts/e2e-line96.mjs`, `node scripts/e2e-line208.mjs`, `node scripts/e2e-trim-notes.mjs`, `node scripts/e2e-ux.mjs`, `node scripts/e2e-planner.mjs`, `node scripts/e2e-transfers.mjs`, `node scripts/e2e-map.mjs`, `node scripts/e2e-mobile.mjs`, `node scripts/e2e-robust.mjs`, `node scripts/e2e-offline-map.mjs`

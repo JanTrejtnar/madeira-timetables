@@ -133,6 +133,26 @@ const hash = (page) => page.evaluate(() => location.hash);
   await page.close();
   await ctx.clearPermissionOverrides();
 }
+
+// ---- 3b. the position dot must never take the page down (it was added to a map that was not ready / already removed -> Error Boundary)
+{
+  const ctx = browser.defaultBrowserContext();
+  await ctx.overridePermissions(new URL(base).origin, ['geolocation']);
+  const { page, errors } = await open(`${base}#/line/5004/1/3-10`);
+  await page.setGeolocation({ latitude: 32.65, longitude: -16.91, accuracy: 30 });
+  // switch between routes and the network map as fast as a reader can (hashchange), while a fix arrives in between
+  for (const [i, h] of ['#/line/5004/0', '#/map', '#/line/5000/0', '#/line/4019/1', '#/map', '#/line/5004/1/3-10', '#/line/5011/1'].entries()) {
+    await page.evaluate((x) => { location.hash = x; }, h);
+    await sleep(i % 2 ? 60 : 350);
+    if (i === 2) await page.setGeolocation({ latitude: 32.7, longitude: -16.8, accuracy: 30 });
+  }
+  await sleep(1500);
+  check('switching routes with the position on does not hit the error page', (await page.$('[data-testid=data-unavailable]')) === null);
+  check('...and the dot is on the map', (await page.$('.me-dot')) !== null);
+  check('no page errors (switching routes with the position on)', errors.length === 0, errors.join(' | '));
+  await page.close();
+  await ctx.clearPermissionOverrides();
+}
 {
   const hints = {};
   const agents = [

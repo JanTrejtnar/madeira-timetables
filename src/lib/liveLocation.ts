@@ -97,19 +97,47 @@ export function useLiveLocation(map: L.Map | null, label: string) {
   useEffect(() => {
     if (!map || !last.current) return;
     const f = last.current;
-    const marker = L.marker([f.lat, f.lon], { icon: L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }), zIndexOffset: 1000, keyboard: false }).bindTooltip(label).addTo(map);
-    const ring = L.circle([f.lat, f.lon], { radius: Math.min(f.acc, 500), color: '#2563eb', weight: 1, fillOpacity: 0.08, interactive: false }).addTo(map);
-    dot.current = { marker, ring };
+    const marker = L.marker([f.lat, f.lon], { icon: L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }), zIndexOffset: 1000, keyboard: false }).bindTooltip(label);
+    const ring = L.circle([f.lat, f.lon], { radius: Math.min(f.acc, 500), color: '#2563eb', weight: 1, fillOpacity: 0.08, interactive: false });
+    let added = false;
+    // the dot is a nicety: a map that is not ready yet (no panes / view) or already gone must never take the page down with it (Error Boundary)
+    const add = () => {
+      if (added || !live(map)) return;
+      try {
+        if (!map.getPane('markerPane') || !map.getPane('overlayPane')) return;
+        marker.addTo(map);
+        ring.addTo(map);
+        dot.current = { marker, ring };
+        added = true;
+      } catch {
+        marker.remove();
+        ring.remove();
+      }
+    };
+    try {
+      map.whenReady(add);
+    } catch {
+      /* the map is gone */
+    }
     return () => {
-      marker.remove();
-      ring.remove();
+      added = true; // a late whenReady must not add it any more
+      try {
+        marker.remove();
+        ring.remove();
+      } catch {
+        /* the map is gone */
+      }
       dot.current = null;
     };
   }, [map, has, label]);
   useEffect(() => {
     if (!fix || !dot.current) return;
-    dot.current.marker.setLatLng([fix.lat, fix.lon]);
-    dot.current.ring.setLatLng([fix.lat, fix.lon]).setRadius(Math.min(fix.acc, 500));
+    try {
+      dot.current.marker.setLatLng([fix.lat, fix.lon]);
+      dot.current.ring.setLatLng([fix.lat, fix.lon]).setRadius(Math.min(fix.acc, 500));
+    } catch {
+      /* the map is gone */
+    }
   }, [fix]);
 
   return { status, fix, following, locate: () => locate() };

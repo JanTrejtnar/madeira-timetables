@@ -13,6 +13,9 @@ const steps = [
   // positions may have changed -> redraw the stale directions only (a no-op when nothing changed), then rebuild
   { name: 'fetch:routes', cmd: npm, args: ['run', 'fetch:routes'], s: 600 },
   { name: 'build:data (after routes)', cmd: npm, args: ['run', 'build:data'], s: 180 },
+  // a redrawn direction leaves the detours through its "Via" places without their anchor points: fetch them again (a no-op when nothing changed)
+  { name: 'fetch:via-routes', cmd: npm, args: ['run', 'fetch:via-routes'], s: 900 },
+  { name: 'build:data (after via routes)', cmd: npm, args: ['run', 'build:data'], s: 180 },
   { name: 'tsc -b', cmd: npx, args: ['tsc', '-b'], s: 240 },
   { name: 'vitest', cmd: npm, args: ['test'], s: 300 },
   ...(process.argv.includes('--skip-e2e')

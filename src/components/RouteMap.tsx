@@ -5,6 +5,7 @@ import { loadShape } from '../data';
 import { useT, type Lang } from '../i18n';
 import { localStopName } from '../lib/text';
 import { spliceDetours } from '../lib/via';
+import { offRoadLinks } from '../lib/offRoad';
 import { rideSplit } from '../lib/ride';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
 import { isApproxPosition } from '../lib/precision';
@@ -210,6 +211,9 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
               for (const rest of [cut.before, cut.after]) if (rest.length > 1) L.polyline(rest, { ...style, weight: 3, opacity: 0.6, interactive: false }).addTo(map).bringToBack();
               casedLine(group, cut.ride, style, 6);
             } else casedLine(group, full, style);
+            // a stop the line does not touch is joined to it by a dashed link (the route must not look as if the bus ignored the place)
+            const placed = layer.stops.flatMap((s) => (s.lat !== undefined && s.lon !== undefined ? [[s.lat, s.lon] as [number, number]] : []));
+            for (const link of offRoadLinks(full, placed)) L.polyline(link, { color: layer.color, weight: 2, opacity: 0.8, dashArray: '2 6', lineCap: 'round', interactive: false }).addTo(group);
             fit();
           })
           .catch(() => alive && setFailed(true));
