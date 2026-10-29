@@ -154,6 +154,9 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
     const group = L.featureGroup().addTo(map);
     const labels: PopupLabels = { google: t('mapGoogle'), mapy: t('mapMapyCz'), arrival: t('arrivalWord'), departure: t('departureWord'), settlement: t('settlementWarning') };
     let alive = true;
+    // the message belongs to the route being shown: a new route starts without it, and a route that loaded clears it
+    setFailed(false);
+    let drawn = false;
 
     layers.forEach((layer, li) => {
       layer.pins?.forEach((p) => drawPin(group, p, t('pickedPoint'), t('mapWalk')));
@@ -203,6 +206,8 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
         loadShape(layer.shapeId as number)
           .then((pts) => {
             if (!alive) return;
+            drawn = true;
+            setFailed(false);
             const full = cutSpurs(spliceDetours(pts, layer.detours), layer.trip?.stops);
             const style = { color: layer.color, lineCap: 'round', lineJoin: 'round' } as const;
             const cut = layer.ride ? rideSplit(full, layer.ride.stops, layer.ride.from, layer.ride.to) : null;
@@ -216,7 +221,7 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
             for (const link of offRoadLinks(full, placed)) L.polyline(link, { color: layer.color, weight: 2, opacity: 0.8, dashArray: '2 6', lineCap: 'round', interactive: false }).addTo(group);
             fit();
           })
-          .catch(() => alive && setFailed(true));
+          .catch(() => alive && !drawn && setFailed(true));
       }
     } else if (layers.length && !group.getLayers().length) setFailed(true);
 

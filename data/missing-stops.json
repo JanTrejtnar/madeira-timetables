@@ -734,7 +734,7 @@
     {
       "name": "Torre",
       "code": null,
-      "status": "name_match",
+      "status": "place_centroid",
       "lineCount": 2,
       "tripCount": 18,
       "lines": [
@@ -1032,7 +1032,7 @@
     {
       "name": "Mercado",
       "code": null,
-      "status": "name_match",
+      "status": "manual_osm_match",
       "lineCount": 1,
       "tripCount": 50,
       "lines": [
@@ -2102,7 +2102,7 @@
     {
       "name": "M. Valente",
       "code": null,
-      "status": "name_match",
+      "status": "interpolated",
       "lineCount": 1,
       "tripCount": 2,
       "lines": [
@@ -2182,7 +2182,7 @@
     {
       "name": "Ribeira Funda",
       "code": null,
-      "status": "name_match",
+      "status": "place_centroid",
       "lineCount": 1,
       "tripCount": 2,
       "lines": [

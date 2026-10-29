@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchFoot, FOOT_TIMEOUT_MS } from './foot';
-import { TERRAIN_FACTOR, WALK_M_PER_MIN, walkTo } from './walk';
+import { TERRAIN_FACTOR, WALK_M_PER_MIN, walkMinutes, walkTo } from './walk';
 
 // two points ~650 m apart; distinct per test so the in-memory cache of foot.ts does not answer
 const pair = (n: number) => ({ a: { lat: 32.65 + n * 0.01, lon: -16.9 }, b: { lat: 32.655 + n * 0.01, lon: -16.9 } });
@@ -34,6 +34,8 @@ describe('walking route without the routing service', () => {
     expect(WALK_M_PER_MIN * 60).toBeCloseTo(4000, -3); // 4.2 km/h
     expect(w.m).toBeGreaterThan(550 * TERRAIN_FACTOR);
     expect(w.m).toBeLessThan(560 * TERRAIN_FACTOR);
-    expect(w.min).toBe(Math.round(w.m / WALK_M_PER_MIN));
+    expect(w.min).toBe(walkMinutes(w.m));
+    expect(walkMinutes(w.m)).toBe(Math.ceil(w.m / WALK_M_PER_MIN));
+    expect(walkMinutes(0)).toBe(1);
   });
 });

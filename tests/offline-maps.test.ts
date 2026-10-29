@@ -278,7 +278,7 @@ describe.skipIf(!existsSync('public/data/shapes-all.json'))('the route pack buil
   });
   it('holds the geometry of the single route files, point for point', () => {
     for (const id of used.keys()) expect(pack[id][1]).toEqual(JSON.parse(readFileSync(`public/data/shapes/${id}.json`, 'utf8')));
-  });
+  }, 30_000); // reads 315 files: over the 5 s default when the whole suite runs in parallel
   it('is described by its meta file', () => {
     expect(meta.count).toBe(used.size);
     expect(meta.raw).toBe(statSync('public/data/shapes-all.json').size);

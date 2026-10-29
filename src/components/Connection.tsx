@@ -9,7 +9,7 @@ import { midStops } from '../lib/ride';
 import { cachedFoot } from '../lib/foot';
 import { fmtMinutes } from '../lib/time';
 import { connectionFare, formatEuro, type FareCard } from '../lib/fare';
-import { WALK_M_PER_MIN, walkTo } from '../lib/walk';
+import { walkMinutes, walkTo } from '../lib/walk';
 import { connectionLink, type Picked } from '../lib/plannerForm';
 import { sameTrip } from '../lib/trips-store';
 import type { Itinerary, Leg } from '../lib/router';
@@ -59,7 +59,7 @@ export function endWalks(it: Itinerary, fromPt: Picked['pt'], toPt: Picked['pt']
   const real = (pt: Picked['pt'], stop: typeof inStop, back: boolean) => {
     if (!pt || stop.lat === undefined || stop.lon === undefined) return null;
     const route = back ? cachedFoot({ lat: stop.lat, lon: stop.lon }, pt) : cachedFoot(pt, { lat: stop.lat, lon: stop.lon });
-    return route ? { m: route.m, min: Math.max(1, Math.round(route.m / WALK_M_PER_MIN)) } : null;
+    return route ? { m: route.m, min: walkMinutes(route.m) } : null;
   };
   return { walkIn: real(fromPt, inStop, false) ?? walkTo(fromPt, inStop), walkOut: real(toPt, outStop, true) ?? walkTo(toPt, outStop) };
 }

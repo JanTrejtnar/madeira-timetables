@@ -33,9 +33,10 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // schedules, stop lists and the detour routes of the lines (data/via) are precached; route geometries and PDFs are cached when first opened
-        globPatterns: ['**/*.{js,css,html,svg,png}', 'data/schedules.json', 'data/pois.json', 'data/overview.json', 'data/via/*.json'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // schedules, stop lists, the detour routes of the lines (data/via) and the pack of all route geometries (shapes-all.json, ~6.8 MB, the fallback of
+        // loadShape for a route not opened before) are precached; single route files and PDFs are cached when first opened
+        globPatterns: ['**/*.{js,css,html,svg,png}', 'data/schedules.json', 'data/pois.json', 'data/overview.json', 'data/via/*.json', 'data/shapes-all.json'],
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         // a new service worker drops the precache of older builds when it activates and takes over open tabs at once
         cleanupOutdatedCaches: true,
         skipWaiting: true,

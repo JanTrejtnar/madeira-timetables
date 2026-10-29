@@ -7,6 +7,7 @@ import type { Direction, Line, Stop } from '../types';
 import { viaAt, viaMinutesChain, viaStop } from './via';
 import { expandTerms } from './aliases';
 import { M_PER_DEG_LAT, metres } from '../../shared/geo.mjs';
+import { walkMinutes } from './walk';
 
 export interface Node {
   id: number;
@@ -49,7 +50,6 @@ const CLUSTER_M = 250;
 const WALK_M = 200;
 /** reach of a walk to or from a transfer hub */
 const HUB_WALK_M = 400;
-const WALK_M_PER_MIN = 70;
 
 
 const displayName = (name: string) => name.replace(/,?\s*(D|S)\d*[A-Z]?$/, '').trim();
@@ -122,7 +122,7 @@ export function buildNetwork(lines: Line[], terminalWalks: readonly { a: string;
       if (((located[j].lat as number) - (located[i].lat as number)) * M_PER_DEG_LAT > WALK_M) break;
       const d = metres(located[i] as Required<Node>, located[j] as Required<Node>);
       if (d <= WALK_M) {
-        const walk = Math.max(1, Math.ceil(d / WALK_M_PER_MIN));
+        const walk = walkMinutes(d);
         near.get(located[i].id)!.push({ node: located[j].id, walk });
         near.get(located[j].id)!.push({ node: located[i].id, walk });
       }
@@ -135,7 +135,7 @@ export function buildNetwork(lines: Line[], terminalWalks: readonly { a: string;
       if (n.id === h.id) continue;
       const d = metres(h as Required<Node>, n as Required<Node>);
       if (d <= WALK_M || d > HUB_WALK_M) continue;
-      const walk = Math.max(1, Math.ceil(d / WALK_M_PER_MIN));
+      const walk = walkMinutes(d);
       near.get(h.id)!.push({ node: n.id, walk });
       near.get(n.id)!.push({ node: h.id, walk });
     }

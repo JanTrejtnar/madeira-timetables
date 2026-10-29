@@ -111,12 +111,41 @@ export async function pruneShapeCache(): Promise<void> {
   }
 }
 
-export async function loadShape(shapeId: number): Promise<[number, number][]> {
+/** public/data/shapes-all.json: every route in one file, `{ id: [rev, points] }` (precached with the app, so it is there offline). */
+type ShapePack = Record<string, [string, [number, number][]]>;
+let shapePack: Promise<ShapePack> | undefined;
+function loadShapePack(): Promise<ShapePack> {
+  shapePack ??= fetch(url('data/shapes-all.json'))
+    .then((r) => (r.ok ? (r.json() as Promise<ShapePack>) : Promise.reject(new Error(String(r.status)))))
+    .catch((e) => {
+      shapePack = undefined; // retried the next time a route is missing
+      throw e;
+    });
+  return shapePack;
+}
+
+async function fetchShape(shapeId: number): Promise<[number, number][]> {
   const r = await fetch(shapeUrl(shapeId));
   if (!r.ok) throw new Error(String(r.status));
   const pts: unknown = await r.json();
   if (!isShape(pts)) throw new Error(`route ${shapeId}: not a list of points`);
   return pts;
+}
+
+/** A route: its own file (cached when first opened); when that cannot be had (offline, not opened before), the copy in the precached pack of all routes. */
+export async function loadShape(shapeId: number): Promise<[number, number][]> {
+  try {
+    return await fetchShape(shapeId);
+  } catch (e) {
+    try {
+      const entry = (await loadShapePack())[String(shapeId)];
+      const rev = shapeRevs.get(shapeId);
+      if (entry && (!rev || entry[0] === rev) && isShape(entry[1])) return entry[1];
+    } catch {
+      // no pack either: the original error below
+    }
+    throw e;
+  }
 }
 
 const viaLoaded = new Map<number, Promise<ViaRoutes>>();

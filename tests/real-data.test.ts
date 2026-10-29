@@ -683,10 +683,10 @@ describe.skipIf(!existsSync(file))('position precision and parishes of intercity
   });
   it('walk: 4 km/h, about 70 m per minute', () => {
     const w = walkTo({ lat: 32.65, lon: -16.9 }, { lat: 32.65 + 280 / 111000, lon: -16.9 });
-    // 280 m straight x 1.3 for winding roads = ~364 m -> 5 min
+    // 280 m straight x 1.3 for winding roads = ~364 m -> 5.2 min, rounded up like every other walk of the planner -> 6 min
     expect(w!.m).toBeGreaterThan(355);
     expect(w!.m).toBeLessThan(375);
-    expect(w!.min).toBe(5);
+    expect(w!.min).toBe(6);
     expect(walkTo({ lat: 32.65, lon: -16.9 }, { lat: 32.65, lon: -16.9 })!.min).toBe(1);
     expect(walkTo(undefined, { lat: 1, lon: 1 })).toBeNull();
     expect(walkTo({ lat: 1, lon: 1 }, {})).toBeNull();
@@ -821,9 +821,9 @@ describe.skipIf(!existsSync(file))('manual overrides, generated routes and "Via"
     expect(achada.locationPrecision).toBe('settlement_center');
     const pts = JSON.parse(readFileSync(new URL(`../public/data/shapes/${d.shapeId}.json`, import.meta.url), 'utf8')) as [number, number][];
     for (const s of [moinhos, achada]) expect(Math.min(...pts.map((p) => m(p, [s.lat!, s.lon!])))).toBeLessThan(100);
-    // the line 505 Moinhos (Santa Cruz concelho) is another place and keeps its position
+    // the line 505 / 527 Moinhos (Santa Cruz concelho) is another place: the official SIGA stop ESTR dos Moinhos (68438), not the Faial one nor a namesake further south
     const l505 = data.lines.find((l) => l.number === '505')!;
     const m505 = l505.directions[0].stops.find((s) => s.name === 'Moinhos')!;
-    expect(m([m505.lat!, m505.lon!], [32.6648, -16.837])).toBeLessThan(50);
+    expect(m([m505.lat!, m505.lon!], [32.7012, -16.8007])).toBeLessThan(50);
   });
 });
