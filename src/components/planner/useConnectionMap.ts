@@ -77,7 +77,8 @@ export function useConnectionMap(shared: Shared, selected: { it: Itinerary } | u
       detours: detoursFor(viaRoutes.get(l.trip.line.id), l.trip.dirIndex, l.trip.notes),
       trip: { stops: tripStops(l.trip).flatMap((s, k) => (s.lat !== undefined && s.lon !== undefined ? [{ at: [s.lat, s.lon] as [number, number], calls: l.trip.times[k] !== null }] : [])) },
       served: { from: 0, to: Math.max(0, ridden(l).length - 1) },
-      ride: { stops: tripStops(l.trip).map((s) => (s.lat !== undefined && s.lon !== undefined ? ([s.lat, s.lon] as [number, number]) : null)), from: l.fromPos, to: l.toPos },
+      // only the stops the trip calls at are matched to the polyline (a skipped one may lie on a stretch that was cut away)
+      ride: { stops: tripStops(l.trip).map((s, k) => (s.lat !== undefined && s.lon !== undefined && l.trip.times[k] !== null ? ([s.lat, s.lon] as [number, number]) : null)), from: l.fromPos, to: l.toPos },
       ...(i === 0 && pins.length ? { pins } : {}),
       ...(i === 0 && transfers.length ? { transfers } : {}),
     }));

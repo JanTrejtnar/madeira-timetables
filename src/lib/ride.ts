@@ -2,11 +2,9 @@
 // the rest (before boarding, after getting off) is faint or hidden.
 import { sameCall, tripStops, type Trip } from './network';
 import type { Stop } from '../types';
-import { localSq } from '../../shared/geo.mjs';
+import { matchStopsToShape } from './shapeMatch';
 
 type Pt = [number, number];
-
-const sq = localSq;
 
 export interface RideSplit {
   before: Pt[];
@@ -16,21 +14,12 @@ export interface RideSplit {
 
 /**
  * Splits `shape` at the points nearest to stop `from` and stop `to` of the trip (`stops` = [lat, lon] of every stop, null where unknown).
- * The stops are matched to the polyline in order, so a line that passes the same place twice is cut at the right pass.
+ * The stops are matched to the polyline in driving order (`matchStopsToShape`), so a line that passes the same place twice is cut at the
+ * right pass, and a stop that is not on the polyline (it was trimmed away) does not move the others.
  * null when either stop has no position or the stretch is empty (the caller then draws the whole line).
  */
 export function rideSplit(shape: readonly Pt[], stops: readonly (Pt | null)[], from: number, to: number): RideSplit | null {
-  let at = 0;
-  const idx = stops.map((s) => {
-    if (!s) return null;
-    let best = at;
-    let bd = Infinity;
-    for (let i = at; i < shape.length; i++) {
-      const d = sq(shape[i], s);
-      if (d < bd) { bd = d; best = i; }
-    }
-    return (at = best);
-  });
+  const idx = matchStopsToShape(shape, stops);
   const a = idx[from];
   const b = idx[to];
   if (a == null || b == null || b <= a) return null;

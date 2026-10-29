@@ -1,4 +1,4 @@
-// "Location not allowed": browsers cannot open the OS settings, so the hint tells where the permission is switched on, by platform.
+// "Location not allowed": browsers cannot open the OS settings, so the one-sentence message tells where the permission is switched on, by platform.
 import type { Key, T } from '../i18n';
 
 export type GeoPlatform = 'ios' | 'android' | 'desktop';
@@ -10,9 +10,7 @@ export function detectPlatform(nav: Pick<Navigator, 'userAgent' | 'maxTouchPoint
   return 'desktop';
 }
 
-export const geoHelpKey = (p: GeoPlatform = detectPlatform()) => (p === 'ios' ? 'geoHelpIos' : p === 'android' ? 'geoHelpAndroid' : 'geoHelpDesktop') satisfies Key;
+export const geoDeniedKey = (p: GeoPlatform = detectPlatform()) => (p === 'ios' ? 'geoDeniedIos' : p === 'android' ? 'geoDeniedAndroid' : 'geoDeniedDesktop') satisfies Key;
 
-/** "Location is not allowed. …" + the steps for this device */
-export function geoDeniedText(t: T): string {
-  return `${t('geoDenied')} ${t(geoHelpKey())}`;
-}
+/** "Location is not allowed. …" with the steps for this device */
+export const geoDeniedText = (t: T): string => t(geoDeniedKey());

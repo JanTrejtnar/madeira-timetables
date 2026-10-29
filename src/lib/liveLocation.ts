@@ -1,5 +1,6 @@
-// Live position on a Leaflet map: watchPosition feeds a pulsing dot with an accuracy circle. The map follows the dot until the reader drags it away;
-// the locate button switches following back on. The watch is cleared when the component using it unmounts.
+// Live position on a Leaflet map: watchPosition feeds a pulsing dot with an accuracy circle. The watch starts by itself when the map appears
+// (quietly: the view stays where it is, a refusal shows nothing); the locate button then makes the map follow the dot until the reader drags
+// it away, and shows why the position is missing. The watch is cleared when the component using it unmounts.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 
@@ -20,6 +21,8 @@ export function useLiveLocation(map: L.Map | null, label: string) {
   const [following, setFollowing] = useState(false);
   const followRef = useRef(false);
   const watchId = useRef<number | null>(null);
+  /** the watch was started by the map itself, not by the button: its failure is not reported */
+  const quiet = useRef(false);
   const last = useRef<Fix | null>(null);
   const mapRef = useRef(map);
   mapRef.current = map;
@@ -42,14 +45,18 @@ export function useLiveLocation(map: L.Map | null, label: string) {
     else m.panTo([f.lat, f.lon], { animate: true });
   }, []);
 
-  const locate = useCallback(() => {
-    if (!('geolocation' in navigator)) return setStatus('unsupported');
-    setFollow(true);
+  const locate = useCallback((auto = false) => {
+    if (!('geolocation' in navigator)) return auto ? undefined : setStatus('unsupported');
+    if (!auto) {
+      quiet.current = false;
+      setFollow(true);
+    }
     if (watchId.current !== null) {
-      if (last.current) center(last.current, true);
+      if (!auto && last.current) center(last.current, true);
       return;
     }
-    setStatus('busy');
+    quiet.current = auto;
+    if (!auto) setStatus('busy');
     watchId.current = navigator.geolocation.watchPosition(
       (p) => {
         const f = { lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy };
@@ -60,10 +67,13 @@ export function useLiveLocation(map: L.Map | null, label: string) {
         if (followRef.current) center(f, first);
       },
       (e) => {
+        // a quiet watch that has no fix yet keeps waiting for one (only a refused permission ends it)
+        if (quiet.current && e.code !== 1) return;
         if (e.code === 1 || !last.current) {
           stop();
           setFollow(false);
-          setStatus(e.code === 1 ? 'denied' : 'error');
+          // a quiet start that failed: the button tries again and says what is wrong
+          setStatus(quiet.current ? 'idle' : e.code === 1 ? 'denied' : 'error');
         }
         // a timeout or a lost signal while a position is known: keep the last dot and wait for the next fix
       },
@@ -75,12 +85,13 @@ export function useLiveLocation(map: L.Map | null, label: string) {
   useEffect(() => {
     if (!map) return;
     setFollow(false);
+    locate(true);
     const off = () => setFollow(false);
     map.on('dragstart', off);
     return () => {
       map.off('dragstart', off);
     };
-  }, [map, setFollow]);
+  }, [map, setFollow, locate]);
 
   const has = fix !== null;
   useEffect(() => {
@@ -101,5 +112,5 @@ export function useLiveLocation(map: L.Map | null, label: string) {
     dot.current.ring.setLatLng([fix.lat, fix.lon]).setRadius(Math.min(fix.acc, 500));
   }, [fix]);
 
-  return { status, fix, following, locate };
+  return { status, fix, following, locate: () => locate() };
 }

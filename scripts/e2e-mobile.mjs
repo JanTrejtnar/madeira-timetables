@@ -96,6 +96,12 @@ const hash = (page) => page.evaluate(() => location.hash);
     return { z: +v.split('|')[0], lat: +v.split('|')[1], lon: +v.split('|')[2] };
   };
   check('the locate button is on the map', (await page.$('[data-testid=locate-fab]')) !== null);
+  // the map asks for the position by itself: the dot appears without a tap, and the view stays where it was
+  await sleep(1500);
+  check('the position is shown without tapping the button', (await page.$('.me-dot')) !== null);
+  check('...the map does not follow it by itself', (await pressed()) === 'false');
+  const v00 = await view();
+  check('...and the view is not moved to it', Math.abs(v00.lat - 32.65) > 0.03 || v00.z < 13, JSON.stringify(v00));
   await page.click('[data-testid=locate-fab]');
   await sleep(2000);
   check('a pulsing dot appears', (await page.$('.me-dot')) !== null);
@@ -148,8 +154,8 @@ const hash = (page) => page.evaluate(() => location.hash);
     hints[name] = await page.$eval('[data-testid=locate-hint]', (e) => e.innerText).catch(() => '');
     await page.close();
   }
-  check('denied permission, Android: Chrome steps', /zámku\/nastavení.*Oprávnění.*Poloha.*Povolit/.test(hints.android), hints.android);
-  check('denied permission, iOS: Safari steps', /aA.*Nastavení webu.*Poloha.*Povolit/.test(hints.ios), hints.ios);
+  check('denied permission, Android: Chrome steps', /Poloha není povolena.*zámku.*Oprávnění.*Poloha/.test(hints.android), hints.android);
+  check('denied permission, iOS: Safari steps', /Poloha není povolena\. Povolte přístup v Nastavení telefonu \(Nastavení → Safari → Poloha\)\./.test(hints.ios), hints.ios);
   check('denied permission, desktop: browser bar steps', /Poloha není povolena/.test(hints.desktop) && /liště/.test(hints.desktop), hints.desktop);
 }
 

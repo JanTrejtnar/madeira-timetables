@@ -1,5 +1,6 @@
 // One road polyline serves every trip of a direction, but a trip may skip stops (a dash in the timetable). When a skipped stop lies on a
 // side road that the bus would drive into and out of again (Ginjas on line 139), the polyline of that trip must not make the excursion.
+import { matchStopsToShape } from './shapeMatch';
 import { MADEIRA_COS, M_PER_DEG_LAT, M_PER_DEG_LON_EQ } from '../../shared/geo.mjs';
 
 type Pt = [number, number];
@@ -22,22 +23,8 @@ const RETURN_SHARE = 0.85;
 const MIN_SPUR_M = 300;
 const WINDOW = 1500;
 
-/** Index of the shape point nearest to each stop, matched in order (a road passing the same place twice is cut at the right pass). */
-function project(shape: readonly Pt[], stops: readonly TripStopPt[]): number[] {
-  let at = 0;
-  return stops.map((s) => {
-    let best = at;
-    let bd = Infinity;
-    for (let i = at; i < shape.length; i++) {
-      const d = dist(shape[i], s.at);
-      if (d < bd) {
-        bd = d;
-        best = i;
-      }
-    }
-    return (at = best);
-  });
-}
+/** Index of the shape point of each stop, matched in driving order (a road passing the same place twice is cut at the right pass). */
+const project = (shape: readonly Pt[], stops: readonly TripStopPt[]): number[] => matchStopsToShape(shape, stops.map((s) => s.at)) as number[];
 
 /** Out-and-back stretch around shape point `apex` between the called stops at `lo` and `hi`: [k, m] of the first and the last point of the road shared by both ways, or null. */
 function spurAround(shape: readonly Pt[], apex: number, lo: number, hi: number): [number, number] | null {
