@@ -58,6 +58,26 @@ export function viaMinutes(dir: Direction, after: number, place: { lat: number; 
   return viaMinutesChain(dir, after, [place], times)[0];
 }
 
+/** Minutes per km of straight line on the winding roads of Madeira (about 25 km/h on the road, a detour factor of 1.3 included). */
+const MIN_PER_KM = 3.1;
+/** A place further than this from the timed stop it hangs on is not a short branch: no time is guessed. */
+const MAX_BRANCH_KM = 8;
+
+/** Times of `places` reached from the timed stop `anchor` (`dir` 1: after it, -1: before it, in the order given), by the way travelled. */
+function extrapolate(anchor: { lat: number; lon: number }, places: readonly { lat: number; lon: number }[], dir: 1 | -1, t0: number): (number | null)[] {
+  // forward the places are visited in the order given; backward the last one is nearest to the anchor
+  const way = dir === 1 ? [anchor, ...places] : [anchor, ...[...places].reverse()];
+  const at: number[] = [t0];
+  let total = 0;
+  for (let i = 1; i < way.length; i++) {
+    total += km(way[i - 1], way[i]);
+    at.push(Math.round(t0 + dir * total * MIN_PER_KM));
+  }
+  if (total > MAX_BRANCH_KM) return places.map(() => null);
+  const out = at.slice(1);
+  return dir === 1 ? out : out.reverse();
+}
+
 /** Passing times of several places that follow the same stop, in the order given: proportional to the way travelled through them. */
 export function viaMinutesChain(dir: Direction, after: number, places: readonly { lat: number; lon: number }[], times: readonly (number | null)[]): (number | null)[] {
   let a = after;
@@ -66,6 +86,10 @@ export function viaMinutesChain(dir: Direction, after: number, places: readonly 
   while (b < dir.stops.length && times[b] == null) b++;
   const sa = dir.stops[a];
   const sb = dir.stops[b];
+  // the branch at the end (or the start) of a trip: no time on one side, but the timed stop right next to the place is the end of the
+  // trip's printed part, so the place is reached after (or before) it at the pace of a road
+  if (a >= 0 && b >= dir.stops.length && a === after && placed(sa)) return extrapolate(sa, places, 1, times[a]!);
+  if (a < 0 && b < dir.stops.length && b === after + 1 && placed(sb)) return extrapolate(sb, places, -1, times[b]!);
   if (a < 0 || b >= dir.stops.length || !placed(sa) || !placed(sb)) return places.map(() => null);
   const way = [sa, ...places, sb];
   const cum = [0];

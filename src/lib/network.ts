@@ -290,11 +290,14 @@ function areaNodes(net: Network) {
 /** Parish labels carry ", <municipality>" where the name exists twice; the part a user types is the name. */
 const parishName = (label: string) => label.split(',')[0];
 
+/** A typed word matches the start of a word of a (normalised) name: "ilha" is not in "Pavilhao" or "Maravilhas". */
+const atWord = (key: string, t: string) => key.startsWith(t) || key.includes(` ${t}`) || key.includes(`(${t}`) || key.includes(`,${t}`);
+
 export function suggest(net: Network, lines: Line[], query: string, limit = 10): Suggestion[] {
   const q = norm(query);
   if (q.length < 2) return [];
   const terms = expandTerms(query).map((x) => x.split(' '));
-  const hit = (key: string) => terms.some((tokens) => tokens.every((t) => key.includes(t)));
+  const hit = (key: string) => terms.some((tokens) => tokens.every((t) => atWord(key, t)));
   const count = new Map<string, Set<number>>();
   for (const line of lines) {
     line.directions.forEach((_, di) => {
@@ -313,7 +316,7 @@ export function suggest(net: Network, lines: Line[], query: string, limit = 10):
   };
   const wanted = (name: string) => {
     const k = norm(name);
-    return k.startsWith(q) || (q.length >= 4 && k.includes(q));
+    return k.startsWith(q) || (q.length >= 4 && atWord(k, q));
   };
   const rank = (a: Suggestion, b: Suggestion) => Number(norm(b.name) === q) - Number(norm(a.name) === q) || Number(norm(b.name).startsWith(q)) - Number(norm(a.name).startsWith(q)) || b.lines - a.lines;
   const { byParish, byCity } = areaNodes(net);
@@ -370,7 +373,7 @@ export function resolveNodes(net: Network, input: string, pickedKey?: string | n
   if (out.size) return out;
   const terms = expandTerms(input).map((x) => x.split(' ').filter(Boolean));
   if (!terms.length) return out;
-  const hit = (key: string) => terms.some((tokens) => tokens.every((t) => key.includes(t)));
+  const hit = (key: string) => terms.some((tokens) => tokens.every((t) => atWord(key, t)));
   for (const n of net.nodes) if (hit(n.key)) out.add(n.id);
   for (const [k, a] of net.aliases) if (hit(k)) for (const id of a.nodes) out.add(id);
   return out;
