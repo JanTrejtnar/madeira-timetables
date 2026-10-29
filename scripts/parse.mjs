@@ -11,6 +11,7 @@ import { isPassage, parsePassage } from './parse-passage.mjs';
 import { isSam, parseSam } from './parse-sam.mjs';
 import { parseTransbordo } from './parse-transbordo.mjs';
 import { isRowTables, parseRowTables } from './parse-rowtables.mjs';
+import { gtfsDirections } from './lib-gtfs-timetable.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RAW = path.join(ROOT, 'data', 'raw');
@@ -104,6 +105,27 @@ async function applyManual(out, warn) {
   warn('manual transcription');
 }
 
+/**
+ * Lines of Horários do Funchal whose PDF cannot be parsed take their timetable from the official GTFS feed (data/gtfs/lines.json, `npm run fetch:gtfs`).
+ * A hand transcription in data/manual wins over it. Stops get their positions later from the GTFS stop list by name, like the PDF ones.
+ */
+async function applyGtfs(out, warn, gtfs) {
+  const trips = gtfs?.lines?.[out.number];
+  if (!trips?.length || out.hasParsedSchedule) return;
+  out.family = 'gtfs';
+  out.manualSource = `Horários do Funchal GTFS feed ${gtfs.feedVersion}`;
+  out.notes = {};
+  out.directions = gtfsDirections(trips).map((d) => {
+    const departures = {};
+    for (const t of d.trips) if (t.times[0]) for (const day of t.days) (departures[day] ??= []).push({ t: t.times[0] });
+    for (const l of Object.values(departures)) l.sort((x, y) => sk(x.t) - sk(y.t));
+    return { ...d, shapeId: null, stopSource: 'pdf', stops: d.stops.map((name) => ({ code: null, name })), departures };
+  });
+  out.hasParsedSchedule = out.directions.some((d) => d.trips.length);
+  out.warnings.length = 0;
+  warn('timetable from the GTFS feed');
+}
+
 /** Source quirks the app should not see: terminal stops without a name, directions without a destination, empty day lists. */
 function tidyDirections(out, warn) {
   for (const d of out.directions) {
@@ -121,6 +143,7 @@ function tidyDirections(out, warn) {
 }
 
 const lines = JSON.parse(await readFile(path.join(ROOT, 'data', 'lines.json'), 'utf8'));
+const gtfs = (await exists(path.join(ROOT, 'data', 'gtfs', 'lines.json'))) ? JSON.parse(await readFile(path.join(ROOT, 'data', 'gtfs', 'lines.json'), 'utf8')) : null;
 const result = [];
 const report = [];
 await mkdir(path.join(ROOT, 'data', 'shapes'), { recursive: true });
@@ -242,6 +265,7 @@ for (const line of lines) {
     warn(`parser crashed: ${e.message}`);
   }
   tidyDirections(out, warn);
+  await applyGtfs(out, warn, gtfs);
   await applyManual(out, warn);
   result.push(out);
   report.push({ number: out.number, id: out.id, family: out.family, ok: out.hasParsedSchedule, warnings });

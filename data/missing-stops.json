@@ -534,6 +534,17 @@
       ]
     },
     {
+      "name": "Antes C C Anadia D",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 2,
+      "tripCount": 53,
+      "lines": [
+        "032",
+        "062"
+      ]
+    },
+    {
       "name": "Câmara de Lobos",
       "code": null,
       "status": "name_match",
@@ -930,6 +941,96 @@
       ]
     },
     {
+      "name": "CAM Lombo Aguiares D1A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 120,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Lombo Aguiares D2A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 120,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Lombo Aguiares D3A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 120,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Lombo Aguiares D4A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 120,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Lombo Aguiares S1A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 120,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Lombo Aguiares S2A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 120,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Lombo Aguiares S3A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 120,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Lombo Aguiares S4A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 120,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Lombo Aguiares S5A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 120,
+      "lines": [
+        "090"
+      ]
+    },
+    {
       "name": "Assomada",
       "code": null,
       "status": "settlement_center",
@@ -977,6 +1078,226 @@
       "tripCount": 65,
       "lines": [
         "96"
+      ]
+    },
+    {
+      "name": "CAM Barreira D1A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Barreira D2A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Barreira D3A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Barreira D4A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Barreira D5A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Trapiche S",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Trapiche S1A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Trapiche S2A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Trapiche S3A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Trapiche S4A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Trapiche S5A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "Jamboto T-12",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 64,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Barreira S1A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 61,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Barreira S2A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 61,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Barreira S3A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 61,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Barreira S4A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 61,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Trapiche D1A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 61,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Trapiche D2A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 61,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Trapiche D3A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 61,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Trapiche D4A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 61,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "CAM Trapiche D5A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 61,
+      "lines": [
+        "090"
+      ]
+    },
+    {
+      "name": "Jamboto T-13",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 61,
+      "lines": [
+        "090"
       ]
     },
     {
@@ -2287,6 +2608,26 @@
       "tripCount": 1,
       "lines": [
         "123"
+      ]
+    },
+    {
+      "name": "Estrada Camacha S1A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 1,
+      "lines": [
+        "062"
+      ]
+    },
+    {
+      "name": "Estrada Camacha S2A",
+      "code": null,
+      "status": "name_match",
+      "lineCount": 1,
+      "tripCount": 1,
+      "lines": [
+        "062"
       ]
     },
     {

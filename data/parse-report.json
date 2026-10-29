@@ -163,10 +163,10 @@
   {
     "number": "032",
     "id": 40,
-    "family": "siga-grid",
-    "ok": false,
+    "family": "gtfs",
+    "ok": true,
     "warnings": [
-      "more than 2 time columns per day (12)"
+      "timetable from the GTFS feed"
     ]
   },
   {
@@ -287,10 +287,10 @@
   {
     "number": "090",
     "id": 62,
-    "family": "unsupported",
-    "ok": false,
+    "family": "gtfs",
+    "ok": true,
     "warnings": [
-      "unsupported PDF layout"
+      "timetable from the GTFS feed"
     ]
   },
   {
@@ -303,37 +303,37 @@
   {
     "number": "094",
     "id": 65,
-    "family": "siga-grid",
-    "ok": false,
+    "family": "gtfs",
+    "ok": true,
     "warnings": [
-      "more than 2 time columns per day (7)"
+      "timetable from the GTFS feed"
     ]
   },
   {
     "number": "060",
     "id": 66,
-    "family": "unsupported",
-    "ok": false,
+    "family": "gtfs",
+    "ok": true,
     "warnings": [
-      "unsupported PDF layout"
+      "timetable from the GTFS feed"
     ]
   },
   {
     "number": "061",
     "id": 67,
-    "family": "unsupported",
-    "ok": false,
+    "family": "gtfs",
+    "ok": true,
     "warnings": [
-      "unsupported PDF layout"
+      "timetable from the GTFS feed"
     ]
   },
   {
     "number": "062",
     "id": 68,
-    "family": "unsupported",
-    "ok": false,
+    "family": "gtfs",
+    "ok": true,
     "warnings": [
-      "unsupported PDF layout"
+      "timetable from the GTFS feed"
     ]
   },
   {
@@ -483,10 +483,10 @@
   {
     "number": "105",
     "id": 1001,
-    "family": "siga-grid",
-    "ok": false,
+    "family": "gtfs",
+    "ok": true,
     "warnings": [
-      "more than 2 time columns per day (4)"
+      "timetable from the GTFS feed"
     ]
   },
   {
