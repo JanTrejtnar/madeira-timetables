@@ -11,7 +11,7 @@ export interface SavedTrip {
 const RECENT_KEY = 'recentTrips.v1';
 const FAV_KEY = 'favoriteTrips.v1';
 export const RECENT_MAX = 5;
-export const FAV_MAX = 30;
+const FAV_MAX = 30;
 
 const sameSide = (a: Picked, b: Picked) => (a.key && b.key ? a.key === b.key && (a.pt?.lat === b.pt?.lat && a.pt?.lon === b.pt?.lon) : a.text.trim().toLowerCase() === b.text.trim().toLowerCase() && a.pt?.lat === b.pt?.lat && a.pt?.lon === b.pt?.lon);
 export const sameTrip = (a: Pick<SavedTrip, 'from' | 'to'>, b: Pick<SavedTrip, 'from' | 'to'>) => sameSide(a.from, b.from) && sameSide(a.to, b.to);

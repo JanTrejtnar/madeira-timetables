@@ -20,7 +20,7 @@ import { Icon } from './Icons';
 type TFn = ReturnType<typeof useT>['t'];
 
 /** Positions of a leg in the direction's own stop list (the trip may carry extra "Via" places). */
-export function srcRide(l: Leg): { from: number; to: number } {
+function srcRide(l: Leg): { from: number; to: number } {
   const stops = tripStops(l.trip);
   const src = (pos: number) => stops.slice(0, pos).filter((s) => !s.via).length;
   return { from: src(l.fromPos), to: src(l.toPos) };
@@ -47,7 +47,7 @@ function Time({ min, est, t, className = '', it }: { min: number; est: boolean; 
 }
 
 /** "45 min" or "2 h 14 min" */
-export function duration(min: number, t: TFn): string {
+function duration(min: number, t: TFn): string {
   return min >= 60 ? t('durH', { h: Math.floor(min / 60), m: min % 60 }) : `${min} min`;
 }
 
@@ -73,7 +73,7 @@ export const totalWalk = (it: Itinerary, walkIn: { min: number } | null | undefi
   (walkIn?.min ?? 0) + (walkOut?.min ?? 0) + it.legs.slice(1).reduce((sum, _, k) => sum + transferWalk(it, k + 1), 0);
 
 /** Where the leg starts / ends for the line detail: the picked point when the leg is the first / last one, else the stop itself. */
-export function rideEnds(it: Itinerary, i: number, fromPt: Picked['pt'], toPt: Picked['pt']): RideEnds {
+function rideEnds(it: Itinerary, i: number, fromPt: Picked['pt'], toPt: Picked['pt']): RideEnds {
   return {
     ...(i === 0 ? { start: fromPt ?? (true as const) } : {}),
     ...(i === it.legs.length - 1 ? { end: toPt ?? (true as const) } : {}),
@@ -91,7 +91,7 @@ export const shortDate = (d: Ymd, lang: Lang) => new Intl.DateTimeFormat(lang, {
  * When the connection leaves, for the head of a card: "in 2 h 14 min" while it is up to three hours ahead, otherwise the date
  * ("today" for the current day) and the time: "today at 9:05", "Wed 21. 10. at 9:05" (also for a departure that has already run).
  */
-export function whenLabel(it: Itinerary, base: Ymd, now: Shared['ctx']['now'], t: TFn, lang: Lang): string {
+function whenLabel(it: Itinerary, base: Ymd, now: Shared['ctx']['now'], t: TFn, lang: Lang): string {
   const dayDiff = Math.round((Date.UTC(base.y, base.m - 1, base.d) - Date.UTC(now.y, now.m - 1, now.d)) / MS_DAY);
   const ahead = dayDiff * 1440 + it.depart - now.minutes;
   if (ahead >= 0 && ahead <= 180) {
@@ -154,7 +154,7 @@ export function ConnectionCard({ it, shared, base, selected, onOpen, fromPt, toP
 }
 
 /** Price of the connection for the card from the settings; small and grey so it stays in the background. */
-export const itineraryFare = (it: Itinerary, card: FareCard): ConnectionFare =>
+const itineraryFare = (it: Itinerary, card: FareCard): ConnectionFare =>
   connectionFare(card, it.legs.map((l) => ({ at: l.depart, zone: operatorOf(l.trip.line) === 'hf' ? 'municipal' : 'intermunicipal' })));
 
 function Fare({ it, card }: { it: Itinerary; card: FareCard }) {

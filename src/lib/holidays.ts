@@ -12,7 +12,7 @@ export interface Ymd {
 }
 
 export type DayType = 'weekday' | 'saturday' | 'sunday';
-export type HolidayScope = 'national' | 'regional' | 'municipal';
+type HolidayScope = 'national' | 'regional' | 'municipal';
 
 export interface Holiday {
   name: string;
@@ -22,7 +22,7 @@ export interface Holiday {
 }
 
 const key = (y: number, m: number, d: number) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-export const ymdKey = (v: Ymd) => key(v.y, v.m, v.d);
+const ymdKey = (v: Ymd) => key(v.y, v.m, v.d);
 
 /** Easter Sunday (Gregorian), anonymous algorithm (Meeus/Jones/Butcher). */
 export function easter(year: number): Ymd {
@@ -49,7 +49,7 @@ export function addDays(v: Ymd, n: number): Ymd {
 }
 
 /** 0 = Sunday … 6 = Saturday */
-export function weekdayOf(v: Ymd): number {
+function weekdayOf(v: Ymd): number {
   return new Date(Date.UTC(v.y, v.m - 1, v.d)).getUTCDay();
 }
 
@@ -58,7 +58,7 @@ export function weekdayOf(v: Ymd): number {
  * National: Portugal. Regional: Madeira (1 Jul Dia da Região, 26 Dec). Municipal: only Funchal (21 Aug,
  * Nossa Senhora do Monte) is included; other municipal holidays are not covered.
  */
-export function holidaysOf(year: number): Map<string, Holiday> {
+function holidaysOf(year: number): Map<string, Holiday> {
   const map = new Map<string, Holiday>();
   const add = (v: Ymd, h: Holiday) => map.set(ymdKey(v), h);
   const fixed = (m: number, d: number, name: string, scope: HolidayScope = 'national', municipality?: string) =>

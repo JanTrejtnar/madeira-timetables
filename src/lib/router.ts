@@ -36,7 +36,7 @@ const REF_SPREAD_M = 6000;
 /** The first bus of a transfer may carry the traveller this much further from the destination (to a hub) before the second one heads back. */
 export const HUB_DETOUR_M = 2500;
 /** `true` when riding from node `from` to node `to` does not take the traveller away from the destination. */
-export type Closer = (from: number, to: number, slackM?: number) => boolean;
+type Closer = (from: number, to: number, slackM?: number) => boolean;
 
 /**
  * Anti-reversal check: a bus that ends where the traveller starts (Funchal -> Cabo Girão on a "Ponta do Sol -> Funchal" run) leaves the

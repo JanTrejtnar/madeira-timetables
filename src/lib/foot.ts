@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { haversineM } from '../../shared/geo.mjs';
 
-export const FOOT_URL = 'https://routing.openstreetmap.de/routed-foot/route/v1/foot';
+const FOOT_URL = 'https://routing.openstreetmap.de/routed-foot/route/v1/foot';
 /** a slow or rate-limited public server is given up on quickly: the straight dashed line is drawn instead */
 export const FOOT_TIMEOUT_MS = 3000;
 const MEM_MAX = 200;
@@ -27,7 +27,7 @@ export interface FootRoute {
 
 export const straightM: (a: LatLon, b: LatLon) => number = haversineM;
 
-export const footKey = (a: LatLon, b: LatLon) => `${a.lat.toFixed(5)},${a.lon.toFixed(5)};${b.lat.toFixed(5)},${b.lon.toFixed(5)}`;
+const footKey = (a: LatLon, b: LatLon) => `${a.lat.toFixed(5)},${a.lon.toFixed(5)};${b.lat.toFixed(5)},${b.lon.toFixed(5)}`;
 
 /** Reads the OSRM answer; null when it is not a usable walk (no route, or a detour round the block that no walker would take). */
 export function parseFoot(json: unknown, a: LatLon, b: LatLon): FootRoute | null {
@@ -43,7 +43,7 @@ export function parseFoot(json: unknown, a: LatLon, b: LatLon): FootRoute | null
 const mem = new Map<string, Promise<FootRoute | null>>();
 /** answers that arrived, for synchronous reads; a least-recently-used cache (Map keeps insertion order) */
 const done = new Map<string, FootRoute | null>();
-export function remember(key: string, route: FootRoute | null) {
+function remember(key: string, route: FootRoute | null) {
   done.delete(key);
   done.set(key, route);
   if (done.size > MEM_MAX) done.delete(done.keys().next().value as string);

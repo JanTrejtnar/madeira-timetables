@@ -5,18 +5,18 @@ import { CITY_PREFIX, PARISH_PREFIX, hubsNear, nearbyStopNodes, nodeIdsOfKeys, n
 import { isPoiKey } from './places';
 import type { Picked } from './plannerForm';
 import { planRaptor } from './raptorAdapter';
-import type { Plan } from './router';
+import { leg, type Itinerary, type Plan } from './router';
 import { walkTo } from './walk';
 
 /** a picked stop also stands for the stops this many minutes away on foot */
-export const NEAR_STOP_MIN = 3;
+const NEAR_STOP_MIN = 3;
 
 /** straight-line reach (about 12 minutes on foot over winding roads) within which a transfer hub counts as a start of the journey */
-export const HUB_WALK_M = 650;
+const HUB_WALK_M = 650;
 
 type Pt = { lat: number; lon: number };
 /** the picked stop and the point to walk from / to when the bus boards / alights at another stop near it */
-export interface PickedStopEnd {
+interface PickedStopEnd {
   pt: Pt;
   base: Set<number>;
 }
@@ -70,6 +70,34 @@ function cityCentre(net: Network, trips: Trip[], all: Set<number>): Set<number> 
 }
 
 /**
+ * A bus that boards at the preferred start (a terminal, the start of the line) is offered from there, not from a stop further along the same trip
+ * that the search found because it leaves later with the same arrival: the traveller waits at the terminal where the bus starts. Only when the bus
+ * has not left yet (`at`); itineraries that become the same ride are listed once.
+ */
+function boardAtStart(plan: Plan, pref: Set<number>, at: number): Plan {
+  const earlier = (it: Itinerary): Itinerary => {
+    const first = it.legs[0];
+    const t = first.trip;
+    for (let i = 0; i < first.fromPos; i++) {
+      const time = t.times[i];
+      if (time === null || time < at || !pref.has(t.nodes[i])) continue;
+      const moved = { ...leg(t, i, first.toPos), walkBefore: first.walkBefore };
+      return { ...it, depart: moved.depart, legs: [moved, ...it.legs.slice(1)] };
+    }
+    return it;
+  };
+  const once = (list: Itinerary[]) => {
+    const seen = new Set<string>();
+    return list.filter((it) => {
+      const key = it.legs.map((l) => `${l.trip.line.id}/${l.trip.dirIndex}/${l.trip.times[0]}/${l.fromPos}/${l.toPos}`).join('>');
+      return !seen.has(key) && !!seen.add(key);
+    });
+  };
+  const direct = once(plan.direct.map(earlier)).sort((a, b) => a.depart - b.depart || a.finish - b.finish);
+  return { direct, transfers: once(plan.transfers.map(earlier)) };
+}
+
+/**
  * The connections from `from` to `to` leaving at `at` (minutes from midnight of the chosen day, may pass 24:00), among `trips`
  * (the day's trips after the type / operator filter). null while a field is empty.
  */
@@ -116,10 +144,13 @@ export function runSearch(net: Network, trips: Trip[], from: Picked, to: Picked,
   if (prefA && prefB) tries.push([A, prefB]);
   if (prefA || prefB) tries.push([A, B]);
   let found = planRaptor(net, trips, tries[0][0], tries[0][1], at, walkIn, walkOut);
+  let started = tries[0][0];
   for (const [x, y] of tries.slice(1)) {
     if (found.direct.length || found.transfers.length) break;
     found = planRaptor(net, trips, x, y, at, walkIn, walkOut);
+    started = x;
   }
+  if (prefA && started === prefA) found = boardAtStart(found, prefA, at);
   // "Funchal" as a whole town: a connection that rides within the town to board the next bus at a stop of the town is just that bus
   // (offered as it is, from its own start); the traveller chose any stop of the town as the start
   if (cityStart) {

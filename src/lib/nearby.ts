@@ -25,10 +25,10 @@ export interface NearbyStop {
 }
 
 /** Great-circle distance in metres. */
-export const distanceM: (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => number = haversineM;
+const distanceM: (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => number = haversineM;
 
-export const NEAR_M = 500;
-export const FAR_M = 1000;
+const NEAR_M = 500;
+const FAR_M = 1000;
 
 /** Stops within 500 m; if there are fewer than three, within 1 km. Sorted by distance. `widened` tells the radius grew. */
 export function nearbyStops(net: Network, pos: UserPos, limit = 12): { stops: NearbyStop[]; widened: boolean } {

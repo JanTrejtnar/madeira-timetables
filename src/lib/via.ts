@@ -50,14 +50,6 @@ export function viaAt(line: Line, dirIndex: number, dir: Direction, notes: reado
   return out;
 }
 
-/**
- * Passing time (minutes) of a via place that follows stop `after`: between the nearest stops before and after that have a time,
- * in proportion to the distance. null when the trip has no time on one side (it does not run through that stretch).
- */
-export function viaMinutes(dir: Direction, after: number, place: { lat: number; lon: number }, times: readonly (number | null)[]): number | null {
-  return viaMinutesChain(dir, after, [place], times)[0];
-}
-
 /** Minutes per km of straight line on the winding roads of Madeira (about 25 km/h on the road, a detour factor of 1.3 included). */
 const MIN_PER_KM = 3.1;
 /** A place further than this from the timed stop it hangs on is not a short branch: no time is guessed. */

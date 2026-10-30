@@ -16,7 +16,7 @@ export interface LastGoodStore {
 const LAST_GOOD_CACHE = 'dataset-last-good';
 const LAST_GOOD_URL = url('data/last-good.json');
 
-export const cacheLastGood: LastGoodStore = {
+const cacheLastGood: LastGoodStore = {
   async read() {
     if (typeof caches === 'undefined') return null;
     const hit = await (await caches.open(LAST_GOOD_CACHE)).match(LAST_GOOD_URL);
@@ -91,7 +91,7 @@ export const assetUrl = url;
  * not change, so the routes a traveller opened before the trip are still there offline. Filled when the dataset arrives.
  */
 const shapeRevs = new Map<number, string>();
-export function registerShapeRevs(lines: readonly Line[]) {
+function registerShapeRevs(lines: readonly Line[]) {
   for (const l of lines) for (const d of l.directions) if (d.shapeId !== null && d.shapeRev) shapeRevs.set(d.shapeId, d.shapeRev);
 }
 const shapeUrl = (shapeId: number) => shapeFileUrl(shapeId, shapeRevs.get(shapeId) ?? '0');
@@ -150,7 +150,7 @@ export async function loadShape(shapeId: number): Promise<[number, number][]> {
 
 const viaLoaded = new Map<number, Promise<ViaRoutes>>();
 /** The detour routes of a line (public/data/via/<id>.json, precached); {} when they cannot be had: the map then draws the plain route. Never rejects. */
-export function loadViaRoutes(lineId: number): Promise<ViaRoutes> {
+function loadViaRoutes(lineId: number): Promise<ViaRoutes> {
   let p = viaLoaded.get(lineId);
   if (!p) {
     p = fetch(url(`data/via/${lineId}.json`))

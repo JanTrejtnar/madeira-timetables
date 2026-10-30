@@ -126,6 +126,6 @@ export function searchPlaces(ix: PlaceIndex, query: string, limit = 8): PlaceHit
 }
 
 /** Key of a picked place in the planner form: no stop key, the point decides which stops are near. */
-export const POI_PREFIX = '@poi:';
+const POI_PREFIX = '@poi:';
 export const poiKey = (p: Place) => POI_PREFIX + norm(p.name);
 export const isPoiKey = (key: string | null | undefined): key is string => !!key?.startsWith(POI_PREFIX);

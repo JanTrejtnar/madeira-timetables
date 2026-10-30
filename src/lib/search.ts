@@ -9,7 +9,7 @@ export { norm };
 /** key of a stop name without the printed direction marker ("…, D", "…, S2A") and the operator's pole number ("T-42" of the GTFS names) */
 export const stopKey = (name: string) => norm(name).replace(/ (d|s)\d*[a-z]?$/, '').replace(/ t \d+(?: e \d+| \d+)*$/, '');
 
-export interface LineIndex {
+interface LineIndex {
   line: Line;
   number: string;
   oldNumber: string;

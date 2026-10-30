@@ -8,11 +8,11 @@ import { shapeFileUrl } from './shapeUrl';
 import { isShape } from './validate';
 
 /** The archive, hosted next to the app. Served with HTTP Range support (static hosting does that). */
-export const ARCHIVE_URL = `${import.meta.env.BASE_URL}maps/madeira.pmtiles`;
+const ARCHIVE_URL = `${import.meta.env.BASE_URL}maps/madeira.pmtiles`;
 /** All route geometries in one file (+ its small description), written by build:data; the pack unpacks them into the route cache. */
-export const SHAPES_URL = `${import.meta.env.BASE_URL}data/shapes-all.json`;
-export const SHAPES_META_URL = `${import.meta.env.BASE_URL}data/shapes-all.meta.json`;
-export const CHUNK_BYTES = 2 * 1024 * 1024;
+const SHAPES_URL = `${import.meta.env.BASE_URL}data/shapes-all.json`;
+const SHAPES_META_URL = `${import.meta.env.BASE_URL}data/shapes-all.meta.json`;
+const CHUNK_BYTES = 2 * 1024 * 1024;
 
 const CACHE_NAME = 'offline-maps-v1';
 /** The service worker's runtime cache of route files (vite.config.ts); the pack's routes are put there under the keys a normal fetch uses. */
@@ -30,7 +30,7 @@ export interface ArchiveInfo {
   size: number;
 }
 /** shapes-all.meta.json: `rev` identifies the content, `bytes` is what travels (gzipped), `raw` what the unpacked routes take on the device. */
-export interface ShapesInfo {
+interface ShapesInfo {
   rev: string;
   count: number;
   bytes: number;
@@ -64,7 +64,7 @@ export const cachesAvailable = () => typeof caches !== 'undefined';
 const openCache = () => caches.open(CACHE_NAME);
 
 /** Synchronous answer for the map code: is a pack installed on this device? (the flag is written after a complete install) */
-export function installedFlag(): ArchiveInfo | null {
+function installedFlag(): ArchiveInfo | null {
   try {
     const v: unknown = JSON.parse(localStorage.getItem(FLAG_KEY) ?? 'null');
     return v && typeof v === 'object' && typeof (v as ArchiveInfo).version === 'string' && typeof (v as ArchiveInfo).size === 'number' ? (v as ArchiveInfo) : null;
@@ -130,7 +130,7 @@ export async function probeArchive(url = ARCHIVE_URL, fetchFn: typeof fetch = fe
 }
 
 /** Description of the route pack, or null when the server has none (a 404, or the app's index.html answered instead of JSON). */
-export async function fetchShapesInfo(url = SHAPES_META_URL, fetchFn: typeof fetch = fetch, signal?: AbortSignal): Promise<ShapesInfo | null> {
+async function fetchShapesInfo(url = SHAPES_META_URL, fetchFn: typeof fetch = fetch, signal?: AbortSignal): Promise<ShapesInfo | null> {
   try {
     const res = await fetchFn(url, { signal });
     if (!res.ok) return null;

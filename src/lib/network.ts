@@ -271,7 +271,7 @@ export const PARISH_PREFIX = '@par:';
  * "the town", and its municipality is one built-up area, not valleys far apart.
  */
 export const CITY_PREFIX = '@muni:';
-export const CITY_GROUPS = ['Funchal'];
+const CITY_GROUPS = ['Funchal'];
 
 const areaCache = new WeakMap<Network, { byParish: Map<string, Set<number>>; byCity: Map<string, Set<number>> }>();
 /** Node ids per parish and per city group (cached per network). */

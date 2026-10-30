@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 /** OpenStreetMap standard tiles (no API key), shown as they are in the light theme and inverted by CSS in the dark theme (`.dark .osm-tiles`, only this layer). */
-export const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
 export function osmTiles(): L.TileLayer {
   return L.tileLayer(TILE_URL, {

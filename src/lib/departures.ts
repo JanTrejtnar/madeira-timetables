@@ -45,12 +45,6 @@ export function withMinutes(list: Departure[]): Timed[] {
   });
 }
 
-/** Trips of a direction that run on a day key (plain weekday trips also apply to the active school variant). */
-export function tripsOn(dir: Direction, day: DayKey, school?: boolean): Trip[] {
-  const keys: DayKey[] = day === 'weekday' && school !== undefined ? keysFor('weekday', school) : [day];
-  return (dir.trips ?? []).filter((t) => t.days.some((d) => keys.includes(d)));
-}
-
 /**
  * Times at one stop (by index) over the trips of a day, sorted. A time earlier than the trip's first time is after
  * midnight.

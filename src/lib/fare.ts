@@ -9,17 +9,17 @@ export type FareCard = 'none' | 'blue' | 'yellow';
 
 export const FARE_CARDS: FareCard[] = ['none', 'blue', 'yellow'];
 
-export type FareZone = 'municipal' | 'intermunicipal';
+type FareZone = 'municipal' | 'intermunicipal';
 
 /** on-board ticket ("bilhete de bordo", no card): one ride, no transfer */
-export const CASH_FARE: Record<FareZone, number> = { municipal: 2.05, intermunicipal: 2.65 };
+const CASH_FARE: Record<FareZone, number> = { municipal: 2.05, intermunicipal: 2.65 };
 /** pre-purchased ride on the giro card ("pré-comprado") */
-export const BLUE_FARE: Record<FareZone, number> = { municipal: 1.45, intermunicipal: 2.0 };
+const BLUE_FARE: Record<FareZone, number> = { municipal: 1.45, intermunicipal: 2.0 };
 /**
  * Minutes after the first validation in which further buses are free: municipal only on the same operator (Horários do Funchal),
  * intermunicipal on any operator.
  */
-export const BLUE_WINDOW_MIN: Record<FareZone, number> = { municipal: 45, intermunicipal: 90 };
+const BLUE_WINDOW_MIN: Record<FareZone, number> = { municipal: 45, intermunicipal: 90 };
 
 /** A bus of the connection as the fare sees it. */
 export interface FareLeg {
@@ -28,7 +28,7 @@ export interface FareLeg {
   zone: FareZone;
 }
 
-export interface LegFare {
+interface LegFare {
   /** euro paid when boarding this bus; 0 for a transfer inside the window of a ticket already paid */
   price: number;
   /** a new ticket is bought here (false = the bus is covered by the ticket of an earlier one, or the card rides free) */

@@ -274,7 +274,7 @@ export function EmptyState({ icon, title, body, tone = 'neutral' }: { icon: Icon
   );
 }
 
-export function relative(u: Upcoming, t: ReturnType<typeof useT>['t']): string {
+function relative(u: Upcoming, t: ReturnType<typeof useT>['t']): string {
   if (u.dayOffset === 1) return t('tomorrow');
   if (u.inMin <= 0) return t('now');
   if (u.inMin >= 120) return `${Math.floor(u.inMin / 60)} h ${u.inMin % 60} min`;

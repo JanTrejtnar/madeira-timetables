@@ -10,11 +10,11 @@
 // minute must both stay usable: the traveller may not go on by the line they came by, and which of the two that is must not depend on which
 // was met first.
 
-export const INF = 0x3fffffff;
+const INF = 0x3fffffff;
 /** label channels: class (any leg / printed leg) x slot (best / best of another group) */
 const NCH = 4;
 /** the group of a trip that is not of any: the start of a journey (never equal to the group of a trip) */
-export const NO_GROUP = -1;
+const NO_GROUP = -1;
 
 /** One run of a bus: stops with arrival and departure minute at each (a wait at a stop = arr < dep); calls without a time are left out. */
 export interface RaptorTrip {
@@ -189,7 +189,7 @@ export interface RaptorQuery {
   earliestOnly?: boolean;
 }
 
-export interface RaptorLeg {
+interface RaptorLeg {
   trip: number;
   from: number;
   to: number;
@@ -534,7 +534,7 @@ export function raptor(ix: RaptorIndex, q: RaptorQuery): RaptorJourney[] {
 }
 
 /** Journeys no other journey beats on departure (later), arrival (earlier) and transfers (fewer); duplicates collapse to one. */
-export function pareto(js: RaptorJourney[]): RaptorJourney[] {
+function pareto(js: RaptorJourney[]): RaptorJourney[] {
   const sorted = [...js].sort((a, b) => b.depart - a.depart || a.finish - b.finish || a.transfers - b.transfers);
   const kept: RaptorJourney[] = [];
   for (const j of sorted) if (!kept.some((k) => k.depart >= j.depart && k.finish <= j.finish && k.transfers <= j.transfers)) kept.push(j);

@@ -3,7 +3,7 @@ import { LANGS, useT, type Key, type Lang } from '../i18n';
 import { Icon } from './Icons';
 
 /** Flags as inline SVG: Windows has no flag emoji, and the offline app needs no image files. */
-export function Flag({ lang, className = 'h-4 w-6' }: { lang: Lang; className?: string }) {
+function Flag({ lang, className = 'h-4 w-6' }: { lang: Lang; className?: string }) {
   return (
     <svg viewBox="0 0 24 16" className={`${className} shrink-0 rounded-[3px] ring-1 ring-black/10`} aria-hidden="true">
       <defs>

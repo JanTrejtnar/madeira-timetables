@@ -19,7 +19,7 @@ export interface Poi {
   lineId?: number;
 }
 
-export const POIS: Poi[] = [
+const POIS: Poi[] = [
   {
     id: 'airport',
     aliases: ['airport', 'aeroporto', 'letiste', 'flugplatz', 'flughafen', 'aeropuerto', 'aeroport'],
