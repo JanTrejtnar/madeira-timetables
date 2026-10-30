@@ -53,6 +53,7 @@ function parseHash(): { id: number; dir?: number; ride?: { from: number; to: num
   return { id: +m[1], dir: m[2] !== undefined ? +m[2] : undefined, ...(m[3] !== undefined && +m[3] < +m[4] ? { ride: { from: +m[3], to: +m[4] } } : {}), ...(when ? { when } : {}) };
 }
 
+const MUNICIPALITIES = ['Funchal'] as const;
 const TAB_KEYS: readonly Tab[] = ['search', 'route', 'map', 'departures', 'settings'];
 
 /** The page named by the hash (`#/settings`, `#/search`, ...); null for a line detail or an empty / unknown hash. */
@@ -222,7 +223,8 @@ export function App() {
 
   const school = (schoolOverride !== null && overrideDay === dayStamp ? schoolOverride : null) ?? isSchoolPeriod(now);
   const autoSchool = isSchoolPeriod(now);
-  const ctx = useMemo(() => ({ now, school, municipalities: ['Funchal'] as const }), [now, school]);
+  // `municipalities` must keep its identity across clock ticks: the planner's search is keyed on it, so a fresh array every 15 s restarted the search ("Hledám spojení…" flash)
+  const ctx = useMemo(() => ({ now, school, municipalities: MUNICIPALITIES }), [now, school]);
   const net = useMemo(() => (data ? buildNetwork(data.lines, data.terminalWalks) : null), [data]);
   const shared: Shared | null = useMemo(
     () =>
