@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
+import '../lib/leafletGuard';
 import { addBasemap } from '../lib/basemap';
 import { loadShape } from '../data';
 import { useT, type Lang } from '../i18n';

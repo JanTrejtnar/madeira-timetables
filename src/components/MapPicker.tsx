@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import '../lib/leafletGuard';
 import { addBasemap } from '../lib/basemap';
 import { useT } from '../i18n';
 import { pinIcon } from '../lib/mapPin';
