@@ -453,6 +453,8 @@ export function nearbyStopNodes(net: Network, base: ReadonlySet<number>, maxMin:
  */
 const PARISH_CENTRES: Record<string, string[]> = {
   camacha: ['Largo da Achada', 'Igreja da Camacha'],
+  // the stops of Ilha are only "Via" places of line 138 (no timetable stop to count); Achada do Marques lies 1.5 km up the road
+  ilha: ['Ilha'],
 };
 
 const centreCache = new WeakMap<Network, Map<string, Set<number>>>();

@@ -58,6 +58,25 @@ describe.skipIf(!existsSync(file))('parish as a destination, short trips (real d
     }
   }, 60_000);
 
+  it('"Ilha" (a parish of two "Via" places on line 138) is the village Ilha, not Achada do Marques, in both directions', () => {
+    const city = suggest(net, data.lines, 'funchal').find((s) => s.group)!;
+    const ilha = suggest(net, data.lines, 'ilha').find((s) => s.group)!;
+    const ends = (it: { legs: { trip: { nodes: number[] }; fromPos: number; toPos: number }[] }, last: boolean) => {
+      const l = last ? it.legs.at(-1)! : it.legs[0];
+      return net.nodes[l.trip.nodes[last ? l.toPos : l.fromPos]].key;
+    };
+    for (const at of [5 * 60, 11 * 60, 17 * 60]) {
+      const out = runSearch(net, trips, { text: 'Ilha', key: ilha.key }, { text: 'Funchal', key: city.key }, at, false)!;
+      const back = runSearch(net, trips, { text: 'Funchal', key: city.key }, { text: 'Ilha', key: ilha.key }, at, false)!;
+      const o = [...out.plan.direct, ...out.plan.transfers].slice(0, 5);
+      const b = [...back.plan.direct, ...back.plan.transfers].slice(0, 5);
+      expect(o.length).toBeGreaterThan(0);
+      expect(b.length).toBeGreaterThan(0);
+      for (const it of o) expect(ends(it, false)).toBe('ilha');
+      for (const it of b) expect(ends(it, true)).toBe('ilha');
+    }
+  }, 60_000);
+
   it('"Funchal" as the start boards where the bus starts (Teleférico-Término), not at the second stop of the same trip', () => {
     const city = suggest(net, data.lines, 'funchal').find((s) => s.group)!;
     for (const at of [8 * 60, 12 * 60]) {
