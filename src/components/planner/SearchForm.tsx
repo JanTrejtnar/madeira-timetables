@@ -34,7 +34,10 @@ export function SearchForm({
   return (
     <Card className="flex flex-col gap-3 p-3!">
       <div className="flex items-stretch gap-2">
-        <div className="flex shrink-0 items-center">
+        <div className="relative flex w-8 shrink-0 flex-col items-center pb-3.5 pt-4.25">
+          <span className="size-2.5 rounded-full border-[2.5px] border-sky-600" />
+          <span className="my-1 w-0 flex-1 border-l-2 border-dotted border-slate-300 dark:border-slate-600" />
+          <Icon name="pin" className="size-4 text-sky-600" strokeWidth={2} />
           <button
             type="button"
             onClick={() => {
@@ -44,15 +47,10 @@ export function SearchForm({
             aria-label={t('swap')}
             title={t('swap')}
             data-testid="swap-button"
-            className="size-10 shrink-0 rounded-full text-slate-500 transition-colors hover:bg-slate-50 hover:text-sky-600 dark:hover:bg-slate-800"
+            className="absolute left-1/2 top-1/2 z-10 size-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:bg-slate-50 hover:text-sky-600 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
           >
-            <Icon name="swap" className="mx-auto size-5" />
+            <Icon name="swap" className="mx-auto size-4" />
           </button>
-        </div>
-        <div className="flex w-5 shrink-0 flex-col items-center pb-3.5 pt-4.25">
-          <span className="size-2.5 rounded-full border-[2.5px] border-sky-600" />
-          <span className="my-1 w-0 flex-1 border-l-2 border-dotted border-slate-300 dark:border-slate-600" />
-          <Icon name="pin" className="size-4 text-sky-600" strokeWidth={2} />
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
           <Combobox label={t('from')} placeholder={t('fromPlaceholderPlace')} value={from} onChange={setFrom} onCommit={() => commit({ from })} shared={shared} onPickMap={() => onPickMap('from')} onLocate={onLocate} locating={locating} />
@@ -61,7 +59,7 @@ export function SearchForm({
               {locNote}
             </p>
           )}
-          <div className="mx-2 h-px bg-slate-100 dark:bg-slate-800" />
+          <div className="mx-2 my-2 h-px bg-slate-100 dark:bg-slate-800" />
           <Combobox label={t('to')} placeholder={t('toPlaceholderPlace')} value={to} onChange={setTo} onCommit={() => commit({ to })} shared={shared} onPickMap={() => onPickMap('to')} />
         </div>
         <div className="flex shrink-0 flex-col items-center justify-center gap-1.5">
