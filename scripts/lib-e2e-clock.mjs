@@ -17,6 +17,8 @@ function install(start) {
     }
   }
   globalThis.Date = FakeDate;
+  // the e2e pages intercept requests (tiles), which keeps a Web Worker from loading: they search on the page's thread; scripts/e2e-worker.mjs tests the worker
+  if (!globalThis.__e2eWorker) globalThis.Worker = undefined;
 }
 
 /** Every page of the browser (and of the contexts it creates later) starts with the fixed clock. */

@@ -86,7 +86,10 @@ const plan = async (from, to) => {
   await typeIn('Odkud', plain(from));
   await typeIn('Kam', plain(to));
   await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /^Hledat$/.test(b.textContent.trim()))?.click());
-  await sleep(2500);
+  // the search runs in a worker: wait until it answers
+  await sleep(400);
+  await page.waitForFunction(() => !document.querySelector('[data-testid=searching]'), { timeout: 30000 }).catch(() => {});
+  await sleep(300);
   return text();
 };
 let t = await plan('Teleférico-Término', 'Lido');
@@ -100,6 +103,9 @@ const d2 = l90.dirs.find((d) => d.schoolOnly) ?? l90.dirs[2];
 // the viewpoint of line 181 is a stop of the feed
 t = await plan('Funchal', 'Eira do Serrado');
 check('181 planner: Funchal -> Eira do Serrado finds line 181', /\b181\b/.test(t));
+// a whole town as the start boards in its centre, a whole parish as the destination ends in its village
+t = await plan('Funchal', 'Camacha');
+check('Funchal -> Camacha (all stops): leaves from the centre (not Estrada da Camacha) and arrives at Largo da Achada', /Largo da Achada/.test(t) && !/Estrada da Camacha/.test(t.slice(0, 1500)), JSON.stringify(t.slice(0, 120)));
 t = await plan(d2.first, d2.mid);
 check(`090 planner: ${d2.first} -> ${d2.mid} (school-term direction) finds a bus`, /\b090\b/.test(t));
 

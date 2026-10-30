@@ -1,8 +1,10 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { PARISH_PREFIX, buildNetwork, servicesFor, suggest } from '../src/lib/network';
-import { runSearch } from '../src/lib/plannerSearch';
+import { CITY_CENTRE_M, runSearch } from '../src/lib/plannerSearch';
+import { metres } from '../shared/geo.mjs';
 import { shortEnds } from '../src/components/LineView';
+import { fromWire, toWire } from '../src/lib/searchWire';
 import type { Dataset } from '../src/types';
 
 const file = 'public/data/schedules.json';
@@ -24,6 +26,34 @@ describe.skipIf(!existsSync(file))('parish as a destination, short trips (real d
       }
     }
   }, 60_000);
+
+  it('"Funchal" as the start boards in the centre (a terminal or hub, or a line start near one), not at the edge of the town', () => {
+    const city = suggest(net, data.lines, 'funchal').find((s) => s.group)!;
+    const hubs = net.nodes.filter((n) => (n.terminal || n.transferHub) && n.lat !== undefined);
+    for (const at of [8 * 60, 12 * 60, 17 * 60]) {
+      const r = runSearch(net, trips, { text: 'Funchal', key: city.key }, { text: 'Camacha', key: camacha.key }, at, false)!;
+      const first = [...r.plan.direct, ...r.plan.transfers].slice(0, 5);
+      expect(first.length).toBeGreaterThan(0);
+      for (const it of first) {
+        const n = net.nodes[it.legs[0].trip.nodes[it.legs[0].fromPos]];
+        expect(n.name).not.toMatch(/Estrada da Camacha/);
+        expect(hubs.some((h) => h.id === n.id || metres(h as never, n as never) <= CITY_CENTRE_M)).toBe(true);
+      }
+    }
+  }, 60_000);
+
+  it('a result crossing the worker boundary (trips as indices) comes back as the same result', () => {
+    const city = suggest(net, data.lines, 'funchal').find((s) => s.group)!;
+    const r = runSearch(net, trips, { text: 'Funchal', key: city.key }, { text: 'Camacha', key: camacha.key }, 9 * 60, false)!;
+    const back = fromWire(structuredClone(toWire(r)), new Map(data.lines.map((l) => [l.id, l])));
+    expect(back).toEqual(r);
+    expect(back.plan.direct[0]?.legs[0].trip.line).toBe(r.plan.direct[0]?.legs[0].trip.line);
+  }, 60_000);
+
+  it('the network map lists the "Via" places (Ilha), which are no stops', () => {
+    const o = JSON.parse(readFileSync('public/data/overview.json', 'utf8'));
+    expect(o.places.find((p: { n: string }) => p.n === 'Ilha')?.i.length).toBeGreaterThan(0);
+  });
 
   it('a parish whose centre cannot be reached keeps all of its stops as the fallback', () => {
     // Rochão: nothing is listed for it, the busiest stops of the parish area are used, and a connection is found either way

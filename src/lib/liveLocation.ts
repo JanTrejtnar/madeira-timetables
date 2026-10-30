@@ -98,7 +98,8 @@ export function useLiveLocation(map: L.Map | null, label: string) {
     if (!map || !last.current) return;
     const f = last.current;
     const marker = L.marker([f.lat, f.lon], { icon: L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }), zIndexOffset: 1000, keyboard: false }).bindTooltip(label);
-    const ring = L.circle([f.lat, f.lon], { radius: Math.min(f.acc, 500), color: '#2563eb', weight: 1, fillOpacity: 0.08, interactive: false });
+    // an SVG overlay lets the taps through; on the map's own canvas (preferCanvas) the ring lay over the stops and lines of the network map and swallowed them
+    const ring = L.circle([f.lat, f.lon], { renderer: L.svg(), radius: Math.min(f.acc, 500), color: '#2563eb', weight: 1, fillOpacity: 0.08, interactive: false });
     let added = false;
     // the dot is a nicety: a map that is not ready yet (no panes / view) or already gone must never take the page down with it (Error Boundary)
     const add = () => {

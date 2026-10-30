@@ -4,12 +4,18 @@ import type { SearchResult } from '../../lib/plannerSearch';
 import { Chip, EmptyState, EstTag, type Shared } from '../common';
 
 /** What the results page says when there is nothing to list: no stop found, a far place, no connection (with a way out of the filters). */
-export function ResultNotices({ shared, searched, result, empty, onResetFilters }: { shared: Shared; searched: boolean; result: SearchResult | null; empty: boolean; onResetFilters: () => void }) {
+export function ResultNotices({ shared, searched, pending, result, empty, onResetFilters }: { shared: Shared; searched: boolean; pending: boolean; result: SearchResult | null; empty: boolean; onResetFilters: () => void }) {
   const { t } = useT();
   const { ops, directOnly, type } = shared.planner;
   return (
     <>
-      {searched && !result && <EmptyState icon="route" title={t('plannerEmptyTitle')} body={t('plannerHint')} />}
+      {pending && (
+        <p role="status" data-testid="searching" className="flex items-center gap-2 py-6 text-sm text-slate-500 dark:text-slate-400">
+          <span className="size-4 animate-spin rounded-full border-2 border-sky-600 border-t-transparent" aria-hidden="true" />
+          {t('searchingConnections')}
+        </p>
+      )}
+      {searched && !pending && !result && <EmptyState icon="route" title={t('plannerEmptyTitle')} body={t('plannerHint')} />}
       {result && (result.A === 0 || result.B === 0) && <EmptyState icon="alert" tone="warn" title={t('noStopNodesTitle')} body={result.missing ? t('placeNoStop', { place: result.missing, m: FAR_PLACE_M }) : t('noStopNodes')} />}
       {result?.far && result.A > 0 && result.B > 0 && (
         <p className="px-1 text-sm text-amber-700 dark:text-amber-300" data-testid="place-far">

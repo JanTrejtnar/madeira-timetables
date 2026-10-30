@@ -8,7 +8,8 @@ import { tripStops } from '../lib/network';
 import { midStops } from '../lib/ride';
 import { cachedFoot } from '../lib/foot';
 import { fmtMinutes } from '../lib/time';
-import { connectionFare, formatEuro, type FareCard } from '../lib/fare';
+import { connectionFare, formatEuro, type ConnectionFare, type FareCard } from '../lib/fare';
+import { operatorOf } from '../lib/operators';
 import { walkMinutes, walkTo } from '../lib/walk';
 import { connectionLink, type Picked } from '../lib/plannerForm';
 import { sameTrip } from '../lib/trips-store';
@@ -153,10 +154,13 @@ export function ConnectionCard({ it, shared, base, selected, onOpen, fromPt, toP
 }
 
 /** Price of the connection for the card from the settings; small and grey so it stays in the background. */
+export const itineraryFare = (it: Itinerary, card: FareCard): ConnectionFare =>
+  connectionFare(card, it.legs.map((l) => ({ at: l.depart, zone: operatorOf(l.trip.line) === 'hf' ? 'municipal' : 'intermunicipal' })));
+
 function Fare({ it, card }: { it: Itinerary; card: FareCard }) {
   const { t, lang } = useT();
   if (card === 'yellow') return null;
-  const price = connectionFare(card, it.legs.map((l) => l.depart));
+  const price = itineraryFare(it, card).total;
   return (
     <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500" data-testid="fare" title={t('fareNote')}>
       · {price === 0 ? t('fareFree') : formatEuro(price, lang)}
@@ -214,7 +218,7 @@ function StopRow({ stop, lang }: { stop: Parameters<typeof MapPin>[0]['stop']; l
   );
 }
 
-function Rides({ it, shared, base, fromPt, toPt, walkIn, walkOut }: { it: Itinerary; shared: Shared; base: Ymd; fromPt: Picked['pt']; toPt: Picked['pt']; walkIn: ReturnType<typeof endWalks>['walkIn']; walkOut: ReturnType<typeof endWalks>['walkOut'] }) {
+function Rides({ it, fare, shared, base, fromPt, toPt, walkIn, walkOut }: { it: Itinerary; fare: ConnectionFare; shared: Shared; base: Ymd; fromPt: Picked['pt']; toPt: Picked['pt']; walkIn: ReturnType<typeof endWalks>['walkIn']; walkOut: ReturnType<typeof endWalks>['walkOut'] }) {
   const { t, lang } = useT();
   const last = it.legs.length - 1;
   const [open, setOpen] = useState<ReadonlySet<number>>(new Set());
@@ -254,6 +258,11 @@ function Rides({ it, shared, base, fromPt, toPt, walkIn, walkOut }: { it: Itiner
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{dirLabel(l.trip.dir, line.name)}</span>
                     <span className="block text-xs text-slate-500 dark:text-slate-400">{t('rideStops', { n: l.stops, m: l.arrive - l.depart })}</span>
+                    {shared.fareCard !== 'yellow' && (
+                      <span className="block text-xs text-slate-500 dark:text-slate-400" data-testid="leg-fare">
+                        {fare.legs[i].paid ? t('legTicket', { price: formatEuro(fare.legs[i].price, lang) }) : t('legTransferFree')}
+                      </span>
+                    )}
                   </span>
                   <Icon name="chevron" className="size-4 shrink-0 text-sky-600" />
                 </button>
@@ -329,6 +338,7 @@ function Rides({ it, shared, base, fromPt, toPt, walkIn, walkOut }: { it: Itiner
 export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, estimatedNote }: { it: Itinerary; shared: Shared; base: Ymd; onBack: () => void; fromPt: Picked['pt']; toPt: Picked['pt']; map: ReactNode; estimatedNote: ReactNode }) {
   const { t, lang } = useT();
   const { walkIn, walkOut } = endWalks(it, fromPt, toPt);
+  const fare = itineraryFare(it, shared.fareCard);
   const mapBox = useRef<HTMLDivElement>(null);
   // the first and the last stop of the connection, when the map has no position for them
   const endsOf = [it.legs[0].trip, it.legs[it.legs.length - 1].trip].map((trip, k) => tripStops(trip)[k === 0 ? it.legs[0].fromPos : it.legs[it.legs.length - 1].toPos]);
@@ -406,9 +416,14 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
           </span>
         </div>
         <div className="px-3 py-3">
-          <Rides it={it} shared={shared} base={base} fromPt={fromPt} toPt={toPt} walkIn={walkIn} walkOut={walkOut} />
+          <Rides it={it} fare={fare} shared={shared} base={base} fromPt={fromPt} toPt={toPt} walkIn={walkIn} walkOut={walkOut} />
         </div>
       </div>
+      {fare.mixed && shared.fareCard !== 'yellow' && (
+        <p className="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-sm text-slate-600 dark:border-slate-700/70 dark:bg-slate-900 dark:text-slate-300" data-testid="fare-mixed">
+          {t('fareMixed')}
+        </p>
+      )}
       {noPos.map((name) => (
         <p key={name} className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200" data-testid="approx-place">
           {t('approxPlace', { name })}

@@ -231,6 +231,7 @@ export function App() {
             ctx,
             lines: data.lines,
             net,
+            terminalWalks: data.terminalWalks,
             openLine: (id, dir, ride, ends, when) => {
               setRideEnds(ends);
               location.hash = `#/line/${id}${dir !== undefined ? `/${dir}` : ''}${dir !== undefined && ride ? `/${ride.from}-${ride.to}` : ''}${dir !== undefined && ride && when ? `?dep=${when.dep}${when.date ? `&date=${when.date}` : ''}` : ''}`;

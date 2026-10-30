@@ -1,6 +1,7 @@
 // The planner's search for one departure time, as a pure function of the network, the day's trips and the two picked places
 // (the component only holds the form and shows the result).
-import { CITY_PREFIX, PARISH_PREFIX, hubsNear, nearbyStopNodes, nodeIdsOfKeys, nodesNearPoint, parishCentre, resolveNodes, type Network, type Trip } from './network';
+import { metres } from '../../shared/geo.mjs';
+import { CITY_PREFIX, PARISH_PREFIX, hubsNear, nearbyStopNodes, nodeIdsOfKeys, nodesNearPoint, parishCentre, resolveNodes, type Network, type Node, type Trip } from './network';
 import { isPoiKey } from './places';
 import type { Picked } from './plannerForm';
 import { planRaptor } from './raptorAdapter';
@@ -52,6 +53,22 @@ function nodesOf(net: Network, p: Picked) {
   return { ids, widened: false, place: false, base, extra, at: at ? { lat: at.lat as number, lon: at.lon as number } : undefined };
 }
 
+/** a stop where a line starts counts as a centre stop of the town when a terminal or hub is this near (the Areeiro bus leaves from its own stop at the cable car) */
+export const CITY_CENTRE_M = 1500;
+
+/** The stops of a whole town that stand for "the town" as a start: terminals, transfer hubs and the starts of lines near them; null when there are none to prefer. */
+function cityCentre(net: Network, trips: Trip[], all: Set<number>): Set<number> | null {
+  const starts = new Set(trips.map((tr) => tr.nodes[0]));
+  const hubs = [...all].map((id) => net.nodes[id]).filter((n) => (n.terminal || n.transferHub) && n.lat !== undefined && n.lon !== undefined);
+  const centre = new Set(hubs.map((n) => n.id));
+  for (const id of all) {
+    const n = net.nodes[id];
+    if (!starts.has(id) || n.lat === undefined || n.lon === undefined) continue;
+    if (hubs.some((h) => metres(h as Required<Node>, n as Required<Node>) <= CITY_CENTRE_M)) centre.add(id);
+  }
+  return centre.size && centre.size < all.size ? centre : null;
+}
+
 /**
  * The connections from `from` to `to` leaving at `at` (minutes from midnight of the chosen day, may pass 24:00), among `trips`
  * (the day's trips after the type / operator filter). null while a field is empty.
@@ -84,34 +101,29 @@ export function runSearch(net: Network, trips: Trip[], from: Picked, to: Picked,
       if (w) walkOut.set(id, w.min);
     }
   }
-  let found = planRaptor(net, trips, A, B, at, walkIn, walkOut);
-  // "Funchal" as a whole town: leave from its terminals (Rodoeste, SAM, CAM, the cable car ...); a wayside stop is offered only when nothing leaves from a terminal
-  if (!from.pt && from.key?.startsWith(CITY_PREFIX)) {
-    // a terminal: marked as one, a transfer hub, or the stop where a line starts (the Areeiro bus leaves from its own stop at the cable car)
-    const starts = new Set(trips.map((tr) => tr.nodes[0]));
-    const terminals = new Set([...A].filter((id) => net.nodes[id].terminal || net.nodes[id].transferHub || starts.has(id)));
-    if (terminals.size && terminals.size < A.size) {
-      const fromTerminals = planRaptor(net, trips, terminals, B, at, walkIn, walkOut);
-      if (fromTerminals.direct.length || fromTerminals.transfers.length) found = fromTerminals;
-    }
-  }
-  // "Funchal" as a whole town: a connection that rides within the town to board the next bus at a stop of the town is just that bus
-  // (offered as it is, from its own start); the traveller chose any stop of the town as the start
-  if (!from.pt && from.key?.startsWith(CITY_PREFIX)) {
-    found = { ...found, transfers: found.transfers.filter((it) => !A.has(it.legs[1].trip.nodes[it.legs[1].fromPos])) };
-  }
-  // a whole parish as the start or the destination ("Camacha (all stops)"): its centre first, not the first roadside stop of the parish border;
-  // the other stops of the parish only when no connection reaches the centre
+  // "Funchal" as a whole town as the start: its centre (terminals, hubs, and the stops where a line starts near them), not the first stop on the
+  // edge of the town; a whole parish ("Camacha (all stops)") as the start or the destination: its centre, not the first roadside pole of the border.
+  // The other stops are used only when nothing connects the preferred ones. One search in the usual case (each run is expensive on a phone).
+  const cityStart = !from.pt && !!from.key?.startsWith(CITY_PREFIX);
   const centreOf = (p: Picked, ids: Set<number>) => {
     if (p.pt || !p.key?.startsWith(PARISH_PREFIX)) return null;
     const c = new Set([...parishCentre(net, p.key)].filter((id) => ids.has(id)));
     return c.size && c.size < ids.size ? c : null;
   };
-  const toCentre = centreOf(to, B);
-  const fromCentre = centreOf(from, A);
-  if (toCentre || fromCentre) {
-    const centred = planRaptor(net, trips, fromCentre ?? A, toCentre ?? B, at, walkIn, walkOut);
-    if (centred.direct.length || centred.transfers.length) found = centred;
+  const prefA = cityStart ? cityCentre(net, trips, A) : centreOf(from, A);
+  const prefB = centreOf(to, B);
+  const tries: [Set<number>, Set<number>][] = [[prefA ?? A, prefB ?? B]];
+  if (prefA && prefB) tries.push([A, prefB]);
+  if (prefA || prefB) tries.push([A, B]);
+  let found = planRaptor(net, trips, tries[0][0], tries[0][1], at, walkIn, walkOut);
+  for (const [x, y] of tries.slice(1)) {
+    if (found.direct.length || found.transfers.length) break;
+    found = planRaptor(net, trips, x, y, at, walkIn, walkOut);
+  }
+  // "Funchal" as a whole town: a connection that rides within the town to board the next bus at a stop of the town is just that bus
+  // (offered as it is, from its own start); the traveller chose any stop of the town as the start
+  if (cityStart) {
+    found = { ...found, transfers: found.transfers.filter((it) => !A.has(it.legs[1].trip.nodes[it.legs[1].fromPos])) };
   }
   const missing = na.place && A.size === 0 ? from.text : nb.place && B.size === 0 ? to.text : null;
   const far = na.widened ? from.text : nb.widened ? to.text : null;

@@ -3,6 +3,8 @@ import { assetUrl } from '../data';
 
 export interface Overview {
   lines: { i: number; t: number; p: number[][] }[];
+  /** "Via X" places: name, position in 1e-5 degrees, ids of the lines passing them */
+  places?: { n: string; la: number; lo: number; i: number[] }[];
 }
 
 let promise: Promise<Overview> | null = null;

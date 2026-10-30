@@ -14,13 +14,15 @@ import { Icon } from './Icons';
 import { LocateFab, LocateHint } from './LocateControl';
 import { useLiveLocation } from '../lib/liveLocation';
 
-type Selection = { kind: 'stop'; nodeId: number } | { kind: 'line'; id: number } | null;
+type Selection = { kind: 'stop'; nodeId: number } | { kind: 'line'; id: number } | { kind: 'via'; idx: number } | null;
 
 const touch = typeof window !== 'undefined' && (L.Browser.mobile || navigator.maxTouchPoints > 0);
 /** zoom from which stops with at least this many lines are drawn: the hubs first, every stop when zoomed in close */
 const TIER_ZOOM = [0, 13, 14];
 /** zoom from which the full-resolution geometry of the lines is drawn; below it a copy simplified to about 30 m */
 const DETAIL_ZOOM = 13;
+/** zoom from which the "Via" places are drawn */
+const VIA_ZOOM = 13;
 const LITE_TOLERANCE = 0.0003;
 const tierOf = (lineCount: number, hub: boolean) => (hub || lineCount >= 6 ? 0 : lineCount >= 2 ? 1 : 2);
 /** Madeira with a margin */
@@ -200,10 +202,32 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
     };
     const group = L.layerGroup().addTo(map);
     const shown = new Set<number>();
+    // "Via X" places (Ilha, Ribeiro Serrão ...): no stops, so no timetable of their own, but the buses of the trips with the note pass them; same layer and lifecycle as the stops
+    const viaMade = new Map<number, L.CircleMarker>();
+    const viaShown = new Set<number>();
+    const viaMarker = (idx: number) => {
+      let m = viaMade.get(idx);
+      if (!m) {
+        const p = (overview?.places ?? [])[idx];
+        m = L.circleMarker([p.la / 1e5, p.lo / 1e5], { renderer: canvas, radius: 4, color: '#475569', weight: 2, dashArray: '2 2', fillColor: '#ffffff', fillOpacity: 1, bubblingMouseEvents: false })
+          .bindTooltip(p.n)
+          .on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            selRef.current({ kind: 'via', idx });
+          });
+        viaMade.set(idx, m);
+      }
+      return m;
+    };
     let lit: number | null = null;
     const refresh = () => {
       const z = map.getZoom();
       const view = map.getBounds().pad(0.25);
+      (overview?.places ?? []).forEach((p, idx) => {
+        const want = z >= VIA_ZOOM && view.contains([p.la / 1e5, p.lo / 1e5]);
+        if (want && !viaShown.has(idx)) (group.addLayer(viaMarker(idx)), viaShown.add(idx));
+        else if (!want && viaShown.has(idx)) (group.removeLayer(viaMarker(idx)), viaShown.delete(idx));
+      });
       const want = new Set<number>();
       ids.forEach((list, i) => {
         if (z < TIER_ZOOM[i]) return;
@@ -256,7 +280,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
     const map = mapRef.current;
     if (!map || !userPos) return;
     const dot = L.marker([userPos.lat, userPos.lon], { icon: L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }), zIndexOffset: 1000, keyboard: false }).bindTooltip(t('yourPosition')).addTo(map);
-    const ring = L.circle([userPos.lat, userPos.lon], { radius: Math.min(userPos.acc, 500), color: '#2563eb', weight: 1, fillOpacity: 0.08 }).addTo(map);
+    const ring = L.circle([userPos.lat, userPos.lon], { renderer: L.svg(), interactive: false, radius: Math.min(userPos.acc, 500), color: '#2563eb', weight: 1, fillOpacity: 0.08 }).addTo(map);
     map.flyTo([userPos.lat, userPos.lon], Math.max(map.getZoom(), 15), { duration: 0.6 });
     return () => {
       dot.remove();
@@ -266,6 +290,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
 
   const node = sel?.kind === 'stop' ? net.nodes[sel.nodeId] : null;
   const picked = sel?.kind === 'line' ? lineById.get(sel.id) : null;
+  const viaPlace = sel?.kind === 'via' ? overview?.places?.[sel.idx] : undefined;
 
   return (
     <div className={full ? 'fixed inset-0 z-1000 bg-white dark:bg-slate-950' : 'relative h-full w-full'} data-testid="network-map">
@@ -309,6 +334,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
       {failed && <p className="absolute bottom-4 left-4 z-500 rounded-xl bg-white/95 px-3 py-2 text-xs text-amber-700 shadow-md dark:bg-slate-900/95 dark:text-amber-300">{t('mapUnavailable')}</p>}
       {node && <StopPanel shared={shared} nodeId={node.id} lines={[...(linesAt.get(node.id)?.values() ?? [])]} onClose={() => setSel(null)} />}
       {picked && <LinePanel shared={shared} line={picked} onClose={() => setSel(null)} />}
+      {viaPlace && <ViaPanel shared={shared} lines={viaPlace.i.flatMap((id) => lineById.get(id) ?? [])} name={viaPlace.n} onClose={() => setSel(null)} />}
     </div>
   );
 }
@@ -368,6 +394,31 @@ function StopPanel({ shared, nodeId, lines, onClose }: { shared: Shared; nodeId:
         <button type="button" data-testid="stop-set-to" onClick={() => shared.useStopAs('to', localStopName(node.name, lang), node.key)} className="min-h-10 rounded-xl px-3 text-sm font-semibold text-sky-700 ring-1 ring-sky-200 active:bg-sky-50 dark:text-sky-300 dark:ring-sky-500/30">
           {t('setAsTo')}
         </button>
+      </div>
+    </div>
+  );
+}
+
+/** Tapped "Via" place: the lines that pass it (no departures: it is not a stop). */
+function ViaPanel({ shared, name, lines, onClose }: { shared: Shared; name: string; lines: Line[]; onClose: () => void }) {
+  const { t } = useT();
+  const sorted = [...lines].sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true }));
+  return (
+    <div className={panelCls} role="dialog" aria-label={name} data-testid="via-panel">
+      <div className="flex items-start gap-2">
+        <Icon name="bus" className="mt-1 size-5 shrink-0 text-slate-500" />
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-semibold leading-6">{name}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t('viaPlaceNote')}</p>
+        </div>
+        <CloseButton onClose={onClose} />
+      </div>
+      <div className="mt-2.5 flex flex-wrap gap-1.5" aria-label={t('stopLines')}>
+        {sorted.map((l) => (
+          <button key={l.id} type="button" onClick={() => shared.openLine(l.id)} aria-label={`${l.number} ${l.name}`} className="rounded-lg transition-opacity hover:opacity-80 active:opacity-70">
+            <LineBadge line={l} />
+          </button>
+        ))}
       </div>
     </div>
   );

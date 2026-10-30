@@ -134,6 +134,33 @@ const hash = (page) => page.evaluate(() => location.hash);
   await ctx.clearPermissionOverrides();
 }
 
+// ---- 3a. a "Via" place (Ilha: no stop, no time) is a tappable point on the network map and names its lines
+{
+  const ctx = browser.defaultBrowserContext();
+  await ctx.overridePermissions(new URL(base).origin, ['geolocation']);
+  const { page, errors } = await open(`${base}#/map`);
+  const ilha = { lat: 32.811175, lon: -16.911526 };
+  // the map flies to the (fake) position: put it a little north of Ilha, then tap the pixel where Ilha is
+  await page.setGeolocation({ latitude: ilha.lat + 0.0012, longitude: ilha.lon, accuracy: 30 });
+  await page.click('[data-testid=locate-fab]');
+  await sleep(2500);
+  const hit = await page.evaluate((p) => {
+    const c = document.querySelector('[data-testid=network-map] .leaflet-container');
+    const [z, lat, lon] = c.getAttribute('data-view').split('|').map(Number);
+    const mercY = (la) => Math.log(Math.tan(Math.PI / 4 + (la * Math.PI) / 360));
+    const scale = (256 * 2 ** z) / (2 * Math.PI);
+    const r = c.getBoundingClientRect();
+    return { x: r.x + r.width / 2 + ((p.lon - lon) * Math.PI / 180) * scale, y: r.y + r.height / 2 - (mercY(p.lat) - mercY(lat)) * scale, z };
+  }, ilha);
+  await page.mouse.click(hit.x, hit.y);
+  await sleep(500);
+  const panel = await page.$eval('[data-testid=via-panel]', (e) => e.innerText).catch(() => '');
+  check('Ilha (a "Via" place) opens a panel with its name and lines', /Ilha/.test(panel) && /(56|103|138)/.test(panel), JSON.stringify(panel).slice(0, 160));
+  check('no page errors (via place)', errors.length === 0, errors.join(' | '));
+  await page.close();
+  await ctx.clearPermissionOverrides();
+}
+
 // ---- 3b. the position dot must never take the page down (it was added to a map that was not ready / already removed -> Error Boundary)
 {
   const ctx = browser.defaultBrowserContext();
@@ -202,7 +229,9 @@ const hash = (page) => page.evaluate(() => location.hash);
   let ok = false;
   for (const [a, b] of [['Santana', 'Machico'], ['Porto Moniz', 'Camacha'], ['Calheta', 'Santana'], ['Ribeira Brava', 'Machico'], ['Câmara de Lobos', 'Santana']]) {
     await page.goto(`${base}?from=${encodeURIComponent(a)}&to=${encodeURIComponent(b)}&time=08:00`, { waitUntil: 'networkidle0' });
-    await sleep(1500);
+    // the search runs in a worker: wait for its answer (a list, or the empty notice) instead of a fixed time
+    await page.waitForFunction(() => !document.querySelector('[data-testid=searching]') && document.body.innerText.length > 200, { timeout: 30000 }).catch(() => {});
+    await sleep(300);
     const idx = await page.evaluate(() => [...document.querySelectorAll('[data-testid=connection]')].findIndex((c) => c.querySelectorAll('[class*="grid-cols-[2.75rem"]').length >= 2));
     if (idx < 0) continue;
     await page.evaluate((i) => document.querySelectorAll('[data-testid=connection]')[i].click(), idx);

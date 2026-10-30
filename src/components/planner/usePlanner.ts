@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { addDays, serviceDay } from '../../lib/holidays';
 import { fmtMinutes } from '../../lib/time';
-import { servicesFor } from '../../lib/network';
+import { servicesFor, type Trip } from '../../lib/network';
 import { isoToYmd, ymdToIso, type PlannerForm } from '../../lib/plannerForm';
-import { runSearch } from '../../lib/plannerSearch';
+import { runSearch, type SearchResult } from '../../lib/plannerSearch';
+import { SearchClient, type SearchJob } from '../../lib/searchClient';
+import { fromWire } from '../../lib/searchWire';
 import { operatorOf } from '../../lib/operators';
 import { sameTrip } from '../../lib/trips-store';
 import type { Itinerary } from '../../lib/router';
@@ -38,7 +40,12 @@ export function usePlanner(shared: Shared) {
   const dateIso = ymdToIso(date);
   const dayInfo = useMemo(() => serviceDay(date, shared.ctx.municipalities), [date, shared.ctx.municipalities]);
   // all trips of the day; rebuilt only when the date or the school switch changes
-  const trips = useMemo(() => servicesFor(shared.net, shared.lines, date, shared.ctx.school, shared.ctx.municipalities), [shared.net, shared.lines, date, shared.ctx.school, shared.ctx.municipalities]);
+  // (computed only when the page has to search itself: the worker has its own copy, and building it here froze the page for a quarter of a second)
+  const dayTrips = useMemo(() => {
+    let cache: Trip[] | null = null;
+    return () => (cache ??= servicesFor(shared.net, shared.lines, date, shared.ctx.school, shared.ctx.municipalities));
+  }, [shared.net, shared.lines, date, shared.ctx.school, shared.ctx.municipalities]);
+  const lineById = useMemo(() => new Map(shared.lines.map((l) => [l.id, l])), [shared.lines]);
 
   // results and map follow the applied values: a picked suggestion / map point or Enter, never the keystrokes
   const dFrom = applied.from;
@@ -53,10 +60,46 @@ export function usePlanner(shared: Shared) {
   const departAt = time === null ? frozenNow : (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
 
   // the trips the search may use (line type / operator filter); one array per filter, so the router can reuse its per-destination index
-  const only = useMemo(() => trips.filter((tr) => matchesType(tr.line, type) && (!ops.length || ops.includes(operatorOf(tr.line)))), [trips, type, ops]);
-  // the search for a departure time (minutes from midnight of the chosen day, may pass 24:00): the results, and the "earlier / later" probes
-  const run = useCallback((at: number) => (searched ? runSearch(shared.net, only, dFrom, dTo, at, directOnly) : null), [shared.net, only, dFrom, dTo, directOnly, searched]);
-  const result = useMemo(() => run(departAt), [run, departAt]);
+  // the search runs in a Web Worker (it takes seconds on a phone and froze the page); the worker is started with the planner, so it has the network built when the question comes
+  const [client, setClient] = useState<SearchClient | null>(null);
+  useEffect(() => {
+    const c = new SearchClient(shared.lines, shared.terminalWalks);
+    setClient(c);
+    return () => c.terminate();
+  }, [shared.lines, shared.terminalWalks]);
+  const lineIds = useMemo(() => (type === 'all' && !ops.length ? null : shared.lines.filter((l) => matchesType(l, type) && (!ops.length || ops.includes(operatorOf(l)))).map((l) => l.id)), [shared.lines, type, ops]);
+  // the search for a departure time (minutes from midnight of the chosen day, may pass 24:00): the results, and the "earlier / later" probes.
+  // Without a worker (old browser) it runs on the page's thread.
+  const run = useCallback(
+    async (at: number): Promise<SearchResult | null> => {
+      if (!searched) return null;
+      if (client) {
+        const job: SearchJob = { date, school: shared.ctx.school, municipalities: [...shared.ctx.municipalities], lineIds, from: dFrom, to: dTo, at, directOnly };
+        try {
+          const wire = await client.search(job);
+          return wire && fromWire(wire, lineById);
+        } catch {
+          // the worker failed: search here
+        }
+      }
+      const only = dayTrips().filter((tr) => matchesType(tr.line, type) && (!ops.length || ops.includes(operatorOf(tr.line))));
+      return runSearch(shared.net, only, dFrom, dTo, at, directOnly);
+    },
+    [client, searched, date, shared.ctx.school, shared.ctx.municipalities, lineIds, dFrom, dTo, directOnly, lineById, shared.net, dayTrips, type, ops],
+  );
+  // a result belongs to the question it answered: until the answer to the current one arrives there is none (and the page shows "searching")
+  const [done, setDone] = useState<{ run: typeof run; at: number; result: SearchResult | null } | null>(null);
+  useEffect(() => {
+    if (!searched || !client) return;
+    let alive = true;
+    run(departAt).then((r) => alive && setDone({ run, at: departAt, result: r }));
+    return () => {
+      alive = false;
+    };
+  }, [run, departAt, searched, client]);
+  const current = !!done && done.run === run && done.at === departAt;
+  const result = searched && current ? done.result : null;
+  const pending = searched && !current;
 
   // the point to walk from / to for a connection: a picked place or map point, or the picked stop when the bus boards / alights at another stop near it
   const fromPtOf = (it?: Itinerary) => dFrom.pt ?? (it && result?.ext.from && !result.ext.from.base.has(it.legs[0].trip.nodes[it.legs[0].fromPos]) ? result.ext.from.pt : undefined);
@@ -88,21 +131,21 @@ export function usePlanner(shared: Shared) {
     window.scrollTo(0, 0);
     scroller()?.scrollTo(0, 0);
   };
-  const later = () => {
+  const later = async () => {
     const it = all[all.length - 1]?.it;
     if (!it) return;
     const at = Math.max(0, it.depart + 1 - leadWalk(it));
-    const r = run(at);
+    const r = await run(at);
     if (r && [...r.plan.direct, ...r.plan.transfers].some((x) => x.depart > it.depart)) moveTo(at);
     else setSpentAt({ ...spent, sig: searchSig, late: true });
   };
-  const earlier = () => {
+  const earlier = async () => {
     const it = all[0]?.it;
     if (!it) return;
     // widen the look-back until something earlier turns up
     for (const back of [90, 240, 720, 1440]) {
       const at = Math.max(0, it.depart - leadWalk(it) - back);
-      const r = run(at);
+      const r = await run(at);
       if (r && [...r.plan.direct, ...r.plan.transfers].some((x) => x.depart < it.depart)) return moveTo(at);
       if (at === 0) break;
     }
@@ -111,12 +154,13 @@ export function usePlanner(shared: Shared) {
   // a shared link names a connection (`?c=line.departure`): open its detail once the results are in
   const { pendingConn, clearPendingConn } = shared;
   useEffect(() => {
-    if (!pendingConn || !searched) return;
+    // the answer of the worker first: with no result yet the connection would be "not found" and the link dropped
+    if (!pendingConn || !searched || pending) return;
     const hit = all.find(({ it }) => it.legs[0].trip.line.id === pendingConn.lineId && fmtMinutes(it.legs[0].depart) === pendingConn.dep);
     if (hit) setOpenKey(hit.key);
     clearPendingConn();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingConn, searched, all]);
+  }, [pendingConn, searched, pending, all]);
   const openConnection = (k: string) => {
     listScroll.current = Math.max(window.scrollY, scroller()?.scrollTop ?? 0);
     setOpenKey(k);
@@ -157,6 +201,7 @@ export function usePlanner(shared: Shared) {
     dFrom,
     dTo,
     searched,
+    pending,
     result,
     empty,
     all,

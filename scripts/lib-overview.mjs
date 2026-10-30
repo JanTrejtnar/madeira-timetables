@@ -72,6 +72,8 @@ const weekdayRuns = (d) => {
 
 export async function buildOverview(lines, shapesDir) {
   const out = [];
+  /** "Via X" places (no stop, no time): shown on the map as small points with the lines that pass them */
+  const places = new Map();
   for (const l of lines) {
     const covered = new Set();
     const segments = [];
@@ -89,7 +91,21 @@ export async function buildOverview(lines, shapesDir) {
       for (const p of JSON.parse(await readFile(f, 'utf8'))) covered.add(cellOf(p));
       segments.push(encode(pts));
     }
+    // the detours through the via places ("Via Ilha"): trips with the note take them, the others the direct road drawn above
+    for (const r of Object.values(l.viaRoutes ?? {})) {
+      const pts = simplify(r.pts);
+      if (pts.length < 2 || pts.filter((p) => cellsAround(p).some((c) => covered.has(c))).length >= pts.length * SEEN_SHARE) continue;
+      for (const p of r.pts) covered.add(cellOf(p));
+      segments.push(encode(pts));
+    }
     if (segments.length) out.push({ i: l.id, t: runs, p: segments });
+    for (const list of Object.values(l.via ?? {})) {
+      for (const v of list) {
+        const key = `${v.name}|${v.lat.toFixed(3)}|${v.lon.toFixed(3)}`;
+        const at = places.get(key) ?? places.set(key, { n: v.name, la: Math.round(v.lat * 1e5), lo: Math.round(v.lon * 1e5), i: new Set() }).get(key);
+        at.i.add(l.id);
+      }
+    }
   }
-  return { lines: out };
+  return { lines: out, places: [...places.values()].map((p) => ({ ...p, i: [...p.i].sort((a, b) => a - b) })) };
 }
