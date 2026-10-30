@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import '../lib/leafletGuard';
+import { tapMarker } from '../lib/tapMarker';
 import { addBasemap } from '../lib/basemap';
 import { useT } from '../i18n';
 import { departuresFrom } from '../lib/nearby';
@@ -191,7 +192,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
       let m = made.get(id);
       if (!m) {
         const n = net.nodes[id];
-        m = L.circleMarker([n.lat as number, n.lon as number], { renderer: canvas, ...base(id), bubblingMouseEvents: false })
+        m = tapMarker([n.lat as number, n.lon as number], { renderer: canvas, ...base(id), bubblingMouseEvents: false })
           .bindTooltip(localStopName(n.name, lang))
           .on('click', (e) => {
             L.DomEvent.stopPropagation(e);

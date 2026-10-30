@@ -34,6 +34,21 @@ export function SearchForm({
   return (
     <Card className="flex flex-col gap-3 p-3!">
       <div className="flex items-stretch gap-2">
+        <div className="flex shrink-0 items-center">
+          <button
+            type="button"
+            onClick={() => {
+              patch({ from: to, to: from });
+              commit({ from: to, to: from });
+            }}
+            aria-label={t('swap')}
+            title={t('swap')}
+            data-testid="swap-button"
+            className="size-10 shrink-0 rounded-full text-slate-500 transition-colors hover:bg-slate-50 hover:text-sky-600 dark:hover:bg-slate-800"
+          >
+            <Icon name="swap" className="mx-auto size-5" />
+          </button>
+        </div>
         <div className="flex w-5 shrink-0 flex-col items-center pb-3.5 pt-4.25">
           <span className="size-2.5 rounded-full border-[2.5px] border-sky-600" />
           <span className="my-1 w-0 flex-1 border-l-2 border-dotted border-slate-300 dark:border-slate-600" />
@@ -50,17 +65,6 @@ export function SearchForm({
           <Combobox label={t('to')} placeholder={t('toPlaceholderPlace')} value={to} onChange={setTo} onCommit={() => commit({ to })} shared={shared} onPickMap={() => onPickMap('to')} />
         </div>
         <div className="flex shrink-0 flex-col items-center justify-center gap-1.5">
-          <button
-            onClick={() => {
-              patch({ from: to, to: from });
-              commit({ from: to, to: from });
-            }}
-            aria-label={t('swap')}
-            title={t('swap')}
-            className="size-10 shrink-0 rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-sky-600 active:rotate-180 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            <Icon name="swap" className="mx-auto size-5" />
-          </button>
           <button
             type="button"
             onClick={() => shared.toggleFavorite({ from: dFrom, to: dTo })}

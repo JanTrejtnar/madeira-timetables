@@ -71,10 +71,12 @@ export function usePlanner(shared: Shared) {
   // the search for a departure time (minutes from midnight of the chosen day, may pass 24:00): the results, and the "earlier / later" probes.
   // Without a worker (old browser) it runs on the page's thread.
   const run = useCallback(
-    async (at: number): Promise<SearchResult | null> => {
+    async (at: number, dayOffset = 0): Promise<SearchResult | null> => {
       if (!searched) return null;
+      // `dayOffset`: the probes of "earlier / later" past the ends of the shown day search on a neighbouring day (times of the result are relative to that day)
+      const day = dayOffset ? addDays(date, dayOffset) : date;
       if (client) {
-        const job: SearchJob = { date, school: shared.ctx.school, municipalities: [...shared.ctx.municipalities], lineIds, from: dFrom, to: dTo, at, directOnly };
+        const job: SearchJob = { date: day, school: shared.ctx.school, municipalities: [...shared.ctx.municipalities], lineIds, from: dFrom, to: dTo, at, directOnly };
         try {
           const wire = await client.search(job);
           return wire && fromWire(wire, lineById);
@@ -82,7 +84,8 @@ export function usePlanner(shared: Shared) {
           // the worker failed: search here
         }
       }
-      const only = dayTrips().filter((tr) => matchesType(tr.line, type) && (!ops.length || ops.includes(operatorOf(tr.line))));
+      const trips = dayOffset ? servicesFor(shared.net, shared.lines, day, shared.ctx.school, shared.ctx.municipalities) : dayTrips();
+      const only = trips.filter((tr) => matchesType(tr.line, type) && (!ops.length || ops.includes(operatorOf(tr.line))));
       return runSearch(shared.net, only, dFrom, dTo, at, directOnly);
     },
     [client, searched, date, shared.ctx.school, shared.ctx.municipalities, lineIds, dFrom, dTo, directOnly, lineById, shared.net, dayTrips, type, ops],
@@ -131,23 +134,32 @@ export function usePlanner(shared: Shared) {
     window.scrollTo(0, 0);
     scroller()?.scrollTo(0, 0);
   };
+  // a probe at an absolute time `abs` (minutes from midnight of the chosen day, negative = the day before, ≥ 1440 = the next days):
+  // it searches on the day `abs` falls on, so the paging goes on past midnight like a continuous timetable; the departures come back relative to the chosen day
+  const probe = async (abs: number) => {
+    const k = Math.floor(abs / 1440);
+    const r = await run(abs - 1440 * k, k);
+    return r ? [...r.plan.direct, ...r.plan.transfers].map((x) => x.depart + 1440 * k) : [];
+  };
+  // how many days the paging may skip over a stretch without service (a holiday, a line that does not run) before it gives up
+  const PAGING_DAYS = 3;
   const later = async () => {
     const it = all[all.length - 1]?.it;
     if (!it) return;
-    const at = Math.max(0, it.depart + 1 - leadWalk(it));
-    const r = await run(at);
-    if (r && [...r.plan.direct, ...r.plan.transfers].some((x) => x.depart > it.depart)) moveTo(at);
-    else setSpentAt({ ...spent, sig: searchSig, late: true });
+    const at = it.depart + 1 - leadWalk(it);
+    for (let day = 0; day < PAGING_DAYS; day++) {
+      const from = at + 1440 * day;
+      if ((await probe(from)).some((d) => d > it.depart)) return moveTo(from);
+    }
+    setSpentAt({ ...spent, sig: searchSig, late: true });
   };
   const earlier = async () => {
     const it = all[0]?.it;
     if (!it) return;
-    // widen the look-back until something earlier turns up
-    for (const back of [90, 240, 720, 1440]) {
-      const at = Math.max(0, it.depart - leadWalk(it) - back);
-      const r = await run(at);
-      if (r && [...r.plan.direct, ...r.plan.transfers].some((x) => x.depart < it.depart)) return moveTo(at);
-      if (at === 0) break;
+    // widen the look-back until something earlier turns up (over midnight into the day before)
+    for (const back of [90, 240, 720, 1440, 2880, 4320]) {
+      const at = it.depart - leadWalk(it) - back;
+      if ((await probe(at)).some((d) => d < it.depart)) return moveTo(at);
     }
     setSpentAt({ ...spent, sig: searchSig, early: true });
   };

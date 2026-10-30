@@ -600,21 +600,24 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                       {stopLabel(s, lang)} {s.via ? <ViaTag /> : <PrecisionWarning stop={s} />}
                       {sameName && <span className="ml-1 text-xs font-normal tabular-nums text-slate-500 dark:text-slate-400" data-testid="stop-pole">({s.code})</span>}
                       {twin && <span className="ml-1 text-xs font-normal text-slate-500 dark:text-slate-400" data-testid="stop-twin">({t(twin === 'arr' ? 'stopArrival' : 'stopDeparture')})</span>}
+                      {s.code && !sameName && <span className="block text-xs font-normal leading-tight text-slate-400 dark:text-slate-500" data-testid="stop-code">{s.code}</span>}
                     </span>
-                    {label ? (
-                      (hasOffsets && i > 0) || s.via || (src !== null && isEstTime(src)) ? (
-                        <EstTag>
-                          <span className="text-xs tabular-nums">{label}</span>
-                        </EstTag>
-                      ) : (
-                        <span className={`text-sm font-semibold tabular-nums ${i === 0 ? 'text-sky-700 dark:text-sky-300' : ''}`}>{label}</span>
-                      )
-                    ) : hasTrips && sel && !s.via ? (
-                      <span className="text-xs text-slate-300 dark:text-slate-600" title={t('noTimeAtStop')}>
-                        –
-                      </span>
-                    ) : null}
-                    {s.code && <span className="text-xs text-slate-400">{s.code}</span>}
+                    {/* the times form one right-aligned column: the stop code sits under the name, not beside the time */}
+                    <span className="flex min-w-14 shrink-0 justify-end">
+                      {label ? (
+                        (hasOffsets && i > 0) || s.via || (src !== null && isEstTime(src)) ? (
+                          <EstTag>
+                            <span className="text-xs tabular-nums">{label}</span>
+                          </EstTag>
+                        ) : (
+                          <span className={`text-sm font-semibold tabular-nums ${i === 0 ? 'text-sky-700 dark:text-sky-300' : ''}`}>{label}</span>
+                        )
+                      ) : hasTrips && sel && !s.via ? (
+                        <span className="text-xs text-slate-300 dark:text-slate-600" title={t('noTimeAtStop')}>
+                          –
+                        </span>
+                      ) : null}
+                    </span>
                   </>
                 );
                 const hasCoords = s.lat !== undefined && s.lon !== undefined;

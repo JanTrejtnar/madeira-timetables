@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import '../lib/leafletGuard';
+import { tapMarker } from '../lib/tapMarker';
 import { addBasemap } from '../lib/basemap';
 import { loadShape } from '../data';
 import { useT, type Lang } from '../i18n';
@@ -174,7 +175,7 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
           : board || alight
             ? { radius: 8, color: '#0f172a', weight: 3, fillColor: board ? '#16a34a' : '#dc2626', fillOpacity: 1, opacity: 1 }
             : { radius: 5.5, color: '#0f172a', weight: 2.5, fillColor: '#fff', fillOpacity: 1, opacity: 1 };
-        const marker = L.circleMarker([s.lat, s.lon], base)
+        const marker = tapMarker([s.lat, s.lon], base)
           .bindTooltip(localStopName(s.name, lang))
           // content is built when the popup opens, so it always shows the time of the currently selected trip
           .bindPopup(() => popupContent(s, lang, labels, li === 0 ? focusRef.current?.times[si] ?? null : null, si === 0), { autoPan: true, autoPanPadding: [12, 12] })
