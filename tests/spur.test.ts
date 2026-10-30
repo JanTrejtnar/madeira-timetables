@@ -8,7 +8,16 @@ const M_LAT = 110540;
 const M_LON = 111320 * 0.84;
 const dist = (a: Pt, b: Pt) => Math.hypot((a[0] - b[0]) * M_LAT, (a[1] - b[1]) * M_LON);
 const length = (s: Pt[]) => s.slice(1).reduce((n, p, i) => n + dist(s[i], p), 0);
-const nearest = (s: Pt[], p: Pt) => Math.min(...s.map((q) => dist(q, p)));
+/** distance from the point to the polyline (to its segments: a thinned shape has long segments between vertices) */
+const nearest = (s: Pt[], p: Pt) => {
+  const toSegment = (a: Pt, b: Pt) => {
+    const [ax, ay, bx, by, px, py] = [a[1] * M_LON, a[0] * M_LAT, b[1] * M_LON, b[0] * M_LAT, p[1] * M_LON, p[0] * M_LAT];
+    const len2 = (bx - ax) ** 2 + (by - ay) ** 2;
+    const u = len2 ? Math.max(0, Math.min(1, ((px - ax) * (bx - ax) + (py - ay) * (by - ay)) / len2)) : 0;
+    return Math.hypot(px - (ax + u * (bx - ax)), py - (ay + u * (by - ay)));
+  };
+  return s.length === 1 ? dist(s[0], p) : Math.min(...s.slice(1).map((q, i) => toSegment(s[i], q)));
+};
 
 // a straight road east (0 .. 4000 m) with a side road to the north at 2000 m (1000 m out, the same way back)
 const road = (n: number, f: (i: number) => Pt) => Array.from({ length: n }, (_, i) => f(i));

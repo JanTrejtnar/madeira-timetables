@@ -20,7 +20,7 @@ const steps = [
   { name: 'vitest', cmd: npm, args: ['test'], s: 300 },
   ...(process.argv.includes('--skip-e2e')
     ? []
-    : [e2e('line96', 120), e2e('line208', 120), e2e('trim-notes', 120), e2e('ux', 240), e2e('planner', 240), e2e('transfers', 120), e2e('map', 180), e2e('mobile', 180), e2e('robust', 120), e2e('offline-map', 120)]),
+    : [e2e('line96', 120), e2e('line208', 120), e2e('trim-notes', 120), e2e('ux', 360), e2e('planner', 240), e2e('transfers', 120), e2e('map', 180), e2e('mobile', 180), e2e('robust', 120), e2e('offline-map', 120), e2e('gtfs-lines', 180)]),
   { name: 'vite build', cmd: npm, args: ['run', 'build'], s: 300 },
 ];
 

@@ -20,8 +20,11 @@ export function decodeEntitiesInJson(text: string): string {
 const LOCAL_NAMES: Record<string, Record<'cs' | 'en' | 'pt', string>> = {
   aeroporto: { cs: 'Letiště', en: 'Airport', pt: 'Aeroporto' },
 };
+/** the pole number the operator prints after a stop name ("Rochinha T-32") is not part of the name a traveller knows */
+export const withoutPole = (name: string): string => name.replace(/,?\s+T-\d+(?:\s+(?:e\s+)?\d+)*$/, '');
 export function localStopName(name: string, lang: 'cs' | 'en' | 'pt'): string {
-  return LOCAL_NAMES[name.trim().toLowerCase()]?.[lang] ?? name;
+  const plain = withoutPole(name);
+  return LOCAL_NAMES[plain.trim().toLowerCase()]?.[lang] ?? plain;
 }
 
 /** The Funchal bus terminals share the stop name "Funchal"; the terminal tells them apart ("Funchal (CAM)"). */

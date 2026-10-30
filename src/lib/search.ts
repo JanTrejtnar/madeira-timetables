@@ -6,7 +6,8 @@ import { norm } from '../../shared/geo.mjs';
 export { norm };
 
 /** Stop name without the trailing direction marker ("…, D", "…, S2A") so both sides of the road match. */
-export const stopKey = (name: string) => norm(name).replace(/ (d|s)\d*[a-z]?$/, '');
+/** key of a stop name without the printed direction marker ("…, D", "…, S2A") and the operator's pole number ("T-42" of the GTFS names) */
+export const stopKey = (name: string) => norm(name).replace(/ (d|s)\d*[a-z]?$/, '').replace(/ t \d+(?: e \d+| \d+)*$/, '');
 
 export interface LineIndex {
   line: Line;

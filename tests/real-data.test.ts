@@ -34,8 +34,12 @@ describe.skipIf(!existsSync(file))('real data (run `npm run build:data` first)',
   });
   it('finds a connection in order and not the reverse on the same direction', () => {
     const r = findConnections(data.lines, 'pinga', 'mercedes').filter((c) => c.line.number === '007');
-    expect(r.length).toBe(1);
-    expect(r[0].dir.from).toBe('Centro');
+    // the feed has the full run and its short-turn variant as directions: every connection goes from Pinga towards Mercedes, none the other way
+    expect(r.length).toBeGreaterThan(0);
+    for (const c of r) {
+      expect(c.dir.from).toBe('Pinga'); // the feed starts the line at its first stop; the PDF printed the town centre as the origin
+      expect(c.dir.stops.findIndex((s) => /pinga/i.test(s.name))).toBeLessThan(c.dir.stops.findIndex((s) => /mercedes/i.test(s.name)));
+    }
   });
   it('builds a departures board for a Monday morning', () => {
     const rows = board(data.lines, ctx);
@@ -75,12 +79,12 @@ describe.skipIf(!existsSync(file))('journey planner on real data', () => {
   const monday = { y: 2026, m: 10, d: 19 };
   const trips = servicesFor(net, data.lines, monday, true, ['Funchal']);
 
-  it('finds a direct connection on line 007 with a real departure and an estimated arrival', () => {
+  it('finds a direct connection on line 007 with a real departure and a real arrival (the feed has a time at every stop)', () => {
     const r = plan(net, trips, resolveNodes(net, 'pinga'), resolveNodes(net, 'mercedes'), 9 * 60);
     const l007 = r.direct.find((x) => x.legs[0].trip.line.number === '007');
     expect(l007).toBeTruthy();
     expect(l007!.legs[0].departEstimated).toBe(false);
-    expect(l007!.legs[0].arriveEstimated).toBe(true);
+    expect(l007!.legs[0].arriveEstimated).toBe(false);
     expect(l007!.arrive).toBeGreaterThan(l007!.depart);
   });
   it('line 142 exposes real (printed) times at intermediate stops', () => {
@@ -142,15 +146,12 @@ describe.skipIf(!existsSync(file))('coverage', () => {
   it('no direction mixes up trip length and stop list', () => {
     for (const l of data.lines) for (const d of l.directions) for (const t of d.trips ?? []) expect(t.times.length).toBe(d.stops.length);
   });
-  it('line 181 includes the Transbordo shuttle page (Terra Chã / Seara Velha)', () => {
+  it('line 181 (feed): the local trips of Terra Chã / Seara Velha are directions of their own, with stops that all have a position', () => {
     const l = data.lines.find((x) => x.number === '181')!;
-    const tr = l.directions.filter((d) => d.variant === 'transbordo');
-    expect(tr.length).toBe(4);
-    const all = tr.flatMap((d) => d.trips ?? []);
-    expect(all.length).toBe(6);
-    const f = tr.find((d) => d.stops[0].name === 'Funchal' && d.stops[1].name === 'ESTR Lombo Chão')!;
-    expect(f.trips![0].times).toEqual(['10:00', '11:20', '11:35', '11:50']);
-    expect(tr.some((d) => d.stops.some((s) => s.name === 'Seara Velha Baixo'))).toBe(true);
+    expect(l.family).toBe('gtfs');
+    expect(l.directions.some((d) => d.stops.some((s) => s.name === 'Seara Velha Baixo'))).toBe(true);
+    expect(l.directions.some((d) => d.stops.some((s) => s.name === 'Terra Chã-Ponte'))).toBe(true);
+    for (const d of l.directions) for (const s of d.stops) expect(s.lat, s.name).toBeDefined();
   });
   it('urban lines that span municipalities or exceed 15 km are interurbano (994 on Porto Santo stays urban)', () => {
     const t = (n: string) => data.lines.find((l) => l.number === n)!;
@@ -180,11 +181,6 @@ describe.skipIf(!existsSync(file))('coverage', () => {
       expect(searchLines(ix, q).some((l) => l.id === 9001)).toBe(true);
     }
     expect(searchStops(ix, 'poiso').length).toBeGreaterThan(0);
-  });
-  it('stops known only by name got approximate coordinates (181 Transbordo)', () => {
-    const l = data.lines.find((x) => x.number === '181')!;
-    for (const d of l.directions.filter((x) => x.variant === 'transbordo')) for (const s of d.stops) expect(s.lat).toBeDefined();
-    expect(l.directions.some((d) => d.stops.some((s) => s.approx))).toBe(true);
   });
   it('Pico do Areeiro line: timetable, GPS and interpolated stops', () => {
     const l = data.lines.find((x) => x.id === 9001)!;
@@ -337,7 +333,8 @@ describe.skipIf(!existsSync(file))('GTFS coordinates and municipality search (re
     const vias = data.lines.flatMap((l) => Object.entries(l.via ?? {}).flatMap(([c, list]) => list.map((v) => ({ l, c, v }))));
     expect(vias.length).toBeGreaterThanOrEqual(35);
     const names = new Set(vias.map((x) => x.v.name));
-    for (const n of ['Aeroporto', 'Bemposta', 'Estádio da Madeira', 'Alto Lido', 'Fajã dos Rolos', 'Eira do Serrado']) expect(names.has(n), n).toBe(true);
+    // lines from the GTFS feed have no "Via" notes (the places are stops with times)
+    for (const n of ['Aeroporto', 'Bemposta', 'Fajã dos Rolos', 'Gaula', 'Garajau']) expect(names.has(n), n).toBe(true);
     for (const { l, c, v } of vias) {
       const text = l.notes[c] ?? c; // free-text notes of hand-made transcriptions are their own key
       expect(text, `${l.number}:${c}`).toMatch(/(^|\.\s+)via\s/i);
@@ -577,7 +574,7 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
     // the stop of the way into town has another name: the picked stop stands for the stops 3 minutes away
     const base = resolveNodes(net2, 'Igreja Santo Amaro', null);
     const extra = nearbyStopNodes(net2, base, 3);
-    expect([...extra.keys()].map((i) => net2.nodes[i].name)).toContain('Igreja STO Amaro, C8');
+    expect([...extra.keys()].map((i) => net2.nodes[i].name)).toContain('Igreja STO Amaro C8');
     const A = new Set([...base, ...extra.keys()]);
     const place = data.lines.length && JSON.parse(readFileSync('public/data/pois.json', 'utf8')).places.find((r: [string]) => r[0] === 'Cristo Rei (Garajau)');
     const B = nodeIdsOfKeys(net2, nodesNearPoint(net2, place[2], place[3]).nodes.map((x) => x.node.key));
@@ -587,7 +584,7 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
     expect(found.transfers.some((x) => x.legs.length === 2 && x.legs[1].trip.line.number.startsWith('55'))).toBe(true);
     // without the link between the centre and the terminal there is no way to the 55x bus
     const hub = net2.nodes.find((n) => n.terminal === 'teleferico')!;
-    const alf = net2.nodes.find((n) => n.name === 'AV Mar, Alfândega')!;
+    const alf = net2.nodes.find((n) => /^AV Mar,? Alfândega/.test(n.name))!;
     expect(net2.near.get(alf.id)!.some((x) => x.node === hub.id)).toBe(true);
   });
   it('planner form survives the URL round trip, ignores bad values', () => {
@@ -752,7 +749,7 @@ describe.skipIf(!existsSync(file))('manual overrides, generated routes and "Via"
   });
   it('lines with a SIGA polyline keep it (no OSRM shape replaces it)', () => {
     const siga = data.lines.flatMap((l) => l.directions).filter((d) => d.shapeId !== null && d.shapeId < 1_000_000);
-    expect(siga.length).toBeGreaterThan(50);
+    expect(siga.length).toBeGreaterThan(5);
     for (const d of siga) expect(d.shapeSource).toBeUndefined();
   });
   it('208 note "a" = Via Aeroporto is a real place between Funchal and Machico; "Via Rápida" is not', () => {

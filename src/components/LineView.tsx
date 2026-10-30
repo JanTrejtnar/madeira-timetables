@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT, type Key } from '../i18n';
-import { stopLabel } from '../lib/text';
+import { stopLabel, withoutPole } from '../lib/text';
 import { sameCall } from '../lib/network';
 import { hasGps } from '../lib/precision';
 import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } from '../lib/departures';
@@ -475,7 +475,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
         <section className="flex flex-col gap-3">
           <div>
             <SectionTitle>
-              {merged ? t('departuresAllDest') : hasTrips ? `${t('departuresFromStop')}: ${dir.stops[stopIdx]?.name ?? ''}` : `${t('schedule')}: ${dir.from}`}
+              {merged ? t('departuresAllDest') : hasTrips ? `${t('departuresFromStop')}: ${withoutPole(dir.stops[stopIdx]?.name ?? '')}` : `${t('schedule')}: ${dir.from}`}
             </SectionTitle>
             <p className="px-1 text-xs text-slate-500 dark:text-slate-400">{hasTrips ? `${t('tapTime')} ${t('tapStop')}` : t('tapTime')}</p>
           </div>
@@ -629,7 +629,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                         <button
                           onClick={() => setLinksIdx(linksIdx === i ? null : i)}
                           aria-expanded={linksIdx === i}
-                          aria-label={`${t('openInMaps')}: ${s.name}`}
+                          aria-label={`${t('openInMaps')}: ${withoutPole(s.name)}`}
                           title={t('openInMaps')}
                           className={`inline-flex size-9 shrink-0 items-center justify-center rounded-full transition-colors ${
                             linksIdx === i ? 'text-sky-700 dark:text-sky-300' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'

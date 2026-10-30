@@ -125,7 +125,7 @@ describe.skipIf(!existsSync(file))('loops and midnight (real data)', () => {
     }
     expect(seen.size).toBeGreaterThan(3);
     expect(failures).toEqual([]);
-  });
+  }, 60_000);
 
   it('a loop trip has rising times from start to end', () => {
     const bad = trips

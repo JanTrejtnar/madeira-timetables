@@ -11,7 +11,7 @@ import { isPassage, parsePassage } from './parse-passage.mjs';
 import { isSam, parseSam } from './parse-sam.mjs';
 import { parseTransbordo } from './parse-transbordo.mjs';
 import { isRowTables, parseRowTables } from './parse-rowtables.mjs';
-import { gtfsDirections } from './lib-gtfs-timetable.mjs';
+import { expandGtfsLine, gtfsDirections } from './lib-gtfs-timetable.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RAW = path.join(ROOT, 'data', 'raw');
@@ -106,20 +106,36 @@ async function applyManual(out, warn) {
 }
 
 /**
- * Lines of Horários do Funchal whose PDF cannot be parsed take their timetable from the official GTFS feed (data/gtfs/lines.json, `npm run fetch:gtfs`).
- * A hand transcription in data/manual wins over it. Stops get their positions later from the GTFS stop list by name, like the PDF ones.
+ * Lines of Horários do Funchal take their timetable from the official GTFS feed (data/gtfs/lines.json, `npm run fetch:gtfs`): the passing time at every stop,
+ * the feed's stop positions and its route shapes (data/gtfs/shapes.json, written to data/shapes/<GTFS_SHAPE_BASE + id>.json). A hand transcription in data/manual wins over it.
+ * Lines the feed does not have (suburban Rodoeste, SAM, CAM) stay on the PDF parsers.
  */
+const GTFS_SHAPE_BASE = 2_000_000;
 async function applyGtfs(out, warn, gtfs) {
-  const trips = gtfs?.lines?.[out.number];
-  if (!trips?.length || out.hasParsedSchedule) return;
+  // the feed numbers are those of Horários do Funchal: a Rodoeste line of the same number (rod_115.pdf, Paúl do Mar) is another line
+  const groups = out.pdfUrl?.includes('/rod_') ? null : gtfs?.lines?.[out.number];
+  if (!groups?.length) return;
+  const trips = expandGtfsLine(groups, gtfs.stopsById);
   out.family = 'gtfs';
   out.manualSource = `Horários do Funchal GTFS feed ${gtfs.feedVersion}`;
   out.notes = {};
+  delete out.generalNotes;
+  delete out.dayLabels;
+  delete out.rejected;
   out.directions = gtfsDirections(trips).map((d) => {
     const departures = {};
     for (const t of d.trips) if (t.times[0]) for (const day of t.days) (departures[day] ??= []).push({ t: t.times[0] });
     for (const l of Object.values(departures)) l.sort((x, y) => sk(x.t) - sk(y.t));
-    return { ...d, shapeId: null, stopSource: 'pdf', stops: d.stops.map((name) => ({ code: null, name })), departures };
+    const { shape, ids, ...dir } = d;
+    const shapeId = shape && gtfs.shapes[shape] ? GTFS_SHAPE_BASE + Number(shape) : null;
+    if (shapeId !== null) gtfsShapesUsed.set(shapeId, gtfs.shapes[shape]);
+    const stops = d.stops.map((name, i) => {
+      const s = gtfs.stopsById.get(ids[i]);
+      return { code: s.code, name, lat: s.lat, lon: s.lon, source: 'gtfs' };
+    });
+    // the pole number after a stop name ("Courelas T-9") is not shown where the direction is named
+    const plain = (n) => n?.replace(/,?\s+T-\d+(?:\s+(?:e\s+)?\d+)*$/, '');
+    return { ...dir, from: plain(dir.from), to: plain(dir.to), shapeId, stopSource: 'pdf', stops, departures };
   });
   out.hasParsedSchedule = out.directions.some((d) => d.trips.length);
   out.warnings.length = 0;
@@ -143,7 +159,16 @@ function tidyDirections(out, warn) {
 }
 
 const lines = JSON.parse(await readFile(path.join(ROOT, 'data', 'lines.json'), 'utf8'));
-const gtfs = (await exists(path.join(ROOT, 'data', 'gtfs', 'lines.json'))) ? JSON.parse(await readFile(path.join(ROOT, 'data', 'gtfs', 'lines.json'), 'utf8')) : null;
+const gtfsFile = (f) => path.join(ROOT, 'data', 'gtfs', f);
+const gtfs = (await exists(gtfsFile('lines.json')))
+  ? {
+      ...JSON.parse(await readFile(gtfsFile('lines.json'), 'utf8')),
+      shapes: JSON.parse(await readFile(gtfsFile('shapes.json'), 'utf8')),
+      stopsById: new Map(JSON.parse(await readFile(gtfsFile('stops.json'), 'utf8')).stops.map((s) => [s.id, s])),
+    }
+  : null;
+/** official route shapes of the lines taken from the feed: shape id -> polyline */
+const gtfsShapesUsed = new Map();
 const result = [];
 const report = [];
 await mkdir(path.join(ROOT, 'data', 'shapes'), { recursive: true });
@@ -272,6 +297,7 @@ for (const line of lines) {
 }
 
 if (!ONLY) {
+  for (const [id, poly] of gtfsShapesUsed) await writeFile(path.join(ROOT, 'data', 'shapes', `${id}.json`), JSON.stringify(poly));
   await writeFile(path.join(ROOT, 'data', 'schedules.json'), JSON.stringify({ generatedAt: new Date().toISOString(), source: 'https://siga.madeira.gov.pt/horarios', lines: result }));
   await writeFile(path.join(ROOT, 'data', 'parse-report.json'), JSON.stringify(report, null, 2));
   const by = {};

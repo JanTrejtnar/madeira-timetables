@@ -24,13 +24,13 @@ export const OPERATORS: Operator[] = [
 export const operatorById = (id: OperatorId): Operator => OPERATORS.find((o) => o.id === id)!;
 
 /**
- * Horários do Funchal: the town lines (numbers below 200 in the SIGA grid, the shuttle to Pico do Areeiro). Rodoeste: the west and the
+ * Horários do Funchal: the town lines (the lines of its GTFS feed, numbers below 200 in the SIGA grid, the shuttle to Pico do Areeiro). Rodoeste: the west and the
  * south-west (numbers 1-399 of the road timetables). SAM: the east (its own timetable sheets and the Machico lines). CAM / EACL: the
  * north (Santana), Santa Cruz, Caniço and Porto Santo (numbers 5xx-9xx).
  */
 export function operatorOf(line: Pick<Line, 'number' | 'family' | 'municipality' | 'operator'>): OperatorId {
   const n = parseInt(line.number, 10);
-  if (line.operator === 'Horários do Funchal') return 'hf';
+  if (line.operator === 'Horários do Funchal' || line.family === 'gtfs') return 'hf';
   if (line.family === 'sam') return 'sam';
   if ((line.family === 'siga-grid' || line.family === 'unsupported') && n < 200) return 'hf';
   if (line.municipality === 'Machico') return 'sam';

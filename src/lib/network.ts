@@ -8,6 +8,7 @@ import { viaAt, viaMinutesChain, viaStop } from './via';
 import { expandTerms } from './aliases';
 import { M_PER_DEG_LAT, metres } from '../../shared/geo.mjs';
 import { walkMinutes } from './walk';
+import { withoutPole } from './text';
 
 export interface Node {
   id: number;
@@ -52,7 +53,7 @@ const WALK_M = 200;
 const HUB_WALK_M = 400;
 
 
-const displayName = (name: string) => name.replace(/,?\s*(D|S)\d*[A-Z]?$/, '').trim();
+const displayName = (name: string) => withoutPole(name.replace(/,?\s*(D|S)\d*[A-Z]?$/, '')).trim();
 export const dirKey = (line: Line, dirIndex: number) => `${line.id}:${dirIndex}`;
 
 export function buildNetwork(lines: Line[], terminalWalks: readonly { a: string; b: string; min: number }[] = []): Network {

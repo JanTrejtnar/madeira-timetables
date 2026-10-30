@@ -2,163 +2,209 @@
   {
     "number": "007",
     "id": 8,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "008",
     "id": 9,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "108",
     "id": 10,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "009",
     "id": 11,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "010",
     "id": 12,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "110",
     "id": 13,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "011",
     "id": 14,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "012",
     "id": 15,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "013",
     "id": 16,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "014",
     "id": 17,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "125",
     "id": 20,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "016",
     "id": 21,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "017",
     "id": 22,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "019",
     "id": 24,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "020",
     "id": 25,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "021",
     "id": 27,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "022",
     "id": 29,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "026",
     "id": 33,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "027",
     "id": 34,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "028",
     "id": 35,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "029",
     "id": 36,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "031",
     "id": 38,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "131",
     "id": 39,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "032",
@@ -172,117 +218,146 @@
   {
     "number": "033",
     "id": 41,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "034",
     "id": 42,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "036",
     "id": 45,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "037",
     "id": 47,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "038",
     "id": 48,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "039",
     "id": 49,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "040",
     "id": 50,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "042",
     "id": 51,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "044",
     "id": 53,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "045",
     "id": 54,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "046",
     "id": 55,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "047",
     "id": 56,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "048",
     "id": 57,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "049",
     "id": 59,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
     "warnings": [
-      "p2: shapedata 18243 overlaps only 1/20 PDF stops; using PDF stops",
-      "p2: shapedata 10626 overlaps only 2/17 PDF stops; using PDF stops"
+      "timetable from the GTFS feed"
     ]
   },
   {
     "number": "050",
     "id": 60,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "092",
     "id": 61,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "090",
@@ -296,9 +371,11 @@
   {
     "number": "093",
     "id": 64,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "094",
@@ -339,51 +416,65 @@
   {
     "number": "001",
     "id": 71,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "002",
     "id": 72,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "003",
     "id": 73,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "004",
     "id": 74,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "015",
     "id": 75,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "024",
     "id": 76,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "043",
     "id": 77,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "503",
@@ -437,10 +528,10 @@
   {
     "number": "181",
     "id": 90,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
     "warnings": [
-      "p2: more than 2 time columns per day (7)"
+      "timetable from the GTFS feed"
     ]
   },
   {
@@ -453,31 +544,37 @@
   {
     "number": "082",
     "id": 94,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "083",
     "id": 95,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "070",
     "id": 96,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
-    "warnings": []
+    "warnings": [
+      "timetable from the GTFS feed"
+    ]
   },
   {
     "number": "005",
     "id": 1000,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
     "warnings": [
-      "direction from Tribunal has no printed destination; using \"Tribunal\""
+      "timetable from the GTFS feed"
     ]
   },
   {
@@ -492,10 +589,10 @@
   {
     "number": "115",
     "id": 1002,
-    "family": "siga-grid",
+    "family": "gtfs",
     "ok": true,
     "warnings": [
-      "direction from Tribunal has no printed destination; using \"Tribunal\""
+      "timetable from the GTFS feed"
     ]
   },
   {
