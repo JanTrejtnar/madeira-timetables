@@ -69,6 +69,14 @@ for (const side of [0, 1]) {
   check(`090: side ${side}: every enabled day tab lists times (${disabled} disabled)`, listed);
 }
 
+// 181: short-turn trips and other poles are no directions of their own: two sides, and the end filter only lists the real branches
+const l181 = data.find((l) => l.number === '181');
+await page.evaluate((i) => { location.hash = `#/line/${i}`; }, l181.id);
+await sleep(1200);
+const tabs = await page.evaluate(() => document.querySelectorAll('[role=tablist] button').length);
+const chips = await page.evaluate(() => document.querySelectorAll('[data-testid=dir-filter] button').length);
+check('181: two direction tabs', tabs === 2, String(tabs));
+check('181: the end filter lists at most all + the 6 other directions (was 9 directions)', chips > 0 && chips <= 7, String(chips));
 // planner: a journey on each of the pilot lines (stop in the middle of a direction -> its end)
 const plan = async (from, to) => {
   await page.evaluate(() => { location.hash = '#/'; });

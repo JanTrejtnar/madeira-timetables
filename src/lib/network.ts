@@ -438,3 +438,34 @@ export function nearbyStopNodes(net: Network, base: ReadonlySet<number>, maxMin:
   for (const id of base) for (const x of net.near.get(id) ?? []) if (x.walk <= maxMin && !base.has(x.node)) extra.set(x.node, Math.min(extra.get(x.node) ?? Infinity, x.walk));
   return extra;
 }
+
+/**
+ * Stops that stand for the centre of a parish when the traveller picks the whole parish as a place to go to ("Camacha (all stops)"): the buses end their
+ * ride there, not at the first roadside pole on the parish border (Levada dos Tornos, 5 km before the village). Listed by hand where the busiest stops
+ * are not the village square; elsewhere the stops served by the most directions (at least 80 % of the busiest) are the centre.
+ */
+const PARISH_CENTRES: Record<string, string[]> = {
+  camacha: ['Largo da Achada', 'Igreja da Camacha'],
+};
+
+const centreCache = new WeakMap<Network, Map<string, Set<number>>>();
+/** The centre stops (node ids) of a parish group key (`@par:<label>`); an empty set when the parish has none to prefer. */
+export function parishCentre(net: Network, groupKey: string): Set<number> {
+  let byKey = centreCache.get(net);
+  if (!byKey) centreCache.set(net, (byKey = new Map()));
+  const hit = byKey.get(groupKey);
+  if (hit) return hit;
+  const label = groupKey.slice(PARISH_PREFIX.length);
+  const members = [...(areaNodes(net).byParish.get(label) ?? [])];
+  const out = new Set<number>();
+  const named = PARISH_CENTRES[norm(parishName(label))];
+  if (named) for (const id of members) if (named.some((n) => norm(n) === net.nodes[id].key)) out.add(id);
+  if (!out.size && members.length) {
+    const served = new Map<number, number>();
+    for (const ids of net.dirNodes.values()) for (const id of new Set(ids)) served.set(id, (served.get(id) ?? 0) + 1);
+    const top = Math.max(0, ...members.map((id) => served.get(id) ?? 0));
+    if (top > 1) for (const id of members) if ((served.get(id) ?? 0) >= top * 0.8) out.add(id);
+  }
+  byKey.set(groupKey, out);
+  return out;
+}

@@ -1,6 +1,6 @@
 // The planner's search for one departure time, as a pure function of the network, the day's trips and the two picked places
 // (the component only holds the form and shows the result).
-import { CITY_PREFIX, PARISH_PREFIX, hubsNear, nearbyStopNodes, nodeIdsOfKeys, nodesNearPoint, resolveNodes, type Network, type Trip } from './network';
+import { CITY_PREFIX, PARISH_PREFIX, hubsNear, nearbyStopNodes, nodeIdsOfKeys, nodesNearPoint, parishCentre, resolveNodes, type Network, type Trip } from './network';
 import { isPoiKey } from './places';
 import type { Picked } from './plannerForm';
 import { planRaptor } from './raptorAdapter';
@@ -99,6 +99,19 @@ export function runSearch(net: Network, trips: Trip[], from: Picked, to: Picked,
   // (offered as it is, from its own start); the traveller chose any stop of the town as the start
   if (!from.pt && from.key?.startsWith(CITY_PREFIX)) {
     found = { ...found, transfers: found.transfers.filter((it) => !A.has(it.legs[1].trip.nodes[it.legs[1].fromPos])) };
+  }
+  // a whole parish as the start or the destination ("Camacha (all stops)"): its centre first, not the first roadside stop of the parish border;
+  // the other stops of the parish only when no connection reaches the centre
+  const centreOf = (p: Picked, ids: Set<number>) => {
+    if (p.pt || !p.key?.startsWith(PARISH_PREFIX)) return null;
+    const c = new Set([...parishCentre(net, p.key)].filter((id) => ids.has(id)));
+    return c.size && c.size < ids.size ? c : null;
+  };
+  const toCentre = centreOf(to, B);
+  const fromCentre = centreOf(from, A);
+  if (toCentre || fromCentre) {
+    const centred = planRaptor(net, trips, fromCentre ?? A, toCentre ?? B, at, walkIn, walkOut);
+    if (centred.direct.length || centred.transfers.length) found = centred;
   }
   const missing = na.place && A.size === 0 ? from.text : nb.place && B.size === 0 ? to.text : null;
   const far = na.widened ? from.text : nb.widened ? to.text : null;

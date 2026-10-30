@@ -59,6 +59,17 @@ function ViaTag() {
   return <span className="ml-1 rounded-full bg-sky-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-sky-800 dark:bg-sky-400/15 dark:text-sky-200">{t('viaStop')}</span>;
 }
 
+/** Where a trip with a time at every stop really starts and ends when that is not the direction's first / last stop (a short-turn trip of the same route), else null. */
+export function shortEnds(d: Direction, trip: { times: (string | null)[] } | undefined): { start: string | null; end: string | null } | null {
+  if (!trip) return null;
+  const served = trip.times.flatMap((x, i) => (x ? [i] : []));
+  if (served.length < 2 || trip.times.length !== d.stops.length) return null;
+  const nameAt = (i: number) => withoutPole(d.stops[i].name);
+  const start = served[0] > 0 ? nameAt(served[0]) : null;
+  const end = served[served.length - 1] < d.stops.length - 1 ? nameAt(served[served.length - 1]) : null;
+  return start || end ? { start, end } : null;
+}
+
 export function LineView({ line, initialDir, initialRide, initialWhen, initialEnds, shared, onBack }: { line: Line; initialDir?: number; initialRide?: { from: number; to: number }; initialWhen?: RideWhen; initialEnds?: RideEnds; shared: Shared; onBack: () => void }) {
   const { t, lang } = useT();
   const tn = (s: string) => translateNote(s, lang);
@@ -514,7 +525,11 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                     {legendCodes(x.notes).length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70">{legendCodes(x.notes).map(tn).join(',')}</sup> : null}
                     {merged && x.dirIdx !== undefined ? (
                       <span className="block truncate text-[10px] font-normal opacity-70" data-testid="time-end">
-                        {side === 0 ? line.directions[x.dirIdx].to : line.directions[x.dirIdx].from ?? line.directions[x.dirIdx].stops[0]?.name}
+                        {(() => {
+                          const dd = line.directions[x.dirIdx];
+                          const cut = shortEnds(dd, x.trip);
+                          return side === 0 ? cut?.end ?? dd.to : cut?.start ?? dd.from ?? dd.stops[0]?.name;
+                        })()}
                       </span>
                     ) : null}
                     {hasFreeMark(x.notes) && !requestPlaces(x.notes).length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70" title={(x.notes ?? []).map(tn).join('; ')} data-testid="free-note-mark">ⓘ</sup> : null}
@@ -525,6 +540,14 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
           ) : (
             <p className="px-1 text-sm text-slate-500" data-testid="no-trips-day">{keys.some((k) => dayHas(k)) ? t('noTripsDay') : t('noDeparturesInDir')}</p>
           )}
+          {sel?.trip && (() => {
+            const cut = shortEnds(sel.dirIdx !== undefined ? line.directions[sel.dirIdx] : dir, sel.trip);
+            return cut ? (
+              <p className="px-1 text-xs font-medium text-amber-700 dark:text-amber-400" data-testid="short-trip">
+                {[cut.end && t('shortTripTo').replace('{x}', cut.end), cut.start && t('shortTripFrom').replace('{x}', cut.start)].filter(Boolean).join(' · ')}
+              </p>
+            ) : null;
+          })()}
           {sel?.trip?.estLast && (
             <p className="px-1 text-xs text-slate-500 dark:text-slate-400" data-testid="est-arrival">
               ~ {t('estArrival')}

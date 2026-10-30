@@ -1,23 +1,49 @@
 // Timetable of a line from the official GTFS feed (data/gtfs/lines.json, made by fetch-gtfs.mjs) in the shape parse.mjs `applyManual` produces.
+import { metres } from '../shared/geo.mjs';
+
 // A direction_id is one direction; the stop patterns of its route variants are merged into one stop list, a trip that skips a stop has null there.
 
 const hhmm = (min) => `${String(Math.floor(min / 60) % 24).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+
+/** the other pole of a stop is within this distance of its first pole; two stops of one name farther apart are two places */
+const SAME_STOP_M = 120;
+
+/** stop id -> the id that stands for the stop on this line: poles of one stop (same pole-less name, within SAME_STOP_M) share one id, so another pole does not make another route */
+function canonicalStops(groups, stopsById) {
+  const canon = new Map();
+  const byName = new Map();
+  for (const id of [...new Set(groups.flatMap((g) => g.ids))].sort()) {
+    const s = stopsById.get(id);
+    if (!s) continue;
+    const name = plainName(s.name);
+    const homes = byName.get(name) ?? [];
+    const home = homes.find((h) => metres(h, s) <= SAME_STOP_M);
+    if (home) canon.set(id, home.id);
+    else { homes.push(s); byName.set(name, homes); canon.set(id, id); }
+  }
+  return canon;
+}
 
 /**
  * The compact groups of data/gtfs/lines.json (stop ids, trips as first minute + minutes between stops) as one trip per day set:
  * { dir, day, head, shape, ids, stops (names), times ("HH:MM", after midnight wrapped like the PDF timetables) }. `stopsById`: id -> { name }.
  */
 export function expandGtfsLine(groups, stopsById) {
+  const canon = canonicalStops(groups, stopsById);
   return groups.flatMap((g) => {
     const stops = g.ids.map((id) => {
       const s = stopsById.get(id);
       if (!s) throw new Error(`GTFS stop ${id} is not in data/gtfs/stops.json; run npm run fetch:gtfs`);
       return s.name;
     });
+    const same = g.ids.map((id) => canon.get(id));
+    // two poles of one stop in a row (both named "Miradouro da Malhada") are one stop: keep the first, the arrival
+    const keep = same.map((k, i) => i === 0 || k !== same[i - 1]);
+    const only = (a) => a.filter((_, i) => keep[i]);
     return g.trips.flatMap(([enc, days]) => {
       let at = 0;
-      const times = enc.split(' ').map((d) => hhmm((at += +d)));
-      return days.map((day) => ({ dir: g.dir, day, head: g.head, shape: g.shape, ids: g.ids, stops, times }));
+      const times = only(enc.split(' ').map((d) => hhmm((at += +d))));
+      return days.map((day) => ({ dir: g.dir, day, head: g.head, shape: g.shape, ids: only(g.ids), same: only(same), stops: only(stops), times }));
     });
   });
 }
@@ -39,14 +65,43 @@ function mergeSequences(seqs) {
   return merged;
 }
 
-/** keys of one trip's stops: the stop id plus the number of earlier visits, so a loop's repeated stop stays distinct */
+/** a stop name without the operator's pole number ("Rochinha T-32"): poles of one stop are the same place for the pattern comparison */
+function plainName(n) {
+  return n.replace(/,?\s+T-\d+(?:\s+(?:e\s+)?\d+)*$/, '');
+}
+
+/** keys of one trip's stops: the stop (its poles are one) plus the number of earlier visits, so a loop's repeated stop stays distinct and another pole of the same stop does not start a new direction */
 function tripKeys(t) {
   const seen = new Map();
-  return t.ids.map((id) => {
-    const n = seen.get(id) ?? 0;
-    seen.set(id, n + 1);
-    return `${id}#${n}`;
+  return t.same.map((k) => {
+    const n = seen.get(k) ?? 0;
+    seen.set(k, n + 1);
+    return `${k}#${n}`;
   });
+}
+
+/** the first visits only: a turn-around that passes a stop twice ("Miradouro#1") or a loop's closing stop does not make another route */
+const bare = (k) => k.slice(0, k.lastIndexOf('#'));
+const firstVisits = (keys) => [...new Set(keys.map(bare))];
+/** the stops of a pattern (each once) in the order of the root's whole run: a trip that starts midway counts its visits from its own start, so the root is read with its repeats */
+const fitsRoot = (p, root) => isSubsequence(firstVisits(p), root.map(bare));
+
+/**
+ * The keys of a pattern named like the root's: a trip that starts midway counts its visits of a stop from its own start ("Cota 500#0" is the root's second visit),
+ * so each stop takes the root key it meets walking the root forward. A pattern the root does not contain in order keeps its own keys.
+ */
+function alignToRoot(keys, root) {
+  const out = [];
+  let at = -1;
+  for (const k of keys) {
+    const b = bare(k);
+    let i = at + 1;
+    while (i < root.length && bare(root[i]) !== b) i++;
+    if (i >= root.length) return keys;
+    out.push(root[i]);
+    at = i;
+  }
+  return out;
 }
 
 const isSubsequence = (seq, order) => {
@@ -60,13 +115,13 @@ const isSubsequence = (seq, order) => {
 
 /**
  * group the stop patterns of one direction_id into clusters whose stops share one list. The longest pattern is the root of a cluster; a pattern joins it when its
- * stops are a subsequence of the root's (a short-turn trip, a trip that skips stops). A pattern with a stop of its own (another pole, a detour, a loop, another branch)
+ * first visits are a subsequence of the root's (a short-turn trip, a trip that skips stops, a trip that turns round at a stop twice). A pattern with a stop of its own (another pole, a detour, a loop, another branch)
  * starts a cluster of its own: the route shape belongs to one stop list, and a stop the shape does not pass would be drawn off the road.
  */
 function clusterPatterns(patterns) {
   const clusters = [];
   for (const p of [...patterns].sort((a, b) => b.keys.length - a.keys.length || b.trips.length - a.trips.length)) {
-    const home = clusters.find((c) => isSubsequence(p.keys, c.patterns[0].keys));
+    const home = clusters.find((c) => fitsRoot(p.keys, c.patterns[0].keys));
     if (home) home.patterns.push(p);
     else clusters.push({ patterns: [p] });
   }
@@ -85,11 +140,13 @@ export function gtfsDirections(trips) {
       byPattern.set(id, p);
     }
     clusterPatterns([...byPattern.values()]).forEach((cluster, ci) => {
-      const keyed = cluster.patterns.flatMap((p) => p.trips.map((t) => ({ t, keys: p.keys })));
+      const root = cluster.patterns[0].keys;
+      const keyed = cluster.patterns.flatMap((p) => { const keys = alignToRoot(p.keys, root); return p.trips.map((t) => ({ t, keys })); });
       const order = mergeSequences(cluster.patterns.map((p) => [...p.keys]));
       const nameOf = new Map();
       const idOf = new Map();
-      for (const { t, keys } of keyed) keys.forEach((k, i) => { nameOf.set(k, t.stops[i]); idOf.set(k, t.ids[i]); });
+      // the longest pattern is first: its poles name the stops of the list
+      for (const { t, keys } of keyed) keys.forEach((k, i) => { if (!nameOf.has(k)) { nameOf.set(k, t.stops[i]); idOf.set(k, t.ids[i]); } });
       const groups = new Map();
       for (const { t, keys } of keyed) {
         const times = order.map((k) => { const i = keys.indexOf(k); return i < 0 ? null : t.times[i]; });

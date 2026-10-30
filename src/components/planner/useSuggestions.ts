@@ -26,11 +26,12 @@ export function useSuggestions(query: string, open: boolean, shared: Shared): It
     // a town or village that is also a stop or an area of the same name is offered once, as the stop (its lines are known)
     const names = new Set(found.map((s) => norm(s.name.split(',')[0])));
     const places = (ix ? searchPlaces(ix, query, 10) : []).filter((h) => !((h.place.kind === 'town' || h.place.kind === 'village') && names.has(norm(h.place.name))));
-    const rows: { item: Item; score: number; rank: number }[] = [
-      ...stops.map((s) => ({ item: { kind: 'stop', s } as Item, score: norm(s.name) === q ? 0 : norm(s.name).startsWith(q) ? 1 : 2, rank: KIND_META.stop.rank })),
-      ...places.map((h) => ({ item: { kind: 'place', place: h.place } as Item, score: h.score, rank: KIND_META[h.place.kind].rank })),
+    const rows: { item: Item; score: number; rank: number; lines: number }[] = [
+      ...stops.map((s) => ({ item: { kind: 'stop', s } as Item, score: norm(s.name) === q ? 0 : norm(s.name).startsWith(q) ? 1 : 2, rank: KIND_META.stop.rank, lines: s.lines })),
+      ...places.map((h) => ({ item: { kind: 'place', place: h.place } as Item, score: h.score, rank: KIND_META[h.place.kind].rank, lines: 0 })),
     ];
-    rows.sort((a, b) => a.score - b.score || a.rank - b.rank);
+    // equally good matches: the stop many lines serve (the village square) before a roadside pole that merely carries the name
+    rows.sort((a, b) => a.score - b.score || a.rank - b.rank || b.lines - a.lines);
     return [...groups.map((s) => ({ kind: 'stop', s }) as Item), ...rows.slice(0, Math.max(5, 10 - groups.length)).map((r) => r.item)];
   }, [open, query, ix, shared.net, shared.lines]);
 }
