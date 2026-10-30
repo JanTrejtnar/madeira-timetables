@@ -3,7 +3,8 @@
 import puppeteer from 'puppeteer-core';
 import { freezeClock, waitForServer } from './lib-e2e-clock.mjs';
 
-const base = process.argv[2] ?? `http://localhost:${process.env.E2E_PORT ?? process.env.PORT ?? 5173}/`;
+const all = process.argv.includes('--all') || !!process.env.E2E_ALL;
+const base = process.argv.slice(2).find((a) => !a.startsWith('--')) ?? `http://localhost:${process.env.E2E_PORT ?? process.env.PORT ?? 5173}/`;
 const chrome = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 await waitForServer();
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--no-sandbox', '--lang=cs-CZ'] });
@@ -30,7 +31,9 @@ const typeIn = async (l, v) => {
 };
 
 // line pages
-for (const l of data) {
+// smoke (verify): 060 simple, 105 circular, 090 with variants; E2E_ALL=1 (npm run test:e2e:all) opens every line of the feed
+const smoke = new Set(['060', '105', '090']);
+for (const l of all ? data : data.filter((x) => smoke.has(x.number))) {
   await page.evaluate((i) => { location.hash = `#/line/${i}`; }, l.id);
   await sleep(700);
   const t = await text();

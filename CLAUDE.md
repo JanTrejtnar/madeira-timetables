@@ -21,7 +21,7 @@ Všech 60 městských linek HF, které má oficiální GTFS (`https://www.horari
 - Zastávky mají polohu přímo z feedu (`source: 'gtfs'`, přesnost `exact`; ruční `data/stop-overrides.json` ji může přebít). Tvar trasy je `data/shapes/<2000000 + shape_id>.json` (zapisuje ho `parse.mjs`, `attachRoutes`/OSRM ho proto nepřepisuje).
 - Směry (`gtfsDirections`, `scripts/lib-gtfs-timetable.mjs`): jeden `direction_id` se rozdělí na shluky vzorů zastávek; kořenem je nejdelší vzor, další se přidá jen jako podposloupnost (krátký spoj, spoj, který zastávky vynechává – „–“ v řádu). Vzor s vlastní zastávkou (jiný sloupek, objížďka, smyčka) je směr sám (`variant` = cíl na čele vozu), protože tvar trasy patří jednomu seznamu zastávek.
 - Číslo sloupku operátora za názvem zastávky (`Rochinha T-32`) se v UI nezobrazuje: `withoutPole`/`localStopName` (`src/lib/text.ts`), `stopKey` a `displayName` v síti (zastávky se stejným jménem u sebe jsou jeden uzel). Data zůstávají nezměněná; názvy směrů (`from`/`to`) se čistí už v `parse.mjs`.
-- E2E `scripts/e2e-gtfs-lines.mjs` (součást `verify`) otevře každou linku z feedu a zkusí plánovač na pilotních linkách.
+- E2E `scripts/e2e-gtfs-lines.mjs` (součást `verify`) ve `verify` běží jako smoke (linky 060, 105, 090 + plánovač); `npm run test:e2e:all` (`--all`, nebo `E2E_ALL=1`) otevře všech 60 linek z feedu, pouštěj ho před větší změnou GTFS dat nebo v noci/CI.
 
 ## Sdílené pomocné funkce
 
@@ -55,6 +55,6 @@ Vývojář/asistent MUSÍ před každým commitem automaticky a bez vyzvání sp
 4. E2E kontrolní sady: `node scripts/e2e-line96.mjs`, `node scripts/e2e-line208.mjs`, `node scripts/e2e-trim-notes.mjs`, `node scripts/e2e-ux.mjs`, `node scripts/e2e-planner.mjs`, `node scripts/e2e-transfers.mjs`, `node scripts/e2e-map.mjs`, `node scripts/e2e-mobile.mjs`, `node scripts/e2e-robust.mjs`, `node scripts/e2e-offline-map.mjs`, `node scripts/e2e-gtfs-lines.mjs`
 5. `npm run build` (produkční vite build)
 
-Celý postup (včetně fetch:routes a časových limitů pro každý krok, `e2e-ux` trvá ~250 s, limit 360 s) spustí `npm run verify` (`-- --skip-e2e` vynechá E2E). Dev server si `verify` obstará sám: použije `E2E_PORT`/`PORT` (výchozí 5173), pokud tam běží tato aplikace; jinak (port volný nebo obsazený cizím serverem) na dobu běhu spustí vlastní Vite na volném portu. E2E skripty používají stejné proměnné, takže jde i `E2E_PORT=5174 node scripts/e2e-ux.mjs`.
+Celý postup (včetně fetch:routes a časových limitů pro každý krok, `e2e-ux` trvá ~105 s, limit 240 s; druhý a třetí `build:data` se přeskočí, když `fetch:routes`/`fetch:via-routes` nic nezměnily) spustí `npm run verify` (`-- --skip-e2e` vynechá E2E). Dev server si `verify` obstará sám: použije `E2E_PORT`/`PORT` (výchozí 5173), pokud tam běží tato aplikace; jinak (port volný nebo obsazený cizím serverem) na dobu běhu spustí vlastní Vite na volném portu. E2E skripty používají stejné proměnné, takže jde i `E2E_PORT=5174 node scripts/e2e-ux.mjs`.
 
 **Pokud jakýkoliv krok selže, kód se nesmí pushnout na main, dokud není chyba opravena.**

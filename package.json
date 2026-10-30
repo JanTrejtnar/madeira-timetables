@@ -14,6 +14,7 @@
     "fetch:via-routes": "node scripts/fetch-via-routes.mjs",
     "build:data": "node scripts/build-data.mjs",
     "verify": "node scripts/verify.mjs",
+    "test:e2e:all": "node scripts/e2e-gtfs-lines.mjs --all",
     "bench:raptor": "node scripts/bench-raptor.mjs",
     "audit": "node scripts/audit-schedules.mjs",
     "audit:stops": "node scripts/audit-stops.mjs",

@@ -27,10 +27,10 @@ async function open(viewport, url = base) {
   page.on('console', (m) => m.type() === 'error' && !/tile\.openstreetmap|cartocdn|Failed to load resource|routed-foot/.test(m.text()) && errors.push(m.text()));
   await page.setRequestInterception(true);
   page.on('request', (r) => (/tile\.openstreetmap\.org|cartocdn\.com/.test(r.url()) ? r.abort() : r.continue()));
-  await page.goto(base, { waitUntil: 'networkidle0' });
-  await page.evaluate(() => { localStorage.clear(); history.replaceState(null, '', location.pathname); });
+  // a clean profile once per tab (the sessionStorage flag survives the reloads of a test), then a single load of the page
+  await page.evaluateOnNewDocument(() => { if (!sessionStorage.getItem('e2e-clean')) { localStorage.clear(); sessionStorage.setItem('e2e-clean', '1'); } });
   await page.goto(url, { waitUntil: 'networkidle0' });
-  await sleep(500);
+  await page.waitForSelector('main, #root > *', { timeout: 10000 });
   return { page, errors };
 }
 const PHONE = { width: 390, height: 844, deviceScaleFactor: 1, isMobile: true, hasTouch: true };
@@ -205,8 +205,8 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   let found = null;
   for (const [a, b] of pairs) {
     await page.goto(`${base}?from=${encodeURIComponent(a)}&to=${encodeURIComponent(b)}&time=08:00`, { waitUntil: 'networkidle0' });
-    await sleep(1800);
-    const legend = await page.evaluate(() => [...document.querySelectorAll('[data-testid=map-legend] li')].map((li) => ({ color: li.querySelector('span').style.backgroundColor, badge: li.children[1].innerText })));
+    await page.waitForSelector('[data-testid=map-legend] li', { timeout: 2500 }).catch(() => {});
+    const legend =await page.evaluate(() => [...document.querySelectorAll('[data-testid=map-legend] li')].map((li) => ({ color: li.querySelector('span').style.backgroundColor, badge: li.children[1].innerText })));
     if (legend.length >= 2) { found = { a, b, legend }; break; }
   }
   check('map of a transfer: a legend with two buses', !!found, found ? `${found.a} -> ${found.b} ${JSON.stringify(found.legend)}` : '');
@@ -222,7 +222,8 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   }
   const single = await (async () => {
     await page.goto(`${base}?from=Funchal&to=Santana&time=08:00&direct=1`, { waitUntil: 'networkidle0' });
-    await sleep(1500);
+    await page.waitForSelector('[data-testid=connection]', { timeout: 4000 }).catch(() => {});
+    await sleep(400); // the legend (if any) renders right after the cards
     return page.evaluate(() => document.querySelectorAll('[data-testid=map-legend]').length);
   })();
   check('a direct bus needs no legend', single === 0);
@@ -266,7 +267,8 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   await page.setRequestInterception(true);
   page.on('request', (r) => (/tile\.openstreetmap\.org|cartocdn\.com/.test(r.url()) ? r.abort() : r.continue()));
   await page.goto(`${base}#/line/90`, { waitUntil: 'networkidle0' });
-  await sleep(1800);
+  await page.waitForSelector('.leaflet-overlay-pane path', { timeout: 6000 }).catch(() => {});
+  await sleep(400);
   const width = () => page.evaluate(() => { const ps = [...document.querySelectorAll('.leaflet-overlay-pane path')].filter((p) => p.getAttribute('stroke-width') === '4'); const r = ps[0]?.getBoundingClientRect(); return r ? Math.round(r.width) : 0; });
   await page.click('.leaflet-control-zoom-in');
   await sleep(500);
@@ -316,8 +318,8 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
 {
   // Funchal -> Falca on Friday 23 Oct 2026 from 05:00: the 07:35 bus of line 139; its line detail opens on 07:35 (not on the device's next departure)
   const { page, errors } = await open(PHONE, `${base}?from=Funchal&to=Falca&tk=falca&date=2026-10-23&time=05:00`);
-  await sleep(1500);
-  if (!(await page.$('[data-testid=connection]'))) { await page.click('[data-testid=search-button]'); await sleep(1500); }
+  await page.waitForSelector('[data-testid=connection]', { timeout: 4000 }).catch(() => {});
+  if (!(await page.$('[data-testid=connection]'))) { await page.click('[data-testid=search-button]'); await page.waitForSelector('[data-testid=connection]', { timeout: 4000 }).catch(() => {}); }
   const picked = await page.evaluate(() => {
     const c = [...document.querySelectorAll('[data-testid=connection]')].find((x) => /07:35/.test(x.innerText) && /139/.test(x.innerText));
     c?.click();
@@ -329,7 +331,7 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   check('the detail shows the arrival in São Vicente at 09:50 (not 10:15)', /09:50/.test(detail) && /S.o Vicente/.test(detail), detail.replace(/\s+/g, ' ').slice(0, 300));
   check('the detail shows the transfer to line 6', /\b6\b/.test(detail) && /11:20/.test(detail));
   await page.evaluate(() => document.querySelector('[data-testid=open-leg]')?.click());
-  await sleep(900);
+  await page.waitForFunction(() => location.hash.startsWith('#/line'), { timeout: 4000 }).catch(() => {});
   const hash = await page.evaluate(() => location.hash);
   check('the line detail URL carries the searched departure and date', /\?dep=07:35&date=2026-10-23$/.test(hash), hash);
   const first = await page.evaluate(() => (document.querySelector('ol > li')?.innerText ?? '').match(/\d\d:\d\d/)?.[0]);
@@ -379,7 +381,7 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
 // ---- desktop: the first card and the detail are not hidden under the sticky bars
 {
   const { page, errors } = await open({ width: 1280, height: 800, deviceScaleFactor: 1 }, `${base}?from=Funchal&to=Falca&tk=falca&date=2026-10-23&time=05:00`);
-  await sleep(1500);
+  await page.waitForSelector('[data-testid=connection]', { timeout: 4000 }).catch(() => {});
   const gap = (bar, below) => page.evaluate((a, b) => { const x = document.querySelector(a)?.getBoundingClientRect(); const y = document.querySelector(b)?.getBoundingClientRect(); return x && y ? Math.round(y.top - x.bottom) : null; }, bar, below);
   const g1 = await gap('[data-testid=search-summary]', '[data-testid=connection]');
   check('desktop: the first result card starts clearly below the search bar', g1 !== null && g1 >= 6, String(g1));
@@ -396,11 +398,11 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   const filt = (sel) => page.evaluate((q) => { const e = document.querySelector(q); return e ? getComputedStyle(e).filter : null; }, sel);
   await page.evaluate(() => localStorage.setItem('theme', 'light'));
   await page.reload({ waitUntil: 'networkidle0' });
-  await sleep(1200);
+  await page.waitForSelector('.leaflet-layer.osm-tiles', { timeout: 4000 }).catch(() => {});
   check('light theme: the map tile layer has no CSS filter', (await filt('.leaflet-layer.osm-tiles')) === 'none', await filt('.leaflet-layer.osm-tiles'));
   await page.evaluate(() => localStorage.setItem('theme', 'dark'));
   await page.reload({ waitUntil: 'networkidle0' });
-  await sleep(1200);
+  await page.waitForSelector('.leaflet-layer.osm-tiles', { timeout: 4000 }).catch(() => {});
   check('dark theme: the tile layer is inverted', /invert/.test((await filt('.leaflet-layer.osm-tiles')) ?? ''));
   check('dark theme: the map container and the line pane are not filtered', (await filt('.leaflet-container')) === 'none' && (await filt('.leaflet-overlay-pane')) === 'none');
   await page.close();
