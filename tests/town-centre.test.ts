@@ -42,6 +42,22 @@ describe.skipIf(!existsSync(file))('parish as a destination, short trips (real d
     }
   }, 60_000);
 
+  it('"Funchal" as the destination alights in the centre (a terminal or hub, or a line end near one), not at the edge of the town (Palheiro Ferreiro)', () => {
+    const city = suggest(net, data.lines, 'funchal').find((s) => s.group)!;
+    const hubs = net.nodes.filter((n) => (n.terminal || n.transferHub) && n.lat !== undefined);
+    for (const at of [8 * 60, 12 * 60, 17 * 60]) {
+      const r = runSearch(net, trips, { text: 'Camacha', key: camacha.key }, { text: 'Funchal', key: city.key }, at, false)!;
+      const first = [...r.plan.direct, ...r.plan.transfers].slice(0, 5);
+      expect(first.length).toBeGreaterThan(0);
+      for (const it of first) {
+        const l = it.legs.at(-1)!;
+        const n = net.nodes[l.trip.nodes[l.toPos]];
+        expect(n.name).not.toMatch(/Palheiro Ferreiro/);
+        expect(hubs.some((h) => h.id === n.id || metres(h as never, n as never) <= CITY_CENTRE_M)).toBe(true);
+      }
+    }
+  }, 60_000);
+
   it('"Funchal" as the start boards where the bus starts (Teleférico-Término), not at the second stop of the same trip', () => {
     const city = suggest(net, data.lines, 'funchal').find((s) => s.group)!;
     for (const at of [8 * 60, 12 * 60]) {

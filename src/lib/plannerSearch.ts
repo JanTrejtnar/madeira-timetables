@@ -56,9 +56,12 @@ function nodesOf(net: Network, p: Picked) {
 /** a stop where a line starts counts as a centre stop of the town when a terminal or hub is this near (the Areeiro bus leaves from its own stop at the cable car) */
 export const CITY_CENTRE_M = 1500;
 
-/** The stops of a whole town that stand for "the town" as a start: terminals, transfer hubs and the starts of lines near them; null when there are none to prefer. */
-function cityCentre(net: Network, trips: Trip[], all: Set<number>): Set<number> | null {
-  const starts = new Set(trips.map((tr) => tr.nodes[0]));
+/**
+ * The stops of a whole town that stand for "the town" as a start or a destination: terminals, transfer hubs and the stops near them where a line
+ * starts (as a start) or ends (as a destination); null when there are none to prefer.
+ */
+function cityCentre(net: Network, trips: Trip[], all: Set<number>, asEnd: boolean): Set<number> | null {
+  const starts = new Set(trips.map((tr) => (asEnd ? tr.nodes[tr.nodes.length - 1] : tr.nodes[0])));
   const hubs = [...all].map((id) => net.nodes[id]).filter((n) => (n.terminal || n.transferHub) && n.lat !== undefined && n.lon !== undefined);
   const centre = new Set(hubs.map((n) => n.id));
   for (const id of all) {
@@ -161,7 +164,7 @@ export function runSearch(net: Network, trips: Trip[], from: Picked, to: Picked,
       if (w) walkOut.set(id, w.min);
     }
   }
-  // "Funchal" as a whole town as the start: its centre (terminals, hubs, and the stops where a line starts near them), not the first stop on the
+  // "Funchal" as a whole town as the start or the destination: its centre (terminals, hubs, and the stops where a line starts near them), not the first stop on the
   // edge of the town; a whole parish ("Camacha (all stops)") as the start or the destination: its centre, not the first roadside pole of the border.
   // The other stops are used only when nothing connects the preferred ones. One search in the usual case (each run is expensive on a phone).
   const cityStart = !from.pt && !!from.key?.startsWith(CITY_PREFIX);
@@ -170,8 +173,9 @@ export function runSearch(net: Network, trips: Trip[], from: Picked, to: Picked,
     const c = new Set([...parishCentre(net, p.key)].filter((id) => ids.has(id)));
     return c.size && c.size < ids.size ? c : null;
   };
-  const prefA = cityStart ? cityCentre(net, trips, A) : centreOf(from, A);
-  const prefB = centreOf(to, B);
+  const cityEnd = !to.pt && !!to.key?.startsWith(CITY_PREFIX);
+  const prefA = cityStart ? cityCentre(net, trips, A, false) : centreOf(from, A);
+  const prefB = cityEnd ? cityCentre(net, trips, B, true) : centreOf(to, B);
   const tries: [Set<number>, Set<number>][] = [[prefA ?? A, prefB ?? B]];
   if (prefA && prefB) tries.push([A, prefB]);
   if (prefA || prefB) tries.push([A, B]);
