@@ -57,6 +57,31 @@ describe.skipIf(!existsSync(file))('parish as a destination, short trips (real d
     }
   }, 60_000);
 
+  it('a town as the start never boards at a mere settlement centre when a real stop follows close on the same trip (line 503 "Funchal")', () => {
+    const city = suggest(net, data.lines, 'funchal').find((s) => s.group)!;
+    const l503 = data.lines.find((x) => x.number === '503')!;
+    expect(l503.directions[0].stops[0].locationPrecision).toBe('settlement_center');
+    const centroids = net.nodes.filter((n) => n.centroid);
+    expect(centroids.length).toBeGreaterThan(0);
+    let seen503 = 0;
+    for (const dest of ['Fonte Almocreves', 'Camacha', 'Santana']) {
+      const to = suggest(net, data.lines, dest.toLowerCase())[0];
+      for (const at of [7 * 60, 10 * 60, 15 * 60]) {
+        const r = runSearch(net, trips, { text: 'Funchal', key: city.key }, { text: dest, key: to.key }, at, false)!;
+        for (const it of [...r.plan.direct, ...r.plan.transfers]) {
+          const l = it.legs[0];
+          const here = net.nodes[l.trip.nodes[l.fromPos]];
+          if (l.trip.line.number === '503') seen503++;
+          if (!here.centroid) continue;
+          // still at the centre: no real stop within 1 km follows on that trip before the alighting stop
+          const next = l.trip.nodes.slice(l.fromPos + 1, l.toPos).map((id) => net.nodes[id]).find((n) => !n.centroid && n.lat !== undefined);
+          expect(!next || metres(here as never, next as never) > 1000).toBe(true);
+        }
+      }
+    }
+    expect(seen503).toBeGreaterThan(0);
+  }, 60_000);
+
   it('a result crossing the worker boundary (trips as indices) comes back as the same result', () => {
     const city = suggest(net, data.lines, 'funchal').find((s) => s.group)!;
     const r = runSearch(net, trips, { text: 'Funchal', key: city.key }, { text: 'Camacha', key: camacha.key }, 9 * 60, false)!;

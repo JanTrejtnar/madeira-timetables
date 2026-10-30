@@ -75,16 +75,48 @@ function cityCentre(net: Network, trips: Trip[], all: Set<number>): Set<number> 
  * has not left yet (`at`); itineraries that become the same ride are listed once.
  */
 function boardAtStart(plan: Plan, pref: Set<number>, at: number): Plan {
-  const earlier = (it: Itinerary): Itinerary => {
+  return reboard(plan, (it) => {
     const first = it.legs[0];
     const t = first.trip;
     for (let i = 0; i < first.fromPos; i++) {
       const time = t.times[i];
-      if (time === null || time < at || !pref.has(t.nodes[i])) continue;
-      const moved = { ...leg(t, i, first.toPos), walkBefore: first.walkBefore };
-      return { ...it, depart: moved.depart, legs: [moved, ...it.legs.slice(1)] };
+      if (time !== null && time >= at && pref.has(t.nodes[i])) return i;
     }
-    return it;
+    return null;
+  });
+}
+
+/** a stop that is only the centre of a settlement is not a place to wait for a bus when a real stop follows this near on the same trip */
+const CENTROID_NEXT_M = 1000;
+
+/**
+ * "Funchal" or a whole parish as the start: a trip that begins at a mere centre of the settlement (the printed "Funchal" of line 503, position
+ * "orientační poloha v obci") is boarded at the first real stop that follows, where the bus actually stops. A centre with no real stop within
+ * reach after it (a village whose only known stop is the centre) stays: there is nothing better to show.
+ */
+function boardAtRealStop(net: Network, plan: Plan): Plan {
+  return reboard(plan, (it) => {
+    const first = it.legs[0];
+    const t = first.trip;
+    const here = net.nodes[t.nodes[first.fromPos]];
+    if (!here.centroid || here.lat === undefined) return null;
+    for (let i = first.fromPos + 1; i < first.toPos; i++) {
+      const n = net.nodes[t.nodes[i]];
+      if (t.times[i] === null || n.centroid || n.lat === undefined || n.lon === undefined) continue;
+      return metres(here as Required<Node>, n as Required<Node>) <= CENTROID_NEXT_M ? i : null;
+    }
+    return null;
+  });
+}
+
+/** moves the boarding of the first leg to the position `pick` names (null = keep), lists itineraries that become the same ride once */
+function reboard(plan: Plan, pick: (it: Itinerary) => number | null): Plan {
+  const moveFirst = (it: Itinerary): Itinerary => {
+    const first = it.legs[0];
+    const i = pick(it);
+    if (i === null) return it;
+    const moved = { ...leg(first.trip, i, first.toPos), walkBefore: first.walkBefore };
+    return { ...it, depart: moved.depart, legs: [moved, ...it.legs.slice(1)] };
   };
   const once = (list: Itinerary[]) => {
     const seen = new Set<string>();
@@ -93,8 +125,8 @@ function boardAtStart(plan: Plan, pref: Set<number>, at: number): Plan {
       return !seen.has(key) && !!seen.add(key);
     });
   };
-  const direct = once(plan.direct.map(earlier)).sort((a, b) => a.depart - b.depart || a.finish - b.finish);
-  return { direct, transfers: once(plan.transfers.map(earlier)) };
+  const direct = once(plan.direct.map(moveFirst)).sort((a, b) => a.depart - b.depart || a.finish - b.finish);
+  return { direct, transfers: once(plan.transfers.map(moveFirst)) };
 }
 
 /**
@@ -151,6 +183,7 @@ export function runSearch(net: Network, trips: Trip[], from: Picked, to: Picked,
     started = x;
   }
   if (prefA && started === prefA) found = boardAtStart(found, prefA, at);
+  if (!from.pt && (cityStart || from.key?.startsWith(PARISH_PREFIX))) found = boardAtRealStop(net, found);
   // "Funchal" as a whole town: a connection that rides within the town to board the next bus at a stop of the town is just that bus
   // (offered as it is, from its own start); the traveller chose any stop of the town as the start
   if (cityStart) {

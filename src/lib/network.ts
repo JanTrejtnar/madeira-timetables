@@ -25,7 +25,11 @@ export interface Node {
   terminal?: string;
   /** official transfer terminal: the end of lines of at least HUB_LINES lines (Funchal, Machico ...), never a "Via" place */
   transferHub?: boolean;
+  /** only the centre of a settlement / place, not a place where a bus is known to stop (the "orientační poloha v obci" stops) */
+  centroid?: boolean;
 }
+
+const isCentroid = (s: Stop) => s.locationPrecision === 'settlement_center' || s.locationPrecision === 'place_centroid';
 
 export interface Network {
   nodes: Node[];
@@ -85,6 +89,9 @@ export function buildNetwork(lines: Line[], terminalWalks: readonly { a: string;
     }
     if (!node.muni && s.muni) node.muni = s.muni;
     if (!node.par && s.par) node.par = s.par;
+    // a node is a mere centre of a place only when every stop merged into it is
+    if (node.centroid === undefined) node.centroid = isCentroid(s);
+    else if (!isCentroid(s)) node.centroid = false;
     return node;
   };
   for (const line of lines) {
