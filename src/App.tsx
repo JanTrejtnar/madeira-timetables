@@ -442,7 +442,7 @@ export function App() {
                 </button>
               </div>
             </div>
-            <nav className="mt-3 hidden grid-cols-4 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 lg:grid" aria-label="Tabs">
+            <nav className="mt-3 hidden grid-cols-4 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800 lg:grid" data-testid="tabs" aria-label={t('tabsLabel')}>
               {tabs.map((x) => (
                 <button
                   key={x.key}
@@ -526,7 +526,7 @@ export function App() {
 
         <nav
           className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-slate-200/70 bg-white/90 pb-safe backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 lg:hidden"
-          aria-label="Tabs"
+          data-testid="tabs" aria-label={t('tabsLabel')}
         >
           {tabs.map((x) => {
             const active = x.key === tab && !route;

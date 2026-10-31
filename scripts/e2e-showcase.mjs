@@ -54,7 +54,7 @@ const typeIn = async (page, label, v) => {
 };
 const options = (page) => page.evaluate(() => [...document.querySelectorAll('[role=option]')].map((o) => ({ kind: o.dataset.kind, text: o.innerText.replace(/\s+/g, ' ').trim() })));
 const clickOption = (page, re) => page.evaluate((src) => { const o = [...document.querySelectorAll('[role=option] button')].find((b) => new RegExp(src).test(b.innerText)); o?.click(); return !!o; }, re.source);
-const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.querySelectorAll('nav[aria-label=Tabs] button')].filter((x) => x.offsetParent !== null).find((x) => x.textContent.trim() === n); b?.click(); return !!b; }, name);
+const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.querySelectorAll('nav[data-testid=tabs] button')].filter((x) => x.offsetParent !== null).find((x) => x.textContent.trim() === n); b?.click(); return !!b; }, name);
 
 // ---- 1. suggestions with a category label and an icon, places of interest
 {
@@ -139,7 +139,7 @@ const clickTab = (page, name) => page.evaluate((n) => { const b = [...document.q
   const { page, errors } = await open({ width: 1280, height: 900 });
   // desktop: the start page has no map; the island map is the "Mapa" tab
   check('desktop start page shows no map', (await page.$('[data-testid=network-map]')) === null);
-  await page.click('nav[aria-label=Tabs] button:nth-child(2)');
+  await page.click('nav[data-testid=tabs] button:nth-child(2)');
   await sleep(1200);
   const hasMap = await page.evaluate(() => !!document.querySelector('[data-testid=network-map] canvas') && !document.querySelector('[data-testid=planner-map]'));
   check('desktop: the idle map shows the whole network on a canvas', hasMap);

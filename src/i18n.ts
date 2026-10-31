@@ -163,6 +163,7 @@ const dict = {
 		stopTimesNote: "Čas na vybrané zastávce",
 		tabSearch: "Linky",
 		tabRoute: "Plánovač",
+		tabsLabel: "Záložky",
 		tabDepartures: "Odjezdy",
 		searchPlaceholder:
 			"Linka, zastávka nebo cíl",
@@ -489,6 +490,7 @@ const dict = {
 		stopTimesNote: "Time at the selected stop",
 		tabSearch: "Lines",
 		tabRoute: "Planner",
+		tabsLabel: "Tabs",
 		tabDepartures: "Departures",
 		searchPlaceholder:
 			"Line, stop or destination",
@@ -814,6 +816,7 @@ const dict = {
 		stopTimesNote: "Hora na paragem selecionada",
 		tabSearch: "Carreiras",
 		tabRoute: "Planeador",
+		tabsLabel: "Separadores",
 		tabDepartures: "Partidas",
 		searchPlaceholder:
 			"Carreira, paragem ou destino",

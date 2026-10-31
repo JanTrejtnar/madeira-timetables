@@ -392,7 +392,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
       <div className="flex items-start gap-3.5">
         <LineBadge line={line} large />
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold leading-tight tracking-tight">{line.name}</h1>
+          <h2 className="text-xl font-bold leading-tight tracking-tight">{line.name}</h2>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{line.route}</p>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-xs text-slate-500 dark:text-slate-400">
             <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium dark:bg-slate-800">{line.type === 'urbano' ? t('urban') : t('interurban')}</span>

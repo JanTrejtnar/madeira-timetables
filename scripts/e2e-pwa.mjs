@@ -42,7 +42,7 @@ try {
   check('places (pois.json) and the network map (overview.json) are precached for offline use', cached.some((u) => u.includes('data/pois.json')) && cached.some((u) => u.includes('data/overview.json')));
 
   // planner is the first tab and the default one; simplified filters
-  const tabs = await page.evaluate(() => [...document.querySelectorAll('nav[aria-label=Tabs]')].map((n) => [...n.querySelectorAll('button')].map((b) => b.textContent.trim())));
+  const tabs = await page.evaluate(() => [...document.querySelectorAll('nav[data-testid=tabs]')].map((n) => [...n.querySelectorAll('button')].map((b) => b.textContent.trim())));
   check('tab order: Plánovač, Mapa, Linky, Odjezdy', tabs.length > 0 && tabs.every((t) => /Plánovač/.test(t[0]) && /Mapa/.test(t[1]) && /Linky/.test(t[2]) && /Odjezdy/.test(t[3])), JSON.stringify(tabs));
   let body0 = await text(page);
   check('planner opens first; no "Preferovat" / "Pouze tento typ"', /Odkud|Nástupní/.test(await page.evaluate(() => document.body.innerHTML)) && !/Preferovat|Pouze tento typ/.test(body0));

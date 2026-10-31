@@ -54,7 +54,7 @@ const hash = (page) => page.evaluate(() => location.hash);
   await page.reload({ waitUntil: 'networkidle0' });
   await sleep(400);
   check('F5 on #/search stays on the line search', (await page.$('[data-testid=line-catalog]')) !== null);
-  await page.evaluate(() => document.querySelectorAll('nav[aria-label=Tabs] button')[1].click());
+  await page.evaluate(() => document.querySelectorAll('nav[data-testid=tabs] button')[1].click());
   await sleep(300);
   check('a tab changes the URL', (await hash(page)) === '#/map');
   await page.goBack();

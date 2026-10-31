@@ -416,12 +416,12 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
   const state = () => page.evaluate(() => ({ split: document.querySelector('[data-testid=layout]')?.dataset.split, maps: document.querySelectorAll('.leaflet-container').length, aside: Math.round(document.querySelector('aside').getBoundingClientRect().width), left: Math.round(document.querySelector('aside').getBoundingClientRect().left) }));
   const s0 = await state();
   check('desktop start page: no map, one centred column', s0.split === 'false' && s0.maps === 0 && s0.aside <= 700 && s0.left > 200, JSON.stringify(s0));
-  await page.click('nav[aria-label=Tabs] button:nth-child(3)');
+  await page.click('nav[data-testid=tabs] button:nth-child(3)');
   check('desktop line search tab: no map either', (await state()).maps === 0);
-  await page.click('nav[aria-label=Tabs] button:nth-child(2)');
+  await page.click('nav[data-testid=tabs] button:nth-child(2)');
   await sleep(800);
   check('desktop "Mapa" tab shows the island map beside the panel', (await state()).maps === 1 && (await state()).split === 'true');
-  await page.click('nav[aria-label=Tabs] button:nth-child(1)');
+  await page.click('nav[data-testid=tabs] button:nth-child(1)');
   await typeIn(page, 'Odkud', 'Funchal');
   await clickOption(page, /všechny zastávky/);
   await typeIn(page, 'Kam', 'Curral');
@@ -500,7 +500,7 @@ const clickOption = (page, re) => page.evaluate((src) => { const o = [...documen
 {
   const { page, errors } = await open({ width: 1400, height: 900, deviceScaleFactor: 1 });
   const split = () => page.evaluate(() => ({ split: document.querySelector('[data-testid=layout]')?.dataset.split, maps: document.querySelectorAll('.leaflet-container').length, paths: document.querySelectorAll('.leaflet-overlay-pane path').length }));
-  await page.click('nav[aria-label=Tabs] button:nth-child(3)');
+  await page.click('nav[data-testid=tabs] button:nth-child(3)');
   await sleep(500);
   const a = await split();
   check('desktop "Linky": the operator list has no map', a.split === 'false' && a.maps === 0, JSON.stringify(a));
