@@ -401,6 +401,23 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   const selNotes = sel?.notes ?? [];
   /** places a trip reaches only after a phone booking ("*Serviço a pedido: ..."), from its notes (legend code or free text) */
   // the grid shows the time and short legend codes only; the text of a free-text note ("Via Ilha, …") is shown below for the selected time
+  /** where a trip of the merged list ends (or starts, for the other side) */
+  const endOf = (x: Timed): string | undefined => {
+    if (!merged || x.dirIdx === undefined) return undefined;
+    const dd = line.directions[x.dirIdx];
+    const cut = shortEnds(dd, x.trip);
+    return side === 0 ? cut?.end ?? dd.to : cut?.start ?? dd.from ?? dd.stops[0]?.name;
+  };
+  /** the end most trips of the list share: only the exceptions are written under the time */
+  const usualEnd = (() => {
+    if (!merged) return undefined;
+    const n = new Map<string, number>();
+    for (const x of times) {
+      const e = endOf(x);
+      if (e) n.set(e, (n.get(e) ?? 0) + 1);
+    }
+    return [...n].sort((a, b) => b[1] - a[1])[0]?.[0];
+  })();
   const legendCodes = (notes?: readonly string[]) => (notes ?? []).filter((k) => k in line.notes && k.length <= 3);
   const isFree = (k: string) => !(k in line.notes) || k.length > 3;
   const hasFreeNote = (notes?: readonly string[]) => (notes ?? []).some(isFree);
@@ -565,13 +582,9 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                     {x.t}
                     {requestPlaces(x.notes).length ? <span className="ml-0.5 text-amber-600" aria-hidden>⚠</span> : null}
                     {legendCodes(x.notes).length ? <sup className="ml-0.5 text-xs font-normal opacity-70">{legendCodes(x.notes).map(tn).join(',')}</sup> : null}
-                    {merged && x.dirIdx !== undefined ? (
+                    {merged && endOf(x) && endOf(x) !== usualEnd ? (
                       <span className="block truncate text-xs font-normal opacity-70" data-testid="time-end">
-                        {(() => {
-                          const dd = line.directions[x.dirIdx];
-                          const cut = shortEnds(dd, x.trip);
-                          return side === 0 ? cut?.end ?? dd.to : cut?.start ?? dd.from ?? dd.stops[0]?.name;
-                        })()}
+                        {endOf(x)}
                       </span>
                     ) : null}
                     {hasFreeMark(x.notes) && !requestPlaces(x.notes).length ? <sup className="ml-0.5 text-xs font-normal opacity-70" title={(x.notes ?? []).map(tn).join('; ')} data-testid="free-note-mark">ⓘ</sup> : null}

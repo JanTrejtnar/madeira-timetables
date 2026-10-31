@@ -116,11 +116,11 @@ export function ConnectionCard({ it, shared, base, selected, onOpen, fromPt, toP
       data-testid="connection"
       className={`block w-full overflow-hidden rounded-2xl border border-slate-200/70 bg-white text-left transition-colors hover:bg-slate-50/70 dark:border-slate-700/70 dark:bg-slate-900 dark:hover:bg-slate-800/60 ${selected && shared.desktop ? 'ring-2 ring-sky-500/70' : ''}`}
     >
-      <span className="flex items-baseline justify-between gap-3 bg-slate-100 px-4 py-1.5 text-sm dark:bg-slate-800/80">
-        <span className="font-semibold text-slate-700 first-letter:uppercase dark:text-slate-200" data-testid="connection-date">
+      <span className="flex flex-wrap items-baseline justify-between gap-x-3 bg-slate-100 px-4 py-1.5 text-sm dark:bg-slate-800/80">
+        <span className="whitespace-nowrap font-semibold text-slate-700 first-letter:uppercase dark:text-slate-200" data-testid="connection-date">
           {whenLabel(it, base, shared.ctx.now, t, lang)}
         </span>
-        <span className="shrink-0 text-slate-500 tabular-nums dark:text-slate-400">
+        <span className="text-slate-500 tabular-nums dark:text-slate-400">
           {duration(it.arrive - it.depart, t)}
           <Fare it={it} card={shared.fareCard} />
         </span>
@@ -400,11 +400,11 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
           ))}
       </BackBar>
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-slate-700/70 dark:bg-slate-900">
-        <div className="flex items-baseline justify-between gap-3 bg-slate-100 px-4 py-1.5 text-sm dark:bg-slate-800/80">
-          <span className="font-semibold text-slate-700 first-letter:uppercase dark:text-slate-200" data-testid="connection-date">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 bg-slate-100 px-4 py-1.5 text-sm dark:bg-slate-800/80">
+          <span className="whitespace-nowrap font-semibold text-slate-700 first-letter:uppercase dark:text-slate-200" data-testid="connection-date">
             {whenLabel(it, base, shared.ctx.now, t, lang)}
           </span>
-          <span className="shrink-0 text-slate-500 tabular-nums dark:text-slate-400">
+          <span className="text-slate-500 tabular-nums dark:text-slate-400">
             {duration(it.arrive - it.depart, t)}
             {totalWalk(it, walkIn, walkOut) > 0 && <span data-testid="walk-total"> · 🚶 {t('walkTotal', { n: totalWalk(it, walkIn, walkOut) })}</span>}
             <Fare it={it} card={shared.fareCard} />
