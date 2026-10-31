@@ -31,7 +31,7 @@ export function LocateHint({ status }: { status: LocStatus }) {
   const text = status === 'denied' ? geoDeniedText(t) : status === 'error' ? t('geoError') : status === 'unsupported' ? t('geoUnsupported') : null;
   if (!text) return null;
   return (
-    <p role="alert" data-testid="locate-hint" className="absolute inset-x-3 bottom-8 z-500 rounded-xl bg-white/95 px-3 py-2 text-xs leading-5 text-amber-800 shadow-md ring-1 ring-amber-200 dark:bg-slate-900/95 dark:text-amber-200 dark:ring-amber-400/30 lg:right-auto lg:max-w-sm">
+    <p role="alert" data-testid="locate-hint" className="absolute left-[max(0.75rem,env(safe-area-inset-left))] right-[max(0.75rem,env(safe-area-inset-right))] bottom-[max(2rem,calc(env(safe-area-inset-bottom)+0.75rem))] z-500 rounded-xl bg-white/95 px-3 py-2 text-xs leading-5 text-amber-800 shadow-md ring-1 ring-amber-200 dark:bg-slate-900/95 dark:text-amber-200 dark:ring-amber-400/30 lg:right-auto lg:max-w-sm">
       {text}
     </p>
   );

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import '../lib/leafletGuard';
-import { tapMarker } from '../lib/tapMarker';
+import { STOP_HIT_RADIUS, tapMarker } from '../lib/tapMarker';
 import { addBasemap } from '../lib/basemap';
 import { loadShape } from '../data';
 import { useT, type Lang } from '../i18n';
+import { reducedMotion } from '../lib/motion';
 import { localStopName } from '../lib/text';
 import { spliceDetours } from '../lib/via';
 import { offRoadLinks } from '../lib/offRoad';
@@ -149,7 +150,7 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
     setFailed(false);
     markers.current = new Map();
     baseStyle.current = new Map();
-    const map = L.map(container, { scrollWheelZoom: fill, dragging: true, touchZoom: true, zoomControl: true });
+    const map = L.map(container, { scrollWheelZoom: fill, dragging: true, touchZoom: true, zoomControl: true, zoomAnimation: !reducedMotion() });
     addBasemap(map);
     mapRef.current = map;
     setMapInst(map);
@@ -159,6 +160,24 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
     // the message belongs to the route being shown: a new route starts without it, and a route that loaded clears it
     setFailed(false);
     let drawn = false;
+    // The stops are SVG dots here (the E2E suites and the route lines rely on that), so the 40 px tap area is made by the map: a tap that
+    // lands near a stop but not on its dot opens that stop, like a tap on the dot itself.
+    const stopDots: { m: L.CircleMarker; si: number | null }[] = [];
+    map.on('click', (e: L.LeafletMouseEvent) => {
+      if ((e.originalEvent.target as Element | null)?.closest?.('.leaflet-interactive')) return;
+      let best: (typeof stopDots)[number] | null = null;
+      let nearest = STOP_HIT_RADIUS;
+      for (const d of stopDots) {
+        const dist = map.latLngToContainerPoint(d.m.getLatLng()).distanceTo(e.containerPoint);
+        if (dist <= nearest) {
+          nearest = dist;
+          best = d;
+        }
+      }
+      if (!best) return;
+      best.m.openPopup();
+      if (best.si !== null) clickRef.current?.(best.si);
+    });
 
     layers.forEach((layer, li) => {
       layer.pins?.forEach((p) => drawPin(group, p, t('pickedPoint'), t('mapWalk')));
@@ -180,6 +199,7 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
           // content is built when the popup opens, so it always shows the time of the currently selected trip
           .bindPopup(() => popupContent(s, lang, labels, li === 0 ? focusRef.current?.times[si] ?? null : null, si === 0), { autoPan: true, autoPanPadding: [12, 12] })
           .addTo(group);
+        stopDots.push({ m: marker, si: li === 0 ? si : null });
         if (li === 0) {
           markers.current.set(si, marker);
           baseStyle.current.set(si, base);
@@ -266,7 +286,7 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
     // include the nearest shown stops so the user sees both themselves and where to walk
     const pts: L.LatLngTuple[] = [[me.lat, me.lon]];
     for (const l of layers) for (const s of l.stops.slice(0, 3)) if (s.lat !== undefined && s.lon !== undefined) pts.push([s.lat, s.lon]);
-    map.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 16, animate: true });
+    map.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 16, animate: !reducedMotion() });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meSeq]);
 
@@ -289,7 +309,7 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
     // clicked on the map itself: the popup is already open and the map where the reader put it
     if (fromMap) return;
     // open the popup once the map has settled, so it pans into view instead of being cut off by the map's edge
-    map.flyTo(m.getLatLng(), Math.max(map.getZoom(), 14), { duration: 0.6 });
+    map.flyTo(m.getLatLng(), Math.max(map.getZoom(), 14), { duration: 0.6, animate: !reducedMotion() });
     const open = () => live(map) && m.openPopup();
     map.once('moveend', open);
     const fallback = setTimeout(() => !m.isPopupOpen() && open(), 900);
@@ -320,14 +340,14 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
           aria-label={full ? t('mapExitFullscreen') : t('mapFullscreen')}
           title={full ? t('mapExitFullscreen') : t('mapFullscreen')}
           data-testid="map-fullscreen"
-          className={`absolute z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700 ${full ? 'right-3 top-[max(0.75rem,env(safe-area-inset-top))]' : 'right-3 top-3'}`}
+          className={`absolute z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700 ${full ? 'right-[max(0.75rem,env(safe-area-inset-right))] top-[max(0.75rem,env(safe-area-inset-top))]' : 'right-3 top-3'}`}
         >
           <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             {full ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
           </svg>
         </button>
       )}
-      <LocateFab status={loc.status} following={loc.following} onClick={loc.locate} className={full ? 'right-3 top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))]' : 'right-3 top-16'} />
+      <LocateFab status={loc.status} following={loc.following} onClick={loc.locate} className={full ? 'right-[max(0.75rem,env(safe-area-inset-right))] top-[max(4.25rem,calc(env(safe-area-inset-top)+3.5rem))]' : 'right-3 top-16'} />
       <LocateHint status={loc.status} />
       {legend.length > 1 && (
         <ul className="absolute bottom-6 left-3 z-500 flex max-w-[calc(100%-4.5rem)] flex-col gap-1 rounded-xl bg-white/95 p-1.5 text-xs shadow-md ring-1 ring-slate-200 dark:bg-slate-900/95 dark:ring-slate-700" data-testid="map-legend">

@@ -429,3 +429,30 @@ export function Linkified({ text }: { text: string }) {
   if (last < text.length) out.push(text.slice(last));
   return <>{out}</>;
 }
+
+/** The sticky bar at the top of a detail page (a line, a connection): the Back button on the left, the page's actions on the right. */
+export function BackBar({ label, onBack, testid, children }: { label: string; onBack: () => void; testid?: string; children?: ReactNode }) {
+  return (
+    <div className="sticky top-(--header-h,0px) z-30 -mx-4 -mt-4 flex items-center gap-1 bg-slate-50/95 px-4 pb-3 pt-2.5 backdrop-blur dark:bg-slate-950/95 lg:-top-4">
+      <BackButton label={label} onClick={onBack} testid={testid} />
+      <span className="ml-auto flex items-center gap-0.5">{children}</span>
+    </div>
+  );
+}
+
+/** The Back control of every page that has one: a text button in the bar, or just the arrow (`iconOnly`, inside a card) with the label for readers. */
+export function BackButton({ label, onClick, testid, iconOnly }: { label: string; onClick: () => void; testid?: string; iconOnly?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={testid}
+      aria-label={iconOnly ? label : undefined}
+      title={iconOnly ? label : undefined}
+      className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-full text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10 ${iconOnly ? 'size-10 shrink-0' : '-ml-2 px-3'}`}
+    >
+      <Icon name="back" className={iconOnly ? 'size-5' : 'size-4'} />
+      {!iconOnly && label}
+    </button>
+  );
+}

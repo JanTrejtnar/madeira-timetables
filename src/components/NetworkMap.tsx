@@ -4,6 +4,7 @@ import '../lib/leafletGuard';
 import { tapMarker } from '../lib/tapMarker';
 import { addBasemap } from '../lib/basemap';
 import { useT } from '../i18n';
+import { reducedMotion } from '../lib/motion';
 import { departuresFrom } from '../lib/nearby';
 import { decodeSegment, loadOverview, type Overview } from '../lib/overview';
 import { dirKey } from '../lib/network';
@@ -92,7 +93,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   useEffect(() => {
     const container = el.current;
     if (!container) return;
-    const map = L.map(container, { zoomControl: true, preferCanvas: true, scrollWheelZoom: fill, zoomAnimation: true, wheelDebounceTime: 60 });
+    const map = L.map(container, { zoomControl: true, preferCanvas: true, scrollWheelZoom: fill, zoomAnimation: !reducedMotion(), wheelDebounceTime: 60 });
     addBasemap(map);
     map.fitBounds(ISLAND, { animate: false });
     let moved = false;
@@ -253,7 +254,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
       if (!m) return;
       m.setStyle({ radius: 9, fillColor: '#facc15' });
       m.bringToFront();
-      map.panTo(m.getLatLng(), { animate: true });
+      map.panTo(m.getLatLng(), { animate: !reducedMotion() });
     };
     /** a highlighted line is brought to the front of the shared canvas, over the stops: the stops go back on top so they can still be tapped */
     const raise = () => {
@@ -299,7 +300,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   }, [userPos?.seq, liveFix, fill, t]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const map = mapRef.current;
-    if (map && userPos) map.flyTo([userPos.lat, userPos.lon], Math.max(map.getZoom(), 15), { duration: 0.6 });
+    if (map && userPos) map.flyTo([userPos.lat, userPos.lon], Math.max(map.getZoom(), 15), { duration: 0.6, animate: !reducedMotion() });
   }, [userPos?.seq, fill]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const node = sel?.kind === 'stop' ? net.nodes[sel.nodeId] : null;
@@ -309,7 +310,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   return (
     <div className={full ? 'fixed inset-0 z-1000 bg-white dark:bg-slate-950' : 'relative h-full w-full'} data-testid="network-map">
       <div ref={el} className="isolate size-full bg-slate-200 dark:bg-slate-800" style={{ touchAction: touch ? 'none' : undefined }} />
-      <div className="pointer-events-none absolute bottom-7 left-2 z-500 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-x-2.5 gap-y-0.5 rounded-lg bg-white/75 px-2 py-1 text-xs font-medium leading-4 text-slate-600 backdrop-blur-sm dark:bg-slate-900/70 dark:text-slate-300" data-testid="network-legend">
+      <div className="pointer-events-none absolute bottom-7 left-[max(0.5rem,env(safe-area-inset-left))] z-500 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-x-2.5 gap-y-0.5 rounded-lg bg-white/75 px-2 py-1 text-xs font-medium leading-4 text-slate-600 backdrop-blur-sm dark:bg-slate-900/70 dark:text-slate-300" data-testid="network-legend">
         {OPERATORS.map((o) => (
           <span key={o.id} className="inline-flex items-center gap-1">
             <span className="h-0.5 w-3 rounded-full" style={{ background: o.color }} />
@@ -317,21 +318,21 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
           </span>
         ))}
       </div>
-      <div role="group" aria-label={t('mapIslands')} data-testid="island-switch" className="absolute left-14 top-3 z-500 flex overflow-hidden rounded-xl bg-white text-xs font-semibold shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+      <div role="group" aria-label={t('mapIslands')} data-testid="island-switch" className="absolute left-[max(3.5rem,calc(env(safe-area-inset-left)+3.5rem))] top-3 z-500 flex overflow-hidden rounded-xl bg-white text-xs font-semibold shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
         {(['madeira', 'portoSanto'] as const).map((id) => (
           <button
             key={id}
             type="button"
             data-testid={`island-${id}`}
             aria-pressed={island === id}
-            onClick={() => mapRef.current?.flyToBounds(id === 'madeira' ? ISLAND : PORTO_SANTO, { duration: 0.8 })}
+            onClick={() => mapRef.current?.flyToBounds(id === 'madeira' ? ISLAND : PORTO_SANTO, { duration: 0.8, animate: !reducedMotion() })}
             className={`min-h-10 px-3 ${island === id ? 'bg-sky-600 text-white' : 'text-sky-700 dark:text-sky-300'}`}
           >
             {id === 'madeira' ? 'Madeira' : 'Porto Santo'}
           </button>
         ))}
       </div>
-      <LocateFab status={loc.status} following={loc.following} onClick={loc.locate} className="right-3 top-16" />
+      <LocateFab status={loc.status} following={loc.following} onClick={loc.locate} className="right-[max(0.75rem,env(safe-area-inset-right))] top-16" />
       <LocateHint status={loc.status} />
       <button
         type="button"
@@ -339,7 +340,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
         aria-label={full ? t('mapExitFullscreen') : t('mapFullscreen')}
         title={full ? t('mapExitFullscreen') : t('mapFullscreen')}
         data-testid="map-fullscreen"
-        className="absolute right-3 top-3 z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700"
+        className="absolute right-[max(0.75rem,env(safe-area-inset-right))] top-3 z-500 flex size-10 cursor-pointer items-center justify-center rounded-xl bg-white text-sky-700 shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:text-sky-300 dark:ring-slate-700"
       >
         <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           {full ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useT, type Key } from '../i18n';
+import { scrollBehavior } from '../lib/motion';
 import { stopLabel, withoutPole } from '../lib/text';
 import { sameCall } from '../lib/network';
 import { hasGps } from '../lib/precision';
@@ -9,7 +10,7 @@ import { useViaRoutes } from '../data';
 import { onRequestPlaces, withVia, detoursFor } from '../lib/via';
 import { serviceDay } from '../lib/holidays';
 import type { DayKey, Direction, Line, MapFocus, MapLayer, MapPin, Stop } from '../types';
-import { Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, pdfHref, PrecisionWarning, SectionTitle, type RideEnds, type RideWhen, type Shared } from './common';
+import { BackBar, Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, pdfHref, PrecisionWarning, SectionTitle, type RideEnds, type RideWhen, type Shared } from './common';
 import { Icon } from './Icons';
 import { RouteMap } from './LazyMaps';
 import { useFootRoutes } from '../lib/foot';
@@ -259,7 +260,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   }, [initialRide, initialDir, dirIndex, shown]);
   useEffect(() => {
     if (!rideShown) return;
-    const id = setTimeout(() => rowRefs.current.get(rideShown.from)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
+    const id = setTimeout(() => rowRefs.current.get(rideShown.from)?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' }), 250);
     return () => clearTimeout(id);
   }, [rideShown?.from, line.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const hasMap = !!dir && (dir.stops.some((s) => s.lat !== undefined) || dir.shapeId !== null);
@@ -329,7 +330,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
     const el = mapBox.current;
     if (!desktop && el) {
       const r = el.getBoundingClientRect();
-      if (force || (r.top < window.innerHeight && r.bottom > 0 && (r.top < 0 || r.bottom > window.innerHeight))) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (force || (r.top < window.innerHeight && r.bottom > 0 && (r.top < 0 || r.bottom > window.innerHeight))) el.scrollIntoView({ behavior: scrollBehavior(), block: 'center' });
     }
   };
 
@@ -342,7 +343,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
     setFocusIdx(i);
     setFocusSeq((n) => n + 1);
     setLinksIdx(i);
-    setTimeout(() => rowRefs.current.get(i)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+    setTimeout(() => rowRefs.current.get(i)?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' }), 60);
   };
   const onMapStopRef = useRef(onMapStop);
   onMapStopRef.current = onMapStop;
@@ -368,19 +369,11 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-1">
-        <button
-          onClick={onBack}
-          className="-ml-2 inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10"
-        >
-          <Icon name="back" className="size-4" />
-          {t('back')}
-        </button>
-        <span className="ml-auto flex items-center gap-0.5">
+      <BackBar label={t('back')} onBack={onBack}>
           {hasMap && !desktop && (
             <button
               type="button"
-              onClick={() => mapBox.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              onClick={() => mapBox.current?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })}
               aria-label={t('mapShort')}
               title={t('mapShort')}
               data-testid="scroll-to-map"
@@ -394,8 +387,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
               <Icon name="file" className="size-5" />
             </a>
           )}
-        </span>
-      </div>
+      </BackBar>
 
       <div className="flex items-start gap-3.5">
         <LineBadge line={line} large />

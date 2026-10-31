@@ -74,6 +74,23 @@ export function App() {
   const [tab, setTab] = useState<Tab>(() => parseTab() ?? 'route');
   const tabRef = useRef(tab);
   tabRef.current = tab;
+  // each page keeps its scroll position while the traveller visits another one (the window on a phone, the side panel on a desktop)
+  const scrollPos = useRef<Partial<Record<Tab, { win: number; box: number }>>>({});
+  const rememberScroll = () => {
+    scrollPos.current[tabRef.current] = { win: window.scrollY, box: document.getElementById('scroller')?.scrollTop ?? 0 };
+  };
+  const shownTab = useRef(tab);
+  useEffect(() => {
+    if (shownTab.current === tab) return;
+    shownTab.current = tab;
+    const p = scrollPos.current[tab];
+    const id = requestAnimationFrame(() => {
+      window.scrollTo({ top: p?.win ?? 0, behavior: 'instant' });
+      const box = document.getElementById('scroller');
+      if (box) box.scrollTop = p?.box ?? 0;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [tab]);
   // in-app navigations so far: the line detail's Back button only steps back in history when there is an app page to return to
   const navCount = useRef(0);
   const [route, setRoute] = useState(parseHash);
@@ -207,9 +224,11 @@ export function App() {
       setRoute(r);
       const next = parseTab();
       if (next && next !== tabRef.current) {
+        rememberScroll();
         setOpenConn(null);
         setTab(next);
       } else if (!next && !r && tabRef.current !== 'route') {
+        rememberScroll();
         setOpenConn(null);
         setTab('route');
       }
@@ -340,6 +359,7 @@ export function App() {
   // where the settings page was opened from: its icon takes the reader back there (the tab, a line detail, a planner connection)
   const cameFrom = useRef<{ tab: Tab; hash: string; openConn: string | null } | null>(null);
   const selectTab = (k: Tab) => {
+    if (k !== tab) rememberScroll();
     cameFrom.current = null;
     setOpenConn(null);
     setTab(k);
@@ -347,6 +367,7 @@ export function App() {
   };
   // the brand: back to the start page (the planner's form), with no line, connection or settings page open
   const goHome = () => {
+    rememberScroll();
     cameFrom.current = null;
     setOpenConn(null);
     setPlannerViewState('form');
@@ -355,6 +376,7 @@ export function App() {
     document.getElementById('scroller')?.scrollTo(0, 0);
   };
   const toggleSettings = () => {
+    rememberScroll();
     if (tab === 'settings' && !route) {
       const back = cameFrom.current ?? { tab: 'route' as Tab, hash: '', openConn: null };
       cameFrom.current = null;
@@ -375,6 +397,21 @@ export function App() {
     { key: 'search', icon: 'bus', label: t('tabSearch') },
     { key: 'departures', icon: 'clock', label: t('tabDepartures') },
   ];
+
+  // the title of the browser tab / history entry names the page: the line, the searched connection, or the tab
+  const tabTitle = tab === 'settings' ? t('settings') : tabs.find((x) => x.key === tab)?.label;
+  const pageTitle = route
+    ? line
+      ? [line.name, line.route].filter(Boolean).join(' · ')
+      : null
+    : tab === 'route' && plannerView === 'results' && planner.from.text && planner.to.text
+      ? `${planner.from.text} → ${planner.to.text}`
+      : tab === 'route'
+        ? null
+        : (tabTitle ?? null);
+  useEffect(() => {
+    document.title = pageTitle ? `${pageTitle} | ${t('appName')}` : t('appName');
+  }, [pageTitle, t]);
 
   return (
     <LangContext.Provider value={{ lang, t }}>

@@ -3,6 +3,7 @@
 // it away, and shows why the position is missing. The watch is cleared when the component using it unmounts.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import { reducedMotion } from './motion';
 
 export type LocStatus = 'idle' | 'busy' | 'on' | 'denied' | 'error' | 'unsupported';
 
@@ -41,8 +42,8 @@ export function useLiveLocation(map: L.Map | null, label: string) {
   const center = useCallback((f: Fix, jump: boolean) => {
     const m = mapRef.current;
     if (!m || !live(m)) return;
-    if (jump) m.flyTo([f.lat, f.lon], Math.max(m.getZoom(), 15), { duration: 0.6 });
-    else m.panTo([f.lat, f.lon], { animate: true });
+    if (jump) m.flyTo([f.lat, f.lon], Math.max(m.getZoom(), 15), { duration: 0.6, animate: !reducedMotion() });
+    else m.panTo([f.lat, f.lon], { animate: !reducedMotion() });
   }, []);
 
   const locate = useCallback((auto = false) => {

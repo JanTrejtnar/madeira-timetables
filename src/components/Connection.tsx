@@ -2,6 +2,7 @@
 // page of the whole connection with the walks, the transfers and a fold-out of the intermediate stops; a bus opens its line.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useT, type Lang } from '../i18n';
+import { scrollBehavior } from '../lib/motion';
 import { stopLabel } from '../lib/text';
 import { addDays, type Ymd } from '../lib/holidays';
 import { tripStops } from '../lib/network';
@@ -14,7 +15,7 @@ import { walkMinutes, walkTo } from '../lib/walk';
 import { connectionLink, type Picked } from '../lib/plannerForm';
 import { sameTrip } from '../lib/trips-store';
 import type { Itinerary, Leg } from '../lib/router';
-import { badgeText, LEG_COLORS, LineBadge, MapPin, PrecisionWarning, dirLabel, lineRailCls, pdfHref, type RideEnds, type RideWhen, type Shared } from './common';
+import { BackBar, badgeText, LEG_COLORS, LineBadge, MapPin, PrecisionWarning, dirLabel, lineRailCls, pdfHref, type RideEnds, type RideWhen, type Shared } from './common';
 import { Icon } from './Icons';
 
 type TFn = ReturnType<typeof useT>['t'];
@@ -370,12 +371,7 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
   const iconBtn = 'inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-full px-2 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10';
   return (
     <div className="flex flex-col gap-3" data-testid="connection-detail">
-      <div className="sticky top-(--header-h,0px) z-30 -mx-4 -mt-4 flex items-center gap-1 bg-slate-50/95 px-4 pb-3 pt-2.5 backdrop-blur dark:bg-slate-950/95 lg:-top-4">
-        <button type="button" onClick={onBack} data-testid="connection-back" className="-ml-2 inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-400/10">
-          <Icon name="back" className="size-4" />
-          {t('connectionBack')}
-        </button>
-        <span className="ml-auto flex items-center gap-0.5">
+      <BackBar label={t('connectionBack')} onBack={onBack} testid="connection-back">
           <button
             type="button"
             onClick={() => shared.toggleFavorite(trip)}
@@ -392,7 +388,7 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
             <Icon name="share" className="size-5" />
           </button>
           {map && (
-            <button type="button" onClick={() => mapBox.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} aria-label={t('mapShort')} title={t('mapShort')} data-testid="scroll-to-map" className={iconBtn}>
+            <button type="button" onClick={() => mapBox.current?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })} aria-label={t('mapShort')} title={t('mapShort')} data-testid="scroll-to-map" className={iconBtn}>
               <Icon name="map" className="size-5" />
             </button>
           )}
@@ -402,8 +398,7 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
               {it.legs.length > 1 && <span className="text-xs">{badgeText(l.trip.line)}</span>}
             </a>
           ))}
-        </span>
-      </div>
+      </BackBar>
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-slate-700/70 dark:bg-slate-900">
         <div className="flex items-baseline justify-between gap-3 bg-slate-100 px-4 py-1.5 text-sm dark:bg-slate-800/80">
           <span className="font-semibold text-slate-700 first-letter:uppercase dark:text-slate-200" data-testid="connection-date">

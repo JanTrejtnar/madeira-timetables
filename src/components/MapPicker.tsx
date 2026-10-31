@@ -3,6 +3,8 @@ import L from 'leaflet';
 import '../lib/leafletGuard';
 import { addBasemap } from '../lib/basemap';
 import { useT } from '../i18n';
+import { useBackToClose } from '../lib/backClose';
+import { reducedMotion } from '../lib/motion';
 import { pinIcon } from '../lib/mapPin';
 import { PICK_RADIUS_M, nearestNode } from '../lib/network';
 import { fetchFoot } from '../lib/foot';
@@ -33,6 +35,7 @@ const pinHtml = (kind: 'from' | 'to') => (pinIcon(kind).options.html as string) 
  */
 export function MapPicker({ shared, title, kind, current, onPick, onClose }: Props) {
   const { t } = useT();
+  useBackToClose(true, onClose);
   const el = useRef<HTMLDivElement>(null);
   const [res, setRes] = useState<Found | 'none' | null>(null);
   const centre = useRef<{ lat: number; lon: number } | null>(null);
@@ -49,7 +52,7 @@ export function MapPicker({ shared, title, kind, current, onPick, onClose }: Pro
   useEffect(() => {
     const container = el.current;
     if (!container) return;
-    const map = L.map(container, { zoomControl: true });
+    const map = L.map(container, { zoomControl: true, zoomAnimation: !reducedMotion() });
     addBasemap(map);
     const layer = L.layerGroup().addTo(map);
     // start on the pin already set, else the stop in the field, else the user's position, else the island
@@ -89,7 +92,7 @@ export function MapPicker({ shared, title, kind, current, onPick, onClose }: Pro
       raf = requestAnimationFrame(update);
     };
     map.on('move', onMove);
-    map.on('click', (e: L.LeafletMouseEvent) => map.panTo(e.latlng));
+    map.on('click', (e: L.LeafletMouseEvent) => map.panTo(e.latlng, { animate: !reducedMotion() }));
     update();
     const ro = new ResizeObserver(() => map.invalidateSize());
     ro.observe(container);

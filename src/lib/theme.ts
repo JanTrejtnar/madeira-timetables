@@ -11,4 +11,6 @@ export function applyTheme(pref: ThemePref): void {
   const root = document.documentElement;
   root.classList.toggle('dark', dark);
   root.style.colorScheme = dark ? 'dark' : 'light';
+  // the colour of the phone's status bar / browser toolbar follows the header
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0f172a' : '#ffffff');
 }

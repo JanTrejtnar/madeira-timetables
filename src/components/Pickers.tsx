@@ -2,6 +2,7 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useT } from '../i18n';
 import { addDays, type Ymd } from '../lib/holidays';
+import { useBackToClose } from '../lib/backClose';
 import { isoToYmd, ymdToIso } from '../lib/plannerForm';
 import { Icon } from './Icons';
 
@@ -14,6 +15,8 @@ function Popover({ trigger, label, testid, children }: { trigger: (p: { open: bo
   const [alignRight, setAlignRight] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const id = useId();
+  // on a phone the popover is a modal sheet: Back closes it
+  useBackToClose(open, () => setOpen(false), typeof matchMedia === 'function' && !matchMedia('(min-width: 640px)').matches);
   useLayoutEffect(() => {
     if (!open || !root.current) return;
     setAlignRight(root.current.getBoundingClientRect().left + PANEL_W > window.innerWidth - 8);
