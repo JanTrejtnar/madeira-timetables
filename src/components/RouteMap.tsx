@@ -241,9 +241,11 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
 
   // user position: pulsing dot plus accuracy circle; centres the map on every new fix
   const meSeq = me?.seq;
+  // the live watch (useLiveLocation) draws its own dot and ring: this one stands in only until it has a fix, so there are never two
+  const liveFix = loc.fix !== null;
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !me) return;
+    if (!map || !me || liveFix) return;
     const dot = L.marker([me.lat, me.lon], {
       icon: L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }),
       zIndexOffset: 1000,
@@ -251,12 +253,13 @@ export function RouteMap({ layers, focus = null, me = null, fill = false, onStop
     })
       .bindTooltip(t('yourPosition'))
       .addTo(map);
-    const ring = L.circle([me.lat, me.lon], { radius: Math.min(me.acc, 500), color: '#2563eb', weight: 1, fillOpacity: 0.08 }).addTo(map);
+    // SVG and not interactive: on the canvas the ring lay over the stops and swallowed their taps
+    const ring = L.circle([me.lat, me.lon], { renderer: L.svg(), interactive: false, radius: Math.min(me.acc, 500), color: '#2563eb', weight: 1, fillOpacity: 0.08 }).addTo(map);
     return () => {
       dot.remove();
       ring.remove();
     };
-  }, [me, layersKey, t, fill]);
+  }, [me, liveFix, layersKey, t, fill]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !me || meSeq === undefined || !live(map)) return;

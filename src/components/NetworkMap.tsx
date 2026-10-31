@@ -40,6 +40,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   const mapRef = useRef<L.Map | null>(null);
   const [mapInst, setMapInst] = useState<L.Map | null>(null);
   const loc = useLiveLocation(mapInst, t('yourPosition'));
+  const liveFix = loc.fix !== null;
   const [overview, setOverview] = useState<Overview | null>(null);
   const [failed, setFailed] = useState(false);
   const [sel, setSel] = useState<Selection>(null);
@@ -81,7 +82,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
 
   const lineLayers = useRef(new Map<number, L.Polyline[]>());
   const operatorGroups = useRef(new Map<OperatorId, L.LayerGroup>());
-  const stopApi = useRef<{ light: (id: number | null) => void } | null>(null);
+  const stopApi = useRef<{ light: (id: number | null) => void; raise: () => void } | null>(null);
   const selStop = useRef<number | null>(null);
   /** one canvas for lines and stops: they share its hit testing, so both stay clickable */
   const renderer = useRef<L.Canvas | null>(null);
@@ -254,7 +255,12 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
       m.bringToFront();
       map.panTo(m.getLatLng(), { animate: true });
     };
-    stopApi.current = { light };
+    /** a highlighted line is brought to the front of the shared canvas, over the stops: the stops go back on top so they can still be tapped */
+    const raise = () => {
+      for (const id of shown) made.get(id)?.bringToFront();
+      if (lit !== null) made.get(lit)?.bringToFront();
+    };
+    stopApi.current = { light, raise };
     refresh();
     if (selStop.current !== null) light(selStop.current);
     map.on('moveend', refresh);
@@ -275,20 +281,26 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
     const stopId = sel?.kind === 'stop' ? sel.nodeId : null;
     selStop.current = stopId;
     stopApi.current?.light(stopId);
+    if (lineId !== null) stopApi.current?.raise();
   }, [sel, overview]);
 
   // the user's position
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !userPos) return;
+    // the live watch (useLiveLocation) draws its own dot and ring: this one stands in only until it has a fix, so there are never two
+    if (liveFix) return;
     const dot = L.marker([userPos.lat, userPos.lon], { icon: L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] }), zIndexOffset: 1000, keyboard: false }).bindTooltip(t('yourPosition')).addTo(map);
     const ring = L.circle([userPos.lat, userPos.lon], { renderer: L.svg(), interactive: false, radius: Math.min(userPos.acc, 500), color: '#2563eb', weight: 1, fillOpacity: 0.08 }).addTo(map);
-    map.flyTo([userPos.lat, userPos.lon], Math.max(map.getZoom(), 15), { duration: 0.6 });
     return () => {
       dot.remove();
       ring.remove();
     };
-  }, [userPos?.seq, fill, t]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userPos?.seq, liveFix, fill, t]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map && userPos) map.flyTo([userPos.lat, userPos.lon], Math.max(map.getZoom(), 15), { duration: 0.6 });
+  }, [userPos?.seq, fill]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const node = sel?.kind === 'stop' ? net.nodes[sel.nodeId] : null;
   const picked = sel?.kind === 'line' ? lineById.get(sel.id) : null;

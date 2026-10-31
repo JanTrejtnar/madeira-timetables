@@ -91,18 +91,28 @@ export function usePlanner(shared: Shared) {
     [client, searched, date, shared.ctx.school, shared.ctx.municipalities, lineIds, dFrom, dTo, directOnly, lineById, shared.net, dayTrips, type, ops],
   );
   // a result belongs to the question it answered: until the answer to the current one arrives there is none (and the page shows "searching")
-  const [done, setDone] = useState<{ run: typeof run; at: number; result: SearchResult | null } | null>(null);
+  const [done, setDone] = useState<{ run: typeof run; at: number; result: SearchResult | null; failed?: true } | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (!searched || !client) return;
     let alive = true;
-    run(departAt).then((r) => alive && setDone({ run, at: departAt, result: r }));
+    // a search that throws (the fallback on the page's thread has no worker to blame) ends as a failure, not as "searching…" for ever
+    run(departAt).then(
+      (r) => alive && setDone({ run, at: departAt, result: r }),
+      () => alive && setDone({ run, at: departAt, result: null, failed: true }),
+    );
     return () => {
       alive = false;
     };
-  }, [run, departAt, searched, client]);
+  }, [run, departAt, searched, client, attempt]);
   const current = !!done && done.run === run && done.at === departAt;
   const result = searched && current ? done.result : null;
   const pending = searched && !current;
+  const failed = searched && current && !!done.failed;
+  const retry = () => {
+    setDone(null);
+    setAttempt((a) => a + 1);
+  };
 
   // the point to walk from / to for a connection: a picked place or map point, or the picked stop when the bus boards / alights at another stop near it
   const fromPtOf = (it?: Itinerary) => dFrom.pt ?? (it && result?.ext.from && !result.ext.from.base.has(it.legs[0].trip.nodes[it.legs[0].fromPos]) ? result.ext.from.pt : undefined);
@@ -126,6 +136,8 @@ export function usePlanner(shared: Shared) {
   // "earlier / later connections": the departure time of the search moves to just before the first / after the last connection shown;
   // it goes into the URL (time, and date when it passes midnight), so a reload or a shared link keeps the window
   const [spentAt, setSpentAt] = useState<{ sig: string; early?: true; late?: true }>({ sig: '' });
+  // a paging probe in progress (each takes seconds on a phone): the button shows it and a second tap does not start an overlapping one
+  const [paging, setPaging] = useState<'early' | 'late' | null>(null);
   const spent = spentAt.sig === searchSig ? spentAt : { sig: searchSig };
   const leadWalk = (it: Itinerary) => endWalks(it, fromPtOf(it), undefined).walkIn?.min ?? 0;
   const moveTo = (abs: number) => {
@@ -145,23 +157,37 @@ export function usePlanner(shared: Shared) {
   const PAGING_DAYS = 3;
   const later = async () => {
     const it = all[all.length - 1]?.it;
-    if (!it) return;
+    if (!it || paging) return;
     const at = it.depart + 1 - leadWalk(it);
-    for (let day = 0; day < PAGING_DAYS; day++) {
-      const from = at + 1440 * day;
-      if ((await probe(from)).some((d) => d > it.depart)) return moveTo(from);
+    setPaging('late');
+    try {
+      for (let day = 0; day < PAGING_DAYS; day++) {
+        const from = at + 1440 * day;
+        if ((await probe(from)).some((d) => d > it.depart)) return moveTo(from);
+      }
+      setSpentAt({ ...spent, sig: searchSig, late: true });
+    } catch {
+      // a failed probe leaves the button usable: the next tap tries again
+    } finally {
+      setPaging(null);
     }
-    setSpentAt({ ...spent, sig: searchSig, late: true });
   };
   const earlier = async () => {
     const it = all[0]?.it;
-    if (!it) return;
-    // widen the look-back until something earlier turns up (over midnight into the day before)
-    for (const back of [90, 240, 720, 1440, 2880, 4320]) {
-      const at = it.depart - leadWalk(it) - back;
-      if ((await probe(at)).some((d) => d < it.depart)) return moveTo(at);
+    if (!it || paging) return;
+    setPaging('early');
+    try {
+      // widen the look-back until something earlier turns up (over midnight into the day before)
+      for (const back of [90, 240, 720, 1440, 2880, 4320]) {
+        const at = it.depart - leadWalk(it) - back;
+        if ((await probe(at)).some((d) => d < it.depart)) return moveTo(at);
+      }
+      setSpentAt({ ...spent, sig: searchSig, early: true });
+    } catch {
+      // see `later`
+    } finally {
+      setPaging(null);
     }
-    setSpentAt({ ...spent, sig: searchSig, early: true });
   };
   // a shared link names a connection (`?c=line.departure`): open its detail once the results are in
   const { pendingConn, clearPendingConn } = shared;
@@ -214,6 +240,9 @@ export function usePlanner(shared: Shared) {
     dTo,
     searched,
     pending,
+    failed,
+    retry,
+    paging,
     result,
     empty,
     all,

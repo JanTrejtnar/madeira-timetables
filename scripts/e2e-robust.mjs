@@ -2,7 +2,7 @@
 //  1. first visit, the data is truncated            -> the friendly "data unavailable" page (with a retry button), no blank page
 //  2. first visit, the data is an HTML error page   -> the same
 //  3. a good visit, then a damaged download         -> the app silently runs on the last good copy (Cache Storage)
-//  4. data that passes the check but crashes a page -> the error boundary shows the same page, the other tabs still work
+//  4. data that passes the check but crashes a page -> the error boundary shows a "something went wrong" page (not the data one), the other tabs still work
 // Usage: node scripts/e2e-robust.mjs [baseUrl]   (dev server `npx vite --port 5173`)
 import puppeteer from 'puppeteer-core';
 import { freezeClock, waitForServer } from './lib-e2e-clock.mjs';
@@ -39,6 +39,7 @@ async function visit(schedules, { hash = '' } = {}) {
   return { ctx, page, errors };
 }
 const bodyText = (page) => page.evaluate(() => document.body.innerText);
+const pageCrashed = (page) => page.evaluate(() => !!document.querySelector('[data-testid=page-error]'));
 const unavailable = (page) => page.evaluate(() => !!document.querySelector('[data-testid=data-unavailable]'));
 const planner = (page) => page.evaluate(() => !!document.querySelector('[data-testid=search-button]'));
 
@@ -116,11 +117,11 @@ const planner = (page) => page.evaluate(() => !!document.querySelector('[data-te
   await page.click('input[role=combobox]');
   await page.keyboard.type('fun', { delay: 30 });
   await sleep(500);
-  check('typing in the planner crashes it into the friendly page, caught by the error boundary', (await unavailable(page)) && logged.some((x) => /Rendering failed/.test(x)), logged.join(' | ').slice(0, 100));
+  check('typing in the planner crashes it into the friendly page, caught by the error boundary', (await pageCrashed(page)) && !(await unavailable(page)) && logged.some((x) => /Rendering failed/.test(x)), logged.join(' | ').slice(0, 100));
   check('...the navigation is still there', await page.evaluate(() => document.querySelectorAll('nav button').length >= 4));
   await page.evaluate(() => { location.hash = '#/departures'; });
   await sleep(500);
-  check('...and another page works again', !(await unavailable(page)));
+  check('...and another page works again', !(await pageCrashed(page)) && !(await unavailable(page)));
   await ctx.close();
 }
 

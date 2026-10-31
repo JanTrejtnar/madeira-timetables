@@ -49,7 +49,7 @@ export function PlannerTab({ shared }: { shared: Shared }) {
       {!p.searched && <SearchForm shared={shared} p={p} setFrom={setFrom} setTo={setTo} onPickMap={setPickFor} locNote={loc.locNote} onLocate={loc.locateMe} locating={loc.locating} />}
       {!p.searched && <TripShortcuts shared={shared} />}
       {p.searched && <SearchSummary shared={shared} p={p} />}
-      <ResultNotices shared={shared} searched={p.searched} pending={p.pending} result={p.result} empty={p.empty} onResetFilters={() => p.patch({ ops: [], directOnly: false, type: 'all' })} />
+      <ResultNotices shared={shared} searched={p.searched} pending={p.pending} failed={p.failed} onRetry={p.retry} result={p.result} empty={p.empty} onResetFilters={() => p.patch({ ops: [], directOnly: false, type: 'all' })} />
       <ConnectionList shared={shared} p={p} />
       {estimatedNote}
       {pickFor && (

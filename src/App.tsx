@@ -425,12 +425,13 @@ export function App() {
           <main id="scroller" className="flex-1 px-4 pb-28 pt-4 lg:min-h-0 lg:overflow-y-auto lg:pb-6">
             {error && <DataUnavailable />}
             {!data && !error && (
-              <div aria-label={t('loading')}>
+              <div role="status" aria-busy="true">
+                <p className="px-1 pb-3 text-sm text-slate-500 dark:text-slate-400">{t('loading')}</p>
                 <SkeletonCards n={5} />
               </div>
             )}
             {data && index && shared && (
-              <ErrorBoundary resetKey={`${tab}${route?.id ?? ''}`}>
+              <ErrorBoundary variant="page" resetKey={`${tab}${route?.id ?? ''}`}>
                 {route && line ? (
                   <LineView line={line} initialDir={route.dir} initialRide={route.ride} initialWhen={route.when} initialEnds={route.ride ? rideEnds : undefined} shared={shared} onBack={() => (navCount.current > 0 ? history.back() : goTab(tab))} />
                 ) : (
