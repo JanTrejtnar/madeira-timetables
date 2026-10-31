@@ -167,3 +167,7 @@ button:disabled,
 .dark .leaflet-layer.osm-tiles {
   filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.85) saturate(0.6);
 }
+
+/* "Via" places on the network map: a dashed diamond */
+.via-diamond span { display: block; width: 11px; height: 11px; margin: 5.5px; transform: rotate(45deg); border: 2px dashed #475569; background: #fff; }
+.dark .via-diamond span { border-color: #94a3b8; background: #0f172a; }

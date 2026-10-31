@@ -4,6 +4,7 @@ import '../lib/leafletGuard';
 import { addBasemap } from '../lib/basemap';
 import { useT } from '../i18n';
 import { useBackToClose } from '../lib/backClose';
+import { useFocusScope } from '../lib/focusScope';
 import { reducedMotion } from '../lib/motion';
 import { pinIcon } from '../lib/mapPin';
 import { PICK_RADIUS_M, nearestNode } from '../lib/network';
@@ -37,6 +38,8 @@ export function MapPicker({ shared, title, kind, current, onPick, onClose }: Pro
   const { t } = useT();
   useBackToClose(true, onClose);
   const el = useRef<HTMLDivElement>(null);
+  const dialog = useRef<HTMLDivElement>(null);
+  useFocusScope(dialog, true);
   const [res, setRes] = useState<Found | 'none' | null>(null);
   const centre = useRef<{ lat: number; lon: number } | null>(null);
   const pickRef = useRef(onPick);
@@ -115,7 +118,7 @@ export function MapPicker({ shared, title, kind, current, onPick, onClose }: Pro
   };
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={`${t('pickOnMap')}: ${title}`} className="fixed inset-0 z-1000 flex flex-col bg-white pt-safe dark:bg-slate-900" data-testid="map-picker">
+    <div ref={dialog} role="dialog" aria-modal="true" aria-label={`${t('pickOnMap')}: ${title}`} className="fixed inset-0 z-1000 flex flex-col bg-white pt-safe dark:bg-slate-900" data-testid="map-picker">
       <div className="flex shrink-0 items-center gap-2 border-b border-slate-200/70 px-3 py-2 dark:border-slate-700">
         <Icon name="map" className="size-5 text-sky-600" />
         <h2 className="min-w-0 flex-1 truncate text-base font-semibold">

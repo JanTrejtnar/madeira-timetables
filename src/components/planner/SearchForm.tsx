@@ -31,6 +31,20 @@ export function SearchForm({
   const { planner, commit } = shared;
   const { from, to, time, ops, directOnly, type } = planner;
   const { patch, dayInfo, dFrom, dTo, starred } = p;
+  const favorite = (
+    <button
+      type="button"
+      onClick={() => shared.toggleFavorite({ from: dFrom, to: dTo })}
+      disabled={!dFrom.text.trim() || !dTo.text.trim()}
+      aria-pressed={starred}
+      aria-label={starred ? t('removeFavorite') : t('addFavorite')}
+      title={starred ? t('removeFavorite') : t('addFavorite')}
+      data-testid="favorite-toggle"
+      className="relative flex size-8 shrink-0 items-center justify-center rounded-full text-slate-500 before:absolute before:-inset-1.5 before:content-[''] transition-colors hover:bg-slate-100 hover:text-amber-500 disabled:opacity-40 dark:hover:bg-slate-800"
+    >
+      <Icon name="star" className={`size-5 ${starred ? 'fill-amber-400 text-amber-500' : ''}`} />
+    </button>
+  );
   return (
     <Card className="flex flex-col gap-3 p-3!">
       <div className="flex items-stretch gap-2">
@@ -60,21 +74,7 @@ export function SearchForm({
             </p>
           )}
           <div className="mx-2 my-2 h-px bg-slate-100 dark:bg-slate-800" />
-          <Combobox label={t('to')} placeholder={t('toPlaceholderPlace')} value={to} onChange={setTo} onCommit={() => commit({ to })} shared={shared} onPickMap={() => onPickMap('to')} />
-        </div>
-        <div className="flex shrink-0 flex-col items-center justify-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => shared.toggleFavorite({ from: dFrom, to: dTo })}
-            disabled={!dFrom.text.trim() || !dTo.text.trim()}
-            aria-pressed={starred}
-            aria-label={starred ? t('removeFavorite') : t('addFavorite')}
-            title={starred ? t('removeFavorite') : t('addFavorite')}
-            data-testid="favorite-toggle"
-            className="size-10 shrink-0 rounded-full border border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-amber-500 disabled:opacity-40 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            <Icon name="star" className={`mx-auto size-5 ${starred ? 'fill-amber-400 text-amber-500' : ''}`} />
-          </button>
+          <Combobox label={t('to')} placeholder={t('toPlaceholderPlace')} value={to} onChange={setTo} onCommit={() => commit({ to })} shared={shared} onPickMap={() => onPickMap('to')} extra={favorite} />
         </div>
       </div>
 

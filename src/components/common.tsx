@@ -277,7 +277,7 @@ export function EmptyState({ icon, title, body, tone = 'neutral' }: { icon: Icon
 function relative(u: Upcoming, t: ReturnType<typeof useT>['t']): string {
   if (u.dayOffset === 1) return t('tomorrow');
   if (u.inMin <= 0) return t('now');
-  if (u.inMin >= 120) return `${Math.floor(u.inMin / 60)} h ${u.inMin % 60} min`;
+  if (u.inMin >= 120) return t('durH', { h: Math.floor(u.inMin / 60), m: u.inMin % 60 });
   return t('inMin', { n: u.inMin });
 }
 

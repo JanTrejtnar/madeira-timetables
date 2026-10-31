@@ -3,6 +3,7 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type Reac
 import { useT } from '../i18n';
 import { addDays, type Ymd } from '../lib/holidays';
 import { useBackToClose } from '../lib/backClose';
+import { useFocusScope } from '../lib/focusScope';
 import { isoToYmd, ymdToIso } from '../lib/plannerForm';
 import { Icon } from './Icons';
 
@@ -15,6 +16,9 @@ function Popover({ trigger, label, testid, children }: { trigger: (p: { open: bo
   const [alignRight, setAlignRight] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const id = useId();
+  const dialog = useRef<HTMLDivElement>(null);
+  const modal = typeof matchMedia === 'function' && !matchMedia('(min-width: 640px)').matches;
+  useFocusScope(dialog, open, modal);
   // on a phone the popover is a modal sheet: Back closes it
   useBackToClose(open, () => setOpen(false), typeof matchMedia === 'function' && !matchMedia('(min-width: 640px)').matches);
   useLayoutEffect(() => {
@@ -40,6 +44,7 @@ function Popover({ trigger, label, testid, children }: { trigger: (p: { open: bo
           <div className="fixed inset-0 z-40 bg-slate-950/40 sm:hidden" aria-hidden />
           <div
             id={id}
+            ref={dialog}
             role="dialog"
             aria-label={label}
             className={`fixed inset-x-[max(1rem,env(safe-area-inset-left))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:absolute sm:inset-x-auto sm:bottom-auto sm:top-full sm:mt-2 sm:w-72 ${alignRight ? 'sm:right-0' : 'sm:left-0'}`}

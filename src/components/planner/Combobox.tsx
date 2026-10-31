@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useT, type Key } from '../../i18n';
 import { localStopName } from '../../lib/text';
 import { CITY_PREFIX, PARISH_PREFIX, type Suggestion } from '../../lib/network';
@@ -10,7 +10,7 @@ import { Icon } from '../Icons';
 import { useSuggestions, type Item } from './useSuggestions';
 
 /** A text field with the suggestion list (stops, areas, places), a clear button, "my location" and "pick on map". */
-export function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPickMap, onLocate, locating }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; onCommit: () => void; shared: Shared; onPickMap: () => void; onLocate?: () => void; locating?: boolean }) {
+export function Combobox({ label, placeholder, value, onChange, onCommit, shared, onPickMap, onLocate, locating, extra }: { label: string; placeholder: string; value: Picked; onChange: (v: Picked) => void; onCommit: () => void; shared: Shared; onPickMap: () => void; onLocate?: () => void; locating?: boolean; extra?: ReactNode }) {
   const { t, lang } = useT();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -124,8 +124,9 @@ export function Combobox({ label, placeholder, value, onChange, onCommit, shared
       >
         <Icon name="map" className="size-5" />
       </button>
+      {extra}
       {open && items.length > 0 && (
-        <ul id={listId} role="listbox" className="absolute -left-9 -right-12 top-full z-30 mt-2 max-h-80 overflow-auto rounded-2xl border border-slate-200/70 bg-white py-1 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+        <ul id={listId} role="listbox" className="absolute -left-9 -right-3 top-full z-30 mt-2 max-h-80 overflow-auto rounded-2xl border border-slate-200/70 bg-white py-1 shadow-xl dark:border-slate-700 dark:bg-slate-900">
           {items.map((it, i) => {
             const group = it.kind === 'stop' && it.s.group;
             const meta = it.kind === 'place' ? KIND_META[it.place.kind] : group ? KIND_META.town : KIND_META.stop;

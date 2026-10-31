@@ -49,7 +49,7 @@ function Time({ min, est, t, className = '', it }: { min: number; est: boolean; 
 
 /** "45 min" or "2 h 14 min" */
 function duration(min: number, t: TFn): string {
-  return min >= 60 ? t('durH', { h: Math.floor(min / 60), m: min % 60 }) : `${min} min`;
+  return min >= 60 ? t('durH', { h: Math.floor(min / 60), m: min % 60 }) : t('durMin', { n: min });
 }
 
 /** The walks at both ends of the connection: from the picked point to the first stop, from the last stop to the picked destination. */

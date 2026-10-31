@@ -44,7 +44,7 @@ function StopCard({ stop, shared }: { stop: NearbyStop; shared: Shared }) {
                 <LineBadge line={d.line} />
                 <span className="min-w-0 flex-1 truncate text-slate-500">{d.line.directions[d.dirIndex].to}</span>
                 <span className="font-semibold tabular-nums">{d.estimated ? <EstTag>~{d.next.t}</EstTag> : d.next.t}</span>
-                <span className="w-14 text-right text-xs text-slate-400">{d.next.inMin} min</span>
+                <span className="w-14 text-right text-xs text-slate-400">{t('durMin', { n: d.next.inMin })}</span>
               </button>
             </li>
           ))}

@@ -16,12 +16,15 @@ import { EstTag, LineBadge, type Shared } from './common';
 import { Icon } from './Icons';
 import { LocateFab, LocateHint } from './LocateControl';
 import { useLiveLocation } from '../lib/liveLocation';
+import { useFocusScope } from '../lib/focusScope';
 
 type Selection = { kind: 'stop'; nodeId: number } | { kind: 'line'; id: number } | { kind: 'via'; idx: number } | null;
 
 const touch = typeof window !== 'undefined' && (L.Browser.mobile || navigator.maxTouchPoints > 0);
 /** zoom from which stops with at least this many lines are drawn: the hubs first, every stop when zoomed in close */
 const TIER_ZOOM = [0, 13, 14];
+/** a "Via" place: a diamond (a stop is a circle); a marker, so it cannot sit on the stops' shared canvas */
+const viaIcon = L.divIcon({ className: 'via-diamond', html: '<span></span>', iconSize: [22, 22], iconAnchor: [11, 11] });
 /** zoom from which the full-resolution geometry of the lines is drawn; below it a copy simplified to about 30 m */
 const DETAIL_ZOOM = 13;
 /** zoom from which the "Via" places are drawn */
@@ -47,9 +50,18 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   const [sel, setSel] = useState<Selection>(null);
   const [full, setFull] = useState(false);
   const [island, setIsland] = useState<'madeira' | 'portoSanto'>('madeira');
+  const selNow = useRef(sel);
+  selNow.current = sel;
+  // Escape closes the open panel first, then the full screen
+  useEffect(() => {
+    if (sel === null) return;
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && setSel(null);
+    document.addEventListener('keydown', key);
+    return () => document.removeEventListener('keydown', key);
+  }, [sel]);
   useEffect(() => {
     if (!full) return;
-    const key = (e: KeyboardEvent) => e.key === 'Escape' && setFull(false);
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && selNow.current === null && setFull(false);
     document.addEventListener('keydown', key);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -146,12 +158,12 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
         const full = decodeSegment(seg);
         const lite = simplify(full, LITE_TOLERANCE);
         const pl = L.polyline(detailed() ? full : lite, { renderer: canvas, color: operatorById(op).color, weight, opacity: 0.9, lineCap: 'round', lineJoin: 'round', smoothFactor: 1.5 })
-          .bindTooltip(`${line.number} · ${line.name}`, { sticky: true })
           .on('click', (e) => {
             L.DomEvent.stopPropagation(e);
             selRef.current({ kind: 'line', id: line.id });
           })
           .addTo(group);
+        if (!touch) pl.bindTooltip(`${line.number} · ${line.name}`, { sticky: true });
         geo.set(pl, { full, lite });
         baseWeight.current.set(pl, weight);
         polys.push(pl);
@@ -195,11 +207,12 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
       if (!m) {
         const n = net.nodes[id];
         m = tapMarker([n.lat as number, n.lon as number], { renderer: canvas, ...base(id), bubblingMouseEvents: false })
-          .bindTooltip(localStopName(n.name, lang))
           .on('click', (e) => {
             L.DomEvent.stopPropagation(e);
             selRef.current({ kind: 'stop', nodeId: id });
           });
+        // a tooltip on touch would cover the stop panel that opens at the same tap
+        if (!touch) m.bindTooltip(localStopName(n.name, lang));
         made.set(id, m);
       }
       return m;
@@ -207,18 +220,18 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
     const group = L.layerGroup().addTo(map);
     const shown = new Set<number>();
     // "Via X" places (Ilha, Ribeiro Serrão ...): no stops, so no timetable of their own, but the buses of the trips with the note pass them; same layer and lifecycle as the stops
-    const viaMade = new Map<number, L.CircleMarker>();
+    const viaMade = new Map<number, L.Marker>();
     const viaShown = new Set<number>();
     const viaMarker = (idx: number) => {
       let m = viaMade.get(idx);
       if (!m) {
         const p = (overview?.places ?? [])[idx];
-        m = L.circleMarker([p.la / 1e5, p.lo / 1e5], { renderer: canvas, radius: 4, color: '#475569', weight: 2, dashArray: '2 2', fillColor: '#ffffff', fillOpacity: 1, bubblingMouseEvents: false })
-          .bindTooltip(p.n)
+        m = L.marker([p.la / 1e5, p.lo / 1e5], { icon: viaIcon, keyboard: false, bubblingMouseEvents: false })
           .on('click', (e) => {
             L.DomEvent.stopPropagation(e);
             selRef.current({ kind: 'via', idx });
           });
+        if (!touch) m.bindTooltip(p.n);
         viaMade.set(idx, m);
       }
       return m;
@@ -317,6 +330,10 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
             {o.name}
           </span>
         ))}
+        <span className="inline-flex items-center gap-1">
+          <span className="size-2 rotate-45 border-[1.5px] border-dashed border-slate-500 bg-white dark:border-slate-400" aria-hidden="true" />
+          {t('mapLegendVia')}
+        </span>
       </div>
       <div role="group" aria-label={t('mapIslands')} data-testid="island-switch" className="absolute left-[max(3.5rem,calc(env(safe-area-inset-left)+3.5rem))] top-3 z-500 flex overflow-hidden rounded-xl bg-white text-xs font-semibold shadow-md ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
         {(['madeira', 'portoSanto'] as const).map((id) => (
@@ -346,6 +363,11 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
           {full ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
         </svg>
       </button>
+      {!overview && !failed && (
+        <p role="status" className="absolute bottom-16 left-1/2 z-500 -translate-x-1/2 rounded-xl bg-white/95 px-3 py-2 text-xs font-medium text-slate-600 shadow-md dark:bg-slate-900/95 dark:text-slate-300" data-testid="network-loading">
+          {t('mapLoadingLines')}
+        </p>
+      )}
       {failed && <p className="absolute bottom-4 left-4 z-500 rounded-xl bg-white/95 px-3 py-2 text-xs text-amber-700 shadow-md dark:bg-slate-900/95 dark:text-amber-300">{t('mapUnavailable')}</p>}
       {node && <StopPanel shared={shared} nodeId={node.id} lines={[...(linesAt.get(node.id)?.values() ?? [])]} onClose={() => setSel(null)} />}
       {picked && <LinePanel shared={shared} line={picked} onClose={() => setSel(null)} />}
@@ -371,8 +393,11 @@ function StopPanel({ shared, nodeId, lines, onClose }: { shared: Shared; nodeId:
   const node = shared.net.nodes[nodeId];
   const deps = useMemo(() => departuresFrom(shared.net, shared.lines, { nodeId, key: node.key }, shared.ctx, 6), [shared.net, shared.lines, shared.ctx, nodeId, node.key]);
   const sorted = useMemo(() => [...lines].sort((a, b) => a.number.localeCompare(b.number, undefined, { numeric: true })), [lines]);
+  const panel = useRef<HTMLDivElement>(null);
+  // not modal (the map stays usable): the focus moves into the panel and returns when it closes
+  useFocusScope(panel, true, false);
   return (
-    <div className={panelCls} role="dialog" aria-label={node.name} data-testid="stop-panel">
+    <div ref={panel} className={panelCls} role="dialog" aria-label={node.name} data-testid="stop-panel">
       <div className="flex items-start gap-2">
         <Icon name="bus" className="mt-1 size-5 shrink-0 text-sky-600" />
         <div className="min-w-0 flex-1">
@@ -397,7 +422,7 @@ function StopPanel({ shared, nodeId, lines, onClose }: { shared: Shared; nodeId:
               <LineBadge line={d.line} />
               <span className="min-w-0 flex-1 truncate text-slate-500">{d.line.directions[d.dirIndex].to}</span>
               <span className="font-semibold tabular-nums">{d.estimated ? <EstTag>~{d.next.t}</EstTag> : d.next.t}</span>
-              <span className="w-14 text-right text-xs text-slate-400">{d.next.inMin} min</span>
+              <span className="w-14 text-right text-xs text-slate-400">{t('durMin', { n: d.next.inMin })}</span>
             </button>
           </li>
         ))}

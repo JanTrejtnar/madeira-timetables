@@ -64,7 +64,7 @@ export function SettingsTab({ school, autoSchool, onSchool, onSchoolReset, fareC
           {t('dataFrom')} {generatedAt.slice(0, 10)}
           <br />
           <span data-testid="build-info">
-            v{__APP_VERSION__} · Build: {__BUILD_TIME__}
+            v{__APP_VERSION__} · {t('buildLabel')}: {__BUILD_TIME__}
           </span>
         </p>
       )}
