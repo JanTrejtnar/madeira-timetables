@@ -8,27 +8,54 @@ import { dayKeysOf, keysFor, listFor, timesAtStop, withMinutes, type Timed } fro
 import { fmtMinutes, toMinutes } from '../lib/time';
 import { useViaRoutes } from '../data';
 import { onRequestPlaces, withVia, detoursFor } from '../lib/via';
-import { serviceDay } from '../lib/holidays';
-import type { DayKey, Direction, Line, MapFocus, MapLayer, MapPin, Stop } from '../types';
+import { serviceDay, type DayType } from '../lib/holidays';
+import type { DayKey, Departure, Direction, Line, MapFocus, MapLayer, MapPin, Stop } from '../types';
 import { BackBar, Card, Chip, dirLabel, EstTag, LineBadge, Linkified, lineColor, lineRailCls, MapLinks, PdfButton, pdfHref, PrecisionWarning, SectionTitle, type RideEnds, type RideWhen, type Shared } from './common';
 import { Icon } from './Icons';
 import { RouteMap } from './LazyMaps';
 import { useFootRoutes } from '../lib/foot';
 
-function defaultDay(keys: DayKey[], shared: Shared): DayKey | undefined {
+/**
+ * The day choices of a line: weekdays (all the school-term / holiday variants of the operator's calendar merged), Saturdays,
+ * Sundays. Which variant of the weekday timetable applies is decided by the date (`Ctx.school`), not by the traveller.
+ */
+export function dayTypesOf(keys: DayKey[]): DayType[] {
+  const types = new Set<DayType>(keys.map((k) => (k === 'saturday' || k === 'sunday' ? k : 'weekday')));
+  return (['weekday', 'saturday', 'sunday'] as const).filter((x) => types.has(x));
+}
+
+function defaultDay(types: DayType[], shared: Shared): DayType | undefined {
   const type = serviceDay(shared.ctx.now, shared.ctx.municipalities).type;
-  const wanted = type === 'weekday' ? keysFor('weekday', shared.ctx.school) : type ? [type] : [];
-  return keys.find((k) => wanted.includes(k)) ?? keys[0];
+  return (type && types.includes(type) ? type : undefined) ?? types[0];
 }
 
 import { translateNote, variantLabel } from '../lib/notes';
 
-/** Times of a direction on a day key: at `stopIdx` for timetables with times at every stop, else departures from the terminal. */
-function timesOfDay(dir: Direction, day: DayKey, stopIdx: number): Timed[] {
-  if (dir.trips?.length) return timesAtStop(dir, stopIdx, dir.trips.filter((x) => x.days.includes(day)));
-  const type = day === 'saturday' || day === 'sunday' ? day : 'weekday';
-  const list = day === 'weekday_school' || day === 'weekday_holiday' ? dir.departures[day] ?? [] : listFor(dir, type, true);
-  return withMinutes(list);
+const NOTE_SCHOOL_ONLY = 'Apenas no período escolar';
+const NOTE_HOLIDAY_ONLY = 'Apenas fora do período escolar';
+
+/**
+ * Times of a direction on a day type: at `stopIdx` for timetables with times at every stop, else departures from the terminal.
+ * A weekday merges the plain weekday trips with those of the school-term or holiday calendar that applies (`school`); when the
+ * line prints both calendars (`mixed`), a trip that runs in one of them only is marked with a note.
+ */
+export function timesOfDay(dir: Direction, type: DayType, stopIdx: number, school: boolean, mixed = false): Timed[] {
+  const wanted = keysFor(type, school);
+  if (dir.trips?.length) {
+    const list = timesAtStop(dir, stopIdx, dir.trips.filter((x) => x.days.some((k) => wanted.includes(k))));
+    if (!mixed || type !== 'weekday') return list;
+    return list.map((x) => {
+      const days = x.trip?.days ?? [];
+      const only = days.includes('weekday') ? null : days.includes('weekday_school') ? NOTE_SCHOOL_ONLY : days.includes('weekday_holiday') ? NOTE_HOLIDAY_ONLY : null;
+      return only && !x.notes?.includes(only) ? { ...x, notes: [...(x.notes ?? []), only] } : x;
+    });
+  }
+  if (type !== 'weekday') return withMinutes(listFor(dir, type, school));
+  // a list printed once for all weekdays plus the one of the calendar in force
+  const period = school ? 'weekday_school' : 'weekday_holiday';
+  const mark = (list: Departure[] | undefined, note: string | null) => (list ?? []).map((x) => (note && mixed && !x.notes?.includes(note) ? { ...x, notes: [...(x.notes ?? []), note] } : x));
+  const all = [...mark(dir.departures.weekday, null), ...mark(dir.departures[period], school ? NOTE_SCHOOL_ONLY : NOTE_HOLIDAY_ONLY)];
+  return withMinutes(dir.departures.weekday && dir.departures[period] ? all.sort((a, b) => toMinutes(a.t) - toMinutes(b.t)) : all);
 }
 
 /** The stop where most trips have a time: many SAM trips start mid-route, so stop 0 would show almost nothing. */
@@ -100,8 +127,26 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   const [focusFromMap, setFocusFromMap] = useState(false);
   const mapBox = useRef<HTMLElement>(null);
   const rowRefs = useRef(new Map<number, HTMLLIElement>());
-  const keys = useMemo(() => dayKeysOf(line), [line]);
-  const [day, setDay] = useState<DayKey | undefined>(() => defaultDay(keys, shared));
+  const dayKeys = useMemo(() => dayKeysOf(line), [line]);
+  const keys = useMemo(() => dayTypesOf(dayKeys), [dayKeys]);
+  /** the line prints a school-term and / or holiday weekday timetable next to another weekday one: trips of one calendar only get a note */
+  const periodKeys = dayKeys.filter((k) => k === 'weekday_school' || k === 'weekday_holiday').length;
+  const mixed = periodKeys > 0 && (periodKeys > 1 || dayKeys.includes('weekday'));
+  /**
+   * The calendar of weekday trips in force: from the date (school term / holidays), else the other one when the line has weekday
+   * trips only in that (a school-only line during the holidays still shows its timetable instead of an empty day).
+   */
+  const school = useMemo(() => {
+    const has = (s: boolean) => line.directions.some((d) => timesOfDay(d, 'weekday', 0, s).length > 0);
+    return has(shared.ctx.school) || !has(!shared.ctx.school) ? shared.ctx.school : !shared.ctx.school;
+  }, [line, shared.ctx.school]);
+  /** both calendars exist and really differ: the traveller is told which one is shown */
+  const periodsDiffer = useMemo(() => {
+    if (!dayKeys.includes('weekday_school') || !dayKeys.includes('weekday_holiday')) return false;
+    const sig = (s: boolean) => JSON.stringify(line.directions.map((d) => timesOfDay(d, 'weekday', 0, s).map((x) => x.t)));
+    return sig(true) !== sig(false);
+  }, [line, dayKeys]);
+  const [day, setDay] = useState<DayType | undefined>(() => defaultDay(keys, shared));
   useEffect(() => {
     setDirIndex(initialDir ?? 0);
     setAllMode(initialDir === undefined);
@@ -131,7 +176,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
     if (!d || !line.hasParsedSchedule) return;
     // the merged list covers the whole side: a day is empty only when no direction of the side runs on it (else weekday / weekend-only branches flip the day back and forth)
     const ds = groups && allMode ? groups.sides[groups.sides.findIndex((x) => x.includes(dirIndex))].map((i) => line.directions[i]) : [d];
-    const has = (k: DayKey) => ds.some((x) => timesOfDay(x, k, 0).length);
+    const has = (k: DayType) => ds.some((x) => timesOfDay(x, k, 0, school).length);
     if (day && has(day)) return;
     const alt = keys.find(has);
     if (alt) setDay(alt);
@@ -152,9 +197,9 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
     if (!same.length) return;
     const date = initialWhen.date?.split('-').map(Number);
     const type = date ? serviceDay({ y: date[0], m: date[1], d: date[2] }, shared.ctx.municipalities).type : null;
-    const wanted = type === 'weekday' ? keysFor('weekday', shared.ctx.school) : type ? [type] : [];
+    const wanted = type ? keysFor(type, school) : [];
     const hit = same.find(({ x }) => x.days.some((k) => wanted.includes(k))) ?? same[0];
-    const dayKey = hit.x.days.find((k) => wanted.includes(k)) ?? hit.x.days[0];
+    const dayKey = dayTypesOf(hit.x.days.filter((k) => wanted.includes(k)))[0] ?? dayTypesOf(hit.x.days)[0];
     if (dayKey !== day) holdSel.current.day = true;
     if ((initialDir ?? 0) !== dirIndex) holdSel.current.dir = true;
     setDirIndex(initialDir ?? 0);
@@ -168,10 +213,10 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   const hasTrips = !!dir?.trips?.length;
   const hasOffsets = !hasTrips && !!dir?.stopOffsets?.length;
   const today = serviceDay(shared.ctx.now, shared.ctx.municipalities);
-  const dayLabel = (k: DayKey) => {
+  const dayLabel = (k: DayType) => {
     const extra = line.dayLabels?.[k];
     const base = t(`day_${k}` as Key);
-    return extra && (k === 'weekday' || k === 'saturday' || k === 'sunday') ? `${base} (${tn(extra)})` : base;
+    return extra ? `${base} (${tn(extra)})` : base;
   };
 
   // grid: times at the chosen stop (timetables with times at every stop) or departures from the terminal
@@ -179,16 +224,16 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
   const merged = groups && allMode ? groups.sides[side] : null;
   const times: Timed[] = useMemo(() => {
     if (!dir || !day) return [];
-    if (merged) return merged.flatMap((i) => timesOfDay(line.directions[i], day, 0).map((x) => ({ ...x, dirIdx: i }))).sort((a, b) => a.minutes - b.minutes);
-    return timesOfDay(dir, day, hasTrips ? stopIdx : 0);
-  }, [dir, day, hasTrips, stopIdx, merged, line]);
+    if (merged) return merged.flatMap((i) => timesOfDay(line.directions[i], day, 0, school, mixed).map((x) => ({ ...x, dirIdx: i }))).sort((a, b) => a.minutes - b.minutes);
+    return timesOfDay(dir, day, hasTrips ? stopIdx : 0, school, mixed);
+  }, [dir, day, hasTrips, stopIdx, merged, line, school, mixed]);
   // a day tab is disabled when no trip of the shown list (merged side / this stop) runs on it
-  const dayHas = (k: DayKey) => (k === day ? times.length > 0 : merged ? merged.some((i) => timesOfDay(line.directions[i], k, 0).length) : !!dir && timesOfDay(dir, k, hasTrips ? stopIdx : 0).length > 0);
+  const dayHas = (k: DayType) => (k === day ? times.length > 0 : merged ? merged.some((i) => timesOfDay(line.directions[i], k, 0, school).length) : !!dir && timesOfDay(dir, k, hasTrips ? stopIdx : 0, school).length > 0);
   const keyOf = (x: Timed, i: number) => {
     const d = x.dirIdx !== undefined ? line.directions[x.dirIdx] : dir;
     return x.trip && d?.trips ? `${x.dirIdx !== undefined ? `${x.dirIdx}:` : ''}t${d.trips.indexOf(x.trip)}` : `d${i}`;
   };
-  const isToday = day !== undefined && today.type !== null && keysFor(today.type, shared.ctx.school).includes(day);
+  const isToday = day !== undefined && today.type === day;
   const nextIdx = isToday ? times.findIndex((x) => x.minutes >= shared.ctx.now.minutes) : -1;
   // exactly one time is always active: the tapped one, else the next upcoming departure, else the first of the day
   const found = selKey === null ? -1 : times.findIndex((x, i) => keyOf(x, i) === selKey);
@@ -489,6 +534,11 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
               </Chip>
             ))}
           </div>
+          {day === 'weekday' && (periodsDiffer || school !== shared.ctx.school) && (
+            <p className="px-1 text-xs text-slate-500 dark:text-slate-400" data-testid="period-note">
+              {t(school !== shared.ctx.school ? 'periodNoteOther' : 'periodNote').replace('{x}', t(school ? 'schoolPeriod' : 'schoolHolidays').toLowerCase())}
+            </p>
+          )}
           {today.type === null && <p className="px-1 text-sm text-amber-600">{t('noService')}</p>}
           {times.length ? (
             <Card className="grid grid-cols-4 gap-1.5 p-3! sm:grid-cols-5">

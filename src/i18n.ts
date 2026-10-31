@@ -282,6 +282,8 @@ const dict = {
 		today: "dnes",
 		schoolPeriod: "Školní období",
 		schoolHolidays: "Školní prázdniny",
+		periodNote: "Platí: {x}. Spoje jen v jednom z období jsou označené. Období lze změnit v Nastavení.",
+		periodNoteOther: "Dnes se nejede podle tohoto kalendáře, ukázán je jízdní řád pro: {x}.",
 		schoolHint:
 			"Platí jen pro linky s odlišným jízdním řádem v době prázdnin. Skutečný školní kalendář se každý rok mění.",
 		timetableToday: "Dnes platí",
@@ -613,6 +615,8 @@ const dict = {
 		today: "today",
 		schoolPeriod: "School term",
 		schoolHolidays: "School holidays",
+		periodNote: "Showing: {x}. Trips that run in one period only are marked. You can change the period in Settings.",
+		periodNoteOther: "This line has no weekday service in the current calendar, so the timetable for {x} is shown.",
 		schoolHint:
 			"Only matters for lines with a separate school-holiday timetable. The real school calendar changes every year.",
 		timetableToday: "Today",
@@ -946,6 +950,8 @@ const dict = {
 		today: "hoje",
 		schoolPeriod: "Período escolar",
 		schoolHolidays: "Férias escolares",
+		periodNote: "Em vigor: {x}. As viagens que só circulam num dos períodos estão assinaladas. Pode alterar o período nas Definições.",
+		periodNoteOther: "Esta linha não tem serviço em dias úteis no calendário atual; mostra-se o horário de {x}.",
 		schoolHint:
 			"Só conta para carreiras com horário próprio nas férias. O calendário escolar real muda todos os anos.",
 		timetableToday: "Hoje",

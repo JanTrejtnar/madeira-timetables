@@ -15,6 +15,8 @@ export const EXTRA: Record<string, [cs: string, en: string]> = {
     'Provozovatel může spoj zrušit, pokud to nedovolí počasí nebo je silnice uzavřena.',
     'The operator may cancel the service when weather or a closed road prevents it.',
   ],
+  'Apenas no período escolar': ['Jen ve školním období', 'School term only'],
+  'Apenas fora do período escolar': ['Jen mimo školní období (prázdniny)', 'School holidays only'],
   'Em dias não letivos, só via Fajã dos Cardos': ['Ve dny mimo školní výuku jen přes Fajã dos Cardos', 'On non-school days only via Fajã dos Cardos'],
   'Transbordo de/para Terra Chã de Cima e Seara Velha de Baixo': ['Přestup z/do Terra Chã de Cima a Seara Velha de Baixo', 'Transfer from/to Terra Chã de Cima and Seara Velha de Baixo'],
   'Serviço à chamada para Eira do Serrado: quem sai de Eira do Serrado marca o serviço pelo telefone 291 705 563 ou 965 059 005 até às 24h00 do dia anterior; quem vai para Eira do Serrado avisa o motorista à entrada no autocarro.': [
