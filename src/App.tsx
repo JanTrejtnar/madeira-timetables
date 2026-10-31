@@ -316,6 +316,11 @@ export function App() {
   }, []);
 
   // height of the sticky header: pages put their own sticky bars right under it
+  const bannerRef = useRef<HTMLDivElement>(null);
+  // the offline banner sits above the page and takes height the full-screen map tab has to leave free
+  useEffect(() => {
+    document.documentElement.style.setProperty('--banner-h', `${online ? 0 : (bannerRef.current?.offsetHeight ?? 0)}px`);
+  }, [online]);
   const headerRef = useRef<HTMLElement>(null);
   useEffect(() => {
     const el = headerRef.current;
@@ -418,7 +423,7 @@ export function App() {
           </header>
 
           {!online && (
-            <div role="status" className="shrink-0 bg-amber-100 px-4 py-1.5 text-center text-xs font-medium text-amber-900 dark:bg-amber-400/15 dark:text-amber-200">
+            <div role="status" ref={bannerRef} className="shrink-0 bg-amber-100 px-4 py-1.5 text-center text-xs font-medium text-amber-900 dark:bg-amber-400/15 dark:text-amber-200">
               {t('offlineBanner')}
             </div>
           )}
@@ -437,7 +442,7 @@ export function App() {
                 ) : (
                   <>
                     {tab === 'map' && !desktop && (
-                      <div className="-mx-4 -mb-28 -mt-4 h-[calc(100dvh-8.75rem-env(safe-area-inset-bottom))] min-h-96" data-testid="map-tab">
+                      <div className="-mx-4 -mb-28 -mt-4 h-[calc(100dvh-var(--header-h,5.25rem)-3.5rem-env(safe-area-inset-bottom)-var(--banner-h,0px))] min-h-96" data-testid="map-tab">
                         <NetworkMap shared={shared} fill />
                       </div>
                     )}
@@ -493,7 +498,7 @@ export function App() {
                 key={x.key}
                 onClick={() => selectTab(x.key)}
                 aria-current={active}
-                className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors ${active ? 'text-sky-600 dark:text-sky-400' : 'text-slate-500 dark:text-slate-400'}`}
+                className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors ${active ? 'text-sky-600 dark:text-sky-400' : 'text-slate-500 dark:text-slate-400'}`}
               >
                 <Icon name={x.icon} className="size-6" strokeWidth={active ? 2 : 1.5} />
                 {x.label}

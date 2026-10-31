@@ -123,7 +123,7 @@ export function SearchTab({ shared, index }: { shared: Shared; index: Index }) {
                   </span>
                 </span>
                 {!l.hasParsedSchedule && (
-                  <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-400/10 dark:text-amber-300">PDF</span>
+                  <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-400/10 dark:text-amber-300">PDF</span>
                 )}
                 <Icon name="chevron" className="size-4 shrink-0 text-slate-300" />
               </button>

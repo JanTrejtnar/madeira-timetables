@@ -47,7 +47,7 @@ export function TripShortcuts({ shared }: { shared: Shared }) {
           <ul className="flex flex-wrap gap-1.5">
             {recent.map((r, i) => (
               <li key={`${r.from.text}>${r.to.text}>${i}`} className="flex max-w-full items-center rounded-2xl border border-slate-200/70 bg-white dark:border-slate-700/70 dark:bg-slate-900">
-                <button type="button" onClick={() => shared.useTrip(r)} className="inline-flex min-h-9 min-w-0 items-center gap-1.5 py-1.5 pl-3 pr-1 text-left text-sm" data-testid="recent-trip">
+                <button type="button" onClick={() => shared.useTrip(r)} className="inline-flex min-h-11 min-w-0 items-center gap-1.5 py-1.5 pl-3 pr-1 text-left text-sm" data-testid="recent-trip">
                   <Icon name="clock" className="size-3.5 shrink-0 text-slate-400" />
                   <span className="min-w-0 wrap-break-word">{label(r, suffix, lang)}</span>
                 </button>

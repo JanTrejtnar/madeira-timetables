@@ -24,13 +24,13 @@ function StopCard({ stop, shared }: { stop: NearbyStop; shared: Shared }) {
         <button
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="min-h-9 rounded-lg bg-sky-600 px-3 font-medium text-white transition-opacity active:opacity-80"
+          className="min-h-11 rounded-lg bg-sky-600 px-3 font-medium text-white transition-opacity active:opacity-80"
         >
           {open ? t('hideDepartures') : t('departuresHere')}
         </button>
         <button
           onClick={() => shared.useAsFrom(stop.name, stop.key)}
-          className="min-h-9 rounded-lg px-3 font-medium text-sky-700 ring-1 ring-sky-200 dark:text-sky-300 dark:ring-sky-500/30"
+          className="min-h-11 rounded-lg px-3 font-medium text-sky-700 ring-1 ring-sky-200 dark:text-sky-300 dark:ring-sky-500/30"
         >
           {t('setAsFrom')}
         </button>

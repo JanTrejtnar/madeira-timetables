@@ -56,7 +56,7 @@ function bestStop(dir: Line['directions'][number] | undefined): number {
 /** Marks a place inserted from a "Via X" note: it is called at only on the selected trip, and its time is interpolated. */
 function ViaTag() {
   const { t } = useT();
-  return <span className="ml-1 rounded-full bg-sky-100 px-2 py-0.5 align-middle text-[11px] font-semibold text-sky-800 dark:bg-sky-400/15 dark:text-sky-200">{t('viaStop')}</span>;
+  return <span className="ml-1 rounded-full bg-sky-100 px-2 py-0.5 align-middle text-xs font-semibold text-sky-800 dark:bg-sky-400/15 dark:text-sky-200">{t('viaStop')}</span>;
 }
 
 /** Where a trip with a time at every stop really starts and ends when that is not the direction's first / last stop (a short-turn trip of the same route), else null. */
@@ -522,9 +522,9 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                   >
                     {x.t}
                     {requestPlaces(x.notes).length ? <span className="ml-0.5 text-amber-600" aria-hidden>⚠</span> : null}
-                    {legendCodes(x.notes).length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70">{legendCodes(x.notes).map(tn).join(',')}</sup> : null}
+                    {legendCodes(x.notes).length ? <sup className="ml-0.5 text-xs font-normal opacity-70">{legendCodes(x.notes).map(tn).join(',')}</sup> : null}
                     {merged && x.dirIdx !== undefined ? (
-                      <span className="block truncate text-[10px] font-normal opacity-70" data-testid="time-end">
+                      <span className="block truncate text-xs font-normal opacity-70" data-testid="time-end">
                         {(() => {
                           const dd = line.directions[x.dirIdx];
                           const cut = shortEnds(dd, x.trip);
@@ -532,7 +532,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                         })()}
                       </span>
                     ) : null}
-                    {hasFreeMark(x.notes) && !requestPlaces(x.notes).length ? <sup className="ml-0.5 text-[10px] font-normal opacity-70" title={(x.notes ?? []).map(tn).join('; ')} data-testid="free-note-mark">ⓘ</sup> : null}
+                    {hasFreeMark(x.notes) && !requestPlaces(x.notes).length ? <sup className="ml-0.5 text-xs font-normal opacity-70" title={(x.notes ?? []).map(tn).join('; ')} data-testid="free-note-mark">ⓘ</sup> : null}
                   </button>
                 );
               })}
@@ -648,7 +648,7 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                           {content}
                         </button>
                         {!hasCoords && !s.via ? (
-                          <span className="mr-1 shrink-0 whitespace-nowrap rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400" data-testid="stop-no-gps">
+                          <span className="mr-1 shrink-0 whitespace-nowrap rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400" data-testid="stop-no-gps">
                             {t('noGps')}
                           </span>
                         ) : (

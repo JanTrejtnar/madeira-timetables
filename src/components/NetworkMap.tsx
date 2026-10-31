@@ -309,7 +309,7 @@ export function NetworkMap({ shared, fill = false }: { shared: Shared; fill?: bo
   return (
     <div className={full ? 'fixed inset-0 z-1000 bg-white dark:bg-slate-950' : 'relative h-full w-full'} data-testid="network-map">
       <div ref={el} className="isolate size-full bg-slate-200 dark:bg-slate-800" style={{ touchAction: touch ? 'none' : undefined }} />
-      <div className="pointer-events-none absolute bottom-7 left-2 z-500 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-x-2.5 gap-y-0.5 rounded-lg bg-white/75 px-2 py-1 text-[10px] font-medium leading-4 text-slate-600 backdrop-blur-sm dark:bg-slate-900/70 dark:text-slate-300" data-testid="network-legend">
+      <div className="pointer-events-none absolute bottom-7 left-2 z-500 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-x-2.5 gap-y-0.5 rounded-lg bg-white/75 px-2 py-1 text-xs font-medium leading-4 text-slate-600 backdrop-blur-sm dark:bg-slate-900/70 dark:text-slate-300" data-testid="network-legend">
         {OPERATORS.map((o) => (
           <span key={o.id} className="inline-flex items-center gap-1">
             <span className="h-0.5 w-3 rounded-full" style={{ background: o.color }} />

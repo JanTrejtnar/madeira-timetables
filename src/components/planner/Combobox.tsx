@@ -97,7 +97,7 @@ export function Combobox({ label, placeholder, value, onChange, onCommit, shared
           aria-label={`${t('clearText')}: ${label}`}
           title={t('clearText')}
           data-testid="clear-input"
-          className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+          className="relative flex size-8 shrink-0 items-center justify-center rounded-full text-slate-500 before:absolute before:-inset-1.5 before:content-[''] transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
         >
           <Icon name="close" className="size-4" strokeWidth={2.25} />
         </button>
@@ -110,7 +110,7 @@ export function Combobox({ label, placeholder, value, onChange, onCommit, shared
           aria-label={t('useMyLocation')}
           title={t('useMyLocation')}
           data-testid="use-my-location"
-          className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-sky-600 dark:hover:bg-slate-800"
+          className="relative flex size-8 shrink-0 items-center justify-center rounded-full text-slate-500 before:absolute before:-inset-1.5 before:content-[''] transition-colors hover:bg-slate-100 hover:text-sky-600 dark:hover:bg-slate-800"
         >
           <Icon name="navigation" className={`size-5 ${locating ? 'animate-pulse' : ''}`} />
         </button>
@@ -120,7 +120,7 @@ export function Combobox({ label, placeholder, value, onChange, onCommit, shared
         onClick={onPickMap}
         aria-label={`${t('pickOnMap')}: ${label}`}
         title={t('pickOnMap')}
-        className="flex size-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-sky-600 dark:hover:bg-slate-800"
+        className="relative flex size-8 shrink-0 items-center justify-center rounded-full text-slate-500 before:absolute before:-inset-1.5 before:content-[''] transition-colors hover:bg-slate-100 hover:text-sky-600 dark:hover:bg-slate-800"
       >
         <Icon name="map" className="size-5" />
       </button>
@@ -144,9 +144,9 @@ export function Combobox({ label, placeholder, value, onChange, onCommit, shared
                   <Icon name={meta.icon} className={`size-4 shrink-0 ${meta.tone}`} />
                   <span className="min-w-0 flex-1 truncate">
                     {name}
-                    {group && <>{' '}<span className="text-xs font-normal text-slate-400">{suffix}</span></>}
+                    {group && <>{' '}<span className="text-xs font-normal text-slate-500">{suffix}</span></>}
                   </span>
-                  <span className="shrink-0 text-xs text-slate-400">
+                  <span className="shrink-0 text-xs text-slate-500">
                     {category}
                     {it.kind === 'stop' && !group ? ` · ${it.s.lines}×` : ''}
                   </span>

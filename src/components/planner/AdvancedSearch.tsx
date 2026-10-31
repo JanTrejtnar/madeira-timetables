@@ -39,7 +39,7 @@ export function AdvancedSearch({ ops, directOnly, type, onOps, onDirect, onType 
                   aria-pressed={on}
                   data-testid={`op-${o.id}`}
                   onClick={() => onOps(on ? ops.filter((x) => x !== o.id) : [...ops, o.id])}
-                  className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors ${on ? 'border-sky-600 bg-sky-50 text-sky-800 dark:bg-sky-400/15 dark:text-sky-200' : 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300'}`}
+                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors ${on ? 'border-sky-600 bg-sky-50 text-sky-800 dark:bg-sky-400/15 dark:text-sky-200' : 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300'}`}
                 >
                   <span className="size-2.5 rounded-full" style={{ background: o.color }} />
                   {o.name}

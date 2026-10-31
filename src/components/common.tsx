@@ -216,7 +216,7 @@ export function Chip({ active, onClick, children, className = '', disabled, titl
       aria-pressed={active}
       disabled={disabled}
       title={title}
-      className={`inline-flex min-h-9 items-center rounded-full px-3.5 text-sm font-medium transition-colors ${
+      className={`inline-flex min-h-11 items-center rounded-full px-3.5 text-sm font-medium transition-colors ${
         disabled
           ? 'cursor-not-allowed border border-dashed border-slate-200 bg-transparent text-slate-400 dark:border-slate-700 dark:text-slate-600'
           : active
@@ -362,8 +362,8 @@ export function MapPin({ stop }: { stop: Stop }) {
         aria-expanded={open}
         aria-label={`${t('openInMaps')}: ${stop.name}`}
         title={t('openInMaps')}
-        className={`inline-flex size-8 items-center justify-center rounded-full transition-colors ${
-          open ? 'bg-sky-50 text-sky-700 dark:bg-sky-400/10 dark:text-sky-300' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800'
+        className={`relative inline-flex size-8 items-center justify-center rounded-full transition-colors before:absolute before:-inset-1.5 before:content-[''] ${
+          open ? 'bg-sky-50 text-sky-700 dark:bg-sky-400/10 dark:text-sky-300' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800'
         }`}
       >
         <Icon name="pin" className="size-4" />

@@ -39,7 +39,7 @@ function Popover({ trigger, label, testid, children }: { trigger: (p: { open: bo
             id={id}
             role="dialog"
             aria-label={label}
-            className={`fixed inset-x-4 bottom-4 z-50 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:absolute sm:inset-x-auto sm:bottom-auto sm:top-full sm:mt-2 sm:w-72 ${alignRight ? 'sm:right-0' : 'sm:left-0'}`}
+            className={`fixed inset-x-[max(1rem,env(safe-area-inset-left))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:absolute sm:inset-x-auto sm:bottom-auto sm:top-full sm:mt-2 sm:w-72 ${alignRight ? 'sm:right-0' : 'sm:left-0'}`}
           >
             {children(() => setOpen(false))}
             <button onClick={() => setOpen(false)} className="mt-3 h-10 w-full rounded-xl bg-sky-600 text-sm font-semibold text-white hover:bg-sky-700 sm:hidden">

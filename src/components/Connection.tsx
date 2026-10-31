@@ -41,7 +41,7 @@ function Time({ min, est, t, className = '', it }: { min: number; est: boolean; 
   return (
     <span className={`whitespace-nowrap tabular-nums ${className}`}>
       {est ? <span title={t('estimateWord')} className="text-amber-700 dark:text-amber-300">~{fmtMinutes(min)}</span> : fmtMinutes(min)}
-      {late > 0 && <sup className="ml-0.5 text-[9px] text-slate-400">+{late}</sup>}
+      {late > 0 && <sup className="ml-0.5 text-xs text-slate-500">+{late}</sup>}
     </span>
   );
 }
@@ -267,7 +267,7 @@ function Rides({ it, fare, shared, base, fromPt, toPt, walkIn, walkOut }: { it: 
                   <Icon name="chevron" className="size-4 shrink-0 text-sky-600" />
                 </button>
                 {mid.length > 0 && (
-                  <button type="button" onClick={() => toggle(i)} aria-expanded={expanded} data-testid="toggle-stops" className="flex min-h-9 items-center gap-1.5 self-start rounded-lg px-1 text-sm font-medium text-sky-700 dark:text-sky-300">
+                  <button type="button" onClick={() => toggle(i)} aria-expanded={expanded} data-testid="toggle-stops" className="flex min-h-11 items-center gap-1.5 self-start rounded-lg px-1 text-sm font-medium text-sky-700 dark:text-sky-300">
                     <Icon name="chevronDown" className={`size-4 transition-transform ${expanded ? 'rotate-180' : ''}`} strokeWidth={2.25} />
                     {t('intermediateStops', { n: mid.length })}
                   </button>
@@ -432,7 +432,7 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
       {estimatedNote}
       {map && <div ref={mapBox} className="scroll-mt-[calc(var(--header-h,0px)+3.5rem)]">{map}</div>}
       {toast && (
-        <div role="status" aria-live="polite" data-testid="toast" className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4 lg:bottom-8">
+        <div role="status" aria-live="polite" data-testid="toast" className="pointer-events-none fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 lg:bottom-8">
           <span className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-lg dark:bg-slate-100 dark:text-slate-900">{toast}</span>
         </div>
       )}
