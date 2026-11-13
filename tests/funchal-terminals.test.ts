@@ -121,16 +121,16 @@ describe.skipIf(!existsSync(file))('timetable rows repaired at parse time (real 
       }
     }
   });
-  it('Achadas da Cruz (lines 80, 139, 250) sits on the OSM node 111788136 at the cable-car junction, labelled as a manual match', () => {
+  it('Achadas da Cruz (lines 80, 139, 250) sits on the position given by the maintainer, precision exact', () => {
     const at = (line: string, name: string) => data.lines.filter((x) => x.number === line).flatMap((l) => l.directions.flatMap((d) => d.stops)).filter((s) => s.name === name);
     for (const [line, name] of [['80', 'Achadas da Cruz'], ['139', 'Achadas Cruz'], ['250', 'Achadas Cruz']]) {
       const found = at(line, name);
       expect(found.length, `${line} ${name}`).toBeGreaterThan(0);
       for (const s of found) {
-        expect(s.lat, `${line} ${name}`).toBeCloseTo(32.8407892, 5);
-        expect(s.lon, `${line} ${name}`).toBeCloseTo(-17.2078548, 5);
-        expect(s.locationPrecision, `${line} ${name}`).toBe('manual_osm_match');
-        expect(s.approx, `${line} ${name}`).toBe(true);
+        expect(s.lat, `${line} ${name}`).toBeCloseTo(32.8403266, 5);
+        expect(s.lon, `${line} ${name}`).toBeCloseTo(-17.2085863, 5);
+        expect(s.locationPrecision, `${line} ${name}`).toBe('exact');
+        expect(s.approx, `${line} ${name}`).toBeFalsy();
       }
     }
   });

@@ -684,17 +684,6 @@
       ]
     },
     {
-      "name": "Achadas Cruz",
-      "code": null,
-      "status": "manual_osm_match",
-      "lineCount": 2,
-      "tripCount": 17,
-      "lines": [
-        "139",
-        "250"
-      ]
-    },
-    {
       "name": "Eira Achada",
       "code": null,
       "status": "corridor_osm_match",
@@ -1418,16 +1407,6 @@
       "tripCount": 5,
       "lines": [
         "137"
-      ]
-    },
-    {
-      "name": "Achadas da Cruz",
-      "code": null,
-      "status": "manual_osm_match",
-      "lineCount": 1,
-      "tripCount": 4,
-      "lines": [
-        "80"
       ]
     },
     {

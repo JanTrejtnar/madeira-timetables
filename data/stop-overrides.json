@@ -248,26 +248,24 @@
     },
     {
       "name": "Achadas da Cruz",
-      "label": "Ověřeno manuálně přes OSM uzel 111788136 u odbočky na lanovku (křižovatka ER101 a odbočky na Teleférico das Achadas da Cruz). Ruční shoda s OSM uzlem, ne oficiální poloha zastávky SIGA; přesné nástupiště se může lišit",
+      "label": "Achadas da Cruz: position given and verified by the maintainer (32.8403266, -17.2085863); replaces the earlier OSM match 111788136, which was about 65 m away.",
       "lines": [
         "80"
       ],
-      "lat": 32.8407892,
-      "lon": -17.2078548,
-      "locationPrecision": "manual_osm_match",
-      "osmNode": 111788136
+      "lat": 32.8403266,
+      "lon": -17.2085863,
+      "locationPrecision": "exact"
     },
     {
       "name": "Achadas Cruz",
-      "label": "Ověřeno manuálně přes OSM uzel 111788136 u odbočky na lanovku (křižovatka ER101 a odbočky na Teleférico das Achadas da Cruz). Ruční shoda s OSM uzlem, ne oficiální poloha zastávky SIGA; přesné nástupiště se může lišit",
+      "label": "Achadas da Cruz: position given and verified by the maintainer (32.8403266, -17.2085863); replaces the earlier OSM match 111788136, which was about 65 m away.",
       "lines": [
         "139",
         "250"
       ],
-      "lat": 32.8407892,
-      "lon": -17.2078548,
-      "locationPrecision": "manual_osm_match",
-      "osmNode": 111788136
+      "lat": 32.8403266,
+      "lon": -17.2085863,
+      "locationPrecision": "exact"
     },
     {
       "name": "Terra Chã",
