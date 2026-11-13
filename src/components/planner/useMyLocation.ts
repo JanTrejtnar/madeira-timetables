@@ -35,7 +35,7 @@ export function useMyLocation(shared: Shared) {
     if (!hit) return setLocNote(t('pickNone', { m: PICK_RADIUS_M }));
     const name = localStopName(hit.node.name, lang);
     const w = walkTo(userPos, hit.node);
-    setPlanner((f) => ({ ...f, from: { text: t('myLocationText', { name }), key: hit.node.key, pt: { lat: +userPos.lat.toFixed(5), lon: +userPos.lon.toFixed(5) } } }));
+    setPlanner((f) => ({ ...f, from: { text: hit.node.name, key: hit.node.key, here: true, pt: { lat: +userPos.lat.toFixed(5), lon: +userPos.lon.toFixed(5) } } }));
     setLocNote(w ? t('nearestStopWalk', { name, m: w.m, n: w.min }) : null);
   }, [wantsLocation, geo, userPos, shared.net, t, lang, setPlanner]);
   return { locNote, clearNote: () => setLocNote(null), locateMe, locating: geo === 'busy' };

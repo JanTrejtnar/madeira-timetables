@@ -35,7 +35,11 @@ export function stopLabel(stop: { name: string; terminal?: string }, lang: 'cs' 
   return terminal && stop.name.trim().toLowerCase() === 'funchal' ? `${name} (${terminal})` : name;
 }
 
-/** A saved or picked place without the "(all stops)" qualifier of a whole town or parish: just "Funchal". */
-export function plainPlace(text: string, allStopsSuffix: string, lang: 'cs' | 'en' | 'pt'): string {
-  return localStopName(allStopsSuffix && text.endsWith(allStopsSuffix) ? text.slice(0, -allStopsSuffix.length).trimEnd() : text, lang);
-}
+/**
+ * Older versions saved the label as it was shown in the UI language ("Funchal (všechny zastávky)", "My location (Funchal)"), so a place picked in
+ * one language kept that language's wording after the switch. These recognise such a label in any language, so it can be reduced to the bare name.
+ */
+const LEGACY_ALL_STOPS = /\s*\((?:všechny zastávky|all stops|todas as paragens)\)\s*$/i;
+const LEGACY_MY_LOCATION = /^(?:Moje poloha|My location|A minha localização) \((.+)\)$/;
+export const withoutLegacyAllStops = (text: string): string => text.replace(LEGACY_ALL_STOPS, '');
+export const legacyMyLocationName = (text: string): string | null => LEGACY_MY_LOCATION.exec(text.trim())?.[1] ?? null;

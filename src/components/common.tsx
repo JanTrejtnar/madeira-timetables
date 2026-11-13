@@ -11,6 +11,7 @@ import type { FareCard } from '../lib/fare';
 import type { Ctx } from '../lib/departures';
 import { googleMapsUrl, mapyCzUrl } from '../lib/maps';
 import { isApproxPosition } from '../lib/precision';
+import { lineNumberLabel } from '../lib/lineNumber';
 import type { Direction, Line, MapLayer, Stop } from '../types';
 import { Icon, type IconName } from './Icons';
 
@@ -103,7 +104,7 @@ export function LineBadge({ line, large = false }: { line: Line; large?: boolean
   const urban = line.type === 'urbano';
   return (
     <span
-      title={line.number}
+      title={lineNumberLabel(line)}
       className={`inline-flex shrink-0 items-center justify-center rounded-lg font-bold tabular-nums tracking-tight text-white ${
         large ? 'h-10 min-w-14 px-3 text-xl' : 'h-7 min-w-11 px-2 text-sm'
       } ${urban ? 'bg-emerald-700' : 'bg-sky-700 dark:bg-sky-600'}`}
@@ -126,8 +127,9 @@ export function EstTag({ children, title }: { children: ReactNode; title?: strin
 }
 
 export function dirLabel(dir: Direction, fallback: string): string {
-  if (dir.from && dir.to) return `${dir.from} → ${dir.to}`;
-  return dir.to || dir.from || fallback;
+  const num = dir.number ? `${dir.number} ` : '';
+  if (dir.from && dir.to) return `${num}${dir.from} → ${dir.to}`;
+  return num + (dir.to || dir.from || fallback);
 }
 
 export function PdfButton({ line, big = false }: { line: Line; big?: boolean }) {

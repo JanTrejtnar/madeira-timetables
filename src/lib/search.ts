@@ -13,6 +13,8 @@ interface LineIndex {
   line: Line;
   number: string;
   oldNumber: string;
+  /** new numbers of a renumbered line (380, 381 for the old 80), normalised */
+  newNumbers: string[];
   hay: string;
 }
 
@@ -32,7 +34,7 @@ const byNumber = (a: Line, b: Line) => a.number.localeCompare(b.number, undefine
 export function buildIndex(lines: Line[]): Index {
   const stopMap = new Map<string, { name: string; lines: Map<number, Line> }>();
   const lix = lines.map((line) => {
-    const parts = [line.number, line.oldNumber, line.name, line.route, line.municipality ?? '', line.type];
+    const parts = [line.number, line.oldNumber, ...(line.newNumbers ?? []), ...line.directions.flatMap((d) => (d.number ? [d.number] : [])), line.name, line.route, line.municipality ?? '', line.type];
     for (const d of line.directions) {
       parts.push(d.from ?? '', d.to, d.variant ?? '');
       for (const s of d.stops) {
@@ -44,7 +46,7 @@ export function buildIndex(lines: Line[]): Index {
         stopMap.set(k, e);
       }
     }
-    return { line, number: norm(line.number), oldNumber: norm(line.oldNumber), hay: norm(parts.join(' ')) };
+    return { line, number: norm(line.number), oldNumber: norm(line.oldNumber), newNumbers: (line.newNumbers ?? []).map(norm), hay: norm(parts.join(' ')) };
   });
   const stops = [...stopMap].map(([key, v]) => ({ key, name: v.name, lines: [...v.lines.values()].sort(byNumber) }));
   stops.sort((a, b) => a.name.localeCompare(b.name));
@@ -60,8 +62,8 @@ export function searchLines(ix: Index, query: string): Line[] {
     terms.forEach((q, ti) => {
       if (!q.split(' ').every((t) => l.hay.includes(t))) return;
       let score = ti === 0 ? 1 : 0; // what was typed ranks above what an alias added
-      if (l.number === q || l.oldNumber === q) score += 100;
-      else if (l.number.startsWith(q) || l.oldNumber.startsWith(q)) score += 60;
+      if (l.number === q || l.oldNumber === q || l.newNumbers.includes(q)) score += 100;
+      else if (l.number.startsWith(q) || l.oldNumber.startsWith(q) || l.newNumbers.some((n) => n.startsWith(q))) score += 60;
       if (norm(l.line.name).includes(q)) score += 30;
       if (norm(l.line.route).includes(q)) score += 20;
       best = Math.max(best, score);

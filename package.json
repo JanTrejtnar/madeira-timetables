@@ -18,6 +18,7 @@
     "bench:raptor": "node scripts/bench-raptor.mjs",
     "audit": "node scripts/audit-schedules.mjs",
     "audit:stops": "node scripts/audit-stops.mjs",
+    "audit:line-numbers": "node scripts/audit-line-numbers.mjs",
     "audit:split-stops": "node scripts/audit-split-stops.mjs",
     "match:corridor": "node scripts/match-corridor-stops.mjs",
     "audit:via": "node scripts/audit-via.mjs",

@@ -588,7 +588,7 @@ describe.skipIf(!existsSync(file))('OpenStreetMap stops, parishes, map picking, 
     expect(net2.near.get(alf.id)!.some((x) => x.node === hub.id)).toBe(true);
   });
   it('planner form survives the URL round trip, ignores bad values', () => {
-    const f = { from: { text: 'Santana (všechny zastávky)', key: '@par:Santana' }, to: { text: 'Funchal', key: null }, time: '07:45', date: '2026-12-08', ops: ['rodoeste', 'sam'] as ('rodoeste' | 'sam')[], directOnly: true, type: 'urbano' as const };
+    const f = { from: { text: 'Santana', key: '@par:Santana' }, to: { text: 'Funchal', key: null }, time: '07:45', date: '2026-12-08', ops: ['rodoeste', 'sam'] as ('rodoeste' | 'sam')[], directOnly: true, type: 'urbano' as const };
     const back = formFromQuery('?' + formToQuery(f));
     expect(back).toEqual(f);
     expect(formFromQuery('?date=2026-02-31&time=25:99&ops=zzz&type=x')).toMatchObject({ date: null, time: null, ops: [], type: 'all' });

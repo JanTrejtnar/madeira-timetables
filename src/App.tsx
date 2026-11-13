@@ -21,6 +21,7 @@ import { useMedia } from './lib/hooks';
 import { applyTheme, isTheme, type ThemePref } from './lib/theme';
 import type { UserPos } from './lib/nearby';
 import { formFromQuery, formToQuery, parseConnectionParam, settled, type PlannerForm } from './lib/plannerForm';
+import { tripLabel } from './lib/placeLabel';
 import type { MapFocus, MapLayer } from './types';
 
 type Tab = 'search' | 'route' | 'map' | 'departures' | 'settings';
@@ -405,7 +406,7 @@ export function App() {
       ? [line.name, line.route].filter(Boolean).join(' · ')
       : null
     : tab === 'route' && plannerView === 'results' && planner.from.text && planner.to.text
-      ? `${planner.from.text} → ${planner.to.text}`
+      ? tripLabel(planner, t, lang)
       : tab === 'route'
         ? null
         : (tabTitle ?? null);

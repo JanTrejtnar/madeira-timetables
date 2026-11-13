@@ -1,0 +1,77 @@
+{
+  "lines": {
+    "2009": {
+      "newNumbers": [
+        "380",
+        "381"
+      ],
+      "directions": [
+        {
+          "from": "Funchal",
+          "to": "Porto Moniz",
+          "number": "380"
+        },
+        {
+          "from": "Porto Moniz",
+          "to": "Funchal",
+          "number": "381"
+        }
+      ],
+      "source": "SIGA timetable PDF, header \"Carreira/Line nº 80 – Nova numeração 380 381\""
+    },
+    "2017": {
+      "newNumbers": [
+        "340",
+        "341",
+        "350",
+        "351",
+        "352",
+        "353"
+      ],
+      "directions": [
+        {
+          "from": "Funchal",
+          "to": "Porto Moniz",
+          "number": "340"
+        },
+        {
+          "from": "Porto Moniz",
+          "to": "Funchal",
+          "number": "341"
+        }
+      ],
+      "source": "SIGA timetable PDF: page 1 \"Nova numeração 340 341\" (one number per direction), page 2 \"Nova numeração 350 351 352 353\"",
+      "note": "Page 2 (Funchal - Santa Porto Moniz): 350 = the 139 trip from Funchal (2ª a 6ª, 18:20), 351 and 353 = the 139 trips back (Santa 12:00 weekdays, Achadas Cruz 06:00 weekdays), 352 = \"139 / 352\" from Ribeira Brava on (note b). The numbers belong to trips, not to a direction, so only the line carries them. The other columns of that page are trips of old lines 6, 7 and 150 (304 306 209 300, 200, 250): not assigned here."
+    },
+    "5000": {
+      "newNumbers": [
+        "801",
+        "802",
+        "850",
+        "860",
+        "875",
+        "885"
+      ],
+      "source": "Image-only SIGA/CAM PDF \"Rede Santana\" (column \"Car.\" per trip), read by eye from the page images, 2026-11",
+      "note": "All Car. codes of the Rede Santana network (Funchal - Santana - Arco de S. Jorge, Lº Galego - Santana, Porto da Cruz - Santana): 801 Funchal - Santana - Lº Galego, 802 Porto da Cruz / via Cº Chão, 850 and 860 Funchal - Arco de S. Jorge and back, 875 Funchal - São Jorge, 885 Arco de S. Jorge - Funchal."
+    },
+    "5004": {
+      "newNumbers": [
+        "802",
+        "850",
+        "860",
+        "885"
+      ],
+      "source": "Image-only SIGA/CAM PDF \"Rede Santana\" (column \"Car.\" per trip), read by eye from the page images, 2026-11",
+      "note": "The codes of the trips that data/manual/5004.json holds (Funchal 13:45 = 802; 16:00, 18:00, weekend 850; Arco - Funchal 860 and the 10:00 trip 885). The PDF does not say which old line a trip belongs to; this follows the split of the transcription."
+    },
+    "5011": {
+      "newNumbers": [
+        "875",
+        "885"
+      ],
+      "source": "Image-only SIGA/CAM PDF \"Rede Santana\" (column \"Car.\" per trip), read by eye from the page images, 2026-11",
+      "note": "The codes of the trips that data/manual/5011.json holds (Funchal 18:30 and 19:30 = 875; the 05:20 trip back = 885). Same caveat as 5004."
+    }
+  }
+}

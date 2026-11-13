@@ -1,5 +1,5 @@
 // Recent searches and favourite connections, kept in localStorage (the app has no account or server).
-import type { Picked } from './plannerForm';
+import { normalizePicked, type Picked } from './plannerForm';
 
 export interface SavedTrip {
   from: Picked;
@@ -20,7 +20,8 @@ const clean = (p: unknown): Picked | null => {
   const o = p as Partial<Picked> | null;
   if (!o || typeof o.text !== 'string' || !o.text.trim()) return null;
   const pt = o.pt && Number.isFinite(o.pt.lat) && Number.isFinite(o.pt.lon) ? { lat: o.pt.lat, lon: o.pt.lon } : undefined;
-  return { text: o.text, key: typeof o.key === 'string' ? o.key : null, ...(pt ? { pt } : {}) };
+  // saved by an older version with the label of the UI language of that time ("Funchal (všechny zastávky)"): reduced to the bare name
+  return normalizePicked({ text: o.text, key: typeof o.key === 'string' ? o.key : null, ...(pt ? { pt } : {}), ...(o.here === true ? { here: true as const } : {}) });
 };
 
 export function parseTrips(raw: string | null): SavedTrip[] {

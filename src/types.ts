@@ -45,6 +45,8 @@ export interface Trip {
 }
 
 export interface Direction {
+  /** the new line number of this direction (80 Funchal > Porto Moniz is 380), from data/line-number-overrides.json */
+  number?: string;
   variant: string | null;
   /** Terminal the departures below leave from (as printed in the timetable header). */
   from: string | null;
@@ -81,6 +83,8 @@ export interface Line {
   id: number;
   number: string;
   newNumber: string | null;
+  /** every new number of a renumbered line whose SIGA index entry has none yet (data/line-number-overrides.json; 80 -> 380, 381); `number` stays the technical key */
+  newNumbers?: string[];
   oldNumber: string;
   name: string;
   route: string;
