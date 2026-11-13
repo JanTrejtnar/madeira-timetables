@@ -8,7 +8,7 @@
 // The key of an entry is the SIGA line id (`Line.id`), which never changes, unlike the number.
 
 /** @typedef {{ from?: string, to?: string, variant?: string, number: string }} DirectionNumber */
-/** @typedef {{ newNumbers: string[], directions?: DirectionNumber[], source?: string, note?: string }} LineNumberOverride */
+/** @typedef {{ newNumbers: string[], oldNumbers?: string[], directions?: DirectionNumber[], source?: string, note?: string }} LineNumberOverride oldNumbers: the old numbers whose new numbers these are, when more than the line's own (the CAM Santana line 56 also keeps the trips of old line 133) */
 
 const NUMBER = /^\d{1,4}[A-Z]?$/;
 
@@ -32,6 +32,7 @@ export function lineNumberProblems(lines, overrides) {
     }
     const at = `${id} (${line.number})`;
     if (!Array.isArray(o.newNumbers) || !o.newNumbers.length) problems.push(`${at}: newNumbers is empty`);
+    if (o.oldNumbers !== undefined && (!Array.isArray(o.oldNumbers) || !o.oldNumbers.every((x) => typeof x === 'string'))) problems.push(`${at}: oldNumbers is not a list of strings`);
     const seen = new Set();
     for (const n of o.newNumbers ?? []) {
       if (!NUMBER.test(n)) problems.push(`${at}: "${n}" is not a line number`);

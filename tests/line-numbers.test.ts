@@ -8,7 +8,7 @@ import { dirLabel } from '../src/components/common';
 import type { Line } from '../src/types';
 
 const read = (f: string) => JSON.parse(readFileSync(new URL(`../data/${f}`, import.meta.url), 'utf8'));
-const overrides = read('line-number-overrides.json').lines as Record<string, { newNumbers: string[]; directions?: { from?: string; to?: string; number: string }[] }>;
+const overrides = read('line-number-overrides.json').lines as Record<string, { newNumbers: string[]; oldNumbers?: string[]; directions?: { from?: string; to?: string; number: string }[] }>;
 
 const dir = (from: string, to: string) => ({ variant: null, from, to, shapeId: null, stopSource: 'pdf', stops: [], departures: {} });
 const line = (id: number, number: string, dirs = [dir('Funchal', 'Porto Moniz'), dir('Porto Moniz', 'Funchal')]) => ({ id, number, newNumber: null, oldNumber: number, name: `L${number}`, route: '', municipality: null, type: 'interurbano', directions: dirs }) as unknown as Line;
@@ -51,13 +51,29 @@ describe('the real overrides', () => {
     const ix = buildIndex(applied);
     for (const [q, id] of [['380', 2009], ['381', 2009], ['80', 2009], ['340', 2017], ['341', 2017], ['139', 2017]] as const) expect(searchLines(ix, q)[0]?.id, q).toBe(id);
   });
-  it('the CAM Santana lines (56, 103, 138) and line 139 are found by their new numbers', () => {
+  it('every line without a number in SIGA\'s index has its new numbers (the 26 of the notice of 2026-03-09)', () => {
+    const missing = (read('lines.json') as { id: number; number: string; oldNumber: string }[]).filter((l) => !l.number && !overrides[String(l.id)]);
+    expect(missing.map((l) => `${l.id} (${l.oldNumber})`)).toEqual([]);
+  });
+  it('the numbers are found: CAM Santana 56 / 103 / 138 by the officially listed codes, 139 by 350-353, and a few of the others', () => {
     const ix = buildIndex(applied);
-    const ids = (q: string) => searchLines(ix, q).map((l) => l.id);
-    for (const q of ['801', '802', '850', '860', '875', '885']) expect(ids(q), q).toContain(5000);
-    expect(ids('860')).toEqual(expect.arrayContaining([5000, 5004]));
-    expect(ids('875')).toEqual(expect.arrayContaining([5000, 5011]));
-    for (const q of ['350', '351', '352', '353']) expect(searchLines(ix, q)[0]?.id, q).toBe(2017);
+    const first = (q: string) => searchLines(ix, q)[0]?.id;
+    for (const q of ['801', '802', '803', '804']) expect(first(q), q).toBe(5000);
+    for (const q of ['850', '860']) expect(first(q), q).toBe(5004);
+    for (const q of ['875', '885']) expect(first(q), q).toBe(5011);
+    for (const q of ['350', '351', '352', '353', '340']) expect(first(q), q).toBe(2017);
+    for (const [q, id] of [['320', 2003], ['244', 2002], ['202', 2001], ['300', 2004], ['290', 2010], ['372', 2012], ['390', 2018], ['324', 2019], ['750', 4000], ['826', 4003], ['827', 4019], ['504', 4006], ['328', 2007]] as const) expect(first(q), q).toBe(id);
+  });
+  it('the numbers fit the official notice, and the notice agrees with the numbers SIGA\'s index already has', () => {
+    const notice = read('sources/siga/renumbering-2026-03-09.json').operators as Record<'rodoeste' | 'cam', { old: string; new: string[] }[]>;
+    const cellsOf = (id: number, olds: string[]) => (id >= 2000 && id < 3000 ? notice.rodoeste : notice.cam).filter((c) => olds.includes(c.old)).flatMap((c) => c.new);
+    const index = read('lines.json') as { id: number; number: string; oldNumber: string }[];
+    const old = (id: number) => overrides[String(id)]!.oldNumbers ?? [index.find((l) => l.id === id)!.oldNumber];
+    for (const [id, o] of Object.entries(overrides)) for (const n of o.newNumbers) expect(cellsOf(+id, old(+id)), `${id} ${n}`).toContain(n);
+    // 43 lines already carry their new number in SIGA's index: the notice lists it under their old number
+    const known = index.filter((l) => /^\d{3}$/.test(l.number) && l.id >= 2000 && /^\d+[A-Z]*$/.test(l.oldNumber) && l.number !== l.oldNumber);
+    expect(known.length).toBeGreaterThan(30);
+    for (const l of known) expect(cellsOf(l.id, [l.oldNumber]), `${l.id} ${l.oldNumber} -> ${l.number}`).toContain(l.number);
   });
   it('the line page names both numbers and the old one, and the directions carry theirs', () => {
     const l = applied.find((x) => x.id === 2009)!;

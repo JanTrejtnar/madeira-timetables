@@ -4,7 +4,9 @@
 //   node scripts/audit-line-numbers.mjs            report only
 //   node scripts/audit-line-numbers.mjs --write    add the proposals the PDF states unambiguously to data/line-number-overrides.json
 //   node scripts/audit-line-numbers.mjs --fetch    first download the PDFs that are missing from data/raw
-// A proposal is made only where the PDF headings name a number per direction ("380  FUNCHAL - PORTO MONIZ"); numbers printed per column of trips
+// The official notice (data/sources/siga/renumbering-2026-03-09.json, old number -> new numbers) is compared with the overrides as well, and where
+// a line is not in the overrides yet its numbers are proposed from it (not for an old number with several cells, e.g. 4, which two lines share).
+// A proposal from a PDF is made only where the PDF headings name a number per direction ("380  FUNCHAL - PORTO MONIZ"); numbers printed per column of trips
 // (the second page of line 139) or in an image are listed for a person to review, never guessed.
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -19,6 +21,11 @@ const args = new Set(process.argv.slice(2));
 const lines = JSON.parse(readFileSync(path.join(ROOT, 'data', 'lines.json'), 'utf8'));
 const parsed = JSON.parse(readFileSync(path.join(ROOT, 'data', 'schedules.json'), 'utf8')).lines;
 const overrides = JSON.parse(readFileSync(OVERRIDES, 'utf8'));
+const notice = JSON.parse(readFileSync(path.join(ROOT, 'data', 'sources', 'siga', 'renumbering-2026-03-09.json'), 'utf8'));
+/** the notice's cells for the old number of a line (Rodoeste lines have ids 2xxx, the others are CAM / SAM) */
+const noticeCells = (l, olds = [l.oldNumber]) => (l.id >= 2000 && l.id < 3000 ? notice.operators.rodoeste : notice.operators.cam).filter((c) => olds.includes(c.old));
+/** a number SIGA's index already gives to another line is that line's, even when the notice lists it under this old number too */
+const ownedByOther = (n, l) => lines.some((x) => x.id !== l.id && x.number === n);
 
 /** The SAM sheets embed their font with a shifted encoding: pdftotext returns "$WH" for "Até" (every character 29 below its code). */
 const unshift = (t) => t.replace(/[!-a]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 29));
@@ -109,8 +116,32 @@ for (const l of noNumber) {
   } else row.status = 'numbers printed, no direction heading matched: REVIEW';
 }
 
+for (const r of report) {
+  const l = noNumber.find((x) => x.id === r.id);
+  const override = overrides.lines[String(l.id)];
+  const cells = noticeCells(l, override?.oldNumbers ?? [l.oldNumber]);
+  const have = override?.newNumbers;
+  const want = [...new Set(cells.flatMap((c) => c.new))].filter((n) => !ownedByOther(n, l));
+  // an old number with several cells (4, 7) is shared by several lines: which cell is whose is decided by hand
+  const several = cells.length > 1 && !override?.oldNumbers;
+  const extra = have?.filter((n) => !want.includes(n)) ?? [];
+  r.notice = !cells.length
+    ? 'not in the notice'
+    : have
+      ? extra.length
+        ? `override has more than the notice: ${extra.join(' ')}`
+        : several
+          ? 'consistent with the notice (old number has several cells)'
+          : want.every((n) => have.includes(n))
+            ? 'matches the notice'
+            : `override lacks ${want.filter((n) => !have.includes(n)).join(' ')}`
+      : several
+        ? `notice has ${cells.length} cells for old ${l.oldNumber}: decide by hand`
+        : `notice: ${want.join(' ')}`;
+  if (!have && !several && want.length && !proposals[String(l.id)]) proposals[String(l.id)] = { newNumbers: want, source: `SIGA notice ${notice.url} (in force from 2026-03-09)` };
+}
 console.log(`Lines without a new number in SIGA's index: ${noNumber.length}`);
-for (const r of report) console.log(`  ${String(r.id).padEnd(5)} old ${String(r.old).padEnd(4)} ${r.name.slice(0, 34).padEnd(34)} ${r.status}${r.detail ? ` – ${r.detail}` : ''}`);
+for (const r of report) console.log(`  ${String(r.id).padEnd(5)} old ${String(r.old).padEnd(4)} ${r.name.slice(0, 34).padEnd(34)} ${r.status} | ${r.notice}${r.detail ? ` – ${r.detail}` : ''}`);
 const count = (re) => report.filter((r) => re.test(r.status)).length;
 console.log(`in overrides ${count(/^in overrides/)}, proposals ${count(/^PROPOSAL/)}, to review ${count(/REVIEW|check by eye/)}, nothing printed yet ${count(/old format/)}, no PDF ${count(/NO PDF/)}`);
 
