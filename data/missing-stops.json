@@ -221,32 +221,6 @@
       ]
     },
     {
-      "name": "Porto da Cruz",
-      "code": null,
-      "status": "place_centroid",
-      "lineCount": 4,
-      "tripCount": 52,
-      "lines": [
-        "208",
-        "56",
-        "785",
-        "825"
-      ]
-    },
-    {
-      "name": "Poiso",
-      "code": null,
-      "status": "manual_osm_match",
-      "lineCount": 4,
-      "tripCount": 40,
-      "lines": [
-        "103",
-        "138",
-        "56",
-        "HF Areeiro"
-      ]
-    },
-    {
       "name": "Canhas",
       "code": null,
       "status": "name_match",
@@ -383,18 +357,6 @@
     },
     {
       "name": "P. Cruz (Túnel)",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 3,
-      "tripCount": 36,
-      "lines": [
-        "103",
-        "138",
-        "56"
-      ]
-    },
-    {
-      "name": "Ribeiro Frio",
       "code": null,
       "status": "name_match",
       "lineCount": 3,
@@ -919,16 +881,6 @@
       ]
     },
     {
-      "name": "Baía d'Abra",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 78,
-      "lines": [
-        "702"
-      ]
-    },
-    {
       "name": "Caniçal",
       "code": null,
       "status": "name_match",
@@ -956,16 +908,6 @@
       "tripCount": 65,
       "lines": [
         "96"
-      ]
-    },
-    {
-      "name": "Aeroporto",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 50,
-      "lines": [
-        "500"
       ]
     },
     {
@@ -1036,16 +978,6 @@
       "tripCount": 50,
       "lines": [
         "500"
-      ]
-    },
-    {
-      "name": "Corrida",
-      "code": null,
-      "status": "name_match",
-      "lineCount": 1,
-      "tripCount": 38,
-      "lines": [
-        "96"
       ]
     },
     {

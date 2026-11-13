@@ -735,7 +735,7 @@
     },
     {
       "name": "Poiso",
-      "label": "Poiso (saddle at the ER103 / ER202 crossroads): manual match to the OSM bus stop S9 'Poiso' (SIGA, gtfs_id 891, survey 2025-11-30, node 1139447948) which OSM lists for lines 56, 103 and 138. The opposite-direction platform (OSM node 6468873426) is 20 m away and is not distinguished. Not an official SIGA position.",
+      "label": "Poiso (saddle at the ER103 / ER202 crossroads): position verified by the maintainer (OSM bus stop S9 'Poiso', SIGA survey 2025-11-30, node 1139447948). The opposite-direction platform (OSM node 6468873426) is 20 m away and is not distinguished.",
       "lines": [
         "56",
         "103",
@@ -744,7 +744,7 @@
       ],
       "lat": 32.712225,
       "lon": -16.8880585,
-      "locationPrecision": "manual_osm_match",
+      "locationPrecision": "exact",
       "osmNode": 1139447948
     },
     {
@@ -1020,10 +1020,10 @@
     },
     {
       "name": "Porto da Cruz",
-      "label": "PLACE POSITION GIVEN BY THE MAINTAINER, NOT A SURVEYED STOP: point in Porto da Cruz given by the maintainer as 32.77182932561351, -16.8289640158653 (earlier picked on mapy.com at 32.7717386, -16.829496, 51 m away); the real stop platform is not known. Valid for the spellings P.Cruz / P. Cruz / Porto Cruz of other lines too (scripts/lib-abbrev.mjs).",
+      "label": "Porto da Cruz: position verified by the maintainer (32.77182932561351, -16.8289640158653). Valid for the spellings P.Cruz / P. Cruz / Porto Cruz of other lines too (scripts/lib-abbrev.mjs).",
       "lat": 32.77182932561351,
       "lon": -16.8289640158653,
-      "locationPrecision": "place_centroid"
+      "locationPrecision": "exact"
     },
     {
       "name": "Torre",
@@ -1158,6 +1158,37 @@
       "lat": 32.727282,
       "lon": -16.777167,
       "locationPrecision": "interpolated_road_point"
+    },
+    {
+      "name": "Baía d'Abra",
+      "label": "Baía d'Abra (Machico - Caniçal): position given and verified by the maintainer (mapy.com).",
+      "lat": 32.7431262,
+      "lon": -16.7014289,
+      "locationPrecision": "exact"
+    },
+    {
+      "name": "Ribeiro Frio",
+      "label": "Ribeiro Frio: position given and verified by the maintainer (32°44.09321'N, 16°53.19072'W).",
+      "lat": 32.7348868,
+      "lon": -16.886512,
+      "locationPrecision": "exact"
+    },
+    {
+      "name": "Aeroporto",
+      "label": "Madeira airport: position given and verified by the maintainer.",
+      "lines": [
+        "500"
+      ],
+      "lat": 32.6925952,
+      "lon": -16.7761499,
+      "locationPrecision": "exact"
+    },
+    {
+      "name": "Corrida",
+      "label": "Corrida: position given and verified by the maintainer (32°42.10014'N, 16°59.35701'W).",
+      "lat": 32.701669,
+      "lon": -16.9892835,
+      "locationPrecision": "exact"
     }
   ],
   "funchalTerminals": {

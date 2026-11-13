@@ -30,6 +30,6 @@ describe.skipIf(!existsSync('public/data/schedules.json'))('Poiso saddle (run `n
     const seen = new Set<string>();
     for (const l of data.lines.filter((l) => ['56', '103', '138', 'HF Areeiro'].includes(l.number)))
       for (const d of l.directions) for (const s of d.stops.filter((s) => s.name === 'Poiso')) seen.add(`${s.lat},${s.lon},${s.locationPrecision}`);
-    expect([...seen]).toEqual(['32.712225,-16.8880585,manual_osm_match']);
+    expect([...seen]).toEqual(['32.712225,-16.8880585,exact']);
   });
 });
