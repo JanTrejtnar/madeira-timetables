@@ -98,7 +98,7 @@ async function applyManual(out, warn) {
     }
     for (const k of Object.keys(departures)) departures[k].sort((x, y) => sk(x.t) - sk(y.t));
     for (const t of d.trips) if (t.times.length !== d.stops.length) throw new Error(`manual ${out.id}: trip length differs from stops`);
-    return { variant: d.variant ?? null, from: d.from, to: d.to, shapeId: null, stopSource: 'pdf', stops: d.stops.map((name) => ({ code: null, name })), departures, trips: d.trips };
+    return { variant: d.variant ?? null, from: d.from, to: d.to, shapeId: null, stopSource: 'pdf', stops: d.stops.map((s) => (typeof s === 'string' ? { code: null, name: s } : { code: null, ...s })), departures, trips: d.trips };
   });
   out.hasParsedSchedule = out.directions.some((d) => d.trips.length || Object.values(d.departures).some((l) => l.length));
   out.warnings.length = 0;

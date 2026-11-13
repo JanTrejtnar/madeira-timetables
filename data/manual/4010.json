@@ -1,6 +1,6 @@
 {
  "lineId": 4010,
- "source": "manual transcription of a scanned PDF (image only): Nº 130 Agua Pena / Sant'Ana",
+ "source": "manual transcription of a scanned PDF (image only): Nº 130 Agua Pena / Sant'Ana + stops of the circular line 725 (Machico - Sant'Ana - Machico) from the SIGA e-mail answer (itinerary with stop codes; positions of the coded stops from the SIGA planner dump)",
  "notes": {},
  "generalNotes": [
   "Não se efectuam viagens a 25 de Dezembro."
@@ -162,8 +162,38 @@
    "from": "Machico",
    "to": "Sant'Ana",
    "stops": [
-    "Machico",
-    "Sant'Ana"
+    {
+     "name": "Machico",
+     "code": "56434",
+     "lat": 32.7211625,
+     "lon": -16.7686808,
+     "locationPrecision": "exact"
+    },
+    {
+     "name": "Rua Ana D Arfet",
+     "code": "56456",
+     "lat": 32.7261285,
+     "lon": -16.7711479,
+     "locationPrecision": "exact"
+    },
+    {
+     "name": "ESTR Tristão Vaz Teixeira",
+     "code": "56457",
+     "lat": 32.72611,
+     "lon": -16.770589,
+     "locationPrecision": "exact"
+    },
+    {
+     "name": "R da Tenda do Leiro",
+     "code": "56469",
+     "lat": 32.7242466,
+     "lon": -16.771236,
+     "locationPrecision": "exact"
+    },
+    {
+     "name": "Sant'Ana",
+     "code": "56592"
+    }
    ],
    "trips": [
     {
@@ -172,6 +202,9 @@
      ],
      "times": [
       "09:15",
+      null,
+      null,
+      null,
       "09:30"
      ]
     },
@@ -181,6 +214,9 @@
      ],
      "times": [
       "10:30",
+      null,
+      null,
+      null,
       "10:45"
      ]
     },
@@ -190,6 +226,9 @@
      ],
      "times": [
       "17:00",
+      null,
+      null,
+      null,
       "17:15"
      ]
     }
@@ -199,8 +238,50 @@
    "from": "Sant'Ana",
    "to": "Machico",
    "stops": [
-    "Sant'Ana",
-    "Machico"
+    {
+     "name": "Sant'Ana",
+     "code": "56592"
+    },
+    {
+     "name": "Caminho de São Cristóvão 57",
+     "code": null
+    },
+    {
+     "name": "ESTR D. Manuel I",
+     "code": "56484",
+     "lat": 32.725614,
+     "lon": -16.781467,
+     "locationPrecision": "exact"
+    },
+    {
+     "name": "ESTR D. Manuel I",
+     "code": "56482",
+     "lat": 32.725092,
+     "lon": -16.779385,
+     "locationPrecision": "exact"
+    },
+    {
+     "name": "Impasse de São José b 4",
+     "code": null
+    },
+    {
+     "name": "R Francisco Alvares Nobrega",
+     "code": "56462"
+    },
+    {
+     "name": "R da Torre",
+     "code": "56465",
+     "lat": 32.727911,
+     "lon": -16.777621,
+     "locationPrecision": "exact"
+    },
+    {
+     "name": "Machico",
+     "code": "56434",
+     "lat": 32.7211625,
+     "lon": -16.7686808,
+     "locationPrecision": "exact"
+    }
    ],
    "trips": [
     {
@@ -209,6 +290,12 @@
      ],
      "times": [
       "09:30",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       "09:45"
      ]
     },
@@ -218,6 +305,12 @@
      ],
      "times": [
       "10:45",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       "11:00"
      ]
     },
@@ -227,10 +320,17 @@
      ],
      "times": [
       "17:15",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       "17:30"
      ]
     }
    ]
   }
- ]
+ ],
+ "stopNote": "Line 725 is a loop Estação Machico (56434) - Rua Ana D Arfet - ESTR Tristão Vaz Teixeira - R da Tenda do Leiro - CAM Quinta Sant'Ana (56592) - Caminho de São Cristóvão 57 (address only) - ESTR D. Manuel I (56484, 56482) - Impasse de São José b 4 (address only) - R Francisco Alvares Nobrega (56462) - R da Torre (56465) - Estação Machico. Split at Sant'Ana into the two printed directions (the printed trips 09:15 > 09:30 and 09:30 > 09:45 follow each other). Only the end times are printed; the stops between have no time. 56592 and 56462 are not in the SIGA planner dump, the two address stops have no code."
 }

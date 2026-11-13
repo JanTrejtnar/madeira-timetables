@@ -1138,6 +1138,16 @@
       "lat": 32.7047,
       "lon": -16.7838,
       "locationPrecision": "interpolated"
+    },
+    {
+      "name": "Fazenda",
+      "label": "Fazenda of line 501 (Funchal - Fazenda - Boqueirão): the SIGA e-mail answer says the printed stop 'Fazenda' is the stretch of seven stops 68337 (Av. 25 Junho rotunda St Amaro; the e-mail names it R 13 Setembro 1509), 68339, 68341, 68342 (R 13 Setembro 1509), 68344, 68343, 68345 (CAM Joao Nicolau Vieira Freitas) in this order (32.6688,-16.8048 ... 32.6724,-16.8113). The point is the fourth of the seven, official stop 68342, the middle of the stretch; the bus calls along the whole stretch. Not the 'Fazenda' of line 526 (other place, other override)",
+      "lines": [
+        "501"
+      ],
+      "lat": 32.666106,
+      "lon": -16.810928,
+      "locationPrecision": "name_match"
     }
   ],
   "funchalTerminals": {

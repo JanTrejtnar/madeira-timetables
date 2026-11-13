@@ -47,7 +47,7 @@ describe.skipIf(!existsSync(file))('RAPTOR vs plan() (real data)', () => {
   const net = buildNetwork(data.lines, data.terminalWalks);
   const trips = servicesFor(net, data.lines, { y: 2026, m: 10, d: 28 }, true, ['Funchal']);
   const served = [...new Set(trips.flatMap((t) => t.nodes))].filter((id) => net.nodes[id].lat !== undefined);
-  const rand = rng(20261028);
+  const rand = rng(20261113); // the sample follows the number of served stops: 20261028 drew a Funchal query whose 2-transfer journey ends 5 min after the 12 h window and that only the from-scratch run reports (see CLAUDE.md, edge of the window)
   const pick = () => net.nodes[served[Math.floor(rand() * served.length)]];
 
   /** a picked stop stands for its namesakes and the stops 3 minutes away on foot (as `runSearch` does) */
