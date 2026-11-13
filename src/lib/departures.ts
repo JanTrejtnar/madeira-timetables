@@ -57,7 +57,7 @@ export function timesAtStop(dir: Direction, stopIdx: number, trips: Trip[]): Tim
     const first = trip.times.find(Boolean) as string;
     let minutes = toMinutes(t);
     if (minutes < toMinutes(first)) minutes += 1440;
-    out.push({ t, minutes, trip, ...(trip.notes ? { notes: trip.notes } : {}) });
+    out.push({ t, minutes, trip, ...(trip.notes ? { notes: trip.notes } : {}), ...(trip.number ? { number: trip.number } : {}) });
   }
   void dir;
   return out.sort((a, b) => a.minutes - b.minutes);

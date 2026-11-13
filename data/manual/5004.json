@@ -47,7 +47,8 @@
      ],
      "notes": [
       "Via Cº Chão, Silveira, A. Marques e Ilha"
-     ]
+     ],
+     "number": "802"
     },
     {
      "days": [
@@ -68,7 +69,8 @@
      ],
      "notes": [
       "Via St. António"
-     ]
+     ],
+     "number": "850"
     },
     {
      "days": [
@@ -86,7 +88,8 @@
       "19:25",
       "19:40",
       "19:50"
-     ]
+     ],
+     "number": "850"
     },
     {
      "days": [
@@ -108,7 +111,8 @@
      "notes": [
       "a",
       "Via St. António e Ilha"
-     ]
+     ],
+     "number": "850"
     },
     {
      "days": [
@@ -129,7 +133,8 @@
      ],
      "notes": [
       "*Serviço a pedido: S. Roque do Faial"
-     ]
+     ],
+     "number": "850"
     },
     {
      "days": [
@@ -150,7 +155,8 @@
      ],
      "notes": [
       "*Serviço a pedido: St. António e Ilha"
-     ]
+     ],
+     "number": "850"
     },
     {
      "days": [
@@ -172,7 +178,8 @@
      "notes": [
       "a",
       "Via St. António e Ilha"
-     ]
+     ],
+     "number": "850"
     },
     {
      "days": [
@@ -193,7 +200,8 @@
      ],
      "notes": [
       "*Serviço a pedido: S. Roque do Faial, St. António e Ilha"
-     ]
+     ],
+     "number": "850"
     }
    ]
   },
@@ -230,7 +238,8 @@
       null,
       "07:21",
       "08:20"
-     ]
+     ],
+     "number": "860"
     },
     {
      "days": [
@@ -251,7 +260,8 @@
      ],
      "notes": [
       "Via St. António"
-     ]
+     ],
+     "number": "860"
     },
     {
      "days": [
@@ -272,7 +282,8 @@
      ],
      "notes": [
       "Via St. António"
-     ]
+     ],
+     "number": "885"
     },
     {
      "days": [
@@ -293,7 +304,8 @@
      ],
      "notes": [
       "Santana 13.10 / 13.25"
-     ]
+     ],
+     "number": "860"
     },
     {
      "days": [
@@ -315,7 +327,8 @@
      "notes": [
       "a",
       "Via Ilha e St. António"
-     ]
+     ],
+     "number": "860"
     },
     {
      "days": [
@@ -336,7 +349,8 @@
      ],
      "notes": [
       "*Serviço a pedido: Silveira, St. António, Lº Galego e S. Roque do Faial"
-     ]
+     ],
+     "number": "860"
     },
     {
      "days": [
@@ -357,7 +371,8 @@
      ],
      "notes": [
       "a"
-     ]
+     ],
+     "number": "860"
     },
     {
      "days": [
@@ -379,7 +394,8 @@
      "notes": [
       "a",
       "Via Ilha e St. António"
-     ]
+     ],
+     "number": "860"
     },
     {
      "days": [
@@ -400,7 +416,8 @@
      ],
      "notes": [
       "*Serviço a pedido: Ilha, A. Marques, Silveira, St. António e S. Roque do Faial"
-     ]
+     ],
+     "number": "860"
     },
     {
      "days": [
@@ -422,7 +439,8 @@
      "notes": [
       "a",
       "Via Ilha e St. António"
-     ]
+     ],
+     "number": "860"
     }
    ]
   }

@@ -94,7 +94,7 @@ async function applyManual(out, warn) {
     const departures = d.departures ? JSON.parse(JSON.stringify(d.departures)) : {};
     for (const t of d.departures ? [] : d.trips) {
       if (!t.times[0]) continue;
-      for (const day of t.days) (departures[day] ??= []).push({ t: t.times[0], ...(t.notes ? { notes: t.notes } : {}) });
+      for (const day of t.days) (departures[day] ??= []).push({ t: t.times[0], ...(t.notes ? { notes: t.notes } : {}), ...(t.number ? { number: t.number } : {}) });
     }
     for (const k of Object.keys(departures)) departures[k].sort((x, y) => sk(x.t) - sk(y.t));
     for (const t of d.trips) if (t.times.length !== d.stops.length) throw new Error(`manual ${out.id}: trip length differs from stops`);

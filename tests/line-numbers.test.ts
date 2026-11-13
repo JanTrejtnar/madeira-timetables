@@ -87,3 +87,16 @@ describe('the real overrides', () => {
     expect(lineNumberLabel(l)).toBe('503');
   });
 });
+
+describe('trip numbers in the departure grid (CAM Santana)', () => {
+  const data = read('schedules.json').lines as Line[];
+  it('every trip of the Santana network carries the number printed in the "Car." column', () => {
+    for (const id of [5000, 5004, 5011]) {
+      const l = data.find((x) => x.id === id)!;
+      for (const d of l.directions) for (const t of d.trips) expect(t.number, `${id} ${d.from} ${t.times.find(Boolean)}`).toMatch(/^(801|802|850|860|875|885)$/);
+    }
+    const l = data.find((x) => x.id === 5000)!;
+    expect(l.directions[0]!.trips.find((t) => t.times[0] === '07:30')!.number).toBe('850');
+    expect(l.directions[0]!.departures.weekday!.find((x) => x.t === '07:30')!.number).toBe('850');
+  });
+});

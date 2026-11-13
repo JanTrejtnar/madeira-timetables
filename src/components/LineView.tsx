@@ -30,7 +30,7 @@ function defaultDay(types: DayType[], shared: Shared): DayType | undefined {
 }
 
 import { translateNote, variantLabel } from '../lib/notes';
-import { formerNumber, lineNumberLabel } from '../lib/lineNumber';
+import { formerNumber, lineNumberLabel, lineNumbers } from '../lib/lineNumber';
 
 const NOTE_SCHOOL_ONLY = 'Apenas no período escolar';
 const NOTE_HOLIDAY_ONLY = 'Apenas fora do período escolar';
@@ -584,6 +584,11 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
                     {x.t}
                     {requestPlaces(x.notes).length ? <span className="ml-0.5 text-amber-600" aria-hidden>⚠</span> : null}
                     {legendCodes(x.notes).length ? <sup className="ml-0.5 text-xs font-normal opacity-70">{legendCodes(x.notes).map(tn).join(',')}</sup> : null}
+                    {x.number && lineNumbers(line).length > 1 ? (
+                      <span className={`block text-xs font-bold ${active ? 'text-white/90' : 'text-sky-700 dark:text-sky-300'}`} data-testid="time-number" title={t('tripRunsAs').replace('{n}', x.number)}>
+                        {x.number}
+                      </span>
+                    ) : null}
                     {merged && endOf(x) && endOf(x) !== usualEnd ? (
                       <span className="block truncate text-xs font-normal opacity-70" data-testid="time-end">
                         {endOf(x)}

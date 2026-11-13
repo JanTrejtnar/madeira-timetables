@@ -3,6 +3,8 @@ export type DayKey = 'weekday' | 'saturday' | 'sunday' | 'weekday_school' | 'wee
 export interface Departure {
   t: string; // "HH:MM"; times after midnight (e.g. 00:10) follow late-evening ones in the list
   notes?: string[];
+  /** the number this trip runs under when the line carries several (CAM Santana: 801, 850, 885 …), printed in the "Car." column */
+  number?: string;
 }
 
 export interface Stop {
@@ -40,6 +42,8 @@ export interface Trip {
   days: DayKey[];
   times: (string | null)[];
   notes?: string[];
+  /** the number this trip runs under when the line carries several (CAM Santana: 801, 850, 885 …) */
+  number?: string;
   /** the time at the last stop is not printed ("Destino Final" column): estimated from the route distance */
   estLast?: true;
 }
