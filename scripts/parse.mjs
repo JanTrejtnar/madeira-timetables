@@ -12,8 +12,10 @@ import { isSam, parseSam } from './parse-sam.mjs';
 import { parseTransbordo } from './parse-transbordo.mjs';
 import { isRowTables, parseRowTables } from './parse-rowtables.mjs';
 import { expandGtfsLine, gtfsDirections } from './lib-gtfs-timetable.mjs';
+import { applyStopExpansions } from './lib-stop-expansion.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const stopExpansions = JSON.parse(await readFile(path.join(ROOT, 'data', 'stop-expansions.json'), 'utf8')).rules;
 const RAW = path.join(ROOT, 'data', 'raw');
 const onlyArg = process.argv.indexOf('--only');
 const ONLY = onlyArg > -1 ? process.argv[onlyArg + 1] : null;
@@ -292,6 +294,7 @@ for (const line of lines) {
   tidyDirections(out, warn);
   await applyGtfs(out, warn, gtfs);
   await applyManual(out, warn);
+  if (applyStopExpansions(out, stopExpansions)) warn('stops expanded from data/stop-expansions.json (times of the added stops estimated)');
   result.push(out);
   report.push({ number: out.number, id: out.id, family: out.family, ok: out.hasParsedSchedule, warnings });
 }

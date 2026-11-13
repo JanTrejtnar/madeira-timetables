@@ -47,7 +47,7 @@ describe.skipIf(!existsSync(file))('RAPTOR vs plan() (real data)', () => {
   const net = buildNetwork(data.lines, data.terminalWalks);
   const trips = servicesFor(net, data.lines, { y: 2026, m: 10, d: 28 }, true, ['Funchal']);
   const served = [...new Set(trips.flatMap((t) => t.nodes))].filter((id) => net.nodes[id].lat !== undefined);
-  const rand = rng(20261113); // the sample follows the number of served stops: 20261028 drew a Funchal query whose 2-transfer journey ends 5 min after the 12 h window and that only the from-scratch run reports (see CLAUDE.md, edge of the window)
+  const rand = rng(20261028);
   const pick = () => net.nodes[served[Math.floor(rand() * served.length)]];
 
   /** a picked stop stands for its namesakes and the stops 3 minutes away on foot (as `runSearch` does) */
@@ -97,8 +97,8 @@ describe.skipIf(!existsSync(file))('RAPTOR vs plan() (real data)', () => {
       // wait: with it, arriving earlier can make a transfer impossible, so no label is the best one and the two may differ at the window's edge)
       if (q % 4 === 0) {
         // a journey whose bus leaves after the window (the traveller waits at the first stop for the next day's bus) is not one the window asks for: with equal arrivals
-        // the shared run keeps the earliest bus and a run from scratch the latest one, so only the journeys inside the window are compared
-        const key = (its: Itinerary[]) => its.filter((x) => x.depart <= at + WINDOW).map((x) => `${x.depart}>${x.finish}/${x.legs.length - 1}`).sort().join(' ');
+        // the shared run keeps the earliest bus and a run from scratch the latest one, so only the journeys inside the window are compared; the same goes for a journey that ends after the window (a long night ride): whether the shared run still reaches it depends on how far past the window it ends, not on the timetable, and the sample of stops follows the data (it moves whenever a line is added)
+        const key = (its: Itinerary[]) => its.filter((x) => x.depart <= at + WINDOW && x.finish <= at + WINDOW).map((x) => `${x.depart}>${x.finish}/${x.legs.length - 1}`).sort().join(' ');
         for (const maxWait of [Infinity, MAX_WAIT]) {
           const fast = maxWait === MAX_WAIT ? mine : raptorJourneys(net, trips, A.ids, B.ids, at, A.extra, B.extra, { window: WINDOW, maxWait });
           const slow = raptorJourneys(net, trips, A.ids, B.ids, at, A.extra, B.extra, { window: WINDOW, maxWait, independentRuns: true });

@@ -1,0 +1,64 @@
+{
+ "_comment": "Printed stops that are really a run of stops (see scripts/lib-stop-expansion.mjs). Applied by parse.mjs after the parsers; the times of the added stops are estimates.",
+ "rules": [
+  {
+   "line": 4004,
+   "stop": "Fazenda",
+   "forwardFrom": "Funchal",
+   "anchor": "68342",
+   "speedKmh": 20,
+   "source": "SIGA e-mail answer: the printed stop 'Fazenda' of line 501 (Funchal - Boqueirão) is the stretch of seven stops 68337 - 68339 - 68341 - 68342 - 68344 - 68343 - 68345, in this order (towards Boqueirão). Positions and names are those of the SIGA planner stops of these codes (the e-mail calls 68337 'R 13 Setembro 1509'; the planner data name it 'Av. 25 Junho rotunda St Amaro'). The printed time is taken for 68342, the middle of the stretch",
+   "stops": [
+    {
+     "code": "68337",
+     "name": "Av. 25 Junho rotunda St Amaro",
+     "lat": 32.668773,
+     "lon": -16.804779,
+     "locationPrecision": "exact"
+    },
+    {
+     "code": "68339",
+     "name": "R 13 Setembro 1509",
+     "lat": 32.667423,
+     "lon": -16.807455,
+     "locationPrecision": "exact"
+    },
+    {
+     "code": "68341",
+     "name": "R 13 Setembro 1509",
+     "lat": 32.665969,
+     "lon": -16.808622,
+     "locationPrecision": "exact"
+    },
+    {
+     "code": "68342",
+     "name": "R 13 Setembro 1509",
+     "lat": 32.666106,
+     "lon": -16.810928,
+     "locationPrecision": "exact"
+    },
+    {
+     "code": "68344",
+     "name": "CAM Joao Nicolau Vieira Freitas",
+     "lat": 32.667282,
+     "lon": -16.812328,
+     "locationPrecision": "exact"
+    },
+    {
+     "code": "68343",
+     "name": "CAM Joao Nicolau Vieira Freitas",
+     "lat": 32.670128,
+     "lon": -16.811475,
+     "locationPrecision": "exact"
+    },
+    {
+     "code": "68345",
+     "name": "CAM Joao Nicolau Vieira Freitas",
+     "lat": 32.672402,
+     "lon": -16.811283,
+     "locationPrecision": "exact"
+    }
+   ]
+  }
+ ]
+}

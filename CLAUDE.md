@@ -63,6 +63,13 @@ Od 9. 3. 2026 platí nové číslování (oznámení SIGA „Nova numeração e 
 
 Pole `Picked.text` (formulář plánovače, Oblíbené, Nedávné v `localStorage`, `?from=` v URL) drží **holé jméno** místa; nikdy „Funchal (všechny zastávky)“ ani „Moje poloha (X)“. Doplněk „(všechny zastávky)“ skládá až vykreslení z klíče (`@par:`/`@muni:`) a jazyka, „Moje poloha“ z příznaku `Picked.here` a nejbližší zastávky: `placeLabel`/`tripLabel` v `src/lib/placeLabel.ts`. Starší uložené texty v kterémkoli jazyce převede `normalizePicked` (`parseTrips`, `formFromQuery`); proto po přepnutí jazyka není v EN/PT žádná čeština. `tests/i18n.test.ts` hlídá stejné klíče a zástupné `{name}` ve všech jazycích, text bez českých písmen v EN/PT a že komponenty nemají české řetězce mimo slovník.
 
+## Zastávky, které operátor rozepsal (linky 501, 725)
+
+- `data/stop-expansions.json` (`scripts/lib-stop-expansion.mjs`, volá ho `parse.mjs` po parserech): vytištěné místo, které jsou ve skutečnosti za sebou jdoucí zastávky (501 „Fazenda“ = 68337, 68339, 68341, 68342, 68344, 68343, 68345; SIGA, e-mail). Zastávky nahradí jedno vytištěné místo v každém směru (v opačném pořadí na zpáteční cestě); vytištěný čas patří kotvě (`anchor`), ostatní zastávky dostanou čas jako **odhad** podle vzdálenosti při `speedKmh`, držený mezi vytištěnými sousedy. Spoj bez času na místě (nejede přes Fazendu) nemá čas na žádné ze sedmi. Nový případ = nové pravidlo, ne další `stop-overrides`.
+- Ruční přepisy (`data/manual`) smí dát zastávku jako objekt `{name, code, lat, lon, locationPrecision}`; souřadnice z dat SIGA podle kódu jsou `exact`. Linka 725 (okruh Machico – Sant'Ana): časy mezilehlých zastávek jsou rovnoměrný odhad mezi vytištěnými časy; polohy bez zdroje v datech SIGA (56592, Caminho de São Cristóvão 57) jsou `manual_osm_match` na pojmenovaném objektu OSM (Nominatim), zbylé (56462, Impasse de São José) jsou `interpolated_road_point` z `scripts/match-corridor-stops.mjs --interp` (`build:data` stopy ručních přepisů po trase neinterpoluje: `attachRoutes` běží až po `interpolateStops`). Žádná z nich není oficiální poloha zastávky.
+- V tomto prostředí `npm run parse` nečte SAM PDF (linky bez směrů), proto se `schedules.json` nepřepisuje celý: viz `git diff` před commitem.
+- `fetch:routes` potřebuje OSRM; v cloudovém prostředí `NODE_USE_ENV_PROXY=1` (Node `fetch` jinak nejde přes proxy) a povolený host `router.project-osrm.org`.
+
 ## Povinný verifikační proces před každým commitem/pushem
 
 Vývojář/asistent MUSÍ před každým commitem automaticky a bez vyzvání spustit a ověřit tuto kompletní pipeline (E2E sady potřebují běžící dev server `npx vite --port 5173`):

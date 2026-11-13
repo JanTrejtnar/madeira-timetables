@@ -192,7 +192,10 @@
     },
     {
      "name": "Sant'Ana",
-     "code": "56592"
+     "code": "56592",
+     "lat": 32.730583,
+     "lon": -16.779817,
+     "locationPrecision": "manual_osm_match"
     }
    ],
    "trips": [
@@ -202,9 +205,9 @@
      ],
      "times": [
       "09:15",
-      null,
-      null,
-      null,
+      "09:19",
+      "09:22",
+      "09:26",
       "09:30"
      ]
     },
@@ -214,9 +217,9 @@
      ],
      "times": [
       "10:30",
-      null,
-      null,
-      null,
+      "10:34",
+      "10:38",
+      "10:41",
       "10:45"
      ]
     },
@@ -226,9 +229,9 @@
      ],
      "times": [
       "17:00",
-      null,
-      null,
-      null,
+      "17:04",
+      "17:08",
+      "17:11",
       "17:15"
      ]
     }
@@ -240,11 +243,17 @@
    "stops": [
     {
      "name": "Sant'Ana",
-     "code": "56592"
+     "code": "56592",
+     "lat": 32.730583,
+     "lon": -16.779817,
+     "locationPrecision": "manual_osm_match"
     },
     {
      "name": "Caminho de São Cristóvão 57",
-     "code": null
+     "code": null,
+     "lat": 32.729576,
+     "lon": -16.784926,
+     "locationPrecision": "manual_osm_match"
     },
     {
      "name": "ESTR D. Manuel I",
@@ -290,12 +299,12 @@
      ],
      "times": [
       "09:30",
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
+      "09:32",
+      "09:34",
+      "09:36",
+      "09:39",
+      "09:41",
+      "09:43",
       "09:45"
      ]
     },
@@ -305,12 +314,12 @@
      ],
      "times": [
       "10:45",
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
+      "10:47",
+      "10:49",
+      "10:51",
+      "10:54",
+      "10:56",
+      "10:58",
       "11:00"
      ]
     },
@@ -320,17 +329,17 @@
      ],
      "times": [
       "17:15",
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
+      "17:17",
+      "17:19",
+      "17:21",
+      "17:24",
+      "17:26",
+      "17:28",
       "17:30"
      ]
     }
    ]
   }
  ],
- "stopNote": "Line 725 is a loop Estação Machico (56434) - Rua Ana D Arfet - ESTR Tristão Vaz Teixeira - R da Tenda do Leiro - CAM Quinta Sant'Ana (56592) - Caminho de São Cristóvão 57 (address only) - ESTR D. Manuel I (56484, 56482) - Impasse de São José b 4 (address only) - R Francisco Alvares Nobrega (56462) - R da Torre (56465) - Estação Machico. Split at Sant'Ana into the two printed directions (the printed trips 09:15 > 09:30 and 09:30 > 09:45 follow each other). Only the end times are printed; the stops between have no time. 56592 and 56462 are not in the SIGA planner dump, the two address stops have no code."
+ "stopNote": "Line 725 is a loop Estação Machico (56434) - Rua Ana D Arfet - ESTR Tristão Vaz Teixeira - R da Tenda do Leiro - CAM Quinta Sant'Ana (56592) - Caminho de São Cristóvão 57 (address only) - ESTR D. Manuel I (56484, 56482) - Impasse de São José b 4 (address only) - R Francisco Alvares Nobrega (56462) - R da Torre (56465) - Estação Machico. Split at Sant'Ana into the two printed directions (the printed trips 09:15 > 09:30 and 09:30 > 09:45 follow each other). Only the end times are printed; the times of the stops between are ESTIMATED, evenly spaced between them. 56592 and 56462 are not in the SIGA planner dump, the two address stops have no code. Positions not in SIGA's data: 56592 = OSM 'Quinta de Santana' on the Caminho da Quinta de Sant'Ana (Nominatim 32.730583, -16.779817), São Cristóvão 57 = OSM 'Quinta de São Cristovão' on the Caminho da Terça (32.729576, -16.784926): named features near the address, NOT the stops (manual_osm_match). Nominatim finds neither the house number nor 'Impasse de São José b 4' nor stop 56462; those two get a point on the road at the ratio of the driving times between their neighbours (interpolated_road_point, data/stop-overrides.json)."
 }
