@@ -1175,10 +1175,7 @@
     },
     {
       "name": "Aeroporto",
-      "label": "Madeira airport: position given and verified by the maintainer.",
-      "lines": [
-        "500"
-      ],
+      "label": "Madeira airport (all lines on Madeira; Porto Santo's 'Aeroporto do Porto Santo' is a different name): position given and verified by the maintainer.",
       "lat": 32.6925952,
       "lon": -16.7761499,
       "locationPrecision": "exact"
