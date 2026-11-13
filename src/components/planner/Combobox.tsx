@@ -1,9 +1,9 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useT, type Key } from '../../i18n';
 import { localStopName } from '../../lib/text';
-import { CITY_PREFIX, PARISH_PREFIX, type Suggestion } from '../../lib/network';
 import { KIND_META, poiKey } from '../../lib/places';
 import type { Picked } from '../../lib/plannerForm';
+import { placeLabel } from '../../lib/placeLabel';
 import { useDebounced } from '../../lib/hooks';
 import type { Shared } from '../common';
 import { Icon } from '../Icons';
@@ -32,11 +32,10 @@ export function Combobox({ label, placeholder, value, onChange, onCommit, shared
 
   // "(all stops)" is a qualifier, not part of the name: the field shows just "Funchal", the list keeps the qualifier in a lighter tone
   const suffix = t('allStopsOf', { name: '' }).trim();
-  const isGroupValue = !!value.key && (value.key.startsWith(PARISH_PREFIX) || value.key.startsWith(CITY_PREFIX)) && value.text.endsWith(suffix);
-  const shownText = isGroupValue ? value.text.slice(0, -suffix.length).trimEnd() : value.text;
-  const labelOf = (s: Suggestion) => (s.group ? t('allStopsOf', { name: s.name }) : localStopName(s.name, lang));
+  const shownText = placeLabel(value, t, lang);
   const pick = (it: Item) => {
-    if (it.kind === 'stop') onChange({ text: labelOf(it.s), key: it.s.key });
+    // the bare printed name: the label is built from it in the UI language when it is shown (a saved search follows a language switch)
+    if (it.kind === 'stop') onChange({ text: it.s.name, key: it.s.key });
     else onChange({ text: it.place.name, key: poiKey(it.place), pt: { lat: +it.place.lat.toFixed(5), lon: +it.place.lon.toFixed(5) } });
     setOpen(false);
   };

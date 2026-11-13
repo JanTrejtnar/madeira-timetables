@@ -30,6 +30,7 @@ function defaultDay(types: DayType[], shared: Shared): DayType | undefined {
 }
 
 import { translateNote, variantLabel } from '../lib/notes';
+import { formerNumber, lineNumberLabel } from '../lib/lineNumber';
 
 const NOTE_SCHOOL_ONLY = 'Apenas no período escolar';
 const NOTE_HOLIDAY_ONLY = 'Apenas fora do período escolar';
@@ -459,9 +460,10 @@ export function LineView({ line, initialDir, initialRide, initialWhen, initialEn
           <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-xs text-slate-500 dark:text-slate-400">
             <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium dark:bg-slate-800">{line.type === 'urbano' ? t('urban') : t('interurban')}</span>
             {line.municipality && <span>{line.municipality}</span>}
-            {line.newNumber && line.oldNumber && line.oldNumber !== String(Number(line.newNumber)) ? (
+            {line.newNumbers?.length ? <span className="font-semibold tabular-nums">· {lineNumberLabel(line)}</span> : null}
+            {formerNumber(line) ? (
               <span>
-                · {t('oldNumber')} {line.oldNumber}
+                · {t('oldNumber')} {formerNumber(line)}
               </span>
             ) : null}
           </p>

@@ -27,12 +27,14 @@ export function datasetProblem(data: unknown): string | null {
     if (line.type !== 'urbano' && line.type !== 'interurbano') return `${at}.type: ${String(line.type)}`;
     if (typeof line.hasParsedSchedule !== 'boolean') return `${at}.hasParsedSchedule: not a boolean`;
     if (!isRec(line.notes)) return `${at}.notes: not an object`;
+    if (line.newNumbers !== undefined && (!Array.isArray(line.newNumbers) || !line.newNumbers.every(isStr))) return `${at}.newNumbers: not strings`;
     if (line.via !== undefined && (!isRec(line.via) || !Object.values(line.via).every((places) => Array.isArray(places) && places.every((p) => isRec(p) && isStr(p.name) && isNum(p.lat) && isNum(p.lon) && isRec(p.after))))) return `${at}.via: not lists of places`;
     if (!Array.isArray(line.directions)) return `${at}.directions: not an array`;
     for (const [di, dir] of line.directions.entries()) {
       const d = `${at}.directions[${di}]`;
       if (!isRec(dir)) return `${d}: not an object`;
       if (!isStr(dir.to)) return `${d}.to: not a string`;
+      if (dir.number !== undefined && !isStr(dir.number)) return `${d}.number: not a string`;
       if (dir.shapeId !== null && !isNum(dir.shapeId)) return `${d}.shapeId: neither a number nor null`;
       if (!Array.isArray(dir.stops)) return `${d}.stops: not an array`;
       for (const [si, s] of dir.stops.entries()) {

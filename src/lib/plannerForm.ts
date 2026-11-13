@@ -3,12 +3,27 @@
 import { OPERATORS, type OperatorId } from './operators';
 import type { Ymd } from './holidays';
 import type { LineTypeFilter } from '../components/common';
+import { legacyMyLocationName, withoutLegacyAllStops } from './text';
 
 export interface Picked {
+  /**
+   * The bare place name as printed in the data ("Funchal", never "Funchal (all stops)"): what the UI adds around it ("(all stops)",
+   * "My location (…)") is built from the key and `here` when it is shown, so it follows the language and is never saved in one.
+   */
   text: string;
   key: string | null;
+  /** the start was set from the device position: `text` is the nearest stop, shown as "My location (stop)" */
+  here?: true;
   /** point tapped on the map ("Pick on map"); dropped as soon as the text is edited */
   pt?: { lat: number; lon: number };
+}
+
+/** A place saved by an older version (the label as it was shown, in whatever language) in the current form: a bare name plus the `here` flag. */
+export function normalizePicked(p: Picked): Picked {
+  const mine = p.key ? legacyMyLocationName(p.text) : null;
+  if (mine) return { ...p, text: mine, here: true };
+  const text = p.key ? withoutLegacyAllStops(p.text) : p.text;
+  return text === p.text ? p : { ...p, text };
 }
 
 /** A field whose value is final: a suggestion or map point was picked, or the field is empty. Typed text is not settled until Enter. */
@@ -56,8 +71,8 @@ export function formFromQuery(search: string): PlannerForm {
   const time = q.get('time');
   const date = q.get('date');
   return {
-    from: { text: q.get('from') ?? '', key: q.get('fk') || null, pt: parsePt(q.get('fp')) },
-    to: { text: q.get('to') ?? '', key: q.get('tk') || null, pt: parsePt(q.get('tp')) },
+    from: normalizePicked({ text: q.get('from') ?? '', key: q.get('fk') || null, pt: parsePt(q.get('fp')), ...(q.get('fh') === '1' ? { here: true as const } : {}) }),
+    to: normalizePicked({ text: q.get('to') ?? '', key: q.get('tk') || null, pt: parsePt(q.get('tp')) }),
     time: time && TIME.test(time) ? time : null,
     date: isoToYmd(date) ? date : null,
     ops,
@@ -72,6 +87,7 @@ export function formToQuery(f: PlannerForm): string {
   if (f.from.text) q.set('from', f.from.text);
   if (f.from.key) q.set('fk', f.from.key);
   if (f.from.pt) q.set('fp', fmtPt(f.from.pt));
+  if (f.from.here) q.set('fh', '1');
   if (f.to.text) q.set('to', f.to.text);
   if (f.to.key) q.set('tk', f.to.key);
   if (f.to.pt) q.set('tp', fmtPt(f.to.pt));

@@ -13,6 +13,7 @@ import { connectionFare, formatEuro, type ConnectionFare, type FareCard } from '
 import { operatorOf } from '../lib/operators';
 import { walkMinutes, walkTo } from '../lib/walk';
 import { connectionLink, type Picked } from '../lib/plannerForm';
+import { placeLabel } from '../lib/placeLabel';
 import { sameTrip } from '../lib/trips-store';
 import type { Itinerary, Leg } from '../lib/router';
 import { BackBar, badgeText, LEG_COLORS, LineBadge, MapPin, PrecisionWarning, dirLabel, lineRailCls, pdfHref, type RideEnds, type RideWhen, type Shared } from './common';
@@ -357,7 +358,7 @@ export function ConnectionDetail({ it, shared, base, onBack, fromPt, toPt, map, 
     const first = it.legs[0];
     const { planner } = shared;
     const url = connectionLink({ ...trip, ops: planner.ops, directOnly: planner.directOnly, type: planner.type }, base, first.depart - (walkIn?.min ?? 0), first.depart, first.trip.line.id, location.origin + location.pathname);
-    const text = t('shareText', { from: trip.from.text, to: trip.to.text, when: whenLabel(it, base, shared.ctx.now, t, lang) });
+    const text = t('shareText', { from: placeLabel(trip.from, t, lang), to: placeLabel(trip.to, t, lang), when: whenLabel(it, base, shared.ctx.now, t, lang) });
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({ title: t('appName'), text, url });

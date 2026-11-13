@@ -1023,6 +1023,8 @@ export function initialLang(): Lang {
 	return nav === "cs" || nav === "pt" ? nav : "en";
 }
 
+/** the dictionaries themselves, for the test that every language has the same keys */
+export const dictionaries = dict;
 export type Key = keyof (typeof dict)["cs"];
 export type T = (key: Key, vars?: Record<string, string | number>) => string;
 

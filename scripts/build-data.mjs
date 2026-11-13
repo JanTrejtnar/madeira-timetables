@@ -23,11 +23,16 @@ import { buildPois } from './lib-pois.mjs';
 import { buildOverview } from './lib-overview.mjs';
 import { buildShapesPack } from './lib-shapes-pack.mjs';
 import { loadNoteFixes, recodeNotes } from './lib-note-fixes.mjs';
+import { applyLineNumberOverrides } from './lib-line-numbers.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'public');
 const MAX_LOCAL_PDF = 1_000_000;
 const data = JSON.parse(await readFile(path.join(ROOT, 'data', 'schedules.json'), 'utf8'));
+
+// new line numbers printed on the timetables before SIGA's index has them (data/line-number-overrides.json); `number` itself stays the technical key
+const lineNumberOverrides = JSON.parse(await readFile(path.join(ROOT, 'data', 'line-number-overrides.json'), 'utf8')).lines;
+console.log('lines given their new number(s) from data/line-number-overrides.json:', applyLineNumberOverrides(data.lines, lineNumberOverrides));
 
 await rm(path.join(OUT, 'data'), { recursive: true, force: true });
 await rm(path.join(OUT, 'pdf'), { recursive: true, force: true });

@@ -1,0 +1,322 @@
+{
+  "lines": {
+    "2001": {
+      "newNumbers": [
+        "202",
+        "203"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2002": {
+      "newNumbers": [
+        "244",
+        "245"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2003": {
+      "newNumbers": [
+        "320",
+        "321",
+        "322",
+        "323"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2004": {
+      "newNumbers": [
+        "300",
+        "301",
+        "302",
+        "303",
+        "304",
+        "305",
+        "306",
+        "307",
+        "310",
+        "311"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2006": {
+      "newNumbers": [
+        "200",
+        "209",
+        "207",
+        "267",
+        "277",
+        "283",
+        "287"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181",
+      "note": "The notice lists old 7 in three cells: the Funchal - Ribeira Brava services (this line), 221 (line 2005 Furna in SIGA's index) and 222 / 233 (local Ribeira Brava services, no line in the app)."
+    },
+    "2007": {
+      "newNumbers": [
+        "328",
+        "329"
+      ],
+      "directions": [
+        {
+          "from": "Funchal",
+          "to": "Madalena Mar",
+          "number": "328"
+        },
+        {
+          "from": "Madalena Mar",
+          "to": "Funchal",
+          "number": "329"
+        }
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2008": {
+      "newNumbers": [
+        "270",
+        "271",
+        "272"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2009": {
+      "newNumbers": [
+        "380",
+        "381"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181; the timetable PDF header says the same",
+      "directions": [
+        {
+          "from": "Funchal",
+          "to": "Porto Moniz",
+          "number": "380"
+        },
+        {
+          "from": "Porto Moniz",
+          "to": "Funchal",
+          "number": "381"
+        }
+      ]
+    },
+    "2010": {
+      "newNumbers": [
+        "290",
+        "291",
+        "292",
+        "293",
+        "294",
+        "295",
+        "296",
+        "297",
+        "298"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2012": {
+      "newNumbers": [
+        "372",
+        "373",
+        "379"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2013": {
+      "newNumbers": [
+        "370",
+        "371"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2014": {
+      "newNumbers": [
+        "223",
+        "224",
+        "225"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2015": {
+      "newNumbers": [
+        "226",
+        "227",
+        "232",
+        "286"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181",
+      "note": "232 (Circulação - Moreno) and 286 (Espigão) are in the same cell of old line 127 as the Boa Morte services."
+    },
+    "2016": {
+      "newNumbers": [
+        "236",
+        "237",
+        "238"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2017": {
+      "newNumbers": [
+        "340",
+        "341",
+        "350",
+        "351",
+        "352",
+        "353"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181; the timetable PDF header says the same",
+      "directions": [
+        {
+          "from": "Funchal",
+          "to": "Porto Moniz",
+          "number": "340"
+        },
+        {
+          "from": "Porto Moniz",
+          "to": "Funchal",
+          "number": "341"
+        }
+      ],
+      "note": "Page 1 of the PDF numbers the directions (340 Funchal - Porto Moniz via São Vicente, 341 back); 350 / 351 are Funchal - Santa Porto Moniz and back VIA RÁPIDA, 352 / 353 the same via Estrada Regional: variants within the Funchal - Achadas Cruz directions of the timetable, so only the line carries them."
+    },
+    "2018": {
+      "newNumbers": [
+        "390",
+        "391",
+        "392",
+        "393",
+        "394",
+        "395",
+        "396",
+        "397",
+        "398",
+        "399"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2019": {
+      "newNumbers": [
+        "324",
+        "325",
+        "326",
+        "327",
+        "334",
+        "335",
+        "336",
+        "337"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2022": {
+      "newNumbers": [
+        "253",
+        "254",
+        "255"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "2024": {
+      "newNumbers": [
+        "259",
+        "299"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "4000": {
+      "newNumbers": [
+        "750",
+        "760"
+      ],
+      "directions": [
+        {
+          "from": "Funchal",
+          "to": "SANTO SERRA",
+          "number": "750"
+        },
+        {
+          "from": "SANTO SERRA",
+          "to": "Funchal",
+          "number": "760"
+        },
+        {
+          "from": "ST. SERRA",
+          "to": "Funchal",
+          "number": "760"
+        }
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "4003": {
+      "newNumbers": [
+        "826",
+        "836"
+      ],
+      "directions": [
+        {
+          "from": "Funchal",
+          "to": "FAIAL",
+          "number": "826"
+        },
+        {
+          "from": "FAIAL",
+          "to": "Funchal",
+          "number": "836"
+        }
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "4006": {
+      "newNumbers": [
+        "504"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181",
+      "note": "The notice lists 601 (Funchal / Achadinha via Ribeirinha) and 504 (Funchal / Achada via Salão, this timetable) for old 111; 601 is a line of its own in SIGA's index."
+    },
+    "4019": {
+      "newNumbers": [
+        "827",
+        "837"
+      ],
+      "directions": [
+        {
+          "from": "Funchal",
+          "to": "Faial",
+          "number": "827"
+        },
+        {
+          "from": "Faial",
+          "to": "Funchal",
+          "number": "837"
+        }
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181"
+    },
+    "5000": {
+      "newNumbers": [
+        "801",
+        "802",
+        "803",
+        "804"
+      ],
+      "oldNumbers": [
+        "56",
+        "133"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181",
+      "note": "Official numbers of old line 56 (801 Funchal - Santana, 803 Santana - Achada Cedro Gordo, 804 Santana - Arco S. Jorge / Lombo Galego) plus 802, the number of old line 133 Santana - Porto da Cruz, whose trips this transcription keeps in line 56. 850 and 860 are old line 103, 875 and 885 old line 138. NB: the transcription of the shared image-only PDF puts some trips on another old line than their \"Car.\" code says (850 Funchal 07:30 and 885 08:39 sit in line 56; 802 Funchal 13:45 in line 103)."
+    },
+    "5004": {
+      "newNumbers": [
+        "850",
+        "860"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181",
+      "note": "Old line 103: 850 Funchal - Arco S. Jorge, 860 back."
+    },
+    "5011": {
+      "newNumbers": [
+        "875",
+        "885"
+      ],
+      "source": "SIGA notice \"Nova numeração e denominação das carreiras\" (in force from 2026-03-09), https://siga.madeira.gov.pt/noticias/download/2181",
+      "note": "Old line 138: 875 Funchal - São Jorge, 885 back."
+    }
+  }
+}

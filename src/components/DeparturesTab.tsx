@@ -17,7 +17,7 @@ export function DeparturesTab({ shared }: { shared: Shared }) {
     return board(lines, ctx, (line, dir) => {
       if (!matchesType(line, type)) return false;
       if (!tokens.length) return true;
-      const hay = norm(`${line.number} ${line.oldNumber} ${line.name} ${dir.from ?? ''} ${dir.to} ${line.municipality ?? ''}`);
+      const hay = norm(`${line.number} ${line.oldNumber} ${line.newNumbers?.join(' ') ?? ''} ${dir.number ?? ''} ${line.name} ${dir.from ?? ''} ${dir.to} ${line.municipality ?? ''}`);
       return tokens.every((x) => hay.includes(x));
     });
     // `ctx` changes every minute, which refreshes the countdowns
